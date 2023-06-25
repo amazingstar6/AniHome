@@ -1,0 +1,96 @@
+query getTrends($page: Int = 1){
+    Page(page: $page, perPage: 12) {
+        media(sort: TRENDING_DESC, type: ANIME) {
+            id
+            title {
+                romaji
+                english
+                native
+            }
+            coverImage {
+                extraLarge
+            }
+        }
+    }
+}
+
+query getAnimeInfo {
+    Media(id: 150672, type:ANIME) {
+        id
+        idMal
+        title {
+            romaji
+            english
+            native
+        }
+        format
+        status
+        description
+        startDate {
+            year
+            month
+            day
+        }
+        endDate {
+            year
+            month
+            day
+        }
+        season
+        seasonYear
+        #   The year & season
+        seasonInt
+        episodes
+        duration
+        chapters @include(if:false)
+        volumes @include(if:false)
+        countryOfOrigin
+        isLicensed
+        source
+        hashtag
+        # what is the id?
+        trailer {
+            id
+            site
+            thumbnail
+        }
+        updatedAt
+        coverImage {
+            extraLarge
+            large
+            medium
+            color
+        }
+        bannerImage
+        genres
+        synonyms
+        averageScore
+        meanScore
+        # number of users with the media on their list
+        popularity
+        #     Locked media may not be added to lists our favorited. This may be due to the entry pending for deletion or other reasons.
+        isLocked
+        # amount of related activity in the past hour
+        trending
+        favourites
+        tags {
+            id
+        }
+        isAdult
+    }
+}
+
+query getTagInfo {
+    MediaTagCollection {
+        id,
+        name,
+        description,
+        category,
+        rank,
+        isGeneralSpoiler,
+        isMediaSpoiler,
+        isAdult,
+        userId
+    }
+}
+
