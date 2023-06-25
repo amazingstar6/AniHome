@@ -6,24 +6,34 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -81,35 +91,62 @@ fun TrendingAnime(
     onNavigateToDetails: (Int) -> Unit
 ) {
     val trendingAnimeUiState by trendingAnimeViewModel.uiState.collectAsState()
-//    val trendingList by remember { mutableStateOf(emptyList<GetTrendsQuery.Medium>()) }
     Column {
-        Text(
-            "Trending Anime",
-            style = MaterialTheme.typography.headlineMedium.copy(fontFamily = FontFamily.Serif)
-        )
-        Row() {
-            Button(onClick = {trendingAnimeViewModel.goToPreviousPage()}) {
-                Text("Go to previous page")
-            }
-            Text(trendingAnimeUiState.page.toString())
-            Button(onClick = { trendingAnimeViewModel.goToNextPage() }) {
-                Text("Go to next page")
-            }
-
+        var text by remember {
+            mutableStateOf("")
         }
-        LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 120.dp)) {
+        var active by remember {
+            mutableStateOf(false)
+        }
+        SearchBar(
+            query = "Search Anime",
+            onQueryChange = { text = it },
+            onSearch = {},
+            active = active,
+            onActiveChange = { active = it },
+            leadingIcon = {
+                Icon(painterResource(id = R.drawable.baseline_menu_24), "Menu")
+            },
+            trailingIcon = {
+                Row {
+                    Icon(
+                        painterResource(id = R.drawable.baseline_search_24),
+                        "Search",
+                        modifier = Modifier.padding(end = 16.dp)
+                    )
+                    Icon(
+                        painterResource(id = R.drawable.baseline_more_vert_24),
+                        "More options",
+                        modifier = Modifier.padding(end = 16.dp)
+                    )
+                }
+            },
+            modifier = Modifier.padding(10.dp)
+        ) {
+            Text(text = "Show top/trending anime/search history")
+        }
+        HeadlineText("Popular this season")
+        LazyHorizontalGrid(rows = GridCells.Adaptive(600.dp)) {
             items(trendingAnimeUiState.names) { anime ->
                 AnimeCard(
                     anime,
                     {
-                        onNavigateToDetails(anime.id); Log.i(
-                        TAG,
-                        "Anime id on click is ${onNavigateToDetails(anime.id)}"
-                    )
+                        onNavigateToDetails(anime.id)
                     })
             }
         }
+        HeadlineText("Trending now")
+        HeadlineText("Upcoming next season")
     }
+}
+
+@Composable
+fun HeadlineText(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.headlineMedium,
+        modifier = Modifier.padding(10.dp)
+    )
 }
 
 @ExperimentalMaterial3Api
@@ -124,9 +161,8 @@ fun AnimeCard(
         Card(
             onClick = onNavigateToDetails,
             modifier = Modifier
-                .fillMaxWidth()
                 .padding(5.dp)
-                .height(400.dp)
+                .width(200.dp)
         ) {
             //todo change not null assertion
             AsyncImage(
@@ -143,7 +179,9 @@ fun AnimeCard(
             Text(
                 anime.title?.native ?: "Native title could not be loaded/does not exist",
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(10.dp)
+                modifier = Modifier.padding(10.dp),
+                overflow = TextOverflow.Ellipsis
+
             )
             Text(
                 anime.title?.romaji ?: "Romaji title could not be loaded/does not exist",
@@ -159,25 +197,7 @@ fun AnimeCard(
     }
 }
 
-//@Preview
-//@Composable
-//fun AnimeCardPreview() {
-//    AnilistTheme() {
-//        AnimeCard(
-//            anime = GetTrendsQuery.Medium(
-//                1,
-//                GetTrendsQuery.Title(
-//                    "Kimetsu no Yaiba: Katanakaji no Sato-hen",
-//                    "Demon Slayer: Kimetsu no Yaiba Swordsmith Village Arc",
-//                    "鬼滅の刃 刀鍛冶の里編"
-//                ),
-//                GetTrendsQuery.CoverImage("https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx145139-rRimpHGWLhym.png")
-//            )
-//        )
-//    }
-//}
-
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun MyAppPreview() {
     TrendingAnime(onNavigateToDetails = {})

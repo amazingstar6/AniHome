@@ -32,19 +32,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-//                    val myBuilder = CronetEngine.Builder(this)
-//                    val cronetEngine: CronetEngine = myBuilder.build()
-//                    val executor: Executor = Executors.newSingleThreadExecutor()
-//                    val myUploadDataProvider: UploadDataProvider = MyUploadDataProvider()
-//                    val requestBuilder = cronetEngine.newUrlRequestBuilder(
-//                        "https://graphql.anilist.co",
-//                        MyUrlRequestCallback(),
-//                        executor
-//                    ).setHttpMethod("POST")
-//                        .addHeader("Content-Type", "application/json")
-//                        .setUploadDataProvider(myUploadDataProvider, executor)
-//                    val request: UrlRequest = requestBuilder.build()
-//                    request.start()
                     val navController = rememberNavController()
                     NavHost(
                         navController = navController,
@@ -76,7 +63,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun GreetingPreview() {
         AnilistTheme {
-            TrendingAnime { navController.navigate(com.example.anilist.ui.Routes.AnimeDetails.route) }
+            TrendingAnime {  }
         }
     }
 }
