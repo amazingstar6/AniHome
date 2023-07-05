@@ -1,9 +1,5 @@
 package com.example.anilist.ui.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.anilist.R
@@ -20,8 +16,8 @@ object AniListRoute {
 
 data class AnilistTopLevelDestination(
     val route: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector,
+    val selectedIcon: Int,
+    val unselectedIcon: Int,
     val iconTextId: Int
 )
 
@@ -42,32 +38,32 @@ class AniListNavigationActions(private val navController: NavController) {
 val TOP_LEVEL_DESTINATIONS = listOf(
     AnilistTopLevelDestination(
         route = AniListRoute.HOME_ROUTE,
-        selectedIcon = Icons.Default.Home,
-        unselectedIcon = Icons.Default.Home,
+        selectedIcon = R.drawable.navigation_home,
+        unselectedIcon = R.drawable.navigation_home,
         iconTextId = R.string.home
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.ANIME_ROUTE,
-        selectedIcon = Icons.Default.Star,
-        unselectedIcon = Icons.Default.Star,
+        selectedIcon = R.drawable.navigation_anime,
+        unselectedIcon = R.drawable.navigation_anime,
         iconTextId = R.string.anime
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.MANGA_ROUTE,
-        selectedIcon = Icons.Default.Star,
-        unselectedIcon = Icons.Default.Star,
+        selectedIcon = R.drawable.navigation_manga,
+        unselectedIcon = R.drawable.navigation_manga,
         iconTextId = R.string.manga
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.FEED_ROUTE,
-        selectedIcon = Icons.Default.Star,
-        unselectedIcon = Icons.Default.Star,
+        selectedIcon = R.drawable.navigation_feed,
+        unselectedIcon = R.drawable.navigation_feed,
         iconTextId = R.string.feed
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.FORUM_ROUTE,
-        selectedIcon = Icons.Default.Star,
-        unselectedIcon = Icons.Default.Star,
+        selectedIcon = R.drawable.navigation_forum,
+        unselectedIcon = R.drawable.navigation_forum,
         iconTextId = R.string.forum
     ),
 )

@@ -38,8 +38,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-
-
                     val navController = rememberNavController()
                     val navigationAction = remember(navController) {
                         AniListNavigationActions(navController)
@@ -80,7 +78,9 @@ class MainActivity : ComponentActivity() {
                     type = NavType.IntType
                 })
             ) { backStackEntry ->
-                AnimeDetails(backStackEntry.arguments?.getInt("animeId") ?: -1)
+                AnimeDetails(backStackEntry.arguments?.getInt("animeId") ?: -1) {
+                    navController.navigate(route = AniListRoute.HOME_ROUTE)
+                }
             }
             composable(AniListRoute.ANIME_ROUTE) {
                 EmptyComingSoon()

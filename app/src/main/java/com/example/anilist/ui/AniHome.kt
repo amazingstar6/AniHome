@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -42,10 +44,10 @@ private const val TAG = "TrendingAnime"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AniHome(
-    trendingAnimeViewModel: TrendingAnimeViewModel = viewModel(),
+    aniHomeViewModel: AniHomeViewModel = viewModel(),
     onNavigateToDetails: (Int) -> Unit
 ) {
-    val trendingAnimeUiState by trendingAnimeViewModel.uiState.collectAsState()
+    val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         var text by remember {
             mutableStateOf("")
@@ -84,34 +86,39 @@ fun AniHome(
             Text(text = "Show top/trending anime/search history")
         }
         HeadlineText("Popular this season")
-        AnimeRow(trendingAnimeUiState, onNavigateToDetails)
+        AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.popularAnime)
         HeadlineText("Trending now")
-        AnimeRow(trendingAnimeUiState, onNavigateToDetails)
+        AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.trendingAnime)
         HeadlineText("Upcoming next season")
+        AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.upcomingNextSeason)
+        HeadlineText("All time popular")
+        AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.allTimePopular)
+        HeadlineText("Top 100 anime")
+        AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.top100Anime)
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun AnimeRow(
-    trendingAnimeUiState: TrendingAnimeUiState,
-    onNavigateToDetails: (Int) -> Unit
+    aniHomeUiState: AniHomeUiState,
+    onNavigateToDetails: (Int) -> Unit,
+    animeList: List<GetTrendsQuery.Medium>
 ) {
-    Row(
+    LazyRow(
         modifier = Modifier
             .height(400.dp)
-            .horizontalScroll(rememberScrollState())
     ) {
-//            items(trendingAnimeUiState.names) { anime ->
-//                AnimeCard(
-//                    anime,
-//                    {
-//                        onNavigateToDetails(anime.id)
-//                    })
-//            }
-        for (anime in trendingAnimeUiState.trendingAnime) {
-            AnimeCard(anime = anime, onNavigateToDetails = { onNavigateToDetails(anime.id) })
-        }
+            items(animeList) { anime ->
+                AnimeCard(
+                    anime,
+                    {
+                        onNavigateToDetails(anime.id)
+                    })
+            }
+//        for (anime in animeList) {
+//            AnimeCard(anime = anime, onNavigateToDetails = { onNavigateToDetails(anime.id) })
+//        }
     }
 }
 
