@@ -6,6 +6,7 @@ import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.api.Optional
 import com.example.anilist.GetTrendsQuery
+import com.example.anilist.type.MediaSort
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +21,7 @@ class TrendingAnimeViewModel : ViewModel() {
 
     init {
         loadTrendingAnime()
+        loadPopularAnime()
     }
 
     private var page = 1
@@ -29,8 +31,32 @@ class TrendingAnimeViewModel : ViewModel() {
     private fun loadTrendingAnime() {
         viewModelScope.launch {
             val response =
-                apolloClient.query(GetTrendsQuery(Optional.Present(_uiState.value.page))).execute()
+                apolloClient.query(
+                    GetTrendsQuery(
+                        Optional.Present(_uiState.value.page),
+                        Optional.Present(
+                            listOf(MediaSort.TRENDING_DESC)
+                        )
+                    )
+                ).execute()
             extractResponse(response)
+        }
+    }
+
+    private fun loadPopularAnime() {
+        viewModelScope.launch {
+            val response =
+                apolloClient.query(
+                    GetTrendsQuery(
+                        Optional.Present(_uiState.value.page),
+                        Optional.Present(listOf( MediaSort.POPULARITY_DESC))
+                    )
+                ).execute()
+            _uiState.update { currentState ->
+                currentState.copy(
+                    popularAnime = response.data?.trending?.media?.filterNotNull() ?: emptyList()
+                )
+            }
         }
     }
 
@@ -45,7 +71,8 @@ class TrendingAnimeViewModel : ViewModel() {
                         GetTrendsQuery(
                             Optional.Present(
                                 _uiState.value.page
-                            )
+                            ),
+                            Optional.Present(listOf(MediaSort.TRENDING_DESC))
                         )
                     )
                         .execute()
@@ -57,7 +84,7 @@ class TrendingAnimeViewModel : ViewModel() {
     private fun extractResponse(response: ApolloResponse<GetTrendsQuery.Data>) {
         _uiState.update { currentState ->
             currentState.copy(
-                names = response.data?.Page?.media?.filterNotNull() ?: emptyList()
+                trendingAnime = response.data?.trending?.media?.filterNotNull() ?: emptyList()
             )
         }
     }

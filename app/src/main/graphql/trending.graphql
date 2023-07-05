@@ -1,6 +1,6 @@
-query getTrends($page: Int = 1){
-    Page(page: $page, perPage: 12) {
-        media(sort: TRENDING_DESC, type: ANIME) {
+query getTrends($page: Int = 1, $sort: [MediaSort], $season: MediaSeason, $year: Int){
+    trending: Page(page: $page, perPage: 12) {
+        media(sort: $sort, type: ANIME, season: $season, seasonYear: $year) {
             id
             title {
                 romaji
@@ -15,7 +15,7 @@ query getTrends($page: Int = 1){
 }
 
 query getAnimeInfo {
-    Media(id: 150672, type:ANIME) {
+    Media(id: 145139, type:ANIME) {
         id
         idMal
         title {
@@ -54,6 +54,7 @@ query getAnimeInfo {
             site
             thumbnail
         }
+        # updatedAt is represented in the Unix timestamp
         updatedAt
         coverImage {
             extraLarge
@@ -64,6 +65,7 @@ query getAnimeInfo {
         bannerImage
         genres
         synonyms
+        isAdult
         averageScore
         meanScore
         # number of users with the media on their list
@@ -75,8 +77,81 @@ query getAnimeInfo {
         favourites
         tags {
             id
+            rank
+            isMediaSpoiler
+            userId
         }
-        isAdult
+        nextAiringEpisode {
+            id
+            airingAt
+            timeUntilAiring
+            episode
+            mediaId
+        }
+        airingSchedule {
+            nodes {
+                id
+            }
+        }
+        trends {
+            nodes {
+                mediaId
+            }
+        }
+        externalLinks {
+            id
+            url
+            site
+            siteId
+            type
+            language
+            color
+            icon
+            notes
+            isDisabled
+        }
+        streamingEpisodes {
+            title
+            thumbnail
+            url
+            site
+        }
+        rankings {
+            id,
+            rank
+            type
+            format
+            year
+            season
+        }
+        mediaListEntry {
+            id
+        }
+        reviews {
+            nodes {
+                id
+            }
+        }
+        recommendations {
+            nodes {
+                id
+            }
+        }
+        stats {
+            scoreDistribution {
+                score
+                amount
+            }
+            statusDistribution {
+                status
+                amount
+            }
+        }
+        siteUrl
+        autoCreateForumThread
+        isRecommendationBlocked
+        isReviewBlocked
+        modNotes
     }
 }
 
@@ -86,9 +161,7 @@ query getTagInfo {
         name,
         description,
         category,
-        rank,
         isGeneralSpoiler,
-        isMediaSpoiler,
         isAdult,
         userId
     }
