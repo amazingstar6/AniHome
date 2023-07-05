@@ -1,6 +1,5 @@
 package com.example.anilist.ui
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -49,42 +48,7 @@ fun AniHome(
 ) {
     val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-        var text by remember {
-            mutableStateOf("")
-        }
-        var active by remember {
-            mutableStateOf(false)
-        }
-        SearchBar(
-            query = "Search Anime",
-            onQueryChange = { text = it },
-            onSearch = {},
-            active = active,
-            onActiveChange = { active = it },
-            placeholder = {
-                          Text(text = "Search for Anime...")
-            },
-            leadingIcon = {
-                Icon(painterResource(id = R.drawable.baseline_menu_24), "Menu")
-            },
-            trailingIcon = {
-                Row {
-                    Icon(
-                        painterResource(id = R.drawable.baseline_search_24),
-                        "Search",
-                        modifier = Modifier.padding(end = 16.dp)
-                    )
-                    Icon(
-                        painterResource(id = R.drawable.baseline_more_vert_24),
-                        "More options",
-                        modifier = Modifier.padding(end = 16.dp)
-                    )
-                }
-            },
-            modifier = Modifier.padding(10.dp)
-        ) {
-            Text(text = "Show top/trending anime/search history")
-        }
+//        AniSearchBar()
         HeadlineText("Popular this season")
         AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.popularAnime)
         HeadlineText("Trending now")
@@ -95,6 +59,50 @@ fun AniHome(
         AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.allTimePopular)
         HeadlineText("Top 100 anime")
         AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.top100Anime)
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun AniSearchBar() {
+    var text by remember {
+        mutableStateOf("")
+    }
+    var active by remember {
+        mutableStateOf(false)
+    }
+    SearchBar(
+        query = "Search Anime",
+        onQueryChange = { text = it },
+        onSearch = {},
+        active = active,
+        onActiveChange = { active = it },
+        placeholder = {
+            Text(text = "Search for Anime...")
+        },
+        leadingIcon = {
+            Icon(
+                painterResource(id = R.drawable.baseline_menu_24),
+                "Menu"
+            )
+        },
+        trailingIcon = {
+            Row {
+                Icon(
+                    painterResource(id = R.drawable.baseline_search_24),
+                    "Search",
+                    modifier = Modifier.padding(end = 16.dp)
+                )
+                Icon(
+                    painterResource(id = R.drawable.baseline_more_vert_24),
+                    "More options",
+                    modifier = Modifier.padding(end = 16.dp)
+                )
+            }
+        },
+        modifier = Modifier.padding(10.dp)
+    ) {
+        Text(text = "Show top/trending anime/search history")
     }
 }
 
@@ -166,16 +174,6 @@ fun AnimeCard(
                 overflow = TextOverflow.Ellipsis
 
             )
-//            Text(
-//                anime.title.romaji ?: "Romaji title could not be loaded/does not exist",
-//                style = MaterialTheme.typography.labelMedium,
-//                modifier = Modifier.padding(5.dp)
-//            )
-//            Text(
-//                anime.title.english ?: "English title could not be loaded/does not exist",
-//                style = MaterialTheme.typography.labelMedium,
-//                modifier = Modifier.padding(5.dp, bottom = 10.dp)
-//            )
         }
     }
 }
