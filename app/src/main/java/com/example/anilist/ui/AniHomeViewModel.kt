@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 
 private const val TAG = "AniHomeViewModel"
+
 class AniHomeViewModel : ViewModel() {
 
     private val apolloClient =
@@ -33,31 +34,29 @@ class AniHomeViewModel : ViewModel() {
 
     val uiState: StateFlow<AniHomeUiState> = _uiState.asStateFlow()
 
-        fun loadTrendingAnime(increasePage: Boolean = false) {
+    fun loadTrendingAnime(increasePage: Boolean = false) {
         if (increasePage) {
             _uiState.update { currentState ->
                 currentState.copy(trendingPage = currentState.trendingPage.inc())
             }
         }
         viewModelScope.launch {
-            try {
-                val response =
-                    apolloClient.query(
-                        GetTrendsQuery(
-                            Optional.Present(_uiState.value.trendingPage),
-                            Optional.Present(
-                                listOf(MediaSort.TRENDING_DESC)
-                            )
+            val response =
+                apolloClient.query(
+                    GetTrendsQuery(
+                        Optional.Present(_uiState.value.trendingPage),
+                        Optional.Present(
+                            listOf(MediaSort.TRENDING_DESC)
                         )
-                    ).execute()
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        trendingAnime = currentState.trendingAnime.orEmpty() + response.data?.trending?.media?.filterNotNull()
-                            .orEmpty()
                     )
-                }
-            } catch (exception: ApolloException) {
-                Log.i(TAG, exception.message.orEmpty())
+                ).execute()
+            val data = response.data?.trending?.media
+//            if (data == null) Log.i(TAG, "Trending data list is empty!")
+            _uiState.update { currentState ->
+                currentState.copy(
+                    trendingAnime = currentState.trendingAnime.orEmpty() + data?.filterNotNull()
+                        .orEmpty()
+                )
             }
         }
     }

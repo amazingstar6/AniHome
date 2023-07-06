@@ -1,5 +1,6 @@
 package com.example.anilist.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -13,11 +14,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -56,28 +60,34 @@ fun AniHome(
         HeadlineText("Popular this season")
         AnimeRow(
             onNavigateToDetails,
-            trendingAnimeUiState.popularAnime
-        ) { aniHomeViewModel.loadPopularAnime(true) }
+            trendingAnimeUiState.popularAnime,
+            { aniHomeViewModel.loadPopularAnime(true) }, aniHomeViewModel::loadPopularAnime
+        )
         HeadlineText("Trending now")
         AnimeRow(
             onNavigateToDetails,
-            trendingAnimeUiState.trendingAnime
-        ) { aniHomeViewModel.loadTrendingAnime(true) }
+            trendingAnimeUiState.trendingAnime,
+            { aniHomeViewModel.loadTrendingAnime(true) }, aniHomeViewModel::loadTrendingAnime
+        )
         HeadlineText("Upcoming next season")
         AnimeRow(
             onNavigateToDetails,
-            trendingAnimeUiState.upcomingNextSeason
-        ) { aniHomeViewModel.loadUpcomingNextSeason(true) }
+            trendingAnimeUiState.upcomingNextSeason,
+            { aniHomeViewModel.loadUpcomingNextSeason(true) },
+            aniHomeViewModel::loadUpcomingNextSeason
+        )
         HeadlineText("All time popular")
         AnimeRow(
             onNavigateToDetails,
-            trendingAnimeUiState.allTimePopular
-        ) { aniHomeViewModel.loadAllTimePopular(true) }
+            trendingAnimeUiState.allTimePopular,
+            { aniHomeViewModel.loadAllTimePopular(true) }, aniHomeViewModel::loadAllTimePopular
+        )
         HeadlineText("Top 100 anime")
         AnimeRow(
             onNavigateToDetails,
-            trendingAnimeUiState.top100Anime
-        ) { aniHomeViewModel.loadTop100Anime(true) }
+            trendingAnimeUiState.top100Anime,
+            { aniHomeViewModel.loadTop100Anime(true) }, aniHomeViewModel::loadTop100Anime
+        )
     }
 }
 
@@ -129,41 +139,53 @@ private fun AniSearchBar() {
 private fun AnimeRow(
     onNavigateToDetails: (Int) -> Unit,
     animeList: List<GetTrendsQuery.Medium>,
-    loadMoreAnime: () -> Unit
+    loadMoreAnime: () -> Unit,
+    reloadAnime: () -> Unit
 ) {
-    val state = rememberLazyListState()
-    LazyRow(
-        state = state, modifier = Modifier.height(400.dp)
-    ) {
-        items(animeList) { anime ->
-            AnimeCard(anime, {
-                onNavigateToDetails(anime.id)
-            })
+    if (animeList.isNotEmpty()) {
+        val state = rememberLazyListState()
+        LazyRow(
+            state = state, modifier = Modifier.height(400.dp)
+        ) {
+            items(animeList) { anime ->
+                AnimeCard(anime, {
+                    onNavigateToDetails(anime.id)
+                })
+            }
         }
-    }
 
-    val needNextPage by remember {
-        derivedStateOf {
-            val layoutInfo = state.layoutInfo
-            val totalItems = layoutInfo.totalItemsCount
-            val lastItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) + 1
-            val buffer = 5
-            lastItemIndex > (totalItems - buffer) }
-    }
-//    Log.i(TAG, "First visible index is " + state.firstVisibleItemIndex.toString())
-//    Log.i(TAG, "Current page is ${aniHomeUiState.popularPage}")
-    LaunchedEffect(needNextPage) {
-        snapshotFlow {
-            needNextPage
-        }.distinctUntilChanged().collect {
-            if (needNextPage) loadMoreAnime()
-//            Log.i(TAG, "Next page is loaded, first visible item index is ${state.firstVisibleItemIndex}")
+        val needNextPage by remember {
+            derivedStateOf {
+                val layoutInfo = state.layoutInfo
+                val totalItems = layoutInfo.totalItemsCount
+                val lastItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) + 1
+                val buffer = 5
+                lastItemIndex > (totalItems - buffer)
+            }
+        }
+        LaunchedEffect(needNextPage) {
+            snapshotFlow {
+                needNextPage
+            }.distinctUntilChanged().collect {
+                if (needNextPage) loadMoreAnime()
+            }
+        }
+    } else {
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .height(400.dp)
+                .fillMaxWidth()
+        ) {
+            Button(
+                onClick = reloadAnime,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+            ) {
+                Text(text = "Reload Anime")
+            }
         }
     }
-//    if (needNextPage) {
-//        Log.i(TAG, "Need next page was called for #1")
-//        loadMoreAnime()
-//    }
 }
 
 @Composable
@@ -194,7 +216,8 @@ fun AnimeCard(
 //                placeholder = PlaceholderPainter(MaterialTheme.colorScheme.surfaceTint),
                 contentDescription = "Cover of ${anime.title!!.english}",
                 modifier = Modifier
-                    .clip(RoundedCornerShape(10))
+                    // cards have a corner radius of 12dp: https://m3.material.io/components/cards/specs#:~:text=Shape-,12dp%20corner%20radius,-Left/right%20padding
+                    .clip(RoundedCornerShape(12.dp))
                     .fillMaxWidth()
             )
             Text(
