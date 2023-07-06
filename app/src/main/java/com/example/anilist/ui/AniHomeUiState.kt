@@ -1,5 +1,6 @@
 package com.example.anilist.ui
 
+import com.example.anilist.GetAnimeInfoQuery
 import com.example.anilist.GetTrendsQuery
 
 data class AniHomeUiState(
@@ -12,5 +13,6 @@ data class AniHomeUiState(
     var popularPage: Int = 1,
     var upcomingNextSeasonPage: Int = 1,
     var allTimePopularPage: Int = 1,
-    var top100AnimePage: Int = 1
+    var top100AnimePage: Int = 1,
+    var currentDetailAnime: GetAnimeInfoQuery.Media? = null
 )

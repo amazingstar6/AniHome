@@ -14,8 +14,8 @@ query getTrends($page: Int = 1, $sort: [MediaSort], $season: MediaSeason, $year:
     }
 }
 
-query getAnimeInfo {
-    Media(id: 145139, type:ANIME) {
+query getAnimeInfo($id: Int!) {
+    Media(id: $id, type:ANIME) {
         id
         idMal
         title {
