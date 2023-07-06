@@ -1,10 +1,11 @@
 package com.example.anilist.ui
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.GetTrendsQuery
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaSort
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
+private const val TAG = "AniHomeViewModel"
 class AniHomeViewModel : ViewModel() {
 
     private val apolloClient =
@@ -29,26 +31,43 @@ class AniHomeViewModel : ViewModel() {
         loadTop100Anime()
     }
 
-    private var page = 1
-
     val uiState: StateFlow<AniHomeUiState> = _uiState.asStateFlow()
 
-    private fun loadTrendingAnime() {
+        fun loadTrendingAnime(increasePage: Boolean = false) {
+        if (increasePage) {
+            _uiState.update { currentState ->
+                currentState.copy(trendingPage = currentState.trendingPage.inc())
+            }
+        }
         viewModelScope.launch {
-            val response =
-                apolloClient.query(
-                    GetTrendsQuery(
-                        Optional.Present(_uiState.value.page),
-                        Optional.Present(
-                            listOf(MediaSort.TRENDING_DESC)
+            try {
+                val response =
+                    apolloClient.query(
+                        GetTrendsQuery(
+                            Optional.Present(_uiState.value.trendingPage),
+                            Optional.Present(
+                                listOf(MediaSort.TRENDING_DESC)
+                            )
                         )
+                    ).execute()
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        trendingAnime = currentState.trendingAnime.orEmpty() + response.data?.trending?.media?.filterNotNull()
+                            .orEmpty()
                     )
-                ).execute()
-            extractResponse(response)
+                }
+            } catch (exception: ApolloException) {
+                Log.i(TAG, exception.message.orEmpty())
+            }
         }
     }
 
-    private fun loadPopularAnime() {
+    fun loadPopularAnime(increasePage: Boolean = false) {
+        if (increasePage) {
+            _uiState.update { currentState ->
+                currentState.copy(popularPage = currentState.popularPage.inc())
+            }
+        }
         val year = Calendar.getInstance().get(Calendar.YEAR)
         val month = Calendar.getInstance().get(Calendar.MONTH)
         val season: MediaSeason
@@ -76,21 +95,27 @@ class AniHomeViewModel : ViewModel() {
             val response =
                 apolloClient.query(
                     GetTrendsQuery(
-                        Optional.Present(_uiState.value.page),
-                        Optional.Present(listOf( MediaSort.POPULARITY_DESC)),
+                        Optional.Present(_uiState.value.popularPage),
+                        Optional.Present(listOf(MediaSort.POPULARITY_DESC)),
                         Optional.Present(season),
                         Optional.Present(year)
                     )
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
-                    popularAnime = response.data?.trending?.media?.filterNotNull() ?: emptyList()
+                    popularAnime = currentState.popularAnime.orEmpty() + response.data?.trending?.media?.filterNotNull()
+                        .orEmpty()
                 )
             }
         }
     }
 
-    private fun loadUpcomingNextSeason() {
+    fun loadUpcomingNextSeason(increasePage: Boolean = false) {
+        if (increasePage) {
+            _uiState.update { currentState ->
+                currentState.copy(upcomingNextSeasonPage = currentState.upcomingNextSeasonPage.inc())
+            }
+        }
         val month = Calendar.getInstance().get(Calendar.MONTH)
         val season: MediaSeason
         // using the next season, since we're loading the upcoming season
@@ -120,93 +145,63 @@ class AniHomeViewModel : ViewModel() {
             val response =
                 apolloClient.query(
                     GetTrendsQuery(
-                        Optional.Present(_uiState.value.page),
-                        Optional.Present(listOf( MediaSort.POPULARITY_DESC)),
+                        Optional.Present(_uiState.value.upcomingNextSeasonPage),
+                        Optional.Present(listOf(MediaSort.POPULARITY_DESC)),
                         Optional.Present(season),
                         Optional.Present(year)
                     )
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
-                    upcomingNextSeason = response.data?.trending?.media?.filterNotNull() ?: emptyList()
+                    upcomingNextSeason = currentState.upcomingNextSeason.orEmpty() + response.data?.trending?.media?.filterNotNull()
+                        .orEmpty()
                 )
             }
         }
     }
 
-    private fun loadAllTimePopular() {
+    fun loadAllTimePopular(increasePage: Boolean = true) {
+        if (increasePage) {
+            _uiState.update { currentState ->
+                currentState.copy(allTimePopularPage = currentState.allTimePopularPage.inc())
+            }
+        }
         viewModelScope.launch {
             val response =
                 apolloClient.query(
                     GetTrendsQuery(
-                        Optional.Present(_uiState.value.page),
-                        Optional.Present(listOf( MediaSort.POPULARITY_DESC)),
+                        Optional.Present(_uiState.value.allTimePopularPage),
+                        Optional.Present(listOf(MediaSort.POPULARITY_DESC)),
                     )
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
-                    allTimePopular = response.data?.trending?.media?.filterNotNull() ?: emptyList()
+                    allTimePopular = currentState.allTimePopular.orEmpty() + response.data?.trending?.media?.filterNotNull()
+                        .orEmpty()
                 )
             }
         }
     }
 
-    fun goToNextPage() {
-        if (_uiState.value.page < Int.MAX_VALUE) {
-            _uiState.update { currenState ->
-                currenState.copy(page = currenState.page.inc())
-            }
-            viewModelScope.launch {
-                val response =
-                    apolloClient.query(
-                        GetTrendsQuery(
-                            Optional.Present(
-                                _uiState.value.page
-                            ),
-                            Optional.Present(listOf(MediaSort.TRENDING_DESC))
-                        )
-                    )
-                        .execute()
-                extractResponse(response)
+    fun loadTop100Anime(increasePage: Boolean = false) {
+        if (increasePage) {
+            _uiState.update { currentState ->
+                currentState.copy(top100AnimePage = currentState.top100AnimePage.inc())
             }
         }
-    }
-
-    private fun loadTop100Anime() {
         viewModelScope.launch {
             val response =
                 apolloClient.query(
                     GetTrendsQuery(
-                        Optional.Present(_uiState.value.page),
-                        Optional.Present(listOf( MediaSort.SCORE_DESC)),
+                        Optional.Present(_uiState.value.top100AnimePage),
+                        Optional.Present(listOf(MediaSort.SCORE_DESC)),
                     )
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
-                    top100Anime = response.data?.trending?.media?.filterNotNull() ?: emptyList()
+                    top100Anime = currentState.top100Anime.orEmpty() + response.data?.trending?.media?.filterNotNull()
+                        .orEmpty()
                 )
-            }
-        }
-    }
-
-    private fun extractResponse(response: ApolloResponse<GetTrendsQuery.Data>) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                trendingAnime = response.data?.trending?.media?.filterNotNull() ?: emptyList()
-            )
-        }
-    }
-
-    fun goToPreviousPage() {
-        if (_uiState.value.page > 1) {
-            _uiState.update { currentState ->
-                currentState.copy(page = currentState.page.dec())
-            }
-            viewModelScope.launch {
-                val response =
-                    apolloClient.query(GetTrendsQuery(Optional.Present(_uiState.value.page.dec())))
-                        .execute()
-                extractResponse(response)
             }
         }
     }

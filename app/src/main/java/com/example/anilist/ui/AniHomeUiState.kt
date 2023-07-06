@@ -8,5 +8,9 @@ data class AniHomeUiState(
     val upcomingNextSeason: List<GetTrendsQuery.Medium> = emptyList(),
     val allTimePopular: List<GetTrendsQuery.Medium> = emptyList(),
     val top100Anime: List<GetTrendsQuery.Medium> = emptyList(),
-    var page: Int = 1
+    var trendingPage: Int = 1,
+    var popularPage: Int = 1,
+    var upcomingNextSeasonPage: Int = 1,
+    var allTimePopularPage: Int = 1,
+    var top100AnimePage: Int = 1
 )

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -19,12 +20,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -37,28 +41,43 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.GetTrendsQuery
 import com.example.anilist.R
+import kotlinx.coroutines.flow.distinctUntilChanged
 
-private const val TAG = "TrendingAnime"
+private const val TAG = "AniHome"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AniHome(
-    aniHomeViewModel: AniHomeViewModel = viewModel(),
-    onNavigateToDetails: (Int) -> Unit
+    aniHomeViewModel: AniHomeViewModel = viewModel(), onNavigateToDetails: (Int) -> Unit
 ) {
     val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
 //        AniSearchBar()
         HeadlineText("Popular this season")
-        AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.popularAnime)
+        AnimeRow(
+            onNavigateToDetails,
+            trendingAnimeUiState.popularAnime
+        ) { aniHomeViewModel.loadPopularAnime(true) }
         HeadlineText("Trending now")
-        AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.trendingAnime)
+        AnimeRow(
+            onNavigateToDetails,
+            trendingAnimeUiState.trendingAnime
+        ) { aniHomeViewModel.loadTrendingAnime(true) }
         HeadlineText("Upcoming next season")
-        AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.upcomingNextSeason)
+        AnimeRow(
+            onNavigateToDetails,
+            trendingAnimeUiState.upcomingNextSeason
+        ) { aniHomeViewModel.loadUpcomingNextSeason(true) }
         HeadlineText("All time popular")
-        AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.allTimePopular)
+        AnimeRow(
+            onNavigateToDetails,
+            trendingAnimeUiState.allTimePopular
+        ) { aniHomeViewModel.loadAllTimePopular(true) }
         HeadlineText("Top 100 anime")
-        AnimeRow(trendingAnimeUiState, onNavigateToDetails, trendingAnimeUiState.top100Anime)
+        AnimeRow(
+            onNavigateToDetails,
+            trendingAnimeUiState.top100Anime
+        ) { aniHomeViewModel.loadTop100Anime(true) }
     }
 }
 
@@ -82,8 +101,7 @@ private fun AniSearchBar() {
         },
         leadingIcon = {
             Icon(
-                painterResource(id = R.drawable.baseline_menu_24),
-                "Menu"
+                painterResource(id = R.drawable.baseline_menu_24), "Menu"
             )
         },
         trailingIcon = {
@@ -109,33 +127,49 @@ private fun AniSearchBar() {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun AnimeRow(
-    aniHomeUiState: AniHomeUiState,
     onNavigateToDetails: (Int) -> Unit,
-    animeList: List<GetTrendsQuery.Medium>
+    animeList: List<GetTrendsQuery.Medium>,
+    loadMoreAnime: () -> Unit
 ) {
+    val state = rememberLazyListState()
     LazyRow(
-        modifier = Modifier
-            .height(400.dp)
+        state = state, modifier = Modifier.height(400.dp)
     ) {
-            items(animeList) { anime ->
-                AnimeCard(
-                    anime,
-                    {
-                        onNavigateToDetails(anime.id)
-                    })
-            }
-//        for (anime in animeList) {
-//            AnimeCard(anime = anime, onNavigateToDetails = { onNavigateToDetails(anime.id) })
-//        }
+        items(animeList) { anime ->
+            AnimeCard(anime, {
+                onNavigateToDetails(anime.id)
+            })
+        }
     }
+
+    val needNextPage by remember {
+        derivedStateOf {
+            val layoutInfo = state.layoutInfo
+            val totalItems = layoutInfo.totalItemsCount
+            val lastItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) + 1
+            val buffer = 5
+            lastItemIndex > (totalItems - buffer) }
+    }
+//    Log.i(TAG, "First visible index is " + state.firstVisibleItemIndex.toString())
+//    Log.i(TAG, "Current page is ${aniHomeUiState.popularPage}")
+    LaunchedEffect(needNextPage) {
+        snapshotFlow {
+            needNextPage
+        }.distinctUntilChanged().collect {
+            if (needNextPage) loadMoreAnime()
+//            Log.i(TAG, "Next page is loaded, first visible item index is ${state.firstVisibleItemIndex}")
+        }
+    }
+//    if (needNextPage) {
+//        Log.i(TAG, "Need next page was called for #1")
+//        loadMoreAnime()
+//    }
 }
 
 @Composable
 fun HeadlineText(text: String) {
     Text(
-        text,
-        style = MaterialTheme.typography.headlineMedium,
-        modifier = Modifier.padding(10.dp)
+        text, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(10.dp)
     )
 }
 
@@ -143,9 +177,7 @@ fun HeadlineText(text: String) {
 @Composable
 @NonRestartableComposable
 fun AnimeCard(
-    anime: GetTrendsQuery.Medium,
-    onNavigateToDetails: () -> Unit,
-    modifier: Modifier = Modifier
+    anime: GetTrendsQuery.Medium, onNavigateToDetails: () -> Unit, modifier: Modifier = Modifier
 ) {
     Column(modifier = Modifier.then(modifier)) {
         Card(
@@ -158,10 +190,8 @@ fun AnimeCard(
             //todo change not null assertion
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(anime.coverImage!!.extraLarge)
-                    .crossfade(true)
-                    .build(),
-                placeholder = painterResource(id = R.drawable.kimetsu_no_yaiba),
+                    .data(anime.coverImage!!.extraLarge).crossfade(true).build(),
+//                placeholder = PlaceholderPainter(MaterialTheme.colorScheme.surfaceTint),
                 contentDescription = "Cover of ${anime.title!!.english}",
                 modifier = Modifier
                     .clip(RoundedCornerShape(10))

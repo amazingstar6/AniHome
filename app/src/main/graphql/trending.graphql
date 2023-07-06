@@ -1,5 +1,5 @@
 query getTrends($page: Int = 1, $sort: [MediaSort], $season: MediaSeason, $year: Int){
-    trending: Page(page: $page, perPage: 12) {
+    trending: Page(page: $page, perPage: 20) {
         media(sort: $sort, type: ANIME, season: $season, seasonYear: $year) {
             id
             title {
