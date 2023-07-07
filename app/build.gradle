@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id("com.apollographql.apollo3") version "4.0.0-alpha.1"
+    id 'com.google.relay' version '0.3.06'
 }
 
 android {

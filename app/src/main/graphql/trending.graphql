@@ -58,8 +58,6 @@ query getAnimeInfo($id: Int!) {
         updatedAt
         coverImage {
             extraLarge
-            large
-            medium
             color
         }
         bannerImage
@@ -77,6 +75,7 @@ query getAnimeInfo($id: Int!) {
         favourites
         tags {
             id
+            name
             rank
             isMediaSpoiler
             userId

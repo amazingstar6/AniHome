@@ -20,7 +20,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
-import androidx.compose.material3.Shapes
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,10 +48,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 private const val TAG = "AniHome"
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AniHome(
-    aniHomeViewModel: AniHomeViewModel = viewModel(), onNavigateToDetails: (Int) -> Unit
+    aniHomeViewModel: AniHomeViewModel = viewModel(),
+    onNavigateToDetails: (Int) -> Unit
 ) {
     val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -61,13 +60,15 @@ fun AniHome(
         AnimeRow(
             onNavigateToDetails,
             trendingAnimeUiState.popularAnime,
-            { aniHomeViewModel.loadPopularAnime(true) }, aniHomeViewModel::loadPopularAnime
+            { aniHomeViewModel.loadPopularAnime(true) },
+            aniHomeViewModel::loadPopularAnime
         )
         HeadlineText("Trending now")
         AnimeRow(
             onNavigateToDetails,
             trendingAnimeUiState.trendingAnime,
-            { aniHomeViewModel.loadTrendingAnime(true) }, aniHomeViewModel::loadTrendingAnime
+            { aniHomeViewModel.loadTrendingAnime(true) },
+            aniHomeViewModel::loadTrendingAnime
         )
         HeadlineText("Upcoming next season")
         AnimeRow(
@@ -80,13 +81,15 @@ fun AniHome(
         AnimeRow(
             onNavigateToDetails,
             trendingAnimeUiState.allTimePopular,
-            { aniHomeViewModel.loadAllTimePopular(true) }, aniHomeViewModel::loadAllTimePopular
+            { aniHomeViewModel.loadAllTimePopular(true) },
+            aniHomeViewModel::loadAllTimePopular
         )
         HeadlineText("Top 100 anime")
         AnimeRow(
             onNavigateToDetails,
             trendingAnimeUiState.top100Anime,
-            { aniHomeViewModel.loadTop100Anime(true) }, aniHomeViewModel::loadTop100Anime
+            { aniHomeViewModel.loadTop100Anime(true) },
+            aniHomeViewModel::loadTop100Anime
         )
     }
 }
@@ -148,9 +151,9 @@ private fun AnimeRow(
             state = state, modifier = Modifier.height(400.dp)
         ) {
             items(animeList) { anime ->
-                AnimeCard(anime, {
+                AnimeCard(anime, onNavigateToDetails = ({
                     onNavigateToDetails(anime.id)
-                })
+                }))
             }
         }
 
@@ -199,11 +202,13 @@ fun HeadlineText(text: String) {
 @Composable
 @NonRestartableComposable
 fun AnimeCard(
-    anime: GetTrendsQuery.Medium, onNavigateToDetails: () -> Unit, modifier: Modifier = Modifier
+    anime: GetTrendsQuery.Medium,
+    onNavigateToDetails: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(modifier = Modifier.then(modifier)) {
         Card(
-            onClick = onNavigateToDetails,
+            onClick = { onNavigateToDetails() },
             modifier = Modifier
                 .padding(5.dp)
                 .width(200.dp)

@@ -9,7 +9,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -46,11 +48,16 @@ class MainActivity : ComponentActivity() {
                     val selectedDestination = navBackStackEntry?.destination?.route ?: AniListRoute.HOME_ROUTE
 
                     Column(modifier = Modifier.fillMaxSize()) {
-                        AniListNavHost(navController = navController, modifier = Modifier.weight(1f))
-
+                        var visible by remember {
+                            mutableStateOf(true)
+                        }
+                        AniListNavHost(navController = navController, modifier = Modifier.weight(1f)) {
+                            visible = !visible
+                        }
                         AniListBottomNavigationBar(
                             selectedDestination = selectedDestination,
-                            navigateToTopLevelDestination = navigationAction::navigateTo
+                            navigateToTopLevelDestination = navigationAction::navigateTo,
+                            visible
                         )
                     }
                 }
@@ -59,17 +66,22 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun AniListNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
+    private fun AniListNavHost(
+        navController: NavHostController,
+        modifier: Modifier = Modifier,
+        toggleNavBar: () -> Unit
+    ) {
         NavHost(
             modifier = modifier,
             navController = navController,
             startDestination = AniListRoute.HOME_ROUTE
         ) {
             composable(AniListRoute.HOME_ROUTE) {
-                AniHome {id ->
+                AniHome() {id ->
                     navController.navigate(
-                        route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id",
+                        route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id"
                     )
+                    toggleNavBar()
                 }
             }
             composable(
@@ -80,6 +92,7 @@ class MainActivity : ComponentActivity() {
             ) { backStackEntry ->
                 AnimeDetails(backStackEntry.arguments?.getInt("animeId") ?: -1) {
                     navController.navigate(route = AniListRoute.HOME_ROUTE)
+                    toggleNavBar()
                 }
             }
             composable(AniListRoute.ANIME_ROUTE) {
