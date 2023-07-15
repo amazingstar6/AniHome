@@ -1,5 +1,6 @@
 package com.example.anilist.ui
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.ApolloClient
@@ -22,7 +23,6 @@ class AniHomeViewModel : ViewModel() {
     private val apolloClient =
         ApolloClient.Builder().serverUrl("https://graphql.anilist.co").build()
     private val _uiState = MutableStateFlow(AniHomeUiState())
-
     init {
         loadTrendingAnime()
         loadPopularAnime()
@@ -212,5 +212,10 @@ class AniHomeViewModel : ViewModel() {
                 currentState.copy(currentDetailAnime = response.data?.Media)
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        Log.i(TAG, "AniHomeViewModel was just cleared!")
     }
 }
