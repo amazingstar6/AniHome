@@ -94,6 +94,51 @@ query getAnimeInfo($id: Int!) {
                 }
             }
         }
+        characters {
+            edges {
+                node {
+                    id
+                    name {
+                        native
+                    }
+                    image {
+                        large
+                    }
+                }
+                role
+                name
+                voiceActors {
+                    name {
+                        native
+                    }
+                    image {
+                        large
+                    }
+                    languageV2
+                }
+                voiceActorRoles {
+                    voiceActor {
+                        name {
+                            native
+                        }
+                        image {
+                            large
+                        }
+                        languageV2
+                    }
+                    roleNotes
+                    dubGroup
+                }
+            }
+            nodes {
+                name {
+                    native
+                }
+                image {
+                    large
+                }
+            }
+        }
         nextAiringEpisode {
             id
             airingAt

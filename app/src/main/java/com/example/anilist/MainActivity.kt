@@ -14,7 +14,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -24,7 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.anilist.ui.AniHome
 import com.example.anilist.ui.AniHomeViewModel
-import com.example.anilist.ui.AnimeDetails
+import com.example.anilist.ui.animeDetails.AnimeDetails
 import com.example.anilist.ui.EmptyComingSoon
 import com.example.anilist.ui.navigation.AniListBottomNavigationBar
 import com.example.anilist.ui.navigation.AniListNavigationActions
