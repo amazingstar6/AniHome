@@ -80,6 +80,20 @@ query getAnimeInfo($id: Int!) {
             isMediaSpoiler
             userId
         }
+        relations {
+            edges {
+                relationType
+                node {
+                    id
+                    title {
+                        native
+                    }
+                    coverImage {
+                        extraLarge
+                    }
+                }
+            }
+        }
         nextAiringEpisode {
             id
             airingAt

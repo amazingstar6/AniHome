@@ -3,6 +3,7 @@ package com.example.anilist
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -13,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,6 +23,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.anilist.ui.AniHome
+import com.example.anilist.ui.AniHomeViewModel
 import com.example.anilist.ui.AnimeDetails
 import com.example.anilist.ui.EmptyComingSoon
 import com.example.anilist.ui.navigation.AniListBottomNavigationBar
@@ -45,13 +48,17 @@ class MainActivity : ComponentActivity() {
                         AniListNavigationActions(navController)
                     }
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val selectedDestination = navBackStackEntry?.destination?.route ?: AniListRoute.HOME_ROUTE
+                    val selectedDestination =
+                        navBackStackEntry?.destination?.route ?: AniListRoute.HOME_ROUTE
 
                     Column(modifier = Modifier.fillMaxSize()) {
                         var visible by remember {
                             mutableStateOf(true)
                         }
-                        AniListNavHost(navController = navController, modifier = Modifier.weight(1f)) {
+                        AniListNavHost(
+                            navController = navController,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             visible = !visible
                         }
                         AniListBottomNavigationBar(
@@ -77,7 +84,8 @@ class MainActivity : ComponentActivity() {
             startDestination = AniListRoute.HOME_ROUTE
         ) {
             composable(AniListRoute.HOME_ROUTE) {
-                AniHome() {id ->
+                val aniHomeViewModel: AniHomeViewModel by viewModels()
+                AniHome(aniHomeViewModel = aniHomeViewModel) { id ->
                     navController.navigate(
                         route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id"
                     )
@@ -90,10 +98,18 @@ class MainActivity : ComponentActivity() {
                     type = NavType.IntType
                 })
             ) { backStackEntry ->
-                AnimeDetails(backStackEntry.arguments?.getInt("animeId") ?: -1) {
-                    navController.navigate(route = AniListRoute.HOME_ROUTE)
-                    toggleNavBar()
-                }
+                AnimeDetails(
+                    backStackEntry.arguments?.getInt("animeId") ?: -1,
+                    onNavigateToDetails = {id ->
+                        navController.navigate(
+                            route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id"
+                        )
+                    },
+                    navigateToHome = {
+//                        navController.navigate(route = AniListRoute.HOME_ROUTE)
+//                        toggleNavBar()
+                        onBackPressedDispatcher.onBackPressed()
+                    })
             }
             composable(AniListRoute.ANIME_ROUTE) {
                 EmptyComingSoon()

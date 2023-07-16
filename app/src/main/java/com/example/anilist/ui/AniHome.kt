@@ -1,9 +1,13 @@
 package com.example.anilist.ui
 
+import android.graphics.drawable.Icon
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -14,11 +18,16 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,50 +57,74 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 private const val TAG = "AniHome"
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AniHome(
     aniHomeViewModel: AniHomeViewModel = viewModel(),
     onNavigateToDetails: (Int) -> Unit
 ) {
     val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
-    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-//        AniSearchBar()
-        HeadlineText("Popular this season")
-        AnimeRow(
-            onNavigateToDetails,
-            trendingAnimeUiState.popularAnime,
-            { aniHomeViewModel.loadPopularAnime(true) },
-            aniHomeViewModel::loadPopularAnime
-        )
-        HeadlineText("Trending now")
-        AnimeRow(
-            onNavigateToDetails,
-            trendingAnimeUiState.trendingAnime,
-            { aniHomeViewModel.loadTrendingAnime(true) },
-            aniHomeViewModel::loadTrendingAnime
-        )
-        HeadlineText("Upcoming next season")
-        AnimeRow(
-            onNavigateToDetails,
-            trendingAnimeUiState.upcomingNextSeason,
-            { aniHomeViewModel.loadUpcomingNextSeason(true) },
-            aniHomeViewModel::loadUpcomingNextSeason
-        )
-        HeadlineText("All time popular")
-        AnimeRow(
-            onNavigateToDetails,
-            trendingAnimeUiState.allTimePopular,
-            { aniHomeViewModel.loadAllTimePopular(true) },
-            aniHomeViewModel::loadAllTimePopular
-        )
-        HeadlineText("Top 100 anime")
-        AnimeRow(
-            onNavigateToDetails,
-            trendingAnimeUiState.top100Anime,
-            { aniHomeViewModel.loadTop100Anime(true) },
-            aniHomeViewModel::loadTop100Anime
-        )
+    Scaffold(topBar = {
+        CenterAlignedTopAppBar(title = {
+            Text("Home")
+        },
+            navigationIcon = {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More"
+                )
+            },
+            actions = {
+                Icon(
+                    imageVector = Icons.Default.AccountBox,
+                    contentDescription = "Profile"
+                )
+            })
+    }) {
+        Column(
+            modifier = Modifier
+                .padding(top = it.calculateTopPadding())
+                .verticalScroll(rememberScrollState())
+        ) {
+            AniSearchBar()
+            HeadlineText("Popular this season")
+            AnimeRow(
+                onNavigateToDetails,
+                trendingAnimeUiState.popularAnime,
+                { aniHomeViewModel.loadPopularAnime(true) },
+                aniHomeViewModel::loadPopularAnime
+            )
+            HeadlineText("Trending now")
+            AnimeRow(
+                onNavigateToDetails,
+                trendingAnimeUiState.trendingAnime,
+                { aniHomeViewModel.loadTrendingAnime(true) },
+                aniHomeViewModel::loadTrendingAnime
+            )
+            HeadlineText("Upcoming next season")
+            AnimeRow(
+                onNavigateToDetails,
+                trendingAnimeUiState.upcomingNextSeason,
+                { aniHomeViewModel.loadUpcomingNextSeason(true) },
+                aniHomeViewModel::loadUpcomingNextSeason
+            )
+            HeadlineText("All time popular")
+            AnimeRow(
+                onNavigateToDetails,
+                trendingAnimeUiState.allTimePopular,
+                { aniHomeViewModel.loadAllTimePopular(true) },
+                aniHomeViewModel::loadAllTimePopular
+            )
+            HeadlineText("Top 100 anime")
+            AnimeRow(
+                onNavigateToDetails,
+                trendingAnimeUiState.top100Anime,
+                { aniHomeViewModel.loadTop100Anime(true) },
+                aniHomeViewModel::loadTop100Anime
+            )
+        }
     }
+
 }
 
 @Composable
@@ -104,13 +137,13 @@ private fun AniSearchBar() {
         mutableStateOf(false)
     }
     SearchBar(
-        query = "Search Anime",
-        onQueryChange = { text = it },
-        onSearch = {},
+        query = text,
+        onQueryChange = {  },
+        onSearch = {  },
         active = active,
-        onActiveChange = { active = it },
+        onActiveChange = {  },
         placeholder = {
-            Text(text = "Search for Anime...")
+            Text(text = "Search for Anime, Manga...")
         },
         leadingIcon = {
             Icon(
@@ -131,15 +164,17 @@ private fun AniSearchBar() {
                 )
             }
         },
-        modifier = Modifier.padding(10.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
     ) {
-        Text(text = "Show top/trending anime/search history")
+//        Text(text = "Show top/trending anime/search history")
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun AnimeRow(
+fun AnimeRow(
     onNavigateToDetails: (Int) -> Unit,
     animeList: List<GetTrendsQuery.Medium>,
     loadMoreAnime: () -> Unit,
@@ -148,10 +183,16 @@ private fun AnimeRow(
     if (animeList.isNotEmpty()) {
         val state = rememberLazyListState()
         LazyRow(
-            state = state, modifier = Modifier.height(400.dp)
+            state = state,
+//            modifier = Modifier.padding(start = 12.dp)
         ) {
             items(animeList) { anime ->
-                AnimeCard(anime, onNavigateToDetails = ({
+//                if (first) {
+//                    AnimeCard(anime, modifier = Modifier.padding(start = 12.dp), onNavigateToDetails = ({
+//                        onNavigateToDetails(anime.id)
+//                    }))
+//                }
+                AnimeCard(title = anime.title?.native ?: "Unknown", coverImage = anime.coverImage?.extraLarge ?: "", onNavigateToDetails = ({
                     onNavigateToDetails(anime.id)
                 }))
             }
@@ -194,7 +235,7 @@ private fun AnimeRow(
 @Composable
 fun HeadlineText(text: String) {
     Text(
-        text, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(10.dp)
+        text, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(12.dp)
     )
 }
 
@@ -202,37 +243,34 @@ fun HeadlineText(text: String) {
 @Composable
 @NonRestartableComposable
 fun AnimeCard(
-    anime: GetTrendsQuery.Medium,
+    title: String,
+    coverImage: String,
     onNavigateToDetails: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = Modifier.then(modifier)) {
-        Card(
-            onClick = { onNavigateToDetails() },
-            modifier = Modifier
-                .padding(5.dp)
-                .width(200.dp)
-                .fillMaxHeight()
-        ) {
-            //todo change not null assertion
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(anime.coverImage!!.extraLarge).crossfade(true).build(),
+    Column(modifier = Modifier
+        .padding(start = 12.dp)
+        .width(120.dp)
+        .height(240.dp)
+        .then(modifier)
+        .clickable { onNavigateToDetails() }) {
+        //todo change not null assertion
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(coverImage).crossfade(true).build(),
 //                placeholder = PlaceholderPainter(MaterialTheme.colorScheme.surfaceTint),
-                contentDescription = "Cover of ${anime.title!!.english}",
-                modifier = Modifier
-                    // cards have a corner radius of 12dp: https://m3.material.io/components/cards/specs#:~:text=Shape-,12dp%20corner%20radius,-Left/right%20padding
-                    .clip(RoundedCornerShape(12.dp))
-                    .fillMaxWidth()
-            )
-            Text(
-                anime.title.native ?: "Native title could not be loaded/does not exist",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(10.dp),
-                overflow = TextOverflow.Ellipsis
-
-            )
-        }
+            contentDescription = "Cover of $title",
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .fillMaxWidth()
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(10.dp),
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
