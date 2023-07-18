@@ -1,6 +1,6 @@
 package com.example.anilist.ui.animeDetails
 
-import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -41,7 +42,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -61,34 +61,26 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.toColorInt
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.anilist.GetAnimeInfoQuery
 import com.example.anilist.R
 import com.example.anilist.TextViewCustom
 import com.example.anilist.data.Anime
 import com.example.anilist.data.Character
-import com.example.anilist.data.Link
 import com.example.anilist.data.Relation
 import com.example.anilist.data.Tag
 import com.example.anilist.ui.AniHomeViewModel
-import com.example.anilist.ui.theme.AnilistTheme
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 
 private const val TAG = "AnimeDetails"
@@ -96,7 +88,7 @@ private const val TAG = "AnimeDetails"
 
 enum class DetailTabs {
     Overview,
-    Charachters,
+    Characters,
     Staff,
     Reviews,
     Stats
@@ -107,14 +99,15 @@ enum class DetailTabs {
 fun AnimeDetails(
     id: Int,
     aniHomeViewModel: AniHomeViewModel = viewModel(),
-    navigateToHome: () -> Unit,
-    onNavigateToDetails: (Int) -> Unit
+    navigateBack: () -> Unit,
+    onNavigateToDetails: (Int) -> Unit,
 ) {
     aniHomeViewModel.getAnimeDetails(id)
 
     val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
 
     val anime = trendingAnimeUiState.currentDetailAnime
+    val characters = trendingAnimeUiState.currentDetailCharacters
 
     val pagerState = rememberPagerState(
         initialPage = 0,
@@ -125,10 +118,10 @@ fun AnimeDetails(
     Scaffold(topBar = {
         TopAppBar(title = {
             Text(
-                text = anime?.title?.english ?: stringResource(R.string.failed_to_load)
+                text = anime.title
             )
         }, navigationIcon = {
-            IconButton(onClick = navigateToHome) {
+            IconButton(onClick = navigateBack) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = Icons.Default.ArrowBack.toString()
@@ -136,56 +129,28 @@ fun AnimeDetails(
             }
         }, actions = { Icon(Icons.Default.MoreVert, "More") })
     }) {
-        if (trendingAnimeUiState.currentDetailAnime != null) {
-            Column {
-                AniDetailTabs(
-                    modifier = Modifier.padding(top = it.calculateTopPadding()),
-                    titles = DetailTabs.values().map { it.name },
-                    tabSelected = DetailTabs.values()[pagerState.currentPage]
-                ) { coroutineScope.launch { pagerState.animateScrollToPage(it) } }
+        Column {
+            AniDetailTabs(
+                modifier = Modifier.padding(top = it.calculateTopPadding()),
+                titles = DetailTabs.values().map { it.name },
+                tabSelected = DetailTabs.values()[pagerState.currentPage]
+            ) { coroutineScope.launch { pagerState.animateScrollToPage(it.ordinal) } }
 
-                val languages: MutableList<String> = mutableListOf()
-                val characters: MutableList<Character> = mutableListOf()
-                for (character in anime?.characters?.edges.orEmpty()) {
-                    for (voiceActor in character?.voiceActors.orEmpty()) {
-                        if (languages.contains(voiceActor?.languageV2) && voiceActor?.languageV2 != null) {
-                            languages.add(voiceActor.languageV2)
-                        }
-                        if (character != null && voiceActor != null) {
-                            characters.add(
-                                Character(
-                                    id = character.node?.id ?: 0,
-                                    name = character.node?.name?.native ?: "",
-                                    coverImage = character.node?.image?.large ?: "",
-                                    voiceActorName = voiceActor.name?.native ?: "",
-                                    voiceActorCoverImage = voiceActor.image?.large ?: "",
-                                    voiceActorLanguage = voiceActor.languageV2 ?: ""
-                                )
-                            )
-                        }
-                    }
-                }
+            HorizontalPager(
+                state = pagerState
+            ) { page ->
+                when (page) {
+                    0 -> Overview(
+                        anime,
+                        onNavigateToDetails
+                    )
 
-                HorizontalPager(
-                    state = pagerState
-                ) { page ->
-                    when (page) {
-                        0 -> Overview(
-                            anime!!,
-                            onNavigateToDetails
-                        )
-
-                        1 -> Characters(languages, characters, navigateToCharacter = {})
-                        2 -> Staff()
-                        3 -> Reviews()
-                        4 -> Stats()
-                    }
+                    1 -> Characters(characters.map { it.voiceActorLanguage }.distinct(), characters, navigateToCharacter = {})
+                    2 -> Staff()
+                    3 -> Reviews()
+                    4 -> Stats()
                 }
             }
-
-
-        } else {
-            FailedToLoad { aniHomeViewModel.getAnimeDetails(id) }
         }
     }
 }
@@ -207,121 +172,49 @@ fun Staff() {
 
 @Composable
 private fun Overview(
-    anime: GetAnimeInfoQuery.Media,
+    anime: Anime,
     onNavigateToDetails: (Int) -> Unit
 ) {
-    val tags: MutableList<Tag> = mutableListOf()
-    for (tag in anime.tags.orEmpty()) {
-        if (tag != null) {
-            tags.add(Tag(tag.name, tag.rank ?: 0, tag.isMediaSpoiler ?: true))
-        }
-    }
-    val synonyms = buildString {
-        for (synonym in anime.synonyms.orEmpty()) {
-            append(synonym)
-            if (anime.synonyms?.last() != synonym) {
-                append("\n")
-            }
-        }
-    }
-    val genres: MutableList<String> = mutableListOf()
-    for (genre in anime.genres.orEmpty()) {
-        if (genre != null) {
-            genres.add(genre)
-        }
-    }
-    val externalLinks: MutableList<Link> = mutableListOf()
-    for (link in anime.externalLinks.orEmpty()) {
-        if (link != null) {
-            externalLinks.add(
-                Link(
-                    link.url ?: "",
-                    link.site,
-                    link.language ?: "",
-                    link.color ?: "",
-                    link.icon ?: ""
-                )
-            )
-        }
-    }
-    val relations: MutableList<Relation> = mutableListOf()
-    for (relation in anime.relations?.edges.orEmpty()) {
-        relations.add(
-            Relation(
-                id = relation?.node?.id ?: 0,
-                coverImage = relation?.node?.coverImage?.extraLarge ?: "",
-                title = relation?.node?.title?.native ?: "",
-                relation = relation?.relationType?.rawValue ?: ""
-            )
-        )
-    }
-    val anime1 = Anime(title = anime.title?.native ?: "Unknown",
-        coverImage = anime.coverImage?.extraLarge ?: "",
-        format = anime.format?.name ?: "Unknown",
-        seasonYear = anime.seasonYear.toString(),
-        episodeAmount = anime.episodes ?: 0,
-        averageScore = anime.averageScore ?: 0,
-        tags = tags,
-        description = anime.description ?: "No description found",
-        relations = relations,
-        infoList = mapOf("format" to anime.format?.name.orEmpty(),
-            "status" to anime.status?.name?.lowercase()
-                ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-                .orEmpty(),
-            "startDate" to if (anime.startDate != null) "${anime.startDate.day}-${anime.startDate.month}-${anime.startDate.year}" else "Unknown",
-            "endDate" to if (anime.endDate?.year != null && anime.endDate.month != null && anime.endDate.day != null) "${anime.endDate.day}-${anime.endDate.month}-${anime.endDate.year}" else "Unknown",
-            "duration" to anime.duration.toString(),
-            "country" to anime.countryOfOrigin.toString(),
-            "source" to (anime.source?.rawValue ?: "Unknown"),
-            "hashtag" to (anime.hashtag ?: "Unknown"),
-            "licensed" to anime.isLicensed.toString(),
-            "updatedAt" to anime.updatedAt.toString(),
-            "synonyms" to synonyms,
-            "nsfw" to anime.isAdult.toString()),
-        genres = genres,
-        trailerImage = anime.trailer?.thumbnail ?: "",
-        // todo add dailymotion
-        trailerLink = if (anime.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${anime.trailer.id}" else if (anime.trailer?.site == "dailymotion") "" else "",
-        externalLinks = externalLinks)
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
             .padding(20.dp)
     ) {
-        OverviewAnimeCoverDetails(anime1)
-        HeadLine("Description")
-        OverviewDescription(anime1)
-        OverviewRelations(anime1, onNavigateToDetails)
-        OverViewInfo(anime1)
-        OverViewTags(anime1)
+        OverviewAnimeCoverDetails(anime, anime.genres)
+        OverviewDescription(anime.description)
+        OverviewRelations(anime.relations, onNavigateToDetails)
+        OverViewInfo(anime)
+        Log.i(TAG, anime.hashCode().toString())
+        var showSpoilers by remember {
+            mutableStateOf(false)
+        }
+        OverViewTags(anime.tags, showSpoilers) { showSpoilers = !showSpoilers }
         val uriHandler = LocalUriHandler.current
-        OverviewTrailer(anime1, uriHandler)
-        OverviewExternalLinks(anime1, uriHandler)
+        OverviewTrailer(anime.trailerImage) { uriHandler.openUri(anime.trailerLink) }
+        OverviewExternalLinks(anime) { uriHandler.openUri(it) }
     }
 
 }
 
 @Composable
 private fun OverviewRelations(
-    anime1: Anime,
+    relations: List<Relation>,
     onNavigateToDetails: (Int) -> Unit
 ) {
     HeadLine("Relations")
     LazyRow {
-        items(anime1.relations) { relation ->
+        items(relations) { relation ->
             Column(modifier = Modifier
-                .padding(end = 12.dp)
-                .width(120.dp)
-                .height(320.dp)
+                .padding(end = 6.dp)
+                .width(80.dp)
+                .height(220.dp)
                 .clickable {
                     onNavigateToDetails(relation.id)
                 }
             ) {
-                //todo change not null assertion
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(relation.coverImage).crossfade(true).build(),
-//                placeholder = PlaceholderPainter(MaterialTheme.colorScheme.surfaceTint),
                     contentDescription = "Cover of ${relation.title}",
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
@@ -331,14 +224,14 @@ private fun OverviewRelations(
                     text = relation.title,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(10.dp),
+                    modifier = Modifier.padding(bottom = 10.dp),
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = relation.relation,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(10.dp),
+                    modifier = Modifier.padding(bottom = 10.dp),
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -348,28 +241,26 @@ private fun OverviewRelations(
 
 @Composable
 private fun OverviewTrailer(
-    anime1: Anime,
-    uriHandler: UriHandler
+    trailerImage: String,
+    openUri: () -> Unit
 ) {
     HeadLine("Trailer")
-    if (anime1.trailerImage == "") {
+    if (trailerImage == "") {
         Image(painter = painterResource(id = R.drawable.kimetsu_no_yaiba_trailer),
             contentDescription = "Trailer",
             contentScale = ContentScale.FillWidth,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { uriHandler.openUri(anime1.trailerLink) })
+                .clickable { openUri() })
     } else {
         AsyncImage(model = ImageRequest.Builder(LocalContext.current)
-            .data(anime1.trailerImage)
+            .data(trailerImage)
             .crossfade(true).build(),
-//                placeholder = PlaceholderPainter(MaterialTheme.colorScheme.surfaceTint),
-//                placeholder = painterResource(id = R.drawable.kimetsu_no_yaiba),
-            contentDescription = "Trailer of ${anime1.title}",
+            contentDescription = "Trailer",
             contentScale = ContentScale.FillWidth,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { uriHandler.openUri(anime1.trailerLink) }
+                .clickable { openUri() }
                 .clip(RoundedCornerShape(12.dp)))
     }
 }
@@ -379,13 +270,13 @@ private fun AniDetailTabs(
     modifier: Modifier = Modifier,
     titles: List<String>,
     tabSelected: DetailTabs,
-    onTabSelected: (Int) -> Unit,
+    onTabSelected: (DetailTabs) -> Unit,
 ) {
     ScrollableTabRow(selectedTabIndex = tabSelected.ordinal, modifier = modifier, tabs = {
         titles.forEachIndexed { index, title ->
             val selected = index == tabSelected.ordinal
             Tab(selected = selected,
-                onClick = { onTabSelected(index) },
+                onClick = { onTabSelected(DetailTabs.values()[index]) },
                 text = { Text(text = title) })
         }
     })
@@ -400,7 +291,7 @@ fun Characters(
 ) {
     var selected by remember { mutableStateOf(0) }
     Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-        FlowRow() {
+        FlowRow {
             languages.forEachIndexed { index, language ->
                 FilterChip(
                     selected = selected == index,
@@ -411,7 +302,7 @@ fun Characters(
             }
         }
         LazyVerticalGrid(columns = GridCells.Adaptive(120.dp)) {
-            items(characters) {
+            items(characters.filter { it.voiceActorLanguage == languages[selected] }) {
                 Column {
                     Column(
                         modifier = Modifier
@@ -472,121 +363,16 @@ fun Characters(
 }
 
 @Composable
-fun Overview(
-    anime: Anime,
-    onNavigateToDetails: (Int) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp)
-    ) {
-        OverviewAnimeCoverDetails(anime)
-        OverviewDescription(anime)
-        HeadLine("Relations")
-        LazyRow {
-            items(anime.relations) { relation ->
-                Column(modifier = Modifier
-                    .padding(end = 12.dp)
-                    .width(120.dp)
-                    .height(320.dp)
-                    .clickable {
-                        onNavigateToDetails(relation.id)
-                    }
-                ) {
-                    //todo change not null assertion
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(relation.coverImage).crossfade(true).build(),
-//                placeholder = PlaceholderPainter(MaterialTheme.colorScheme.surfaceTint),
-                        contentDescription = "Cover of ${relation.title}",
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .fillMaxWidth()
-                    )
-                    Text(
-                        text = relation.title,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(10.dp),
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = relation.relation,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(10.dp),
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-//                Column(modifier = Modifier.padding(end = 22.dp)) {
-//                    AsyncImage(model = ImageRequest.Builder(LocalContext.current)
-//                        .data(relation.coverImage)
-//                        .crossfade(true).build(),
-//                        contentDescription = "Trailer of ${relation.title}",
-//                        contentScale = ContentScale.FillWidth,
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .clickable { }
-//                            .clip(RoundedCornerShape(12.dp)))
-//                    Text(
-//                        text = relation.title,
-//                        color = MaterialTheme.colorScheme.onSurface,
-//                        style = MaterialTheme.typography.labelLarge,
-//                        modifier = Modifier.padding(4.dp)
-//                    )
-//                    Text(
-//                        text = relation.relation,
-//                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-//                        style = MaterialTheme.typography.labelLarge,
-//                        modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 4.dp)
-//                    )
-//                }
-            }
-        }
-        OverViewInfo(anime)
-        OverViewTags(anime)
-        HeadLine("Trailer")
-        val uriHandler = LocalUriHandler.current
-        if (anime.trailerImage == "") {
-            Image(painter = painterResource(id = R.drawable.kimetsu_no_yaiba_trailer),
-                contentDescription = "Trailer",
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { uriHandler.openUri(anime.trailerLink) })
-        } else {
-            AsyncImage(model = ImageRequest.Builder(LocalContext.current)
-                .data(anime.trailerImage)
-                .crossfade(true).build(),
-//                placeholder = PlaceholderPainter(MaterialTheme.colorScheme.surfaceTint),
-//                placeholder = painterResource(id = R.drawable.kimetsu_no_yaiba),
-                contentDescription = "Trailer of ${anime.title}",
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { uriHandler.openUri(anime.trailerLink) }
-                    .clip(RoundedCornerShape(12.dp)))
-        }
-        OverviewExternalLinks(anime, uriHandler)
-    }
-}
-
-@Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun OverviewAnimeCoverDetails(anime1: Anime) {
+private fun OverviewAnimeCoverDetails(anime1: Anime, genres: List<String>) {
     Row {
         if (anime1.coverImage != "") {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current).data(anime1.coverImage)
                     .crossfade(true).build(),
-//                placeholder = PlaceholderPainter(MaterialTheme.colorScheme.surfaceTint),
-//                placeholder = painterResource(id = R.drawable.kimetsu_no_yaiba),
                 contentDescription = "Cover of ${anime1.title}",
                 modifier = Modifier.clip(RoundedCornerShape(12.dp))
             )
-        } else {
-            RoundedImage(anime1.title)
         }
         Column {
             Text(
@@ -625,7 +411,7 @@ private fun OverviewAnimeCoverDetails(anime1: Anime) {
             .padding(top = 12.dp)
             .fillMaxWidth()
     ) {
-        for (genre in anime1.genres) {
+        for (genre in genres) {
             FilledTonalButton(
                 onClick = { }, modifier = Modifier.padding(bottom = 6.dp, end = 12.dp)
             ) {
@@ -652,11 +438,11 @@ private fun OverviewAnimeCoverDetails(anime1: Anime) {
 }
 
 @Composable
-private fun OverviewDescription(anime1: Anime) {
+private fun OverviewDescription(description: String) {
     HeadLine("Description")
     val color = MaterialTheme.colorScheme.onSurface.toArgb()
     AndroidView(factory = { context ->
-        TextViewCustom(context, anime1.description, color)
+        TextViewCustom(context, description, color)
     })
 }
 
@@ -664,13 +450,13 @@ private fun OverviewDescription(anime1: Anime) {
 @OptIn(ExperimentalLayoutApi::class)
 private fun OverviewExternalLinks(
     anime1: Anime,
-    uriHandler: UriHandler
+    openUri: (String) -> Unit
 ) {
     HeadLine("External links")
-    FlowRow() {
+    FlowRow {
         for (link in anime1.externalLinks) {
             OutlinedButton(
-                onClick = { uriHandler.openUri(link.url) },
+                onClick = { openUri(link.url) },
                 modifier = Modifier.padding(end = 8.dp, bottom = 4.dp)
             ) {
                 Row(
@@ -698,26 +484,25 @@ private fun OverviewExternalLinks(
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun OverViewTags(anime: Anime) {
-    var showSpoilers by remember {
-        mutableStateOf(false)
-    }
+private fun OverViewTags(tags: List<Tag>, showSpoilers: Boolean, toggleSpoilers: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier.fillMaxWidth()
     ) {
         HeadLine("Tags")
-        if (anime.tags.any { tag -> tag.isMediaSpoiler }) {
-            IconWithText(icon = if (showSpoilers) R.drawable.anime_detail_not_visible else R.drawable.anime_detail_visible,
+        if (tags.any { tag -> tag.isMediaSpoiler }) {
+            IconWithText(
+                icon = if (showSpoilers) R.drawable.anime_detail_not_visible else R.drawable.anime_detail_visible,
                 text = if (showSpoilers) "Hide spoilers" else "Show spoilers",
                 iconTint = MaterialTheme.colorScheme.error,
                 textColor = MaterialTheme.colorScheme.error,
-                modifier = Modifier.clickable { showSpoilers = !showSpoilers })
+                modifier = Modifier.clickable { toggleSpoilers() }
+            )
         }
     }
     FlowRow(horizontalArrangement = Arrangement.Start) {
-        for (tag in anime.tags) {
+        for (tag in tags) {
             if (!tag.isMediaSpoiler) {
                 ElevatedButton(
                     onClick = { }, modifier = Modifier.padding(end = 12.dp, bottom = 4.dp)
@@ -870,17 +655,6 @@ private fun InfoData(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun RoundedImage(title: String, modifier: Modifier = Modifier) {
-    Image(
-        painter = painterResource(id = R.drawable.kimetsu_no_yaiba),
-        contentDescription = title,
-        modifier = Modifier
-            .then(modifier)
-            .clip(RoundedCornerShape(20.dp))
-    )
-}
-
-@Composable
 private fun HeadLine(text: String) {
     Text(
         text = text,
@@ -917,97 +691,97 @@ fun IconWithText(
 }
 
 @Composable
-private fun FailedToLoad(reload: () -> Unit) {
+private fun Loading(reload: () -> Unit) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize()
     ) {
-        Text(text = "Failed to load anime")
+        CircularProgressIndicator(modifier = Modifier.padding(12.dp))
         Button(onClick = { reload() }) {
             Text(text = "Reload")
         }
     }
 }
 
-@Preview(
-    device = "id:pixel_6_pro", showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL,
-    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE, group = "Characters"
-)
-@Composable
-fun CharactersPreview() {
-    Characters(
-        listOf("Japanese", "Portuguese", "English", "French"),
-        characters = listOf(Character(1212321, "tanjirou", "", "花江夏樹", "", "Japanese")),
-        navigateToCharacter = {}
-    )
-}
+//@Preview(
+//    device = "id:pixel_6_pro", showBackground = true,
+//    uiMode = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL,
+//    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE, group = "Characters"
+//)
+//@Composable
+//fun CharactersPreview() {
+//    Characters(
+//        listOf("Japanese", "Portuguese", "English", "French"),
+//        characters = listOf(Character(1212321, "tanjirou", "", "花江夏樹", "", "Japanese")),
+//        navigateToCharacter = {}
+//    )
+//}
 
-@Preview(
-    name = "Light mode", showBackground = true, heightDp = 2000, group = "Overview",
-)
-@Preview(name = "Night mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, group = "Overview")
-@Composable
-fun OverviewPreview() {
-    AnilistTheme {
-        Surface {
-            Overview(
-                onNavigateToDetails = {},
-                anime = Anime(
-                    title = "鬼滅の刃 刀鍛冶の里編",
-                    coverImage = "",
-                    format = "TV",
-                    seasonYear = "Spring 2023",
-                    episodeAmount = 11,
-                    averageScore = 83,
-                    genres = listOf("Action", "Adventure", "Drama", "Fantasy", "Supernatural"),
-                    highestRated = "#99 Highest rated all time",
-                    mostPopular = "#183 Most popular all time",
-                    description = "Adaptation of the Swordsmith Village Arc.<br>\n<br>\nTanjiro\u2019s journey leads him to the Swordsmith Village, where he reunites with two Hashira, members of the Demon Slayer Corps\u2019 highest-ranking swordsmen - Mist Hashira Muichiro Tokito and Love Hashira Mitsuri Kanroji. With the shadows of demons lurking near, a new battle begins for Tanjiro and his comrades.\n<br><br>\n<i>Notes:<br>\n\u2022 The first episode has a runtime of ~49 minutes, and received an early premiere in cinemas worldwide as part of a special screening alongside the final two episodes of Kimetsu no Yaiba: Yuukaku-hen.<br>\n\u2022 The final episode has a runtime of ~52 minutes. </i>",
-                    relations = emptyList(),
-                    infoList = mapOf(
-                        "format" to "TV",
-                        "status" to "Finished",
-                        "startDate" to "04-09-2023",
-                        "endDate" to "06-18-2023",
-                        "duration" to "24",
-                        "country" to "Japan",
-                        "source" to "Manga",
-                        "hashtag" to "#鬼滅の刃",
-                        "licensed" to "Yes",
-                        "updatedAt" to "04-06-2023",
-                        "synonyms" to "KnY 3ดาบพิฆาตอสูร ภาค 3 บทหมู่บ้านช่างตีดาบ\n" + "Demon Slayer: Kimetsu no Yaiba - Le village des forgerons\n" + "Истребитель демонов: Kimetsu no Yaiba. Деревня кузнецов",
-                        "nsfw" to "No"
-                    ),
-                    tags = listOf(
-                        Tag(name = "Demons", 96, false), Tag(name = "Shounen", rank = 40, true)
-        //                        "Shounen",
-        //                        "Swordplay",
-        //                        "Male Protagonist",
-        //                        "Super Power",
-        //                        "Gore",
-        //                        "Monster Girl",
-        //                        "Body Horror",
-        //                        "Historical",
-        //                        "CGI",
-        //                        "Femaile Protagonist",
-        //                        "Orphan",
-        //                        "Rural"
-                    ),
-                    trailerImage = "",
-                    trailerLink = "https://www.youtube.com/watch?v=a9tq0aS5Zu8",
-                    externalLinks = listOf(
-                        Link(
-                            "https://kimetsu.com/anime/katanakajinosatohen/",
-                            "Official Site",
-                            "Japanese",
-                            "",
-                            ""
-                        )
-                    )
-                )
-            )
-        }
-    }
-}
+//@Preview(
+//    name = "Light mode", showBackground = true, heightDp = 2000, group = "Overview",
+//)
+//@Preview(name = "Night mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, group = "Overview")
+//@Composable
+//fun OverviewPreview() {
+//    AnilistTheme {
+//        Surface {
+//            Overview(
+//                onNavigateToDetails = {},
+//                anime = Anime(
+//                    title = "鬼滅の刃 刀鍛冶の里編",
+//                    coverImage = "",
+//                    format = "TV",
+//                    seasonYear = "Spring 2023",
+//                    episodeAmount = 11,
+//                    averageScore = 83,
+//                    genres = listOf("Action", "Adventure", "Drama", "Fantasy", "Supernatural"),
+//                    highestRated = "#99 Highest rated all time",
+//                    mostPopular = "#183 Most popular all time",
+//                    description = "Adaptation of the Swordsmith Village Arc.<br>\n<br>\nTanjiro\u2019s journey leads him to the Swordsmith Village, where he reunites with two Hashira, members of the Demon Slayer Corps\u2019 highest-ranking swordsmen - Mist Hashira Muichiro Tokito and Love Hashira Mitsuri Kanroji. With the shadows of demons lurking near, a new battle begins for Tanjiro and his comrades.\n<br><br>\n<i>Notes:<br>\n\u2022 The first episode has a runtime of ~49 minutes, and received an early premiere in cinemas worldwide as part of a special screening alongside the final two episodes of Kimetsu no Yaiba: Yuukaku-hen.<br>\n\u2022 The final episode has a runtime of ~52 minutes. </i>",
+//                    relations = emptyList(),
+//                    infoList = mapOf(
+//                        "format" to "TV",
+//                        "status" to "Finished",
+//                        "startDate" to "04-09-2023",
+//                        "endDate" to "06-18-2023",
+//                        "duration" to "24",
+//                        "country" to "Japan",
+//                        "source" to "Manga",
+//                        "hashtag" to "#鬼滅の刃",
+//                        "licensed" to "Yes",
+//                        "updatedAt" to "04-06-2023",
+//                        "synonyms" to "KnY 3ดาบพิฆาตอสูร ภาค 3 บทหมู่บ้านช่างตีดาบ\n" + "Demon Slayer: Kimetsu no Yaiba - Le village des forgerons\n" + "Истребитель демонов: Kimetsu no Yaiba. Деревня кузнецов",
+//                        "nsfw" to "No"
+//                    ),
+//                    tags = listOf(
+//                        Tag(name = "Demons", 96, false), Tag(name = "Shounen", rank = 40, true)
+//        //                        "Shounen",
+//        //                        "Swordplay",
+//        //                        "Male Protagonist",
+//        //                        "Super Power",
+//        //                        "Gore",
+//        //                        "Monster Girl",
+//        //                        "Body Horror",
+//        //                        "Historical",
+//        //                        "CGI",
+//        //                        "Femaile Protagonist",
+//        //                        "Orphan",
+//        //                        "Rural"
+//                    ),
+//                    trailerImage = "",
+//                    trailerLink = "https://www.youtube.com/watch?v=a9tq0aS5Zu8",
+//                    externalLinks = listOf(
+//                        Link(
+//                            "https://kimetsu.com/anime/katanakajinosatohen/",
+//                            "Official Site",
+//                            "Japanese",
+//                            "",
+//                            ""
+//                        )
+//                    )
+//                )
+//            )
+//        }
+//    }
+//}

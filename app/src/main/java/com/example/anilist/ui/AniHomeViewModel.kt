@@ -7,6 +7,11 @@ import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
 import com.example.anilist.GetAnimeInfoQuery
 import com.example.anilist.GetTrendsQuery
+import com.example.anilist.data.Anime
+import com.example.anilist.data.Character
+import com.example.anilist.data.Link
+import com.example.anilist.data.Relation
+import com.example.anilist.data.Tag
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaSort
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.util.Locale
 
 private const val TAG = "AniHomeViewModel"
 
@@ -209,9 +215,110 @@ class AniHomeViewModel : ViewModel() {
             val response =
                 apolloClient.query(GetAnimeInfoQuery(id)).execute()
             _uiState.update { currentState ->
-                currentState.copy(currentDetailAnime = response.data?.Media)
+                currentState.copy(currentDetailAnime = parseMedia(response.data?.Media), currentDetailCharacters = parseCharacters(response.data?.Media))
             }
         }
+    }
+
+    private fun parseCharacters(anime: GetAnimeInfoQuery.Media?): List<Character> {
+        val languages: MutableList<String> = mutableListOf()
+        val characters: MutableList<Character> = mutableListOf()
+        for (character in anime?.characters?.edges.orEmpty()) {
+            for (voiceActor in character?.voiceActors.orEmpty()) {
+                if (languages.contains(voiceActor?.languageV2) && voiceActor?.languageV2 != null) {
+                    languages.add(voiceActor.languageV2)
+                }
+                if (character != null && voiceActor != null) {
+                    characters.add(
+                        Character(
+                            id = character.node?.id ?: 0,
+                            name = character.node?.name?.native ?: "",
+                            coverImage = character.node?.image?.large ?: "",
+                            voiceActorName = voiceActor.name?.native ?: "",
+                            voiceActorCoverImage = voiceActor.image?.large ?: "",
+                            voiceActorLanguage = voiceActor.languageV2 ?: ""
+                        )
+                    )
+                }
+            }
+        }
+        return characters
+    }
+
+    private fun parseMedia(anime: GetAnimeInfoQuery.Media?): Anime {
+        val tags: MutableList<Tag> = mutableListOf()
+        for (tag in anime?.tags.orEmpty()) {
+            if (tag != null) {
+                tags.add(Tag(tag.name, tag.rank ?: 0, tag.isMediaSpoiler ?: true))
+            }
+        }
+        val synonyms = buildString {
+            for (synonym in anime?.synonyms.orEmpty()) {
+                append(synonym)
+                if (anime?.synonyms?.last() != synonym) {
+                    append("\n")
+                }
+            }
+        }
+        val genres: MutableList<String> = mutableListOf()
+        for (genre in anime?.genres.orEmpty()) {
+            if (genre != null) {
+                genres.add(genre)
+            }
+        }
+        val externalLinks: MutableList<Link> = mutableListOf()
+        for (link in anime?.externalLinks.orEmpty()) {
+            if (link != null) {
+                externalLinks.add(
+                    Link(
+                        link.url ?: "",
+                        link.site,
+                        link.language ?: "",
+                        link.color ?: "",
+                        link.icon ?: ""
+                    )
+                )
+            }
+        }
+        val relations: MutableList<Relation> = mutableListOf()
+        for (relation in anime?.relations?.edges.orEmpty()) {
+            relations.add(
+                Relation(
+                    id = relation?.node?.id ?: 0,
+                    coverImage = relation?.node?.coverImage?.extraLarge ?: "",
+                    title = relation?.node?.title?.native ?: "",
+                    relation = relation?.relationType?.rawValue ?: ""
+                )
+            )
+        }
+        return Anime(title = anime?.title?.native ?: "Unknown",
+            coverImage = anime?.coverImage?.extraLarge ?: "",
+            format = anime?.format?.name ?: "Unknown",
+            seasonYear = anime?.seasonYear.toString(),
+            episodeAmount = anime?.episodes ?: 0,
+            averageScore = anime?.averageScore ?: 0,
+            tags = tags,
+            description = anime?.description ?: "No description found",
+            relations = relations,
+            infoList = mapOf("format" to anime?.format?.name.orEmpty(),
+                "status" to anime?.status?.name?.lowercase()
+                    ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                    .orEmpty(),
+                "startDate" to if (anime?.startDate != null) "${anime.startDate.day}-${anime.startDate.month}-${anime.startDate.year}" else "Unknown",
+                "endDate" to if (anime?.endDate?.year != null && anime.endDate.month != null && anime.endDate.day != null) "${anime.endDate.day}-${anime.endDate.month}-${anime.endDate.year}" else "Unknown",
+                "duration" to anime?.duration.toString(),
+                "country" to anime?.countryOfOrigin.toString(),
+                "source" to (anime?.source?.rawValue ?: "Unknown"),
+                "hashtag" to (anime?.hashtag ?: "Unknown"),
+                "licensed" to anime?.isLicensed.toString(),
+                "updatedAt" to anime?.updatedAt.toString(),
+                "synonyms" to synonyms,
+                "nsfw" to anime?.isAdult.toString()),
+            genres = genres,
+            trailerImage = anime?.trailer?.thumbnail ?: "",
+            // todo add dailymotion
+            trailerLink = if (anime?.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${anime.trailer.id}" else if (anime?.trailer?.site == "dailymotion") "" else "",
+            externalLinks = externalLinks)
     }
 
     override fun onCleared() {

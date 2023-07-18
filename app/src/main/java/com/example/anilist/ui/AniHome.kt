@@ -1,13 +1,9 @@
 package com.example.anilist.ui
 
-import android.graphics.drawable.Icon
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -71,13 +66,15 @@ fun AniHome(
             navigationIcon = {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More"
+                    contentDescription = "More",
+                    modifier = Modifier.padding(12.dp)
                 )
             },
             actions = {
                 Icon(
                     imageVector = Icons.Default.AccountBox,
-                    contentDescription = "Profile"
+                    contentDescription = "Profile",
+                    modifier = Modifier.padding(12.dp)
                 )
             })
     }) {
@@ -138,10 +135,10 @@ private fun AniSearchBar() {
     }
     SearchBar(
         query = text,
-        onQueryChange = {  },
-        onSearch = {  },
+        onQueryChange = { },
+        onSearch = { },
         active = active,
-        onActiveChange = {  },
+        onActiveChange = { },
         placeholder = {
             Text(text = "Search for Anime, Manga...")
         },
@@ -168,7 +165,7 @@ private fun AniSearchBar() {
             .fillMaxWidth()
             .padding(horizontal = 12.dp)
     ) {
-//        Text(text = "Show top/trending anime/search history")
+        Text(text = "Show top/trending anime/search history")
     }
 }
 
@@ -184,17 +181,15 @@ fun AnimeRow(
         val state = rememberLazyListState()
         LazyRow(
             state = state,
-//            modifier = Modifier.padding(start = 12.dp)
         ) {
             items(animeList) { anime ->
-//                if (first) {
-//                    AnimeCard(anime, modifier = Modifier.padding(start = 12.dp), onNavigateToDetails = ({
-//                        onNavigateToDetails(anime.id)
-//                    }))
-//                }
-                AnimeCard(title = anime.title?.native ?: "Unknown", coverImage = anime.coverImage?.extraLarge ?: "", onNavigateToDetails = ({
-                    onNavigateToDetails(anime.id)
-                }))
+                AnimeCard(
+                    title = anime.title?.native ?: "Unknown",
+                    coverImage = anime.coverImage?.extraLarge ?: "",
+                    onNavigateToDetails = ({
+                        onNavigateToDetails(anime.id)
+                    })
+                )
             }
         }
 
@@ -254,7 +249,6 @@ fun AnimeCard(
         .height(240.dp)
         .then(modifier)
         .clickable { onNavigateToDetails() }) {
-        //todo change not null assertion
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(coverImage).crossfade(true).build(),

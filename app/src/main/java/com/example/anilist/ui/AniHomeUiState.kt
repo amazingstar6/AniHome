@@ -1,7 +1,8 @@
 package com.example.anilist.ui
 
-import com.example.anilist.GetAnimeInfoQuery
 import com.example.anilist.GetTrendsQuery
+import com.example.anilist.data.Anime
+import com.example.anilist.data.Character
 
 data class AniHomeUiState(
     val trendingAnime: List<GetTrendsQuery.Medium> = emptyList(),
@@ -14,5 +15,6 @@ data class AniHomeUiState(
     var upcomingNextSeasonPage: Int = 1,
     var allTimePopularPage: Int = 1,
     var top100AnimePage: Int = 1,
-    var currentDetailAnime: GetAnimeInfoQuery.Media? = null
+    var currentDetailAnime: Anime = Anime(),
+    var currentDetailCharacters: List<Character> = emptyList(),
 )

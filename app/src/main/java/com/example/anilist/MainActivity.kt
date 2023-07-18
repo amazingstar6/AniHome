@@ -4,9 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,7 +39,6 @@ class MainActivity : ComponentActivity() {
             AnilistTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
@@ -50,20 +49,21 @@ class MainActivity : ComponentActivity() {
                     val selectedDestination =
                         navBackStackEntry?.destination?.route ?: AniListRoute.HOME_ROUTE
 
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        var visible by remember {
-                            mutableStateOf(true)
-                        }
-                        AniListNavHost(
-                            navController = navController,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            visible = !visible
-                        }
+                    var visible by remember {
+                        mutableStateOf(true)
+                    }
+                    Scaffold(bottomBar = {
                         AniListBottomNavigationBar(
                             selectedDestination = selectedDestination,
                             navigateToTopLevelDestination = navigationAction::navigateTo,
                             visible
+                        )
+                    }) {
+                        AniListNavHost(
+                            navController = navController,
+                            modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
+                            toggleNavBar = { visible = true },
+                            toggleNavBarOff = { visible = false }
                         )
                     }
                 }
@@ -75,7 +75,8 @@ class MainActivity : ComponentActivity() {
     private fun AniListNavHost(
         navController: NavHostController,
         modifier: Modifier = Modifier,
-        toggleNavBar: () -> Unit
+        toggleNavBar: () -> Unit,
+        toggleNavBarOff: () -> Unit
     ) {
         NavHost(
             modifier = modifier,
@@ -88,7 +89,7 @@ class MainActivity : ComponentActivity() {
                     navController.navigate(
                         route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id"
                     )
-                    toggleNavBar()
+                    toggleNavBarOff()
                 }
             }
             composable(
@@ -99,19 +100,20 @@ class MainActivity : ComponentActivity() {
             ) { backStackEntry ->
                 AnimeDetails(
                     backStackEntry.arguments?.getInt("animeId") ?: -1,
-                    onNavigateToDetails = {id ->
+                    onNavigateToDetails = { id ->
                         navController.navigate(
                             route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id"
                         )
+                        toggleNavBarOff()
                     },
-                    navigateToHome = {
-//                        navController.navigate(route = AniListRoute.HOME_ROUTE)
-//                        toggleNavBar()
+//                    anime = Anime(),
+                    navigateBack = {
+                        toggleNavBar()
                         onBackPressedDispatcher.onBackPressed()
                     })
             }
             composable(AniListRoute.ANIME_ROUTE) {
-                EmptyComingSoon()
+                MyAnime()
             }
             composable(AniListRoute.MANGA_ROUTE) {
                 EmptyComingSoon()
