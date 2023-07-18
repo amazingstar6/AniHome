@@ -1,12 +1,13 @@
 package com.example.anilist.data
 
 data class Anime(
+    val id: Int = -1,
     val title: String = "?",
     val coverImage: String = "",
     val format: String = "?",
     val seasonYear: String = "?",
-    val episodeAmount: Int = 0,
-    val averageScore: Int = 0,
+    val episodeAmount: Int = -1,
+    val averageScore: Int = -1,
     val genres: List<String> = emptyList(),
     val highestRated: String = "",
     val mostPopular: String = "",
@@ -17,4 +18,7 @@ data class Anime(
     val trailerImage: String = "",
     val trailerLink: String = "",
     val externalLinks: List<Link> = emptyList(),
+    // todo fill these
+    val personalRating: Int = -1,
+    val personalEpisodeProgress: Int = -1,
 )

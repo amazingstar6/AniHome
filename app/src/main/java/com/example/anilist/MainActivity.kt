@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +26,7 @@ import com.example.anilist.ui.AniHome
 import com.example.anilist.ui.AniHomeViewModel
 import com.example.anilist.ui.animeDetails.AnimeDetails
 import com.example.anilist.ui.EmptyComingSoon
+import com.example.anilist.ui.PleaseLogin
 import com.example.anilist.ui.navigation.AniListBottomNavigationBar
 import com.example.anilist.ui.navigation.AniListNavigationActions
 import com.example.anilist.ui.navigation.AniListRoute
@@ -106,14 +108,26 @@ class MainActivity : ComponentActivity() {
                         )
                         toggleNavBarOff()
                     },
-//                    anime = Anime(),
                     navigateBack = {
                         toggleNavBar()
                         onBackPressedDispatcher.onBackPressed()
                     })
             }
             composable(AniListRoute.ANIME_ROUTE) {
-                MyAnime()
+                val aniHomeViewModel: AniHomeViewModel by viewModels()
+                val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
+                if (trendingAnimeUiState.isLoggedIn) {
+                    MyAnime(
+                        aniHomeViewModel,
+                        { id ->
+                            navController.navigate(route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id")
+                            toggleNavBarOff()
+                        },
+                        true
+                    )
+                } else {
+                    PleaseLogin()
+                }
             }
             composable(AniListRoute.MANGA_ROUTE) {
                 EmptyComingSoon()

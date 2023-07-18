@@ -23,12 +23,21 @@ fun AniListBottomNavigationBar(
                     selected = selectedDestination == destination.route,
                     onClick = { navigateToTopLevelDestination(destination) },
                     icon = {
-                        Icon(
-                            painter = painterResource(id = destination.selectedIcon),
-                            contentDescription = stringResource(
-                                id = destination.iconTextId
+                        if (selectedDestination == destination.route) {
+                            Icon(
+                                painter = painterResource(id = destination.selectedIcon),
+                                contentDescription = stringResource(
+                                    id = destination.iconTextId
+                                )
                             )
-                        )
+                        } else {
+                            Icon(
+                                painter = painterResource(id = destination.unselectedIcon),
+                                contentDescription = stringResource(
+                                    id = destination.iconTextId
+                                )
+                            )
+                        }
                     },
                     label = { Text(stringResource(id = destination.iconTextId)) }
                 )

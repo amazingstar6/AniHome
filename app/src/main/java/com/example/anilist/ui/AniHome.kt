@@ -48,6 +48,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.GetTrendsQuery
 import com.example.anilist.R
+import com.example.anilist.data.Anime
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 private const val TAG = "AniHome"
@@ -173,7 +174,7 @@ private fun AniSearchBar() {
 @OptIn(ExperimentalMaterial3Api::class)
 fun AnimeRow(
     onNavigateToDetails: (Int) -> Unit,
-    animeList: List<GetTrendsQuery.Medium>,
+    animeList: List<Anime>,
     loadMoreAnime: () -> Unit,
     reloadAnime: () -> Unit
 ) {
@@ -184,8 +185,8 @@ fun AnimeRow(
         ) {
             items(animeList) { anime ->
                 AnimeCard(
-                    title = anime.title?.native ?: "Unknown",
-                    coverImage = anime.coverImage?.extraLarge ?: "",
+                    title = anime.title,
+                    coverImage = anime.coverImage,
                     onNavigateToDetails = ({
                         onNavigateToDetails(anime.id)
                     })

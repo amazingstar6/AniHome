@@ -6,10 +6,42 @@ query getTrends($page: Int = 1, $sort: [MediaSort], $season: MediaSeason, $year:
                 romaji
                 english
                 native
+                userPreferred
             }
             coverImage {
                 extraLarge
             }
+        }
+    }
+}
+
+query getMyAnime {
+    Media(onList: true, sort:UPDATED_AT) {
+        id
+        title {
+            userPreferred
+        }
+        isLocked
+        mediaListEntry {
+            status
+            score
+            progress
+            progressVolumes@include(if: false)
+            repeat
+            private
+            notes
+            advancedScores
+            startedAt {
+                year
+                month
+                day
+            }
+            completedAt {
+                year
+                month
+                day
+            }
+            updatedAt
         }
     }
 }

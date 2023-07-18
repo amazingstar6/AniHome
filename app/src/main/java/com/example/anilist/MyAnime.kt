@@ -1,51 +1,96 @@
 package com.example.anilist
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.anilist.data.Anime
+import com.example.anilist.ui.AniHomeViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MyAnime(aniHomeViewModel: AniHomeViewModel, navigateToDetails: (Int) -> Unit, isAnime: Boolean) {
+    Scaffold(topBar = {
+        TopAppBar(title = { Text(text = if (isAnime) "Watching" else "Reading") })
+    }) {
+
+        aniHomeViewModel.loadMyAnime()
+        val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
+        val mediaList = trendingAnimeUiState.personalAnimeList
+
+        LazyColumn(modifier = Modifier.padding(top = it.calculateTopPadding())) {
+            items(mediaList) { media ->
+                MediaCard(navigateToDetails, media)
+            }
+        }
+    }
+}
 
 @Composable
-fun MyAnime() {
-    Surface() {
-        var showDialog by remember {
-            mutableStateOf(false)
-        }
-        Button(onClick = { showDialog = true }) {
-            Text(text = "Show dialog")
-        }
-        if (showDialog) {
-            Dialog(
-                onDismissRequest = { showDialog = false },
-                properties = DialogProperties(usePlatformDefaultWidth = false)
-            ) {
-                Column(modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Cyan)) {
-                    Text("Edit Anime")
-                    Row() {
-                        Button(onClick = { showDialog = false }) {
-                            Text("Cancel")
-                        }
-                        Button(onClick = { showDialog = false }) {
-                            Text("Save")
+@OptIn(ExperimentalMaterial3Api::class)
+private fun MediaCard(
+    navigateToDetails: (Int) -> Unit,
+    media: Anime
+) {
+    Card(onClick = { navigateToDetails(media.id) }) {
+        Row {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(media.coverImage)
+                    .crossfade(true).build(),
+                contentDescription = "Cover of ${media.title}",
+                fallback = painterResource(id = R.drawable.no_image),
+                modifier = Modifier.clip(RoundedCornerShape(20.dp))
+            )
+            Column {
+                Row {
+                    Text(text = media.title)
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = "edit")
+                }
+                Text(text = media.format)
+                Row {
+                    Icon(
+                        painterResource(id = R.drawable.anime_details_rating_star),
+                        contentDescription = "star"
+                    )
+                    Text(text = media.personalRating.toString())
+                }
+                Row {
+                    Text(text = "${media.personalEpisodeProgress}/${media.episodeAmount}")
+                    Button(onClick = { /*TODO*/ }) {
+                        Row {
+                            Icon(imageVector = Icons.Default.Add, contentDescription = "add")
+                            Text(text = "1")
                         }
                     }
                 }
             }
+            LinearProgressIndicator(progress = (media.personalEpisodeProgress / media.episodeAmount.toFloat()) * 100)
         }
     }
 }
@@ -53,5 +98,5 @@ fun MyAnime() {
 @Preview(showBackground = true)
 @Composable
 fun MyAnimePreview() {
-    MyAnime()
+    MediaCard(navigateToDetails = {}, media = Anime(title = "鬼滅の刃"))
 }

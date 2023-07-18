@@ -38,32 +38,32 @@ class AniListNavigationActions(private val navController: NavController) {
 val TOP_LEVEL_DESTINATIONS = listOf(
     AnilistTopLevelDestination(
         route = AniListRoute.HOME_ROUTE,
-        selectedIcon = R.drawable.navigation_home,
-        unselectedIcon = R.drawable.navigation_home,
+        selectedIcon = R.drawable.navigation_home_filled,
+        unselectedIcon = R.drawable.navigation_home_outlined,
         iconTextId = R.string.home
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.ANIME_ROUTE,
-        selectedIcon = R.drawable.navigation_anime,
-        unselectedIcon = R.drawable.navigation_anime,
+        selectedIcon = R.drawable.navigation_anime_filled,
+        unselectedIcon = R.drawable.navigation_anime_outlined,
         iconTextId = R.string.anime
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.MANGA_ROUTE,
-        selectedIcon = R.drawable.navigation_manga,
-        unselectedIcon = R.drawable.navigation_manga,
+        selectedIcon = R.drawable.navigation_manga_filled,
+        unselectedIcon = R.drawable.navigation_manga_outlined,
         iconTextId = R.string.manga
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.FEED_ROUTE,
-        selectedIcon = R.drawable.navigation_feed,
-        unselectedIcon = R.drawable.navigation_feed,
+        selectedIcon = R.drawable.navigation_feed_filled,
+        unselectedIcon = R.drawable.navigation_feed_outlined,
         iconTextId = R.string.feed
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.FORUM_ROUTE,
-        selectedIcon = R.drawable.navigation_forum,
-        unselectedIcon = R.drawable.navigation_forum,
+        selectedIcon = R.drawable.navigation_forum_filled,
+        unselectedIcon = R.drawable.navigation_forum_outlined,
         iconTextId = R.string.forum
     ),
 )

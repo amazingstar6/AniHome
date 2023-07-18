@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo3.api.http.HttpHeader
 import com.example.anilist.GetAnimeInfoQuery
+import com.example.anilist.GetMyAnimeQuery
 import com.example.anilist.GetTrendsQuery
 import com.example.anilist.data.Anime
 import com.example.anilist.data.Character
@@ -26,9 +28,11 @@ private const val TAG = "AniHomeViewModel"
 
 class AniHomeViewModel : ViewModel() {
 
+    private val accessToken: String = "" //todo
     private val apolloClient =
         ApolloClient.Builder().serverUrl("https://graphql.anilist.co").build()
     private val _uiState = MutableStateFlow(AniHomeUiState())
+
     init {
         loadTrendingAnime()
         loadPopularAnime()
@@ -59,11 +63,29 @@ class AniHomeViewModel : ViewModel() {
 //            if (data == null) Log.i(TAG, "Trending data list is empty!")
             _uiState.update { currentState ->
                 currentState.copy(
-                    trendingAnime = currentState.trendingAnime + data?.filterNotNull()
-                        .orEmpty()
+                    trendingAnime = currentState.trendingAnime + parseMediaHome(
+                        data?.filterNotNull()
+                            .orEmpty()
+                    )
                 )
             }
         }
+    }
+
+    private fun parseMediaHome(medias: List<GetTrendsQuery.Medium>): List<Anime> {
+        val mediaList: MutableList<Anime> = mutableListOf()
+        for (media in medias) {
+            if (media.title?.userPreferred != null && media.coverImage?.extraLarge != null) {
+                mediaList.add(
+                    Anime(
+                        id = media.id,
+                        title = media.title.userPreferred,
+                        coverImage = media.coverImage?.extraLarge
+                    )
+                )
+            }
+        }
+        return mediaList
     }
 
     fun loadPopularAnime(increasePage: Boolean = false) {
@@ -107,8 +129,10 @@ class AniHomeViewModel : ViewModel() {
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
-                    popularAnime = currentState.popularAnime + response.data?.trending?.media?.filterNotNull()
-                        .orEmpty()
+                    popularAnime = currentState.popularAnime + parseMediaHome(
+                        response.data?.trending?.media?.filterNotNull()
+                            .orEmpty()
+                    )
                 )
             }
         }
@@ -157,8 +181,10 @@ class AniHomeViewModel : ViewModel() {
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
-                    upcomingNextSeason = currentState.upcomingNextSeason + response.data?.trending?.media?.filterNotNull()
-                        .orEmpty()
+                    upcomingNextSeason = currentState.upcomingNextSeason + parseMediaHome(
+                        response.data?.trending?.media?.filterNotNull()
+                            .orEmpty()
+                    )
                 )
             }
         }
@@ -180,8 +206,10 @@ class AniHomeViewModel : ViewModel() {
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
-                    allTimePopular = currentState.allTimePopular + response.data?.trending?.media?.filterNotNull()
-                        .orEmpty()
+                    allTimePopular = currentState.allTimePopular + parseMediaHome(
+                        response.data?.trending?.media?.filterNotNull()
+                            .orEmpty()
+                    )
                 )
             }
         }
@@ -203,9 +231,12 @@ class AniHomeViewModel : ViewModel() {
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
-                    top100Anime = currentState.top100Anime + response.data?.trending?.media?.filterNotNull()
-                        .orEmpty()
+                    top100Anime = currentState.top100Anime + parseMediaHome(
+                        response.data?.trending?.media?.filterNotNull()
+                            .orEmpty()
+                    )
                 )
+
             }
         }
     }
@@ -215,7 +246,10 @@ class AniHomeViewModel : ViewModel() {
             val response =
                 apolloClient.query(GetAnimeInfoQuery(id)).execute()
             _uiState.update { currentState ->
-                currentState.copy(currentDetailAnime = parseMedia(response.data?.Media), currentDetailCharacters = parseCharacters(response.data?.Media))
+                currentState.copy(
+                    currentDetailAnime = parseMedia(response.data?.Media),
+                    currentDetailCharacters = parseCharacters(response.data?.Media)
+                )
             }
         }
     }
@@ -324,5 +358,20 @@ class AniHomeViewModel : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         Log.i(TAG, "AniHomeViewModel was just cleared!")
+    }
+
+    fun loadMyAnime() {
+        viewModelScope.launch {
+            val response =
+                apolloClient.query(
+                    GetMyAnimeQuery(
+                    )
+                ).httpHeaders(listOf(HttpHeader("Authorization", "Bearer $accessToken"))).execute()
+            _uiState.update { currentState ->
+                currentState.copy(
+                    personalAnimeList = emptyList() //todo
+                )
+            }
+        }
     }
 }

@@ -1,15 +1,14 @@
 package com.example.anilist.ui
 
-import com.example.anilist.GetTrendsQuery
 import com.example.anilist.data.Anime
 import com.example.anilist.data.Character
 
 data class AniHomeUiState(
-    val trendingAnime: List<GetTrendsQuery.Medium> = emptyList(),
-    val popularAnime: List<GetTrendsQuery.Medium> = emptyList(),
-    val upcomingNextSeason: List<GetTrendsQuery.Medium> = emptyList(),
-    val allTimePopular: List<GetTrendsQuery.Medium> = emptyList(),
-    val top100Anime: List<GetTrendsQuery.Medium> = emptyList(),
+    val trendingAnime: List<Anime> = emptyList(),
+    val popularAnime: List<Anime> = emptyList(),
+    val upcomingNextSeason: List<Anime> = emptyList(),
+    val allTimePopular: List<Anime> = emptyList(),
+    val top100Anime: List<Anime> = emptyList(),
     var trendingPage: Int = 1,
     var popularPage: Int = 1,
     var upcomingNextSeasonPage: Int = 1,
@@ -17,4 +16,6 @@ data class AniHomeUiState(
     var top100AnimePage: Int = 1,
     var currentDetailAnime: Anime = Anime(),
     var currentDetailCharacters: List<Character> = emptyList(),
+    val personalAnimeList: List<Anime> = emptyList(),
+    val isLoggedIn: Boolean = false,
 )

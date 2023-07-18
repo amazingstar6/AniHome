@@ -22,6 +22,21 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!--                 Accepts URIs that begin with "anihome://login” -->
+                <data
+                    android:host="login"
+                    android:scheme="anihome" />
+<!--                                <data-->
+<!--                                    android:host="login"-->
+<!--                                    android:pathPattern=".*"-->
+<!--                                    android:scheme="anihome" />-->
+            </intent-filter>
         </activity>
     </application>
 
