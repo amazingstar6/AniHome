@@ -54,6 +54,7 @@ android {
 dependencies {
     implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
     def lifecycle_version = "2.6.1"
+    def apollo_version = "4.0.0-alpha.1"
 
     implementation 'androidx.core:core-ktx:1.8.0'
     implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.0')
@@ -81,7 +82,7 @@ dependencies {
     //  For http requests
     implementation 'com.google.android.gms:play-services-cronet:18.0.1'
     //  For graphql library
-    implementation("com.apollographql.apollo3:apollo-runtime:4.0.0-alpha.1")
+    implementation("com.apollographql.apollo3:apollo-runtime:$apollo_version")
     //  For downloading images
     implementation("io.coil-kt:coil-compose:2.4.0")
     //  For navigation in compose
@@ -99,6 +100,8 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
     // For observeAsState; compose live data
     implementation "androidx.compose.runtime:runtime-livedata:1.4.3"
+    // For apollo caching
+    implementation("com.apollographql.apollo3:apollo-normalized-cache:$apollo_version")
 }
 
 apollo {

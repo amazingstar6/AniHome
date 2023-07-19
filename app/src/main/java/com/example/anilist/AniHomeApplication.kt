@@ -1,6 +1,7 @@
 package com.example.anilist
 
 import android.app.Application
+import com.example.anilist.data.repository.MediaRepository
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp

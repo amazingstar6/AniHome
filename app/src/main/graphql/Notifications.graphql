@@ -1,0 +1,34 @@
+query getnot($page: Int = 1, $currentSeason: MediaSeason, $nextSeason: MediaSeason, $currentYear: Int, $nextYear: Int){
+    trending: Page(page: $page, perPage: 20) {
+        popularThisSeason: media(sort:POPULARITY_DESC, type: ANIME, season: $currentSeason, seasonYear: $currentYear) {
+            ...everyTrend
+        }
+        trendingNow: media(sort: TRENDING_DESC, type:ANIME) {
+            ...everyTrend
+        }
+        upcomingNextSeason: media(sort: POPULARITY_DESC, type: ANIME, season: $nextSeason, seasonYear: $nextYear) {
+            ...everyTrend
+        }
+        AllTimePopular: media(sort: POPULARITY_DESC, type:ANIME) {
+            ...everyTrend
+        }
+        top100Anime: media(sort: SCORE_DESC, type: ANIME) {
+            ...everyTrend
+        }
+
+    }
+
+}
+
+fragment everyTrend on Media {
+    id
+    title {
+        romaji
+        english
+        native
+        userPreferred
+    }
+    coverImage {
+        extraLarge
+    }
+}

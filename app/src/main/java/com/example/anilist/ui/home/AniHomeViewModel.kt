@@ -1,4 +1,4 @@
-package com.example.anilist.ui
+package com.example.anilist.ui.home
 
 import android.util.Log
 import androidx.lifecycle.LiveData
@@ -20,7 +20,6 @@ import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Relation
 import com.example.anilist.data.models.Tag
-import com.example.anilist.data.repository.Title
 import com.example.anilist.data.repository.UserPreferencesRepository
 import com.example.anilist.data.repository.UserSettings
 import com.example.anilist.type.MediaSeason
@@ -65,7 +64,7 @@ class AniHomeViewModel @Inject constructor(private val userPreferencesRepository
     private val apolloClient =
         ApolloClient.Builder().serverUrl("https://graphql.anilist.co").build()
     private val _uiState = MutableStateFlow(AniHomeUiState())
-
+    val uiState: StateFlow<AniHomeUiState> = _uiState.asStateFlow()
 
     init {
         loadTrendingAnime()
@@ -74,8 +73,6 @@ class AniHomeViewModel @Inject constructor(private val userPreferencesRepository
         loadAllTimePopular()
         loadTop100Anime()
     }
-
-    val uiState: StateFlow<AniHomeUiState> = _uiState.asStateFlow()
 
     fun loadTrendingAnime(increasePage: Boolean = false) {
         if (increasePage) {
@@ -407,7 +404,10 @@ class AniHomeViewModel @Inject constructor(private val userPreferencesRepository
             _uiState.update { currentState ->
                 val list: List<GetMyAnimeQuery.List> =
                     response.data?.MediaListCollection?.lists?.filterNotNull().orEmpty()
-                Log.i(TAG, "The size of the received anime list is ${list.size}")
+                Log.i(
+                    TAG,
+                    "The size of the received anime list is ${list.size}"
+                )
                 Log.i(TAG, response.exception?.message ?: "")
                 currentState.copy(
                     personalAnimeList = list.map {
@@ -432,6 +432,10 @@ class AniHomeViewModel @Inject constructor(private val userPreferencesRepository
         }
     }
 
+    fun markAllNotificationsAsRead() {
+        // todo
+    }
+
 //    fun saveLoginDetails(userSettings: UserSettings) {
 //        viewModelScope.launch {
 //            dataStoreManager.saveToDataStore(userSettings)
@@ -444,17 +448,3 @@ class AniHomeViewModel @Inject constructor(private val userPreferencesRepository
 //        }
 //    }
 }
-
-//class AniHomeViewModelFactory(
-////    private val repository: TasksRepository,
-//    private val userPreferencesRepository: DataStoreManager
-//) : ViewModelProvider.Factory {
-//
-//    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-//        if (modelClass.isAssignableFrom(AniHomeViewModel::class.java)) {
-//            @Suppress("UNCHECKED_CAST")
-//            return TasksViewModel(repository, userPreferencesRepository) as T
-//        }
-//        throw IllegalArgumentException("Unknown ViewModel class")
-//    }
-//}

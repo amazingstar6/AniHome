@@ -1,4 +1,4 @@
-package com.example.anilist.ui
+package com.example.anilist.ui.my_media
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +30,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.Anime
+import com.example.anilist.ui.home.AniHomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -6,6 +6,8 @@ import com.example.anilist.R
 
 
 object AniListRoute {
+    const val SETTINGS: String = "Settings"
+    const val NOTIFICATION_ROUTE: String = "Notification"
     const val HOME_ROUTE = "Home"
     const val ANIME_DETAIL_ROUTE = "Detail"
     const val ANIME_ROUTE = "Anime"
@@ -32,6 +34,12 @@ class AniListNavigationActions(private val navController: NavController) {
 
             restoreState = true
         }
+    }
+
+    fun navigateToMediaDetails(mediaId: Int) {
+        navController.navigate(
+            route = AniListRoute.ANIME_DETAIL_ROUTE + "/$mediaId"
+        )
     }
 }
 

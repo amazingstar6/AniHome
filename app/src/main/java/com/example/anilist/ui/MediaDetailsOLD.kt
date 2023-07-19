@@ -1,4 +1,4 @@
-package com.example.anilist.ui.animeDetails
+
 
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -70,21 +70,18 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.toColorInt
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
-import com.example.anilist.TextViewCustom
+import com.example.anilist.ui.media_details.HtmlText
 import com.example.anilist.data.models.Anime
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Relation
 import com.example.anilist.data.models.Tag
-import com.example.anilist.ui.AniHomeViewModel
+import com.example.anilist.ui.home.AniHomeViewModel
 import kotlinx.coroutines.launch
 
-
 private const val TAG = "AnimeDetails"
-
 
 enum class DetailTabs {
     Overview,
@@ -145,7 +142,11 @@ fun AnimeDetails(
                         onNavigateToDetails
                     )
 
-                    1 -> Characters(characters.map { it.voiceActorLanguage }.distinct(), characters, navigateToCharacter = {})
+                    1 -> Characters(
+                        characters.map { it.voiceActorLanguage }.distinct(),
+                        characters,
+                        navigateToCharacter = {})
+
                     2 -> Staff()
                     3 -> Reviews()
                     4 -> Stats()
@@ -442,7 +443,7 @@ private fun OverviewDescription(description: String) {
     HeadLine("Description")
     val color = MaterialTheme.colorScheme.onSurface.toArgb()
     AndroidView(factory = { context ->
-        TextViewCustom(context, description, color)
+        HtmlText(context, description, color)
     })
 }
 

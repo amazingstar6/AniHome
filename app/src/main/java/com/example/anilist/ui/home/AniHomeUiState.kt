@@ -1,4 +1,4 @@
-package com.example.anilist.ui
+package com.example.anilist.ui.home
 
 import com.example.anilist.data.models.Anime
 import com.example.anilist.data.models.Character

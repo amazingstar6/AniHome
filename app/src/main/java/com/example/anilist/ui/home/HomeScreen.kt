@@ -1,4 +1,4 @@
-package com.example.anilist.ui
+package com.example.anilist.ui.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,12 +15,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
@@ -44,7 +46,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
@@ -57,27 +58,32 @@ private const val TAG = "AniHome"
 @Composable
 fun AniHome(
     aniHomeViewModel: AniHomeViewModel,
-    onNavigateToDetails: (Int) -> Unit
+    onNavigateToDetails: (Int) -> Unit,
+    onNavigateToNotification: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
     Scaffold(topBar = {
         CenterAlignedTopAppBar(title = {
+
             Text("Home")
-        },
-            navigationIcon = {
+        }, navigationIcon = {
+            IconButton(onClick = onNavigateToSettings) {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More",
-                    modifier = Modifier.padding(12.dp)
+                    imageVector = Icons.Outlined.Settings,
+                    contentDescription = "settings",
                 )
-            },
-            actions = {
+            }
+        }, actions = {
+            IconButton(onClick = onNavigateToNotification) {
                 Icon(
-                    imageVector = Icons.Default.AccountBox,
-                    contentDescription = "Profile",
-                    modifier = Modifier.padding(12.dp)
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "notifications",
+//                    modifier = Modifier.padding(Dimens.PaddingNormal)
                 )
-            })
+            }
+
+        })
     }) {
         Column(
             modifier = Modifier
@@ -185,9 +191,7 @@ fun AnimeRow(
         ) {
             items(animeList) { anime ->
                 AnimeCard(
-                    title = anime.title,
-                    coverImage = anime.coverImage,
-                    onNavigateToDetails = ({
+                    title = anime.title, coverImage = anime.coverImage, onNavigateToDetails = ({
                         onNavigateToDetails(anime.id)
                     })
                 )
@@ -229,10 +233,17 @@ fun AnimeRow(
 }
 
 @Composable
-fun HeadlineText(text: String) {
-    Text(
-        text, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(12.dp)
-    )
+fun HeadlineText(text: String, onNavigateToOverview: () -> Unit = {}) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(12.dp)
+        )
+        IconButton(onClick = onNavigateToOverview) {
+            Icon(imageVector = Icons.Outlined.ArrowForward, contentDescription = "anime overview")
+        }
+    }
 }
 
 @ExperimentalMaterial3Api
@@ -251,8 +262,8 @@ fun AnimeCard(
         .then(modifier)
         .clickable { onNavigateToDetails() }) {
         AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(coverImage).crossfade(true).build(),
+            model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
+                .build(),
             contentDescription = "Cover of $title",
             contentScale = ContentScale.FillWidth,
             modifier = Modifier
@@ -274,5 +285,5 @@ fun AnimeCard(
 @Preview(showBackground = true)
 @Composable
 fun MyAppPreview() {
-//    AniHome(onNavigateToDetails = {}, aniHomeViewModel = null)
+//    AniHome(onNavigateToDetails = {}, aniHomeViewModel = AniHomeViewModel(), onNavigateToNotification = {})
 }

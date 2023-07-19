@@ -1,19 +1,14 @@
-package com.example.anilist
+package com.example.anilist.ui.media_details
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import android.text.Html
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.graphics.toArgb
+import com.example.anilist.R
 
-class TextViewCustom @JvmOverloads constructor(
+class HtmlText @JvmOverloads constructor(
     context: Context,
     text: String,
     color: Int,

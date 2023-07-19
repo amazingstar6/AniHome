@@ -39,7 +39,8 @@ fun AniListBottomNavigationBar(
                             )
                         }
                     },
-                    label = { Text(stringResource(id = destination.iconTextId)) }
+                    label = { Text(stringResource(id = destination.iconTextId)) },
+                    alwaysShowLabel = true
                 )
             }
         }
