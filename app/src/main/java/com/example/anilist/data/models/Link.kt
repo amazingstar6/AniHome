@@ -1,4 +1,4 @@
-package com.example.anilist.data
+package com.example.anilist.data.models
 
 data class Link(
     val url: String,

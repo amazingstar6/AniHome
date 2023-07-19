@@ -1,4 +1,4 @@
-package com.example.anilist.data
+package com.example.anilist.data.models
 
 data class Character(
     val id: Int,

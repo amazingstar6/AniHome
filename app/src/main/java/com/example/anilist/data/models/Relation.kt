@@ -1,4 +1,4 @@
-package com.example.anilist.data
+package com.example.anilist.data.models
 
 data class Relation(
     val id: Int,

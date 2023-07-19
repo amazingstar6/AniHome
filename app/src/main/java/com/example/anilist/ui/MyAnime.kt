@@ -1,4 +1,4 @@
-package com.example.anilist
+package com.example.anilist.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,24 +22,23 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.anilist.data.Anime
-import com.example.anilist.ui.AniHomeViewModel
+import com.example.anilist.R
+import com.example.anilist.data.models.Anime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyAnime(aniHomeViewModel: AniHomeViewModel, navigateToDetails: (Int) -> Unit, isAnime: Boolean) {
+fun MyAnime(aniHomeViewModel: AniHomeViewModel, navigateToDetails: (Int) -> Unit, isAnime: Boolean, accessCode: String) {
     Scaffold(topBar = {
         TopAppBar(title = { Text(text = if (isAnime) "Watching" else "Reading") })
     }) {
 
-        aniHomeViewModel.loadMyAnime()
+        aniHomeViewModel.loadMyAnime(accessCode)
         val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
         val mediaList = trendingAnimeUiState.personalAnimeList
 

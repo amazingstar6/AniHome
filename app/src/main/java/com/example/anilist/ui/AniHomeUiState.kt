@@ -1,7 +1,7 @@
 package com.example.anilist.ui
 
-import com.example.anilist.data.Anime
-import com.example.anilist.data.Character
+import com.example.anilist.data.models.Anime
+import com.example.anilist.data.models.Character
 
 data class AniHomeUiState(
     val trendingAnime: List<Anime> = emptyList(),
@@ -18,4 +18,5 @@ data class AniHomeUiState(
     var currentDetailCharacters: List<Character> = emptyList(),
     val personalAnimeList: List<Anime> = emptyList(),
     val isLoggedIn: Boolean = false,
+    val accessCode: String = "",
 )

@@ -38,6 +38,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,9 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.anilist.GetTrendsQuery
 import com.example.anilist.R
-import com.example.anilist.data.Anime
+import com.example.anilist.data.models.Anime
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 private const val TAG = "AniHome"
@@ -56,7 +56,7 @@ private const val TAG = "AniHome"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AniHome(
-    aniHomeViewModel: AniHomeViewModel = viewModel(),
+    aniHomeViewModel: AniHomeViewModel,
     onNavigateToDetails: (Int) -> Unit
 ) {
     val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
@@ -253,11 +253,13 @@ fun AnimeCard(
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(coverImage).crossfade(true).build(),
-//                placeholder = PlaceholderPainter(MaterialTheme.colorScheme.surfaceTint),
             contentDescription = "Cover of $title",
+            contentScale = ContentScale.FillWidth,
             modifier = Modifier
+//                .fillMaxWidth()
+                .height(160.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .fillMaxWidth()
+
         )
         Text(
             text = title,
@@ -272,5 +274,5 @@ fun AnimeCard(
 @Preview(showBackground = true)
 @Composable
 fun MyAppPreview() {
-    AniHome(onNavigateToDetails = {})
+//    AniHome(onNavigateToDetails = {}, aniHomeViewModel = null)
 }

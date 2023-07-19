@@ -1,21 +1,31 @@
 package com.example.anilist.ui
 
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.ApolloClient
+import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.http.HttpHeader
+import com.apollographql.apollo3.api.http.HttpMethod
 import com.example.anilist.GetAnimeInfoQuery
 import com.example.anilist.GetMyAnimeQuery
 import com.example.anilist.GetTrendsQuery
-import com.example.anilist.data.Anime
-import com.example.anilist.data.Character
-import com.example.anilist.data.Link
-import com.example.anilist.data.Relation
-import com.example.anilist.data.Tag
+import com.example.anilist.data.models.Anime
+import com.example.anilist.data.models.Character
+import com.example.anilist.data.models.Link
+import com.example.anilist.data.models.Relation
+import com.example.anilist.data.models.Tag
+import com.example.anilist.data.repository.Title
+import com.example.anilist.data.repository.UserPreferencesRepository
+import com.example.anilist.data.repository.UserSettings
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaSort
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,15 +33,39 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
+import javax.inject.Inject
 
 private const val TAG = "AniHomeViewModel"
 
-class AniHomeViewModel : ViewModel() {
+@HiltViewModel
+class AniHomeViewModel @Inject constructor(private val userPreferencesRepository: UserPreferencesRepository) :
+    ViewModel() {
 
-    private val accessToken: String = "" //todo
+    val initialSetupEvent = liveData {
+        emit(userPreferencesRepository.fetchInitialPreferences())
+    }
+
+    // Keep the user preferences as a stream of changes
+    private val userPreferencesFlow = userPreferencesRepository.userPreferencesFlow
+    private val _userSettings: MutableLiveData<UserSettings> = MutableLiveData()
+    val userSettings: LiveData<UserSettings>
+        get() = _userSettings
+
+    init {
+        _userSettings.value = userPreferencesFlow.asLiveData().value
+    }
+
+    fun setAccessCode(accessCode: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setAccessCode(accessCode)
+        }
+    }
+
+
     private val apolloClient =
         ApolloClient.Builder().serverUrl("https://graphql.anilist.co").build()
     private val _uiState = MutableStateFlow(AniHomeUiState())
+
 
     init {
         loadTrendingAnime()
@@ -360,18 +394,67 @@ class AniHomeViewModel : ViewModel() {
         Log.i(TAG, "AniHomeViewModel was just cleared!")
     }
 
-    fun loadMyAnime() {
+    fun loadMyAnime(accessCode: String) {
+        Log.i(TAG, "My anime is being loaded!")
         viewModelScope.launch {
-            val response =
+            val response: ApolloResponse<GetMyAnimeQuery.Data> =
                 apolloClient.query(
                     GetMyAnimeQuery(
                     )
-                ).httpHeaders(listOf(HttpHeader("Authorization", "Bearer $accessToken"))).execute()
+                ).httpMethod(HttpMethod.Post)
+                    .httpHeaders(listOf(HttpHeader("Authorization", "Bearer $accessCode")))
+                    .execute()
             _uiState.update { currentState ->
+                val list: List<GetMyAnimeQuery.List> =
+                    response.data?.MediaListCollection?.lists?.filterNotNull().orEmpty()
+                Log.i(TAG, "The size of the received anime list is ${list.size}")
+                Log.i(TAG, response.exception?.message ?: "")
                 currentState.copy(
-                    personalAnimeList = emptyList() //todo
+                    personalAnimeList = list.map {
+                        Log.i(
+                            TAG,
+                            "The title of the current anime being processed in my anime is ${
+                                it.entries?.get(0)?.media?.title?.userPreferred ?: ""
+                            }"
+                        )
+                        Anime(
+                            id = it.entries?.get(0)?.media?.id ?: -1,
+                            title = it.entries?.get(0)?.media?.title?.userPreferred ?: "?",
+                            coverImage = it.entries?.get(0)?.media?.coverImage?.extraLarge ?: "",
+                            format = it.entries?.get(0)?.media?.format?.name ?: "",
+                            personalRating = it.entries?.get(0)?.score ?: (-1).toDouble(),
+                            personalEpisodeProgress = it.entries?.get(0)?.progress ?: -1,
+                            episodeAmount = it.entries?.get(0)?.media?.episodes ?: -1,
+                        )
+                    }
                 )
             }
         }
     }
+
+//    fun saveLoginDetails(userSettings: UserSettings) {
+//        viewModelScope.launch {
+//            dataStoreManager.saveToDataStore(userSettings)
+//        }
+//    }
+//
+//    fun getFromDataStore() {
+//        viewModelScope.launch {
+//            dataStoreManager.getFromDataStore().first()
+//        }
+//    }
 }
+
+//class AniHomeViewModelFactory(
+////    private val repository: TasksRepository,
+//    private val userPreferencesRepository: DataStoreManager
+//) : ViewModelProvider.Factory {
+//
+//    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+//        if (modelClass.isAssignableFrom(AniHomeViewModel::class.java)) {
+//            @Suppress("UNCHECKED_CAST")
+//            return TasksViewModel(repository, userPreferencesRepository) as T
+//        }
+//        throw IllegalArgumentException("Unknown ViewModel class")
+//    }
+//}

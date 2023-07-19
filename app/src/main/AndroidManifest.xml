@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:name=".AniHomeApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -28,14 +29,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <!--                 Accepts URIs that begin with "anihome://login” -->
+                <!-- Accepts URIs that begin with "anihome://login” -->
                 <data
                     android:host="login"
                     android:scheme="anihome" />
-<!--                                <data-->
-<!--                                    android:host="login"-->
-<!--                                    android:pathPattern=".*"-->
-<!--                                    android:scheme="anihome" />-->
             </intent-filter>
         </activity>
     </application>

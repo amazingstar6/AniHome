@@ -1,4 +1,4 @@
-package com.example.anilist.data
+package com.example.anilist.data.models
 
 data class Anime(
     val id: Int = -1,
@@ -19,6 +19,6 @@ data class Anime(
     val trailerLink: String = "",
     val externalLinks: List<Link> = emptyList(),
     // todo fill these
-    val personalRating: Int = -1,
+    val personalRating: Double = (-1).toDouble(),
     val personalEpisodeProgress: Int = -1,
 )

@@ -75,10 +75,10 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.TextViewCustom
-import com.example.anilist.data.Anime
-import com.example.anilist.data.Character
-import com.example.anilist.data.Relation
-import com.example.anilist.data.Tag
+import com.example.anilist.data.models.Anime
+import com.example.anilist.data.models.Character
+import com.example.anilist.data.models.Relation
+import com.example.anilist.data.models.Tag
 import com.example.anilist.ui.AniHomeViewModel
 import kotlinx.coroutines.launch
 
@@ -98,7 +98,7 @@ enum class DetailTabs {
 @Composable
 fun AnimeDetails(
     id: Int,
-    aniHomeViewModel: AniHomeViewModel = viewModel(),
+    aniHomeViewModel: AniHomeViewModel,
     navigateBack: () -> Unit,
     onNavigateToDetails: (Int) -> Unit,
 ) {

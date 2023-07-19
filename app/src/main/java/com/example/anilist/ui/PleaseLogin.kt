@@ -29,7 +29,10 @@ fun PleaseLogin() {
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        Button(onClick = { uriHandler.openUri("https://anilist.co/api/v2/oauth/authorize?client_id=13616&redirect_uri=anihome://login&response_type=code") }) {
+        Button(onClick = {
+//            uriHandler.openUri("https://anilist.co/api/v2/oauth/authorize?client_id=13616&redirect_uri=anihome://login&response_type=code")
+            uriHandler.openUri("https://anilist.co/api/v2/oauth/authorize?client_id=13616&response_type=token")
+        }) {
             Text("Login to AniList")
         }
     }
