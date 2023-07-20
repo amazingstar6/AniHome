@@ -1,34 +1,209 @@
-query getnot($page: Int = 1, $currentSeason: MediaSeason, $nextSeason: MediaSeason, $currentYear: Int, $nextYear: Int){
-    trending: Page(page: $page, perPage: 20) {
-        popularThisSeason: media(sort:POPULARITY_DESC, type: ANIME, season: $currentSeason, seasonYear: $currentYear) {
-            ...everyTrend
+query getNotifications($page: Int = 1, $perPage: Int = 20) {
+    Page(page: $page, perPage: $perPage) {
+        notifications {
+            ... on AiringNotification {
+                type
+                animeId
+                contexts
+                createdAt
+                episode
+                media {
+                    title {
+                        userPreferred
+                    }
+                    coverImage {
+                        extraLarge
+                    }
+                }
+            }
+            ... on FollowingNotification {
+                context
+                createdAt
+                type
+                userId
+            }
+            ... on ActivityMessageNotification {
+                activityId
+                context
+                createdAt
+                message {
+                    message
+                }
+                type
+                userId
+            }
+            ... on ActivityMentionNotification {
+                activityId
+                context
+                createdAt
+                type
+                userId
+                activity {
+                    ...activityFragment
+                }
+            }
+            ... on ActivityReplyNotification {
+                activityId
+                context
+                createdAt
+                type
+                userId
+                activity {
+                    ...activityFragment
+                }
+            }
+            ... on ActivityReplySubscribedNotification {
+                activityId
+                context
+                createdAt
+                userId
+                type
+                activity {
+                    ...activityFragment
+                }
+            }
+            ... on ActivityLikeNotification {
+                activity {
+                    ...activityFragment
+                }
+                activityId
+                context
+                createdAt
+                type
+                userId
+            }
+            ... on ActivityReplyLikeNotification {
+                activity {
+                    ...activityFragment
+                }
+                userId
+                activityId
+                context
+                createdAt
+                type
+            }
+            ... on ThreadCommentMentionNotification {
+                comment {
+                    comment(asHtml: true)
+                }
+                commentId
+                context
+                userId
+                type
+                thread {
+                    title
+                }
+            }
+            ... on ThreadCommentReplyNotification {
+                comment {
+                    comment(asHtml: true)
+                }
+                createdAt
+                context
+                commentId
+                thread {
+                    title
+                }
+                type
+                userId
+            }
+            ... on ThreadCommentSubscribedNotification {
+                commentId
+                context
+                createdAt
+                type
+                userId
+                comment {
+                    comment(asHtml: true)
+                }
+                thread {
+                    title
+                }
+            }
+            ... on ThreadCommentLikeNotification {
+                userId
+                type
+                createdAt
+                context
+                commentId
+                comment {
+                    comment(asHtml: true)
+                }
+                thread {
+                    title
+                }
+            }
+            ... on ThreadLikeNotification {
+                userId
+                type
+                threadId
+                createdAt
+                context
+                thread {
+                    title
+                }
+                comment {
+                    comment(asHtml: true)
+                }
+            }
+            ... on RelatedMediaAdditionNotification {
+                context
+                createdAt
+                type
+                mediaId
+            }
+            ... on MediaDataChangeNotification {
+                context
+                createdAt
+                mediaId
+                reason
+                type
+            }
+            ... on MediaMergeNotification {
+                context
+                createdAt
+                type
+                reason
+                mediaId
+                deletedMediaTitles
+            }
+            ... on MediaDeletionNotification {
+                context
+                createdAt
+                deletedMediaTitle
+                type
+                reason
+            }
         }
-        trendingNow: media(sort: TRENDING_DESC, type:ANIME) {
-            ...everyTrend
-        }
-        upcomingNextSeason: media(sort: POPULARITY_DESC, type: ANIME, season: $nextSeason, seasonYear: $nextYear) {
-            ...everyTrend
-        }
-        AllTimePopular: media(sort: POPULARITY_DESC, type:ANIME) {
-            ...everyTrend
-        }
-        top100Anime: media(sort: SCORE_DESC, type: ANIME) {
-            ...everyTrend
-        }
-
     }
-
 }
 
-fragment everyTrend on Media {
-    id
-    title {
-        romaji
-        english
-        native
-        userPreferred
+fragment activityFragment on ActivityUnion {
+    ... on TextActivity {
+        createdAt
+        text
+        type
+        userId
     }
-    coverImage {
-        extraLarge
+    ... on ListActivity {
+        createdAt
+        media {
+            title {
+                userPreferred
+            }
+            coverImage {
+                extraLarge
+            }
+        }
+        progress
+        type
+        userId
+    }
+    ... on MessageActivity {
+        createdAt
+        message
+        messengerId
+        recipientId
+        type
     }
 }

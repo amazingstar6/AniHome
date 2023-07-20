@@ -10,24 +10,34 @@ import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo3.api.Query
 import com.apollographql.apollo3.api.http.HttpHeader
 import com.apollographql.apollo3.api.http.HttpMethod
+import com.example.anilist.Apollo
 import com.example.anilist.GetAnimeInfoQuery
 import com.example.anilist.GetMyAnimeQuery
+import com.example.anilist.GetNotificationsQuery
 import com.example.anilist.GetTrendsQuery
+import com.example.anilist.ResultStatus
 import com.example.anilist.data.models.Anime
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Link
+import com.example.anilist.data.models.Notification
 import com.example.anilist.data.models.Relation
 import com.example.anilist.data.models.Tag
+import com.example.anilist.data.repository.NotificationRepository
 import com.example.anilist.data.repository.UserPreferencesRepository
 import com.example.anilist.data.repository.UserSettings
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaSort
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -37,7 +47,10 @@ import javax.inject.Inject
 private const val TAG = "AniHomeViewModel"
 
 @HiltViewModel
-class AniHomeViewModel @Inject constructor(private val userPreferencesRepository: UserPreferencesRepository) :
+class AniHomeViewModel @Inject constructor(
+    notificationRepository: NotificationRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
+) :
     ViewModel() {
 
     val initialSetupEvent = liveData {
@@ -47,12 +60,35 @@ class AniHomeViewModel @Inject constructor(private val userPreferencesRepository
     // Keep the user preferences as a stream of changes
     private val userPreferencesFlow = userPreferencesRepository.userPreferencesFlow
     private val _userSettings: MutableLiveData<UserSettings> = MutableLiveData()
+
+    //    fun getNotifications:
     val userSettings: LiveData<UserSettings>
         get() = _userSettings
 
     init {
         _userSettings.value = userPreferencesFlow.asLiveData().value
     }
+
+//    private fun parseNotification(data: GetNotificationsQuery.Data?): Flow<List<Notification>> {
+//        val list = listOf(
+//            Notification(
+//                type = data?.Page?.notifications?.get(0)?.__typename ?: ""
+//            )
+//        )
+//        return list.asFlow()
+//    }
+
+    val notifications = notificationRepository.getNotifications().asLiveData()
+//    val notifications: LiveData<List<Notification>> get() = _notifications
+//    fun fetchNotifications() {
+//        viewModelScope.launch {
+//            val data = Apollo.executeQuery(Apollo.apolloClient.query(GetNotificationsQuery()))
+//
+//            if (data.status == ResultStatus.SUCCESSFUL) {
+//                _notifications.value = data.data.
+//            }
+//        }
+//    }
 
     fun setAccessCode(accessCode: String) {
         viewModelScope.launch {

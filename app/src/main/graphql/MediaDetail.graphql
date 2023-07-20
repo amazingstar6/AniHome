@@ -1,0 +1,198 @@
+query getMediaDetail($id: Int!, $type: MediaType) {
+    Media(id: $id, type: $type) {
+        id
+        idMal
+        title {
+            romaji
+            english
+            native
+        }
+        format
+        status
+        description
+        startDate {
+            year
+            month
+            day
+        }
+        endDate {
+            year
+            month
+            day
+        }
+        season
+        seasonYear
+        #   The year & season
+        seasonInt
+        episodes
+        duration
+        chapters
+        volumes
+        countryOfOrigin
+        isLicensed
+        source
+        hashtag
+        # what is the id?
+        trailer {
+            id
+            site
+            thumbnail
+        }
+        # updatedAt is represented in the Unix timestamp
+        updatedAt
+        coverImage {
+            extraLarge
+            color
+        }
+        bannerImage
+        genres
+        synonyms
+        isAdult
+        averageScore
+        meanScore
+        # number of users with the media on their list
+        popularity
+        #     Locked media may not be added to lists our favorited. This may be due to the entry pending for deletion or other reasons.
+        isLocked
+        # amount of related activity in the past hour
+        trending
+        favourites
+        tags {
+            id
+            name
+            rank
+            isMediaSpoiler
+            userId
+        }
+        relations {
+            edges {
+                relationType
+                node {
+                    id
+                    title {
+                        native
+                    }
+                    coverImage {
+                        extraLarge
+                    }
+                }
+            }
+        }
+        characters {
+            edges {
+                node {
+                    id
+                    name {
+                        native
+                    }
+                    image {
+                        large
+                    }
+                }
+                role
+                name
+                voiceActors {
+                    name {
+                        native
+                    }
+                    image {
+                        large
+                    }
+                    languageV2
+                }
+                voiceActorRoles {
+                    voiceActor {
+                        name {
+                            native
+                        }
+                        image {
+                            large
+                        }
+                        languageV2
+                    }
+                    roleNotes
+                    dubGroup
+                }
+            }
+            nodes {
+                name {
+                    native
+                }
+                image {
+                    large
+                }
+            }
+        }
+        nextAiringEpisode {
+            id
+            airingAt
+            timeUntilAiring
+            episode
+            mediaId
+        }
+        airingSchedule {
+            nodes {
+                id
+            }
+        }
+        trends {
+            nodes {
+                mediaId
+            }
+        }
+        externalLinks {
+            id
+            url
+            site
+            siteId
+            type
+            language
+            color
+            icon
+            notes
+            isDisabled
+        }
+        streamingEpisodes {
+            title
+            thumbnail
+            url
+            site
+        }
+        rankings {
+            id,
+            rank
+            type
+            format
+            year
+            season
+        }
+        mediaListEntry {
+            id
+        }
+        reviews {
+            nodes {
+                id
+            }
+        }
+        recommendations {
+            nodes {
+                id
+            }
+        }
+        stats {
+            scoreDistribution {
+                score
+                amount
+            }
+            statusDistribution {
+                status
+                amount
+            }
+        }
+        siteUrl
+        autoCreateForumThread
+        isRecommendationBlocked
+        isReviewBlocked
+        modNotes
+    }
+}

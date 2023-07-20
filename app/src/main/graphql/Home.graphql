@@ -1,0 +1,34 @@
+query getTrendingMedia($page: Int = 1, $type: MediaType, $currentSeason: MediaSeason, $nextSeason: MediaSeason, $currentYear: Int, $nextYear: Int){
+    trending: Page(page: $page, perPage: 20) {
+        popularThisSeason: media(sort:POPULARITY_DESC, type: $type, season: $currentSeason, seasonYear: $currentYear) {
+            ...mediaTitleCover
+        }
+        trendingNow: media(sort: TRENDING_DESC, type:$type) {
+            ...mediaTitleCover
+        }
+        upcomingNextSeason: media(sort: POPULARITY_DESC, type: $type, season: $nextSeason, seasonYear: $nextYear) {
+            ...mediaTitleCover
+        }
+        AllTimePopular: media(sort: POPULARITY_DESC, type:$type) {
+            ...mediaTitleCover
+        }
+        top100Anime: media(sort: SCORE_DESC, type: $type) {
+            ...mediaTitleCover
+        }
+
+    }
+
+}
+
+fragment mediaTitleCover on Media {
+    id
+    title {
+        romaji
+        english
+        native
+        userPreferred
+    }
+    coverImage {
+        extraLarge
+    }
+}

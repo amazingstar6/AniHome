@@ -61,7 +61,7 @@ fun AniNavGraph(
         composable(
             AniListRoute.NOTIFICATION_ROUTE,
         ) {
-            NotificationScreen()
+            NotificationScreen(aniHomeViewModel = aniHomeViewModel)
         }
         composable(
             AniListRoute.SETTINGS
