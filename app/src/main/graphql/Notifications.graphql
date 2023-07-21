@@ -113,6 +113,12 @@ query getNotifications($page: Int = 1, $perPage: Int = 20) {
                 createdAt
                 type
                 userId
+                user {
+                    id
+                    avatar {
+                        large
+                    }
+                }
                 comment {
                     comment(asHtml: true)
                 }

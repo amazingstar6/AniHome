@@ -1,22 +1,22 @@
 package com.example.anilist.ui.home
 
-import com.example.anilist.data.models.Anime
 import com.example.anilist.data.models.Character
+import com.example.anilist.data.models.Media
 
 data class AniHomeUiState(
-    val trendingAnime: List<Anime> = emptyList(),
-    val popularAnime: List<Anime> = emptyList(),
-    val upcomingNextSeason: List<Anime> = emptyList(),
-    val allTimePopular: List<Anime> = emptyList(),
-    val top100Anime: List<Anime> = emptyList(),
+    val trendingAnime: List<Media> = emptyList(),
+    val popularAnime: List<Media> = emptyList(),
+    val upcomingNextSeason: List<Media> = emptyList(),
+    val allTimePopular: List<Media> = emptyList(),
+    val top100Anime: List<Media> = emptyList(),
     var trendingPage: Int = 1,
     var popularPage: Int = 1,
     var upcomingNextSeasonPage: Int = 1,
     var allTimePopularPage: Int = 1,
     var top100AnimePage: Int = 1,
-    var currentDetailAnime: Anime = Anime(),
+    var currentDetailAnime: Media = Media(note = ""),
     var currentDetailCharacters: List<Character> = emptyList(),
-    val personalAnimeList: List<Anime> = emptyList(),
+    val personalAnimeList: List<Media> = emptyList(),
     val isLoggedIn: Boolean = false,
-    val accessCode: String = "",
+    val accessCode: String = ""
 )

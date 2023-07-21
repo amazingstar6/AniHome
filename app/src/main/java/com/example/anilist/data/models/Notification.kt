@@ -2,6 +2,9 @@ package com.example.anilist.data.models
 
 data class Notification(
     val type: String = "",
-    val context: String = "",
-    val createdAt: Int = -1
+    val context: List<String?>? = emptyList(),
+    val createdAt: Int = -1,
+    val image: String = "",
+    val airedEpisode: Int = -1,
+    val title: String = ""
 )

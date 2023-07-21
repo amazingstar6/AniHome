@@ -10,45 +10,38 @@ import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.api.Query
 import com.apollographql.apollo3.api.http.HttpHeader
 import com.apollographql.apollo3.api.http.HttpMethod
-import com.example.anilist.Apollo
 import com.example.anilist.GetAnimeInfoQuery
 import com.example.anilist.GetMyAnimeQuery
-import com.example.anilist.GetNotificationsQuery
 import com.example.anilist.GetTrendsQuery
-import com.example.anilist.ResultStatus
-import com.example.anilist.data.models.Anime
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Link
-import com.example.anilist.data.models.Notification
+import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Relation
 import com.example.anilist.data.models.Tag
+import com.example.anilist.data.repository.HomeRepository
 import com.example.anilist.data.repository.NotificationRepository
 import com.example.anilist.data.repository.UserPreferencesRepository
 import com.example.anilist.data.repository.UserSettings
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaSort
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 private const val TAG = "AniHomeViewModel"
 
 @HiltViewModel
 class AniHomeViewModel @Inject constructor(
     notificationRepository: NotificationRepository,
+    homeRepository: HomeRepository,
     private val userPreferencesRepository: UserPreferencesRepository
 ) :
     ViewModel() {
@@ -96,7 +89,6 @@ class AniHomeViewModel @Inject constructor(
         }
     }
 
-
     private val apolloClient =
         ApolloClient.Builder().serverUrl("https://graphql.anilist.co").build()
     private val _uiState = MutableStateFlow(AniHomeUiState())
@@ -139,15 +131,16 @@ class AniHomeViewModel @Inject constructor(
         }
     }
 
-    private fun parseMediaHome(medias: List<GetTrendsQuery.Medium>): List<Anime> {
-        val mediaList: MutableList<Anime> = mutableListOf()
+    private fun parseMediaHome(medias: List<GetTrendsQuery.Medium>): List<Media> {
+        val mediaList: MutableList<Media> = mutableListOf()
         for (media in medias) {
             if (media.title?.userPreferred != null && media.coverImage?.extraLarge != null) {
                 mediaList.add(
-                    Anime(
+                    Media(
                         id = media.id,
                         title = media.title.userPreferred,
-                        coverImage = media.coverImage?.extraLarge
+                        coverImage = media.coverImage?.extraLarge,
+                        note = ""
                     )
                 )
             }
@@ -208,7 +201,9 @@ class AniHomeViewModel @Inject constructor(
     fun loadUpcomingNextSeason(increasePage: Boolean = false) {
         if (increasePage) {
             _uiState.update { currentState ->
-                currentState.copy(upcomingNextSeasonPage = currentState.upcomingNextSeasonPage.inc())
+                currentState.copy(
+                    upcomingNextSeasonPage = currentState.upcomingNextSeasonPage.inc()
+                )
             }
         }
         val month = Calendar.getInstance().get(Calendar.MONTH)
@@ -268,7 +263,7 @@ class AniHomeViewModel @Inject constructor(
                 apolloClient.query(
                     GetTrendsQuery(
                         Optional.Present(_uiState.value.allTimePopularPage),
-                        Optional.Present(listOf(MediaSort.POPULARITY_DESC)),
+                        Optional.Present(listOf(MediaSort.POPULARITY_DESC))
                     )
                 ).execute()
             _uiState.update { currentState ->
@@ -293,7 +288,7 @@ class AniHomeViewModel @Inject constructor(
                 apolloClient.query(
                     GetTrendsQuery(
                         Optional.Present(_uiState.value.top100AnimePage),
-                        Optional.Present(listOf(MediaSort.SCORE_DESC)),
+                        Optional.Present(listOf(MediaSort.SCORE_DESC))
                     )
                 ).execute()
             _uiState.update { currentState ->
@@ -303,7 +298,6 @@ class AniHomeViewModel @Inject constructor(
                             .orEmpty()
                     )
                 )
-
             }
         }
     }
@@ -346,7 +340,7 @@ class AniHomeViewModel @Inject constructor(
         return characters
     }
 
-    private fun parseMedia(anime: GetAnimeInfoQuery.Media?): Anime {
+    private fun parseMedia(anime: GetAnimeInfoQuery.Media?): Media {
         val tags: MutableList<Tag> = mutableListOf()
         for (tag in anime?.tags.orEmpty()) {
             if (tag != null) {
@@ -392,18 +386,22 @@ class AniHomeViewModel @Inject constructor(
                 )
             )
         }
-        return Anime(title = anime?.title?.native ?: "Unknown",
+        return Media(
+            title = anime?.title?.native ?: "Unknown",
             coverImage = anime?.coverImage?.extraLarge ?: "",
             format = anime?.format?.name ?: "Unknown",
             seasonYear = anime?.seasonYear.toString(),
             episodeAmount = anime?.episodes ?: 0,
             averageScore = anime?.averageScore ?: 0,
-            tags = tags,
+            genres = genres,
             description = anime?.description ?: "No description found",
             relations = relations,
-            infoList = mapOf("format" to anime?.format?.name.orEmpty(),
+            infoList = mapOf(
+                "format" to anime?.format?.name.orEmpty(),
                 "status" to anime?.status?.name?.lowercase()
-                    ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                    ?.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                    }
                     .orEmpty(),
                 "startDate" to if (anime?.startDate != null) "${anime.startDate.day}-${anime.startDate.month}-${anime.startDate.year}" else "Unknown",
                 "endDate" to if (anime?.endDate?.year != null && anime.endDate.month != null && anime.endDate.day != null) "${anime.endDate.day}-${anime.endDate.month}-${anime.endDate.year}" else "Unknown",
@@ -414,12 +412,15 @@ class AniHomeViewModel @Inject constructor(
                 "licensed" to anime?.isLicensed.toString(),
                 "updatedAt" to anime?.updatedAt.toString(),
                 "synonyms" to synonyms,
-                "nsfw" to anime?.isAdult.toString()),
-            genres = genres,
+                "nsfw" to anime?.isAdult.toString()
+            ),
+            tags = tags,
             trailerImage = anime?.trailer?.thumbnail ?: "",
             // todo add dailymotion
             trailerLink = if (anime?.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${anime.trailer.id}" else if (anime?.trailer?.site == "dailymotion") "" else "",
-            externalLinks = externalLinks)
+            externalLinks = externalLinks,
+            note = ""
+        )
     }
 
     override fun onCleared() {
@@ -432,8 +433,7 @@ class AniHomeViewModel @Inject constructor(
         viewModelScope.launch {
             val response: ApolloResponse<GetMyAnimeQuery.Data> =
                 apolloClient.query(
-                    GetMyAnimeQuery(
-                    )
+                    GetMyAnimeQuery()
                 ).httpMethod(HttpMethod.Post)
                     .httpHeaders(listOf(HttpHeader("Authorization", "Bearer $accessCode")))
                     .execute()
@@ -453,14 +453,15 @@ class AniHomeViewModel @Inject constructor(
                                 it.entries?.get(0)?.media?.title?.userPreferred ?: ""
                             }"
                         )
-                        Anime(
+                        Media(
                             id = it.entries?.get(0)?.media?.id ?: -1,
                             title = it.entries?.get(0)?.media?.title?.userPreferred ?: "?",
                             coverImage = it.entries?.get(0)?.media?.coverImage?.extraLarge ?: "",
                             format = it.entries?.get(0)?.media?.format?.name ?: "",
+                            episodeAmount = it.entries?.get(0)?.media?.episodes ?: -1,
                             personalRating = it.entries?.get(0)?.score ?: (-1).toDouble(),
                             personalEpisodeProgress = it.entries?.get(0)?.progress ?: -1,
-                            episodeAmount = it.entries?.get(0)?.media?.episodes ?: -1,
+                            note = ""
                         )
                     }
                 )

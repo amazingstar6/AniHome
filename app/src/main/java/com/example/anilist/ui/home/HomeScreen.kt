@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
-import com.example.anilist.data.models.Anime
+import com.example.anilist.data.models.Media
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 private const val TAG = "AniHome"
@@ -180,7 +180,7 @@ private fun AniSearchBar() {
 @OptIn(ExperimentalMaterial3Api::class)
 fun AnimeRow(
     onNavigateToDetails: (Int) -> Unit,
-    animeList: List<Anime>,
+    animeList: List<Media>,
     loadMoreAnime: () -> Unit,
     reloadAnime: () -> Unit
 ) {

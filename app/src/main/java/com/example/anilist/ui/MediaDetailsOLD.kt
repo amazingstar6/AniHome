@@ -74,7 +74,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.ui.media_details.HtmlText
-import com.example.anilist.data.models.Anime
+import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Relation
 import com.example.anilist.data.models.Tag
@@ -173,7 +173,7 @@ fun Staff() {
 
 @Composable
 private fun Overview(
-    anime: Anime,
+    anime: Media,
     onNavigateToDetails: (Int) -> Unit
 ) {
     Column(
@@ -365,7 +365,7 @@ fun Characters(
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun OverviewAnimeCoverDetails(anime1: Anime, genres: List<String>) {
+private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
     Row {
         if (anime1.coverImage != "") {
             AsyncImage(
@@ -450,7 +450,7 @@ private fun OverviewDescription(description: String) {
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 private fun OverviewExternalLinks(
-    anime1: Anime,
+    anime1: Media,
     openUri: (String) -> Unit
 ) {
     HeadLine("External links")
@@ -546,7 +546,7 @@ private fun OverViewTags(tags: List<Tag>, showSpoilers: Boolean, toggleSpoilers:
 }
 
 @Composable
-private fun OverViewInfo(anime1: Anime) {
+private fun OverViewInfo(anime1: Media) {
     HeadLine("Info")
     Row {
         Column(

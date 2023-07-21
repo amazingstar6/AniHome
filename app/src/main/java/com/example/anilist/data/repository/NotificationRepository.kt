@@ -6,7 +6,6 @@ import com.example.anilist.GetNotificationsQuery
 import com.example.anilist.ResultData
 import com.example.anilist.ResultStatus
 import com.example.anilist.data.models.Notification
-import dagger.Provides
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -38,11 +37,31 @@ class NotificationRepository @Inject constructor() {
     private fun parseNotification(data: GetNotificationsQuery.Data?): List<Notification> {
         val list = mutableListOf<Notification>()
         for (notification in data?.Page?.notifications.orEmpty()) {
-            list.add(
-                Notification(
-                    type = notification?.__typename ?: "",
+            notification?.onAiringNotification.let {
+                val onAiringNotification = notification?.onAiringNotification
+                list.add(
+                    Notification(
+                        type = notification?.__typename ?: "",
+                        context = onAiringNotification?.contexts,
+                        image = onAiringNotification?.media?.coverImage?.extraLarge
+                            ?: "",
+                        airedEpisode = onAiringNotification?.episode ?: -1,
+                        createdAt = onAiringNotification?.createdAt ?: -1,
+                        title = onAiringNotification?.media?.title?.userPreferred ?: ","
+                    )
                 )
-            )
+            }
+            notification?.onThreadCommentSubscribedNotification.let {
+                val onThreadCommentSubscribedNotification =
+                    notification?.onThreadCommentSubscribedNotification
+                list.add(
+                    Notification(
+                        type = notification?.__typename ?: "",
+                        image = onThreadCommentSubscribedNotification?.user?.avatar?.large ?: "",
+                        createdAt = onThreadCommentSubscribedNotification?.createdAt ?: -1,
+                    )
+                )
+            }
         }
         return list
     }

@@ -53,6 +53,7 @@ android {
 
 dependencies {
     implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
+    implementation 'androidx.compose.material:material:1.4.3'
     def lifecycle_version = "2.6.1"
     def apollo_version = "4.0.0-alpha.1"
 
@@ -65,7 +66,7 @@ dependencies {
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.ui:ui-graphics'
     implementation 'androidx.compose.ui:ui-tooling-preview'
-    implementation 'androidx.compose.material3:material3:1.2.0-alpha01'
+    implementation 'androidx.compose.material3:material3:1.2.0-alpha02'
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.compose.ui:ui-viewbinding:1.4.3'
@@ -102,6 +103,10 @@ dependencies {
     implementation "androidx.compose.runtime:runtime-livedata:1.4.3"
     // For apollo caching
     implementation("com.apollographql.apollo3:apollo-normalized-cache:$apollo_version")
+    // For html compose
+    implementation 'com.github.ireward:compose-html:1.0.2'
+    // For kotlinx date time
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
 }
 
 apollo {

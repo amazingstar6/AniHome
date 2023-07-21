@@ -1,6 +1,6 @@
 package com.example.anilist.data.models
 
-data class Anime(
+data class Media(
     val id: Int = -1,
     val title: String = "?",
     val coverImage: String = "",
@@ -20,5 +20,8 @@ data class Anime(
     val externalLinks: List<Link> = emptyList(),
     // todo fill these
     val personalRating: Double = (-1).toDouble(),
-    val personalEpisodeProgress: Int = -1,
+    var personalEpisodeProgress: Int = -1,
+    val isPrivate: Boolean = false,
+    val note: String = "",
+    val rewatches: Int = -1
 )

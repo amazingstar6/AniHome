@@ -20,6 +20,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.anilist.ui.home.AniHomeViewModel
+import com.example.anilist.ui.media_details.MediaDetailsViewModel
 import com.example.anilist.ui.navigation.AniListBottomNavigationBar
 import com.example.anilist.ui.navigation.AniListNavigationActions
 import com.example.anilist.ui.navigation.AniListRoute
@@ -80,6 +81,7 @@ class MainActivity : ComponentActivity() {
                         navBackStackEntry?.destination?.route ?: AniListRoute.HOME_ROUTE
 
                     val aniHomeViewModel: AniHomeViewModel = hiltViewModel()
+//                    val mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel()
 
                     aniHomeViewModel.initialSetupEvent.observe(this) { initialSetupEvent ->
                         observePreferenceChanges()

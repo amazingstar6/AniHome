@@ -1,10 +1,10 @@
 package com.example.anilist.data.repository
 
 import androidx.lifecycle.LiveData
-import com.example.anilist.data.models.Anime
+import com.example.anilist.data.models.Media
 
 interface MediaRepository {
-    fun observeMedia(mediaId: Int): LiveData<Anime>
+    fun observeMedia(mediaId: Int): LiveData<Media>
 
     suspend fun refreshMedia(mediaId: Int)
 }

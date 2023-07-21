@@ -57,7 +57,7 @@ query getMyAnime {
 }
 
 query getAnimeInfo($id: Int!) {
-    Media(id: $id, type:ANIME) {
+    Media(id: $id) {
         id
         idMal
         title {

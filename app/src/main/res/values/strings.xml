@@ -7,4 +7,6 @@
     <string name="manga">Manga</string>
     <string name="failed_to_load">Failed to load</string>
     <string name="mark_all_as_read">Mark all as read</string>
+    <string name="plus_one">+ 1</string>
+    <string name="minus_one">− 1</string>
 </resources>
