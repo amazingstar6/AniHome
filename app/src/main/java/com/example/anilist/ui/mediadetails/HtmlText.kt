@@ -1,4 +1,4 @@
-package com.example.anilist.ui.media_details
+package com.example.anilist.ui.mediadetails
 
 import android.content.Context
 import android.text.Html

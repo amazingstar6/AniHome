@@ -73,7 +73,7 @@ import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
-import com.example.anilist.ui.media_details.HtmlText
+import com.example.anilist.ui.mediadetails.HtmlText
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Relation

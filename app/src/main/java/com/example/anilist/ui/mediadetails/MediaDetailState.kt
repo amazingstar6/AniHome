@@ -1,4 +1,4 @@
-package com.example.anilist.ui.media_details
+package com.example.anilist.ui.mediadetails
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable

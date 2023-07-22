@@ -219,8 +219,42 @@ query GetStaffInfo($id:Int!, $page:Int = 1, $perPage:Int = 25) {
                 favouriteOrder
             }
             pageInfo {
-                hasNextPage
                 perPage
+                currentPage
+                lastPage
+                hasNextPage
+            }
+        }
+    }
+}
+
+query GetReviewsOfMedia($id: Int!, $page:Int = 1, $perPage:Int = 25) {
+    Media(id: $id) {
+        reviews(page: $page, perPage: $perPage) {
+            nodes {
+                id
+                userId
+                body(asHtml: true)
+                summary
+                user {
+                    name
+                    avatar {
+                        large
+                    }
+                }
+                rating
+                ratingAmount
+                userRating
+                score
+                createdAt
+                updatedAt
+                private
+            }
+            pageInfo {
+                perPage
+                currentPage
+                lastPage
+                hasNextPage
             }
         }
     }

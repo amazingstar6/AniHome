@@ -1,9 +1,10 @@
-package com.example.anilist.ui.media_details
+package com.example.anilist.ui.mediadetails
 
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -59,7 +60,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -79,7 +79,6 @@ import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Relation
 import com.example.anilist.data.models.Tag
-import com.ireward.htmlcompose.HtmlText
 import kotlinx.coroutines.launch
 
 private const val TAG = "AnimeDetails"
@@ -99,7 +98,8 @@ fun MediaDetail(
     modifier: Modifier = Modifier,
     mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onNavigateToDetails: (Int) -> Unit
+    onNavigateToDetails: (Int) -> Unit,
+    onNavigateToReviewDetails: (Int) -> Unit
 ) {
     val pagerState = rememberPagerState(
         initialPage = 0,
@@ -112,13 +112,16 @@ fun MediaDetail(
     val media by mediaDetailsViewModel.media.observeAsState()
     val characters by mediaDetailsViewModel.charachters.observeAsState(initial = emptyList())
     val staff by mediaDetailsViewModel.staff.observeAsState(initial = emptyList())
+    val reviews by mediaDetailsViewModel.reviews.observeAsState(initial = emptyList())
 
     mediaDetailsViewModel.fetchMedia(mediaId)
 
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(title = {
             Text(
-                text = media?.title ?: ""
+                text = media?.title ?: "",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }, navigationIcon = {
             IconButton(onClick = onNavigateBack) {
@@ -150,7 +153,11 @@ fun MediaDetail(
                 when (page) {
                     0 -> {
                         if (media == null) {
-                            CircularProgressIndicator()
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                )
+                            }
                         } else {
                             Overview(
                                 media,
@@ -171,7 +178,10 @@ fun MediaDetail(
                         mediaDetailsViewModel.fetchStaff(mediaId, 1)
                         StaffScreen(staff) { mediaDetailsViewModel.fetchStaff(mediaId, it) }
                     }
-                    3 -> Reviews()
+                    3 -> {
+                        mediaDetailsViewModel.fetchReviews(mediaId)
+                        Reviews(reviews, onNavigateToReviewDetails)
+                    }
                     4 -> Stats()
                 }
             }
@@ -182,11 +192,6 @@ fun MediaDetail(
 @Composable
 fun Stats() {
     Text(text = "Stats", modifier = Modifier.fillMaxSize())
-}
-
-@Composable
-fun Reviews() {
-    Text(text = "Reviews", modifier = Modifier.fillMaxSize())
 }
 
 @Composable
@@ -469,8 +474,14 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
 @Composable
 private fun OverviewDescription(description: String) {
     HeadLine("Description")
-    val color = MaterialTheme.colorScheme.onSurface.toArgb()
-    HtmlText(text = description, style = MaterialTheme.typography.bodyMedium)
+//    val color = MaterialTheme.colorScheme.onSurface.toArgb()
+//    HtmlText(text = description, style = MaterialTheme.typography.bodyMedium)
+    de.charlex.compose.HtmlText(
+        text = description,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+//                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
+    )
 //    AndroidView(factory = { context ->
 //        HtmlText(context, description, color)
 //    })

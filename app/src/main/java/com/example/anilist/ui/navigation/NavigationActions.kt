@@ -4,8 +4,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.anilist.R
 
-
 object AniListRoute {
+    const val REVIEW_DETAIL_ROUTE: String = "ReviewDetail"
     const val SETTINGS: String = "Settings"
     const val NOTIFICATION_ROUTE: String = "Notification"
     const val HOME_ROUTE = "Home"
@@ -41,6 +41,12 @@ class AniListNavigationActions(private val navController: NavController) {
             route = AniListRoute.ANIME_DETAIL_ROUTE + "/$mediaId"
         )
     }
+
+    fun navigateToReviewDetails(reviewId: Int) {
+        navController.navigate(
+            route = AniListRoute.REVIEW_DETAIL_ROUTE + "/$reviewId"
+        )
+    }
 }
 
 val TOP_LEVEL_DESTINATIONS = listOf(
@@ -73,5 +79,5 @@ val TOP_LEVEL_DESTINATIONS = listOf(
         selectedIcon = R.drawable.navigation_forum_filled,
         unselectedIcon = R.drawable.navigation_forum_outlined,
         iconTextId = R.string.forum
-    ),
+    )
 )

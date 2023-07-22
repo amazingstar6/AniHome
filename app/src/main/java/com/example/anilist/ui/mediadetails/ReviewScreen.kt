@@ -1,0 +1,150 @@
+package com.example.anilist.ui.mediadetails
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.anilist.R
+import com.example.anilist.Utils
+import com.example.anilist.data.models.Review
+import com.example.anilist.ui.Dimens
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Reviews(reviews: List<Review>, onNavigateToReviewDetails: (Int) -> Unit) {
+    LazyColumn {
+        items(reviews) { review ->
+            Card(
+                onClick = {onNavigateToReviewDetails(review.id)},
+                modifier = Modifier.padding(
+                    top = Dimens.PaddingNormal,
+                    bottom = Dimens.PaddingSmall,
+                    start = Dimens.PaddingNormal,
+                    end = Dimens.PaddingNormal
+                )
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(Dimens.PaddingNormal),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(review.userAvatar).crossfade(true).build(),
+                        placeholder = painterResource(id = R.drawable.no_image),
+                        contentDescription = "avatar of ${review.userName}",
+                        modifier = Modifier
+                            .clip(CircleShape)
+                    )
+                    Column {
+                        Text(text = review.userName)
+                        Text(text = Utils.getRelativeTime(review.createdAt.toLong()))
+                    }
+                    IconButton(onClick = { /*TODO*/ }) {
+                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "more")
+                    }
+                }
+                Text(
+                    text = review.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+                )
+                de.charlex.compose.HtmlText(
+                    text = review.body,
+                    maxLines = 7,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
+                    modifier = Modifier.padding(Dimens.PaddingNormal)
+                )
+            }
+            Row(
+                modifier = Modifier.padding(horizontal = Dimens.PaddingNormal).fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                UpDownVote(
+                    review.upvotes,
+                    R.drawable.media_detail_thumbs_up,
+                    "upvote"
+                )
+                UpDownVote(
+                    review.totalVotes - review.upvotes,
+                    iconId = R.drawable.media_detail_thumb_down,
+                    contentDescription = "downvote",
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "${review.score}/100",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(end = Dimens.PaddingSmall)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpDownVote(
+    totalVotes: Int,
+    iconId: Int,
+    contentDescription: String,
+    modifier: Modifier = Modifier
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
+        IconButton(onClick = { /*TODO*/ }) {
+            Icon(
+                painter = painterResource(id = iconId),
+                contentDescription = contentDescription
+            )
+        }
+        Text(text = totalVotes.toString())
+    }
+}
+
+@Composable
+fun ReviewDetailScreen(reviewId: Int) {
+    Text(text = "Review detail screen of $reviewId")
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ReviewsPreview() {
+    Reviews(
+        listOf(
+            Review(
+                title = "An unbalanced, yet entertaining and explosive season of KnY",
+                userName = "SlayerArt",
+                body = "I can't fucking believe it. They've done it again (sort of).It's no secret that ufotable have been killing it with their new projects over the last few years. The Heaven's Feel trilogy is stunning, and the two previous seasons of Demon Slayer were superb in the animation",
+                upvotes = 43,
+                totalVotes = 64,
+                score = 80,
+                createdAt = 1533109209
+            )
+        )
+    ) { }
+}

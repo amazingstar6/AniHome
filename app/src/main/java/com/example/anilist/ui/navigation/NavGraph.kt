@@ -17,7 +17,8 @@ import com.example.anilist.ui.home.AniHome
 import com.example.anilist.ui.home.AniHomeViewModel
 import com.example.anilist.ui.home.NotificationScreen
 import com.example.anilist.ui.home.SettingsScreen
-import com.example.anilist.ui.media_details.MediaDetail
+import com.example.anilist.ui.mediadetails.MediaDetail
+import com.example.anilist.ui.mediadetails.ReviewDetailScreen
 import com.example.anilist.ui.my_media.MyMediaScreen
 
 private const val TAG = "AniNavGraph"
@@ -60,9 +61,17 @@ fun AniNavGraph(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToDetails = navigationActions::navigateToMediaDetails
+                onNavigateToDetails = navigationActions::navigateToMediaDetails,
+                onNavigateToReviewDetails = navigationActions::navigateToReviewDetails
             )
         }
+        composable(
+            route = AniListRoute.REVIEW_DETAIL_ROUTE + "/{reviewId}",
+            arguments = listOf(navArgument("reviewId") { type = NavType.IntType }),
+            content = { backStackEntry -> ReviewDetailScreen(
+                reviewId = backStackEntry.arguments?.getInt("reviewId") ?: -1
+            ) }
+        )
         composable(
             AniListRoute.NOTIFICATION_ROUTE
         ) {

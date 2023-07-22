@@ -6,13 +6,17 @@ import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.Apollo
 import com.example.anilist.GetMediaDetailQuery
+import com.example.anilist.GetReviewsOfMediaQuery
 import com.example.anilist.GetStaffInfoQuery
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Relation
+import com.example.anilist.data.models.Review
+import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.data.models.Staff
 import com.example.anilist.data.models.Tag
+import com.example.anilist.type.ReviewRating
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -79,6 +83,52 @@ class MediaDetailsRepository @Inject constructor() {
             // handle exception here,, these are mainly for network errors
         }
         return emptyList()
+    }
+
+    suspend fun fetchReviews(mediaId: Int): List<Review> {
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    GetReviewsOfMediaQuery(mediaId)
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+            }
+            val data = result.data?.Media?.reviews
+            if (data != null) {
+                return parseReview(data)
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here,, these are mainly for network errors
+        }
+        return emptyList()
+    }
+
+    private fun parseReview(reviews: GetReviewsOfMediaQuery.Reviews?): List<Review> {
+        val list = mutableListOf<Review>()
+        for (review in reviews?.nodes.orEmpty()) {
+            list.add(
+                Review(
+                    id = review?.id ?: -1,
+                    title = review?.summary ?: "",
+                    userName = review?.user?.name ?: "",
+                    createdAt = review?.createdAt ?: -1,
+                    body = review?.body ?: "",
+                    score = review?.score ?: -1,
+                    upvotes = review?.rating ?: -1,
+                    totalVotes = review?.ratingAmount ?: -1,
+                    userRating = when (review?.userRating) {
+                        ReviewRating.NO_VOTE -> ReviewRatingStatus.NO_VOTE
+                        ReviewRating.UP_VOTE -> ReviewRatingStatus.UP_VOTE
+                        ReviewRating.DOWN_VOTE -> ReviewRatingStatus.DOWN_VOTE
+                        else -> ReviewRatingStatus.NO_VOTE
+                    },
+                    userAvatar = review?.user?.avatar?.large ?: ""
+                )
+            )
+        }
+        return list
     }
 
     private fun parseMedia(anime: GetMediaDetailQuery.Media?): Media {

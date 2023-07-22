@@ -1,4 +1,4 @@
-package com.example.anilist.ui.media_details
+package com.example.anilist.ui.mediadetails
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.Staff
 import com.example.anilist.data.repository.MediaDetailsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,10 +34,12 @@ class MediaDetailsViewModel @Inject constructor(
 //        config = PagingConfig(pageSize = 25, enablePlaceholders = false),
 //        pagingSourceFactory = { mediaDetailsRepository.pagingRepository()}
 //    )
-    private val _staff =
-        MutableLiveData<List<Staff>>()
+    private val _staff = MutableLiveData<List<Staff>>()
 
     val staff = _staff
+
+    private val _reviews = MutableLiveData<List<Review>>()
+    val reviews = _reviews
 
 //    init {
 //        fetchMedia()
@@ -60,6 +63,13 @@ class MediaDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             val data = mediaDetailsRepository.fetchStaff(mediaId, page)
             _staff.value = (_staff.value?.plus(data)) ?: data
+        }
+    }
+
+    fun fetchReviews(mediaId: Int) {
+        viewModelScope.launch {
+            val data = mediaDetailsRepository.fetchReviews(mediaId)
+            _reviews.value = data
         }
     }
 

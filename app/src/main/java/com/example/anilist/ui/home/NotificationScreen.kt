@@ -36,14 +36,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
+import com.example.anilist.Utils
 import com.example.anilist.data.models.Notification
 import com.example.anilist.ui.Dimens
-
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun NotificationScreen(aniHomeViewModel: AniHomeViewModel, onNavigateBack: () -> Unit) {
-
     val notifications = aniHomeViewModel.notifications.observeAsState()
     Notifications(
         notifications?.value?.data ?: emptyList(),
@@ -77,7 +76,7 @@ private fun Notifications(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.Outlined.ArrowBack,
-                    contentDescription = "back",
+                    contentDescription = "back"
                 )
             }
         })
@@ -90,10 +89,12 @@ private fun Notifications(
                         selected = selected,
                         onClick = { currentIndex = filter },
                         leadingIcon = {
-                            if (selected) Icon(
-                                Icons.Outlined.Check,
-                                contentDescription = null
-                            )
+                            if (selected) {
+                                Icon(
+                                    Icons.Outlined.Check,
+                                    contentDescription = null
+                                )
+                            }
                         },
                         label = { Text(text = filter.name) },
                         modifier = Modifier.padding(end = Dimens.PaddingSmall)
@@ -109,33 +110,35 @@ private fun Notifications(
                 Text(text = stringResource(R.string.mark_all_as_read))
             }
             LazyColumn() {
-                items(notifications.filter {
-                    when (currentIndex) {
-                        FilterList.ALL -> {
-                            true
-                        }
+                items(
+                    notifications.filter {
+                        when (currentIndex) {
+                            FilterList.ALL -> {
+                                true
+                            }
 
-                        FilterList.AIRING -> {
-                            it.type == "AiringNotification"
-                        }
+                            FilterList.AIRING -> {
+                                it.type == "AiringNotification"
+                            }
 
-                        FilterList.ACTIVITY -> {
-                            it.type == "Activity"
-                        }
+                            FilterList.ACTIVITY -> {
+                                it.type == "Activity"
+                            }
 
-                        FilterList.FORUM -> {
-                            it.type == "ThreadCommentSubscribedNotification"
-                        }
+                            FilterList.FORUM -> {
+                                it.type == "ThreadCommentSubscribedNotification"
+                            }
 
-                        FilterList.FOLLOWS -> {
-                            it.type == "Follows"
-                        }
+                            FilterList.FOLLOWS -> {
+                                it.type == "Follows"
+                            }
 
-                        FilterList.MEDIA -> {
-                            it.type == "Media"
+                            FilterList.MEDIA -> {
+                                it.type == "Media"
+                            }
                         }
                     }
-                }) {
+                ) {
                     Column() {
                         Row {
                             AsyncImage(
@@ -152,7 +155,7 @@ private fun Notifications(
                             )
                             Column(modifier = Modifier.padding(Dimens.PaddingNormal)) {
                                 Text(
-                                    text = getRelativeTime(it.createdAt.toLong()),
+                                    text = Utils.getRelativeTime(it.createdAt.toLong()),
                                     style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -171,30 +174,6 @@ private fun Notifications(
     }
 }
 
-fun getRelativeTime(timestamp: Long): String {
-    val currentTime = System.currentTimeMillis() / 1000
-    val elapsedTime = currentTime - timestamp
-
-    val seconds = elapsedTime
-    val minutes = seconds / 60
-    val hours = minutes / 60
-    val days = hours / 24
-    val weeks = days / 7
-    val months = weeks / 4
-    val years = months / 12
-
-    return when {
-        years > 0 -> "$years ${if (years == (1).toLong()) "year" else "years"} ago"
-        months > 0 -> "$months ${if (months == (1).toLong()) "month" else "months"} ago"
-        weeks > 0 -> "$weeks ${if (weeks == (1).toLong()) "week" else "weeks"} ago"
-        days > 0 -> "$days ${if (days == (1).toLong()) "day" else "days"} ago"
-        hours > 0 -> "$hours ${if (hours == (1).toLong()) "hour" else "hours"} ago"
-        minutes > 0 -> "$minutes ${if (minutes == (1).toLong()) "minute" else "minutes"} ago"
-        else -> "Just now"
-    }
-}
-
-
 @Preview(showBackground = true)
 @Composable
 fun NotificationScreenPreview() {
@@ -208,5 +187,6 @@ fun NotificationScreenPreview() {
             )
         ),
         markAllAsRead = { },
-        onNavigateBack = { })
+        onNavigateBack = { }
+    )
 }
