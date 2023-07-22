@@ -54,6 +54,9 @@ android {
 dependencies {
     implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
     implementation 'androidx.compose.material:material:1.4.3'
+    // For paging data
+    implementation("androidx.paging:paging-runtime:3.1.1")
+
     def lifecycle_version = "2.6.1"
     def apollo_version = "4.0.0-alpha.1"
 

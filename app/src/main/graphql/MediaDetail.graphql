@@ -1,5 +1,5 @@
-query getMediaDetail($id: Int!, $type: MediaType) {
-    Media(id: $id, type: $type) {
+query getMediaDetail($id: Int!) {
+    Media(id: $id) {
         id
         idMal
         title {
@@ -194,5 +194,34 @@ query getMediaDetail($id: Int!, $type: MediaType) {
         isRecommendationBlocked
         isReviewBlocked
         modNotes
+    }
+}
+
+query GetStaffInfo($id:Int!, $page:Int = 1, $perPage:Int = 25) {
+    Media(id:$id) {
+        staff(page: $page, perPage: $perPage) {
+            edges {
+                node {
+                    name {
+                        first
+                        middle
+                        last
+                        full
+                        native
+                        alternative
+                        userPreferred
+                    }
+                    image {
+                        large
+                    }
+                }
+                role
+                favouriteOrder
+            }
+            pageInfo {
+                hasNextPage
+                perPage
+            }
+        }
     }
 }

@@ -57,10 +57,10 @@ fun AniNavGraph(
         ) { backStackEntry ->
             MediaDetail(
                 mediaId = backStackEntry.arguments?.getInt("animeId") ?: -1,
-                onNavigateToDetails = navigationActions::navigateToMediaDetails,
                 onNavigateBack = {
                     navController.popBackStack()
-                }
+                },
+                onNavigateToDetails = navigationActions::navigateToMediaDetails
             )
         }
         composable(

@@ -71,7 +71,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
@@ -97,15 +97,10 @@ enum class DetailTabs {
 fun MediaDetail(
     mediaId: Int,
     modifier: Modifier = Modifier,
-    mediaDetailsViewModel: MediaDetailsViewModel = viewModel(),
+    mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onNavigateToDetails: (Int) -> Unit,
-    state: MediaDetailState = rememberMediaDetailState(mediaId, mediaDetailsViewModel)
+    onNavigateToDetails: (Int) -> Unit
 ) {
-//    val anime = trendingAnimeUiState.currentDetailAnime
-//    val characters = trendingAnimeUiState.currentDetailCharacters
-    val characters = emptyList<Character>() // fixme
-
     val pagerState = rememberPagerState(
         initialPage = 0,
         pageCount = { DetailTabs.values().size }
@@ -115,7 +110,10 @@ fun MediaDetail(
 
     val loading by mediaDetailsViewModel.dataLoading.observeAsState(initial = false)
     val media by mediaDetailsViewModel.media.observeAsState()
-    mediaDetailsViewModel.start(mediaId)
+    val characters by mediaDetailsViewModel.charachters.observeAsState(initial = emptyList())
+    val staff by mediaDetailsViewModel.staff.observeAsState(initial = emptyList())
+
+    mediaDetailsViewModel.fetchMedia(mediaId)
 
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(title = {
@@ -161,12 +159,18 @@ fun MediaDetail(
                         }
                     }
 
-                    1 -> Characters(
-                        characters.map { it.voiceActorLanguage }.distinct(),
-                        characters,
-                        navigateToCharacter = {}
-                    )
-                    2 -> Staff()
+                    1 -> {
+                        mediaDetailsViewModel.fetchCharacters(mediaId)
+                        Characters(
+                            characters.map { it.voiceActorLanguage }.distinct(),
+                            characters,
+                            navigateToCharacter = {}
+                        )
+                    }
+                    2 -> {
+                        mediaDetailsViewModel.fetchStaff(mediaId, 1)
+                        StaffScreen(staff) { mediaDetailsViewModel.fetchStaff(mediaId, it) }
+                    }
                     3 -> Reviews()
                     4 -> Stats()
                 }
@@ -183,11 +187,6 @@ fun Stats() {
 @Composable
 fun Reviews() {
     Text(text = "Reviews", modifier = Modifier.fillMaxSize())
-}
-
-@Composable
-fun Staff() {
-    Text(text = "Staff", modifier = Modifier.fillMaxSize())
 }
 
 @Composable
