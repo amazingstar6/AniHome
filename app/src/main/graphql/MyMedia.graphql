@@ -13,6 +13,8 @@ query getMyMedia($type: MediaType, $userId: Int = 808626, $status: MediaListStat
                     }
                     format
                     episodes
+                    chapters
+                    volumes
                 }
                 status
                 score

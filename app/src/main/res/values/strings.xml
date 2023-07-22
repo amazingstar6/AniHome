@@ -9,4 +9,6 @@
     <string name="mark_all_as_read">Mark all as read</string>
     <string name="plus_one">+ 1</string>
     <string name="minus_one">− 1</string>
+    <string name="plus_one_volume">+ 1 vol</string>
+    <string name="plus_one_chapter">+ 1 ch</string>
 </resources>

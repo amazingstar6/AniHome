@@ -20,8 +20,11 @@ data class Media(
     val externalLinks: List<Link> = emptyList(),
     // todo fill these
     val personalRating: Double = (-1).toDouble(),
-    var personalEpisodeProgress: Int = -1,
+    var personalProgress: Int = -1,
     val isPrivate: Boolean = false,
     val note: String = "",
-    val rewatches: Int = -1
+    val rewatches: Int = -1,
+    val volumes: Int = -1,
+    val personalVolumeProgress: Int = -1,
+    val chapters: Int = -1,
 )

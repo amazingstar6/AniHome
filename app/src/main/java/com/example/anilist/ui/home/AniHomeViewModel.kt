@@ -460,7 +460,7 @@ class AniHomeViewModel @Inject constructor(
                             format = it.entries?.get(0)?.media?.format?.name ?: "",
                             episodeAmount = it.entries?.get(0)?.media?.episodes ?: -1,
                             personalRating = it.entries?.get(0)?.score ?: (-1).toDouble(),
-                            personalEpisodeProgress = it.entries?.get(0)?.progress ?: -1,
+                            personalProgress = it.entries?.get(0)?.progress ?: -1,
                             note = ""
                         )
                     }

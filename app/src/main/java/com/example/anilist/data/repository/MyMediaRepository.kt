@@ -50,8 +50,11 @@ class MyMediaRepository @Inject constructor() {
                 format = it?.media?.format?.name ?: "",
                 episodeAmount = it?.media?.episodes ?: -1,
                 personalRating = it?.score ?: (-1).toDouble(),
-                personalEpisodeProgress = it?.progress ?: -1,
+                personalProgress = it?.progress ?: -1,
+                personalVolumeProgress = it?.progressVolumes ?: -1,
                 rewatches = it?.repeat ?: -1,
+                chapters = it?.media?.chapters ?: -1,
+                volumes = it?.media?.volumes ?: -1,
                 note = it?.notes ?: ""
             )
         } ?: emptyList()

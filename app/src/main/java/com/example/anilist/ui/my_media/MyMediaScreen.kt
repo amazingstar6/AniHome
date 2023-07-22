@@ -5,8 +5,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -198,15 +200,21 @@ private fun MyMedia(
 
         val state = rememberPullRefreshState(refreshing, ::refresh)
 
-        Box(Modifier.pullRefresh(state)) {
+        Box(
+            Modifier
+                .pullRefresh(state)
+                .fillMaxSize()
+        ) {
             LazyColumn(modifier = Modifier.padding(top = it.calculateTopPadding())) {
                 if (!refreshing) {
                     items(myMedia) { media ->
                         MediaCard(
                             navigateToDetails,
                             increaseEpisodeProgress,
-                            media
-                        ) { openSheet(BottomSheetScreen.EditStatusScreen(media)) }
+                            media,
+                            { openSheet(BottomSheetScreen.EditStatusScreen(media)) },
+                            isAnime = isAnime
+                        )
                     }
                 }
             }
@@ -293,7 +301,7 @@ fun EditStatusScreen(
         NumberTextField(
             media,
             "Episodes",
-            initialValue = media.personalEpisodeProgress.toString(),
+            initialValue = media.personalProgress.toString(),
             hasSuffix = true
         )
         NumberTextField(
@@ -649,14 +657,16 @@ private fun MediaCard(
     navigateToDetails: (Int) -> Unit,
     increaseEpisodeProgress: (mediaId: Int, newProgress: Int) -> Unit,
     media: Media,
-    onNavigateToStatusEditor: () -> Unit
+    onNavigateToStatusEditor: () -> Unit,
+    isAnime: Boolean
 ) {
-    var personalEpisodeProgress by remember { mutableIntStateOf(media.personalEpisodeProgress) }
+    var personalEpisodeProgress by remember { mutableIntStateOf(media.personalProgress) }
     Card(
         onClick = { navigateToDetails(media.id) },
         modifier = Modifier
             .padding(Dimens.PaddingSmall)
             .height(150.dp)
+            .fillMaxWidth()
     ) {
         Row {
             AsyncImage(
@@ -671,25 +681,83 @@ private fun MediaCard(
                     .width(100.dp)
                     .clip(MaterialTheme.shapes.medium)
             )
-            Column(
-                modifier = Modifier.padding(start = Dimens.PaddingNormal),
-                verticalArrangement = Arrangement.SpaceBetween
+//            Column(
+//                modifier = Modifier.padding(start = Dimens.PaddingNormal),
+//                verticalArrangement = Arrangement.SpaceBetween
+//            ) {
+//                Row(
+//                    horizontalArrangement = Arrangement.SpaceBetween,
+//                    verticalAlignment = Alignment.CenterVertically,
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(top = Dimens.PaddingSmall)
+//                ) {
+//
+//
+//                }
+            Row(
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        top = Dimens.PaddingSmall,
+                        bottom = Dimens.PaddingSmall,
+                        start = Dimens.PaddingSmall
+                    )
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = Dimens.PaddingSmall)
+                Column(
+                    modifier = Modifier.fillMaxHeight(),
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = media.title,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.width(200.dp),
+                        modifier = Modifier.width(175.dp),
                         overflow = TextOverflow.Ellipsis,
-                        maxLines = 3
+                        maxLines = 2
                     )
+                    Text(
+                        text = media.format,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        Icon(
+                            painterResource(id = R.drawable.anime_details_rating_star),
+                            contentDescription = "star",
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                        Text(
+                            text = media.personalRating.toString(),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    if (isAnime) {
+                        Text(
+                            text = "$personalEpisodeProgress/${media.episodeAmount}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    } else {
+                        Text(
+                            text = "${media.personalProgress}/${media.chapters}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "${media.personalVolumeProgress}/${media.volumes}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+                Column(horizontalAlignment = Alignment.End) {
                     IconButton(
                         onClick = onNavigateToStatusEditor
 //                        modifier = Modifier.weight(1f, false)
@@ -699,69 +767,73 @@ private fun MediaCard(
                             contentDescription = "edit"
                         )
                     }
-                }
-                Text(
-                    text = media.format,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    Icon(
-                        painterResource(id = R.drawable.anime_details_rating_star),
-                        contentDescription = "star",
-                        tint = MaterialTheme.colorScheme.secondary
-                    )
-                    Text(
-                        text = media.personalRating.toString(),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = Dimens.PaddingSmall)
-                ) {
-                    Text(
-                        text = "$personalEpisodeProgress/${media.episodeAmount}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    if (media.episodeAmount != media.personalEpisodeProgress) {
-                        OutlinedButton(
-                            onClick = {
-                                increaseEpisodeProgress(
-                                    media.id,
-                                    personalEpisodeProgress + 1
+                    if (isAnime) {
+                        if (media.personalProgress != media.episodeAmount) {
+                            IncreaseProgress(
+                                increaseEpisodeProgress,
+                                media,
+                                personalEpisodeProgress,
+                                stringResource(id = R.string.plus_one)
+                            )
+                        }
+                    } else {
+                        if (media.chapters != media.personalProgress) {
+                            IncreaseProgress(
+                                increaseEpisodeProgress,
+                                media,
+                                personalEpisodeProgress,
+                                stringResource(id = R.string.plus_one_chapter)
+                            )
+                        }
+                        if (media.personalVolumeProgress != media.volumes && !isAnime) {
+                            IncreaseProgress(
+                                increaseEpisodeProgress,
+                                media,
+                                personalEpisodeProgress,
+                                stringResource(
+                                    id = R.string.plus_one_volume
                                 )
-                                personalEpisodeProgress++
-                            }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        LinearProgressIndicator(
+            progress = (personalEpisodeProgress / media.episodeAmount.toFloat()) * 100
+        )
+    }
+}
+
+@Composable
+private fun IncreaseProgress(
+    increaseEpisodeProgress: (mediaId: Int, newProgress: Int) -> Unit,
+    media: Media,
+    personalEpisodeProgress: Int,
+    label: String
+) {
+    var personalEpisodeProgress1 = personalEpisodeProgress
+    OutlinedButton(
+        onClick = {
+            increaseEpisodeProgress(
+                media.id,
+                personalEpisodeProgress1 + 1
+            )
+            personalEpisodeProgress1++
+        },
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
 //                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
-                        ) {
+    ) {
 //                            Row(
 //                                verticalAlignment = Alignment.CenterVertically,
 //                                horizontalArrangement = Arrangement.SpaceEvenly
 //                            ) {
 //                                Icon(imageVector = Icons.Default.Add, contentDescription = "add")
-                            Text(
-                                text = stringResource(id = R.string.plus_one),
-                                color = MaterialTheme.colorScheme.secondary,
-                                style = MaterialTheme.typography.titleLarge
-                            )
-//                            }
-                        }
-                    }
-                }
-            }
-            LinearProgressIndicator(
-                progress = (personalEpisodeProgress / media.episodeAmount.toFloat()) * 100
-            )
-        }
+        Text(
+            text = label,
+            color = MaterialTheme.colorScheme.secondary,
+            style = MaterialTheme.typography.titleMedium
+        )
     }
 }
 
@@ -781,41 +853,47 @@ fun EditStatusScreenPreview() {
             format = "TV",
             episodeAmount = 11,
             personalRating = 6.0,
-            personalEpisodeProgress = 1,
+            personalProgress = 1,
             note = ""
         )
     )
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, group = "fullscreen")
 @Composable
 fun MyAnimePreview() {
     MyMedia(
-        isAnime = true,
+        isAnime = false,
         myMedia = listOf(
             Media(
                 title = "鬼滅の刃",
                 format = "TV",
-                episodeAmount = 11,
+                chapters = 80,
+                volumes = 6,
                 personalRating = 6.0,
-                personalEpisodeProgress = 1,
+                personalProgress = 20,
+                personalVolumeProgress = 3,
                 note = ""
             ),
             Media(
                 title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
                 format = "TV",
-                episodeAmount = 1012,
+                chapters = 1012,
                 personalRating = 10.0,
-                personalEpisodeProgress = 120,
-                note = ""
+                personalProgress = 120,
+                note = "",
+                personalVolumeProgress = 2,
+                volumes = 5
             ),
             Media(
                 title = "ONE PIECE",
                 format = "TV",
                 episodeAmount = 101,
                 personalRating = 3.0,
-                personalEpisodeProgress = 101,
-                note = ""
+                personalProgress = 101,
+                note = "",
+                volumes = 3,
+                personalVolumeProgress = 2
             )
         ),
         navigateToDetails = {},

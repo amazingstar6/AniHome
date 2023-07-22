@@ -49,6 +49,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -165,7 +166,6 @@ fun MediaDetail(
                         characters,
                         navigateToCharacter = {}
                     )
-
                     2 -> Staff()
                     3 -> Reviews()
                     4 -> Stats()
@@ -318,7 +318,7 @@ fun Characters(
     characters: List<Character>,
     navigateToCharacter: (Int) -> Unit
 ) {
-    var selected by remember { mutableStateOf(0) }
+    var selected by remember { mutableIntStateOf(0) }
     Column(modifier = Modifier.padding(horizontal = 12.dp)) {
         FlowRow {
             languages.forEachIndexed { index, language ->
