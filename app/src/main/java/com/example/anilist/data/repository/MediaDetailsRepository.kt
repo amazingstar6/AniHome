@@ -6,16 +6,24 @@ import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.Apollo
 import com.example.anilist.GetMediaDetailQuery
+import com.example.anilist.GetReviewDetailQuery
 import com.example.anilist.GetReviewsOfMediaQuery
 import com.example.anilist.GetStaffInfoQuery
+import com.example.anilist.GetStatsQuery
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Relation
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.ReviewRatingStatus
+import com.example.anilist.data.models.ScoreDistribution
+import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.Staff
+import com.example.anilist.data.models.Stats
+import com.example.anilist.data.models.Status
 import com.example.anilist.data.models.Tag
+import com.example.anilist.type.MediaRankType
+import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.ReviewRating
 import java.util.Locale
 import javax.inject.Inject
@@ -103,6 +111,140 @@ class MediaDetailsRepository @Inject constructor() {
             // handle exception here,, these are mainly for network errors
         }
         return emptyList()
+    }
+
+    suspend fun fetchStats(mediaId: Int): Stats? {
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    GetStatsQuery(mediaId)
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+            }
+            val data = result.data?.Media
+            if (data != null) {
+                return parseStats(data)
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here,, these are mainly for network errors
+        }
+        return Stats()
+    }
+
+    private fun parseStats(media: GetStatsQuery.Media): Stats {
+        var highestRatedAllTime: Int = -1
+        var highestRatedYearRank: Int = -1
+        var highestRatedYearNumber: Int = -1
+        var highestRatedSeasonRank: Int = -1
+        var highestRatedSeasonSeason: Season = Season.UNKNOWN
+        var highestRatedSeasonYear: Int = -1
+        var mostPopularAllTime: Int = -1
+        var mostPopularYearRank: Int = -1
+        var mostPopularYearNumber: Int = -1
+        var mostPopularSeasonRank: Int = -1
+        var mostPopularSeasonSeason: Season = Season.UNKNOWN
+        var mostPopularSeasonYear: Int = -1
+        val scoreDistribution: ScoreDistribution = ScoreDistribution()
+        val statusDistribution: Map<Status, Int> = mapOf(
+            Status.CURRENT to 0,
+            Status.PLANNING to 0,
+            Status.COMPLETED to 0,
+            Status.DROPPED to 0,
+            Status.PAUSED to 0
+        )
+        for (rank in media.rankings.orEmpty()) {
+            if (rank?.type == MediaRankType.RATED && rank?.allTime == true) {
+                highestRatedAllTime = rank.rank
+            }
+            if (rank?.type == MediaRankType.RATED && rank.year != null) {
+                highestRatedYearRank = rank.rank
+                highestRatedYearNumber = rank.year
+            }
+            if (rank?.type == MediaRankType.RATED && rank.season != null && rank.year != null) {
+                highestRatedSeasonRank = rank.rank
+                highestRatedSeasonSeason = when (rank.season) {
+                    MediaSeason.SPRING -> Season.SPRING
+                    MediaSeason.SUMMER -> Season.SUMMER
+                    MediaSeason.FALL -> Season.FALL
+                    MediaSeason.WINTER -> Season.WINTER
+                    MediaSeason.UNKNOWN__ -> Season.UNKNOWN
+                }
+                highestRatedSeasonYear = rank.year
+            }
+
+            if (rank?.type == MediaRankType.POPULAR && rank?.allTime == true) {
+                mostPopularAllTime = rank.rank
+            }
+            if (rank?.type == MediaRankType.POPULAR && rank.year != null) {
+                mostPopularYearRank = rank.rank
+                mostPopularYearNumber = rank.year
+            }
+            if (rank?.type == MediaRankType.POPULAR && rank.season != null && rank.year != null) {
+                mostPopularSeasonRank = rank.rank
+                mostPopularSeasonSeason = when (rank.season) {
+                    MediaSeason.SPRING -> Season.SPRING
+                    MediaSeason.SUMMER -> Season.SUMMER
+                    MediaSeason.FALL -> Season.FALL
+                    MediaSeason.WINTER -> Season.WINTER
+                    MediaSeason.UNKNOWN__ -> Season.UNKNOWN
+                }
+                mostPopularSeasonYear = rank.year
+            }
+        }
+        return Stats(
+            highestRatedAllTime = highestRatedAllTime,
+            highestRatedYearRank = highestRatedYearRank,
+            highestRatedYearNumber = highestRatedYearNumber,
+            highestRatedSeasonRank = highestRatedSeasonRank,
+            highestRatedSeasonSeason = highestRatedSeasonSeason,
+            highestRatedSeasonYear = highestRatedSeasonYear,
+            mostPopularAllTime = mostPopularAllTime,
+            mostPopularYearRank = mostPopularYearRank,
+            mostPopularYearNumber = mostPopularYearNumber,
+            mostPopularSeasonRank = mostPopularSeasonRank,
+            mostPopularSeasonSeason = mostPopularSeasonSeason,
+            mostPopularSeasonYear = mostPopularSeasonYear,
+            scoreDistribution = scoreDistribution,
+            statusDistribution = statusDistribution
+        )
+    }
+
+    suspend fun fetchReview(reviewId: Int): Review {
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    GetReviewDetailQuery(reviewId)
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+            }
+            val review = result.data?.Review
+            if (review != null) {
+                return Review(
+                    id = review?.id ?: -1,
+                    title = review?.summary ?: "",
+                    userName = review?.user?.name ?: "",
+                    createdAt = review?.createdAt ?: -1,
+                    body = review?.body ?: "",
+                    score = review?.score ?: -1,
+                    upvotes = review?.rating ?: -1,
+                    totalVotes = review?.ratingAmount ?: -1,
+                    userRating = when (review?.userRating) {
+                        ReviewRating.NO_VOTE -> ReviewRatingStatus.NO_VOTE
+                        ReviewRating.UP_VOTE -> ReviewRatingStatus.UP_VOTE
+                        ReviewRating.DOWN_VOTE -> ReviewRatingStatus.DOWN_VOTE
+                        else -> ReviewRatingStatus.NO_VOTE
+                    },
+                    userAvatar = review?.user?.avatar?.large ?: ""
+                )
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here,, these are mainly for network errors
+        }
+        return Review()
     }
 
     private fun parseReview(reviews: GetReviewsOfMediaQuery.Reviews?): List<Review> {

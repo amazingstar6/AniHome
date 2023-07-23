@@ -259,3 +259,46 @@ query GetReviewsOfMedia($id: Int!, $page:Int = 1, $perPage:Int = 25) {
         }
     }
 }
+
+query GetStats($id: Int!) {
+    Media(id: $id) {
+        stats {
+            scoreDistribution {
+                score
+                amount
+            }
+            statusDistribution {
+                status
+                amount
+            }
+        }
+        rankings {
+            rank
+            type
+            year
+            season
+            allTime
+            context
+        }
+    }
+}
+
+query GetReviewDetail($id: Int!) {
+    Review(id: $id) {
+        id
+        summary,
+        user {
+            name
+            avatar {
+                large
+            }
+        }
+        createdAt
+        updatedAt
+        body(asHtml: true)
+        score
+        rating
+        ratingAmount
+        userRating
+    }
+}

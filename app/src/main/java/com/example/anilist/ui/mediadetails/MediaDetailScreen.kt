@@ -1,5 +1,6 @@
 package com.example.anilist.ui.mediadetails
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -44,6 +45,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -69,6 +71,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -76,9 +80,13 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.Character
+import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Relation
+import com.example.anilist.data.models.Stats
 import com.example.anilist.data.models.Tag
+import com.example.anilist.ui.Dimens
+import com.example.anilist.ui.theme.AnilistTheme
 import kotlinx.coroutines.launch
 
 private const val TAG = "AnimeDetails"
@@ -112,7 +120,8 @@ fun MediaDetail(
     val media by mediaDetailsViewModel.media.observeAsState()
     val characters by mediaDetailsViewModel.charachters.observeAsState(initial = emptyList())
     val staff by mediaDetailsViewModel.staff.observeAsState(initial = emptyList())
-    val reviews by mediaDetailsViewModel.reviews.observeAsState(initial = emptyList())
+    val reviews by mediaDetailsViewModel.reviews.observeAsState()
+    val stats by mediaDetailsViewModel.stats.observeAsState()
 
     mediaDetailsViewModel.fetchMedia(mediaId)
 
@@ -153,11 +162,7 @@ fun MediaDetail(
                 when (page) {
                     0 -> {
                         if (media == null) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier
-                                )
-                            }
+                            LoadingCircle()
                         } else {
                             Overview(
                                 media,
@@ -174,15 +179,29 @@ fun MediaDetail(
                             navigateToCharacter = {}
                         )
                     }
+
                     2 -> {
                         mediaDetailsViewModel.fetchStaff(mediaId, 1)
                         StaffScreen(staff) { mediaDetailsViewModel.fetchStaff(mediaId, it) }
                     }
+
                     3 -> {
                         mediaDetailsViewModel.fetchReviews(mediaId)
-                        Reviews(reviews, onNavigateToReviewDetails)
+                        if (reviews == null) {
+                            LoadingCircle()
+                        } else {
+                            Reviews(reviews.orEmpty(), onNavigateToReviewDetails)
+                        }
                     }
-                    4 -> Stats()
+
+                    4 -> {
+                        mediaDetailsViewModel.fetchStats(mediaId)
+                        if (stats == null) {
+                            LoadingCircle()
+                        } else {
+                            Stats(stats ?: Stats())
+                        }
+                    }
                 }
             }
         }
@@ -190,8 +209,12 @@ fun MediaDetail(
 }
 
 @Composable
-fun Stats() {
-    Text(text = "Stats", modifier = Modifier.fillMaxSize())
+private fun LoadingCircle() {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+        CircularProgressIndicator(
+            modifier = Modifier
+        )
+    }
 }
 
 @Composable
@@ -202,7 +225,7 @@ private fun Overview(
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
-            .padding(20.dp)
+//            .padding(20.dp)
     ) {
         val anime: Media = media ?: Media(note = "")
         OverviewAnimeCoverDetails(anime, anime.genres)
@@ -231,9 +254,9 @@ private fun OverviewRelations(
             items(relations) { relation ->
                 Column(
                     modifier = Modifier
-                        .padding(end = 6.dp)
+                        .padding(start = Dimens.PaddingNormal)
                         .width(80.dp)
-                        .height(220.dp)
+                        .height(205.dp)
                         .clickable {
                             onNavigateToDetails(relation.id)
                         }
@@ -242,20 +265,23 @@ private fun OverviewRelations(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(relation.coverImage).crossfade(true).build(),
                         contentDescription = "Cover of ${relation.title}",
+                        contentScale = ContentScale.FillHeight,
                         modifier = Modifier
+                            .height(140.dp)
+                            .padding(bottom = Dimens.PaddingSmall)
                             .clip(RoundedCornerShape(12.dp))
-                            .fillMaxWidth()
                     )
                     Text(
                         text = relation.title,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(bottom = 10.dp),
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = relation.relation,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 10.dp),
                         overflow = TextOverflow.Ellipsis
@@ -398,12 +424,14 @@ fun Characters(
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
-    Row {
+    Row(modifier = Modifier.padding(Dimens.PaddingNormal)) {
         if (anime1.coverImage != "") {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current).data(anime1.coverImage)
                     .crossfade(true).build(),
                 contentDescription = "Cover of ${anime1.title}",
+                placeholder = painterResource(id = R.drawable.no_image),
+//                fallBack = painterResource(id = R.drawable.no_image),
                 modifier = Modifier.clip(RoundedCornerShape(12.dp))
             )
         }
@@ -441,7 +469,7 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
     FlowRow(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier
-            .padding(top = 12.dp)
+            .padding(top = 12.dp, start = Dimens.PaddingNormal, end = Dimens.PaddingNormal)
             .fillMaxWidth()
     ) {
         for (genre in genres) {
@@ -458,7 +486,8 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
             icon = R.drawable.anime_details_rating_star,
             text = anime1.highestRated,
             iconTint = MaterialTheme.colorScheme.secondary,
-            textColor = MaterialTheme.colorScheme.onSurface
+            textColor = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
         )
     }
     if (anime1.mostPopular != "") {
@@ -466,7 +495,8 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
             icon = R.drawable.anime_details_heart,
             text = anime1.mostPopular,
             iconTint = MaterialTheme.colorScheme.secondary,
-            textColor = MaterialTheme.colorScheme.onSurface
+            textColor = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
         )
     }
 }
@@ -479,7 +509,8 @@ private fun OverviewDescription(description: String) {
     de.charlex.compose.HtmlText(
         text = description,
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
 //                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
     )
 //    AndroidView(factory = { context ->
@@ -495,7 +526,7 @@ private fun OverviewExternalLinks(
 ) {
     if (anime1.externalLinks.isNotEmpty()) {
         HeadLine("External links")
-        FlowRow {
+        FlowRow(modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)) {
             for (link in anime1.externalLinks) {
                 OutlinedButton(
                     onClick = { openUri(link.url) },
@@ -544,11 +575,16 @@ private fun OverViewTags(
                 text = if (showSpoilers) "Hide spoilers" else "Show spoilers",
                 iconTint = MaterialTheme.colorScheme.error,
                 textColor = MaterialTheme.colorScheme.error,
-                modifier = Modifier.clickable { toggleSpoilers() }
+                modifier = Modifier
+                    .clickable { toggleSpoilers() }
+                    .padding(end = Dimens.PaddingNormal)
             )
         }
     }
-    FlowRow(horizontalArrangement = Arrangement.Start) {
+    FlowRow(
+        horizontalArrangement = Arrangement.Start,
+        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+    ) {
         for (tag in tags) {
             if (!tag.isMediaSpoiler) {
                 ElevatedButton(
@@ -607,7 +643,7 @@ private fun OverViewInfo(anime1: Media) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
-                .padding(end = 8.dp),
+                .padding(horizontal = Dimens.PaddingNormal),
             verticalArrangement = Arrangement.Bottom
         ) {
             if (anime1.infoList.containsKey("format")) {
@@ -716,7 +752,7 @@ private fun HeadLine(text: String) {
         text = text,
         style = MaterialTheme.typography.headlineMedium,
         color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(bottom = 4.dp, top = 8.dp)
+        modifier = Modifier.padding(bottom = 4.dp, top = 8.dp, start = Dimens.PaddingNormal)
     )
 }
 
@@ -762,84 +798,95 @@ private fun Loading(reload: () -> Unit) {
     }
 }
 
-// @Preview(
-//    device = "id:pixel_6_pro", showBackground = true,
-//    uiMode = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL,
-//    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE, group = "Characters"
-// )
-// @Composable
-// fun CharactersPreview() {
-//    Characters(
-//        listOf("Japanese", "Portuguese", "English", "French"),
-//        characters = listOf(Character(1212321, "tanjirou", "", "花江夏樹", "", "Japanese")),
-//        navigateToCharacter = {}
-//    )
-// }
+@Preview(
+    device = "id:pixel_6_pro",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL,
+    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE,
+    group = "Characters"
+)
+@Composable
+fun CharactersPreview() {
+    Characters(
+        listOf("Japanese", "Portuguese", "English", "French"),
+        characters = listOf(Character(1212321, "tanjirou", "", "花江夏樹", "", "Japanese")),
+        navigateToCharacter = {}
+    )
+}
 
-// @Preview(
-//    name = "Light mode", showBackground = true, heightDp = 2000, group = "Overview",
-// )
-// @Preview(name = "Night mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, group = "Overview")
-// @Composable
-// fun OverviewPreview() {
-//    AnilistTheme {
-//        Surface {
-//            Overview(
-//                onNavigateToDetails = {},
-//                anime = Anime(
-//                    title = "鬼滅の刃 刀鍛冶の里編",
-//                    coverImage = "",
-//                    format = "TV",
-//                    seasonYear = "Spring 2023",
-//                    episodeAmount = 11,
-//                    averageScore = 83,
-//                    genres = listOf("Action", "Adventure", "Drama", "Fantasy", "Supernatural"),
-//                    highestRated = "#99 Highest rated all time",
-//                    mostPopular = "#183 Most popular all time",
-//                    description = "Adaptation of the Swordsmith Village Arc.<br>\n<br>\nTanjiro\u2019s journey leads him to the Swordsmith Village, where he reunites with two Hashira, members of the Demon Slayer Corps\u2019 highest-ranking swordsmen - Mist Hashira Muichiro Tokito and Love Hashira Mitsuri Kanroji. With the shadows of demons lurking near, a new battle begins for Tanjiro and his comrades.\n<br><br>\n<i>Notes:<br>\n\u2022 The first episode has a runtime of ~49 minutes, and received an early premiere in cinemas worldwide as part of a special screening alongside the final two episodes of Kimetsu no Yaiba: Yuukaku-hen.<br>\n\u2022 The final episode has a runtime of ~52 minutes. </i>",
-//                    relations = emptyList(),
-//                    infoList = mapOf(
-//                        "format" to "TV",
-//                        "status" to "Finished",
-//                        "startDate" to "04-09-2023",
-//                        "endDate" to "06-18-2023",
-//                        "duration" to "24",
-//                        "country" to "Japan",
-//                        "source" to "Manga",
-//                        "hashtag" to "#鬼滅の刃",
-//                        "licensed" to "Yes",
-//                        "updatedAt" to "04-06-2023",
-//                        "synonyms" to "KnY 3ดาบพิฆาตอสูร ภาค 3 บทหมู่บ้านช่างตีดาบ\n" + "Demon Slayer: Kimetsu no Yaiba - Le village des forgerons\n" + "Истребитель демонов: Kimetsu no Yaiba. Деревня кузнецов",
-//                        "nsfw" to "No"
-//                    ),
-//                    tags = listOf(
-//                        Tag(name = "Demons", 96, false), Tag(name = "Shounen", rank = 40, true)
-//        //                        "Shounen",
-//        //                        "Swordplay",
-//        //                        "Male Protagonist",
-//        //                        "Super Power",
-//        //                        "Gore",
-//        //                        "Monster Girl",
-//        //                        "Body Horror",
-//        //                        "Historical",
-//        //                        "CGI",
-//        //                        "Femaile Protagonist",
-//        //                        "Orphan",
-//        //                        "Rural"
-//                    ),
-//                    trailerImage = "",
-//                    trailerLink = "https://www.youtube.com/watch?v=a9tq0aS5Zu8",
-//                    externalLinks = listOf(
-//                        Link(
-//                            "https://kimetsu.com/anime/katanakajinosatohen/",
-//                            "Official Site",
-//                            "Japanese",
-//                            "",
-//                            ""
-//                        )
-//                    )
-//                )
-//            )
-//        }
-//    }
-// }
+@Preview(
+    name = "Light mode",
+    showBackground = true,
+    heightDp = 2000,
+    group = "Overview"
+)
+@Preview(
+    name = "Night mode",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    group = "Overview"
+)
+@Composable
+fun OverviewPreview() {
+    AnilistTheme {
+        Surface {
+            Overview(
+                onNavigateToDetails = {},
+                media = Media(
+                    title = "鬼滅の刃 刀鍛冶の里編",
+                    coverImage = "",
+                    format = "TV",
+                    seasonYear = "Spring 2023",
+                    episodeAmount = 11,
+                    averageScore = 83,
+                    genres = listOf("Action", "Adventure", "Drama", "Fantasy", "Supernatural"),
+                    highestRated = "#99 Highest rated all time",
+                    mostPopular = "#183 Most popular all time",
+                    description = "Adaptation of the Swordsmith Village Arc.<br>\n<br>\nTanjiro\u2019s journey leads him to the Swordsmith Village, where he reunites with two Hashira, members of the Demon Slayer Corps\u2019 highest-ranking swordsmen - Mist Hashira Muichiro Tokito and Love Hashira Mitsuri Kanroji. With the shadows of demons lurking near, a new battle begins for Tanjiro and his comrades.\n<br><br>\n<i>Notes:<br>\n\u2022 The first episode has a runtime of ~49 minutes, and received an early premiere in cinemas worldwide as part of a special screening alongside the final two episodes of Kimetsu no Yaiba: Yuukaku-hen.<br>\n\u2022 The final episode has a runtime of ~52 minutes. </i>",
+                    relations = emptyList(),
+                    infoList = mapOf(
+                        "format" to "TV",
+                        "status" to "Finished",
+                        "startDate" to "04-09-2023",
+                        "endDate" to "06-18-2023",
+                        "duration" to "24",
+                        "country" to "Japan",
+                        "source" to "Manga",
+                        "hashtag" to "#鬼滅の刃",
+                        "licensed" to "Yes",
+                        "updatedAt" to "04-06-2023",
+                        "synonyms" to "KnY 3ดาบพิฆาตอสูร ภาค 3 บทหมู่บ้านช่างตีดาบ\n" + "Demon Slayer: Kimetsu no Yaiba - Le village des forgerons\n" + "Истребитель демонов: Kimetsu no Yaiba. Деревня кузнецов",
+                        "nsfw" to "No"
+                    ),
+                    tags = listOf(
+                        Tag(name = "Demons", 96, false),
+                        Tag(name = "Shounen", rank = 40, true)
+                        //                        "Shounen",
+                        //                        "Swordplay",
+                        //                        "Male Protagonist",
+                        //                        "Super Power",
+                        //                        "Gore",
+                        //                        "Monster Girl",
+                        //                        "Body Horror",
+                        //                        "Historical",
+                        //                        "CGI",
+                        //                        "Femaile Protagonist",
+                        //                        "Orphan",
+                        //                        "Rural"
+                    ),
+                    trailerImage = "",
+                    trailerLink = "https://www.youtube.com/watch?v=a9tq0aS5Zu8",
+                    externalLinks = listOf(
+                        Link(
+                            "https://kimetsu.com/anime/katanakajinosatohen/",
+                            "Official Site",
+                            "Japanese",
+                            "",
+                            ""
+                        )
+                    )
+                )
+            )
+        }
+    }
+}

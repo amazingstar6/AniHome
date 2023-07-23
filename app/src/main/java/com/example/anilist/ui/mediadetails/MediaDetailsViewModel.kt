@@ -8,6 +8,7 @@ import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.Staff
+import com.example.anilist.data.models.Stats
 import com.example.anilist.data.repository.MediaDetailsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -41,6 +42,12 @@ class MediaDetailsViewModel @Inject constructor(
     private val _reviews = MutableLiveData<List<Review>>()
     val reviews = _reviews
 
+    private val _review = MutableLiveData<Review>()
+    val review = _review
+
+    private val _stats = MutableLiveData<Stats>()
+    val stats = _stats
+
 //    init {
 //        fetchMedia()
 //    }
@@ -70,6 +77,19 @@ class MediaDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             val data = mediaDetailsRepository.fetchReviews(mediaId)
             _reviews.value = data
+        }
+    }
+
+    fun fetchStats(mediaId: Int) {
+        viewModelScope.launch {
+            _stats.value = mediaDetailsRepository.fetchStats(mediaId)
+        }
+    }
+
+    fun fetchReview(reviewId: Int) {
+        viewModelScope.launch {
+            val data = mediaDetailsRepository.fetchReview(reviewId)
+            _review.value = data
         }
     }
 
