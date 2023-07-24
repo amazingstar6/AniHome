@@ -1,5 +1,6 @@
 package com.example.anilist.ui.mediadetails
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -32,7 +33,11 @@ import com.example.anilist.ui.Dimens
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
-fun StaffScreen(staffList: List<Staff>, getMoreStaff: (Int) -> Unit) {
+fun StaffScreen(
+    staffList: List<Staff>,
+    getMoreStaff: (Int) -> Unit,
+    onNavigateToStaff: (Int) -> Unit
+) {
     val state = rememberLazyGridState()
     var page by remember {
         mutableIntStateOf(1)
@@ -41,7 +46,11 @@ fun StaffScreen(staffList: List<Staff>, getMoreStaff: (Int) -> Unit) {
         items(
             staffList
         ) { staff ->
-            Row(modifier = Modifier.padding(Dimens.PaddingNormal)) {
+            Row(
+                modifier = Modifier.padding(Dimens.PaddingNormal).clickable {
+                    onNavigateToStaff(staff.id)
+                }
+            ) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current).data(staff.coverImage)
                         .crossfade(true).build(),
@@ -95,7 +104,8 @@ fun StaffScreen(staffList: List<Staff>, getMoreStaff: (Int) -> Unit) {
 @Composable
 fun StaffPreview() {
     StaffScreen(
-        listOf(Staff("吾峠呼世晴", "Original Creator"), Staff("外崎春雄", "Director"))
+        listOf(Staff(123, "吾峠呼世晴", "Original Creator"), Staff(1234, "外崎春雄", "Director")),
+        {}
     ) {
     }
 }

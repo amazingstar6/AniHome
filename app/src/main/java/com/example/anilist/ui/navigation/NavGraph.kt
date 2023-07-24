@@ -13,8 +13,8 @@ import com.example.anilist.data.repository.UserSettings
 import com.example.anilist.ui.PleaseLogin
 import com.example.anilist.ui.feed.FeedScreen
 import com.example.anilist.ui.forum.ForumScreen
-import com.example.anilist.ui.home.HomeScreen
 import com.example.anilist.ui.home.AniHomeViewModel
+import com.example.anilist.ui.home.HomeScreen
 import com.example.anilist.ui.home.NotificationScreen
 import com.example.anilist.ui.home.SettingsScreen
 import com.example.anilist.ui.mediadetails.CharacterDetailScreen
@@ -65,15 +65,20 @@ fun AniNavGraph(
                 },
                 onNavigateToDetails = navigationActions::navigateToMediaDetails,
                 onNavigateToReviewDetails = navigationActions::navigateToReviewDetails,
+                navigateToStaff = navigationActions::navigateToStaff,
                 navigateToCharacter = navigationActions::navigateToCharacter,
-                navigateToStaff = navigationActions::navigateToStaff
+                onNavigateToStaff = navigationActions::navigateToStaff
             )
         }
         composable(
             route = AniListRoute.CHARACTER_DETAIL_ROUTE + "/{characterId}",
             arguments = listOf(navArgument("characterId") { type = NavType.IntType }),
             content = { backStackEntry ->
-                CharacterDetailScreen(id = backStackEntry.arguments?.getInt("characterId") ?: -1)
+                CharacterDetailScreen(
+                    id = backStackEntry.arguments?.getInt("characterId") ?: -1,
+                    onNavigateToMedia = navigationActions::navigateToMediaDetails,
+                    onNavigateToStaff = navigationActions::navigateToStaff
+                )
             }
         )
         composable(

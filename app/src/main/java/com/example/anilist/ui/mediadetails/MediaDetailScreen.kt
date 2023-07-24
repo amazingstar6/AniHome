@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -31,6 +32,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -53,6 +56,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,18 +112,23 @@ fun MediaDetail(
     onNavigateToDetails: (Int) -> Unit,
     onNavigateToReviewDetails: (Int) -> Unit,
     navigateToStaff: (Int) -> Unit,
-    navigateToCharacter: (Int) -> Unit
+    navigateToCharacter: (Int) -> Unit,
+    onNavigateToStaff: (Int) -> Unit
 ) {
 //    val pagerState = rememberPagerState(
 //        initialPage = 0,
 //        pageCount = { DetailTabs.values().size }
 //    )
-    var index by remember { mutableStateOf(DetailTabs.Overview) }
+    var index by rememberSaveable { mutableStateOf(DetailTabs.Overview) }
     rememberCoroutineScope()
 
     val media by mediaDetailsViewModel.media.observeAsState()
     val staff by mediaDetailsViewModel.staff.observeAsState(initial = emptyList())
     val reviews by mediaDetailsViewModel.reviews.observeAsState()
+
+    var showDropDownMenu by remember {
+        mutableStateOf(false)
+    }
 
     mediaDetailsViewModel.fetchMedia(mediaId)
 
@@ -138,7 +147,25 @@ fun MediaDetail(
                 )
             }
         }, actions = {
-            Icon(Icons.Default.MoreVert, "More")
+            Box(
+                modifier = Modifier.fillMaxWidth()
+                    .wrapContentSize(Alignment.TopEnd)
+            ) {
+                IconButton(onClick = { showDropDownMenu = !showDropDownMenu }) {
+                    Icon(Icons.Default.MoreVert, "More")
+                }
+                DropdownMenu(
+                    expanded = showDropDownMenu,
+                    onDismissRequest = { showDropDownMenu = false },
+                    modifier = Modifier.align(Alignment.TopEnd)
+                ) {
+                    val uriHandler = LocalUriHandler.current
+                    DropdownMenuItem(text = {
+                        Text(text = "Open in AniList.co")
+                    }, onClick = { uriHandler.openUri("https://anilist.co/anime/$mediaId") })
+                    DropdownMenuItem(text = { Text(text = "Copy URL") }, onClick = { /*TODO*/ })
+                }
+            }
         })
     }, floatingActionButton = {
         FloatingActionButton(
@@ -180,7 +207,9 @@ fun MediaDetail(
 
                 2 -> {
                     mediaDetailsViewModel.fetchStaff(mediaId, 1)
-                    StaffScreen(staff) { mediaDetailsViewModel.fetchStaff(mediaId, it) }
+                    StaffScreen(staff, getMoreStaff = {
+                        mediaDetailsViewModel.fetchStaff(mediaId, it)
+                    }, onNavigateToStaff)
                 }
 
                 3 -> {
@@ -200,7 +229,7 @@ fun MediaDetail(
 }
 
 @Composable
-private fun LoadingCircle() {
+fun LoadingCircle() {
     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
         CircularProgressIndicator(
             modifier = Modifier
@@ -343,7 +372,7 @@ fun Characters(
 ) {
     var selected by remember { mutableIntStateOf(0) }
     Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-        FlowRow {
+        FlowRow(modifier = Modifier.padding(Dimens.PaddingNormal)) {
             languages.forEachIndexed { index, language ->
                 FilterChip(
                     selected = selected == index,

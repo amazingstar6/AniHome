@@ -254,11 +254,24 @@ query GetCharacterDetail($id: Int!) {
             edges {
                 characterRole
                 node {
+                    id
                     title {
                         userPreferred
                     }
                     coverImage {
                         extraLarge
+                    }
+                }
+                voiceActorRoles {
+                    voiceActor {
+                        id
+                        name {
+                            userPreferred
+                        }
+                        image {
+                            large
+                        }
+                        languageV2
                     }
                 }
             }
@@ -293,6 +306,7 @@ query GetStaffInfo($id:Int!, $page:Int = 1, $perPage:Int = 25) {
         staff(page: $page, perPage: $perPage) {
             edges {
                 node {
+                    id
                     name {
                         first
                         middle

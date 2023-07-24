@@ -12,6 +12,7 @@ import com.example.anilist.GetReviewsOfMediaQuery
 import com.example.anilist.GetStaffInfoQuery
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.CharacterDetail
+import com.example.anilist.data.models.CharacterMediaConnection
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Relation
@@ -20,6 +21,7 @@ import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.data.models.ScoreDistribution
 import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.Staff
+import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.models.Stats
 import com.example.anilist.data.models.Status
 import com.example.anilist.data.models.Tag
@@ -156,7 +158,55 @@ class MediaDetailsRepository @Inject constructor() {
         return CharacterDetail()
     }
 
+    private fun parseMediaCharacter(mediaList: GetCharacterDetailQuery.Media?): List<CharacterMediaConnection> {
+        val result = mutableListOf<CharacterMediaConnection>()
+        for (media in mediaList?.edges.orEmpty()) {
+            result.add(
+                CharacterMediaConnection(
+                    id = media?.node?.id ?: -1,
+                    title = media?.node?.title?.userPreferred ?: "",
+                    coverImage = media?.node?.coverImage?.extraLarge ?: "",
+                    characterRole = media?.characterRole?.name ?: ""
+                )
+            )
+        }
+        return result
+    }
+
+    private fun parseVoiceActorsForCharacter(mediaList: GetCharacterDetailQuery.Media?): List<StaffDetail> {
+        val result = mutableListOf<StaffDetail>()
+        for (media in mediaList?.edges.orEmpty()) {
+            for (voiceActor in media?.voiceActorRoles.orEmpty()) {
+                result.add(
+                    StaffDetail(
+                        id = voiceActor?.voiceActor?.id ?: -1,
+                        name = voiceActor?.voiceActor?.name?.userPreferred ?: "",
+                        coverImage = voiceActor?.voiceActor?.image?.large ?: "",
+                        language = voiceActor?.voiceActor?.languageV2 ?: ""
+                    )
+                )
+            }
+        }
+        return result.distinctBy { it.id }
+    }
+
     private fun parseCharacter(data: GetCharacterDetailQuery.Character): CharacterDetail {
+        val description = buildString {
+            if (!(data.dateOfBirth?.fuzzyDate?.year == null && data.dateOfBirth?.fuzzyDate?.month == null && data.dateOfBirth?.fuzzyDate?.day == null)) {
+                append(
+                    "<strong>Birthday:</strong>${data.dateOfBirth.fuzzyDate.year ?: "?"}-${data.dateOfBirth.fuzzyDate.month ?: "?"}-${data.dateOfBirth.fuzzyDate.day ?: "?"}<br>"
+                )
+            }
+            if (data.age != null) append("<strong>Age:</strong>${data.age}<br>")
+            if (data.gender != null) append("<strong>Gender:</strong>${data.gender}<br>")
+            if (data.bloodType != null) append("<strong>Blood type:</strong>${data.bloodType}<br>")
+            if (data.description != null) {
+                append(
+                    data.description.substringAfter("<p>")
+                        .substringBeforeLast("</p>")
+                )
+            }
+        }
         return CharacterDetail(
             id = data.id,
             userPreferredName = data.name?.userPreferred ?: "",
@@ -167,12 +217,12 @@ class MediaDetailsRepository @Inject constructor() {
             nativeName = data.name?.native ?: "",
             coverImage = data.image?.large ?: "",
             // we take the outer p element out of the description, because otherwise there will be a margin between the blood type and description
-            description = "<strong>Birthday:</strong>${data.dateOfBirth?.fuzzyDate?.year}-${data.dateOfBirth?.fuzzyDate?.month}-${data.dateOfBirth?.fuzzyDate?.day}<br><strong>Age:</strong>${data.age}<br><strong>Gender:</strong>${data.gender}<br><strong>Blood type:</strong>${data.bloodType}<br>${data.description?.substringAfter("<p>")?.substringBeforeLast("</p>")}",
+            description = description,
             isFavorite = data.isFavourite,
             isFavoriteBlocked = data.isFavouriteBlocked,
             favorites = data.favourites ?: -1,
-            voiceActors = emptyList(),
-            relatedMedia = emptyList(),
+            voiceActors = parseVoiceActorsForCharacter(data.media),
+            relatedMedia = parseMediaCharacter(data.media),
             alternativeNames = data.name?.alternative?.filterNotNull().orEmpty(),
             alternativeSpoilerNames = data.name?.alternativeSpoiler?.filterNotNull().orEmpty()
         )
@@ -489,10 +539,11 @@ class MediaDetailsRepository @Inject constructor() {
         for (staff in media?.staff?.edges.orEmpty()) {
             list.add(
                 Staff(
-                    staff?.node?.name?.userPreferred ?: "Unknown",
-                    staff?.role ?: "Unknown",
-                    staff?.node?.image?.large ?: "Unknown",
-                    media?.staff?.pageInfo?.hasNextPage ?: false
+                    id = staff?.node?.id ?: -1,
+                    name = staff?.node?.name?.userPreferred ?: "Unknown",
+                    role = staff?.role ?: "Unknown",
+                    coverImage = staff?.node?.image?.large ?: "Unknown",
+                    hasNextPage = media?.staff?.pageInfo?.hasNextPage ?: false
                 )
             )
         }

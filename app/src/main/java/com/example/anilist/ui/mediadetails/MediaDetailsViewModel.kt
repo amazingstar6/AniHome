@@ -35,16 +35,16 @@ class MediaDetailsViewModel @Inject constructor(
 //    )
     private val _staff = MutableLiveData<List<Staff>>()
 
-    val staff = _staff
+    val staff: LiveData<List<Staff>> = _staff
 
     private val _reviews = MutableLiveData<List<Review>>()
-    val reviews = _reviews
+    val reviews: LiveData<List<Review>> = _reviews
 
     private val _review = MutableLiveData<Review>()
-    val review = _review
+    val review: LiveData<Review> = _review
 
     private val _character = MutableLiveData<CharacterDetail>()
-    val character = _character
+    val character: LiveData<CharacterDetail> = _character
 
 
 //    private val _stats = MutableLiveData<Stats>()

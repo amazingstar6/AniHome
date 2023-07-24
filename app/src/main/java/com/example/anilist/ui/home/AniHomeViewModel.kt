@@ -32,7 +32,7 @@ private const val TAG = "AniHomeViewModel"
 @HiltViewModel
 class AniHomeViewModel @Inject constructor(
     notificationRepository: NotificationRepository,
-    homeRepository: HomeRepository,
+    private val homeRepository: HomeRepository,
     private val userPreferencesRepository: UserPreferencesRepository
 ) :
     ViewModel() {
@@ -86,7 +86,17 @@ class AniHomeViewModel @Inject constructor(
     val uiState: StateFlow<AniHomeUiState> = _uiState.asStateFlow()
 
     private val _media = MutableLiveData<HomeMedia>()
-    val media = _media
+    val media: LiveData<HomeMedia> = _media
+    private val _popularAnime = MutableLiveData<List<Media>>()
+    val popularAnime: LiveData<List<Media>> = _popularAnime
+    private val _trendingAnime = MutableLiveData<List<Media>>()
+    val trendingAnime: LiveData<List<Media>> = _trendingAnime
+    private val _upcomingNextSeason = MutableLiveData<List<Media>>()
+    val upcomingNextSeason: LiveData<List<Media>> = _upcomingNextSeason
+    private val _allTimePopular = MutableLiveData<List<Media>>()
+    val allTimePopular: LiveData<List<Media>> = _allTimePopular
+    private val _top100 = MutableLiveData<List<Media>>()
+    val top100: LiveData<List<Media>> = _top100
 
     init {
 //        loadTrendingAnime()
@@ -94,10 +104,58 @@ class AniHomeViewModel @Inject constructor(
 //        loadUpcomingNextSeason()
 //        loadAllTimePopular()
 //        loadTop100Anime()
+        fetchMedia(
+            isAnime = true,
+            page = 1,
+            skipPopularThisSeason = false,
+            skipTrendingNow = false,
+            skipUpcomingNextSeason = false,
+            skipAllTimePopular = false,
+            skipTop100Anime = false
+        )
+    }
+
+    fun fetchMedia(
+        isAnime: Boolean,
+        page: Int,
+        skipPopularThisSeason: Boolean = true,
+        skipTrendingNow: Boolean = true,
+        skipUpcomingNextSeason: Boolean = true,
+        skipAllTimePopular: Boolean = true,
+        skipTop100Anime: Boolean = true
+    ) {
         viewModelScope.launch {
-            _media.value = homeRepository.getHomeMedia(true).getOrDefault(HomeMedia())
+            val newMedia = homeRepository.getHomeMedia(
+                isAnime,
+                page,
+                skipTrendingNow,
+                skipPopularThisSeason,
+                skipUpcomingNextSeason,
+                skipAllTimePopular,
+                skipTop100Anime
+            ).getOrDefault(HomeMedia())
+            if (!skipPopularThisSeason) _popularAnime.value = _media.value?.popularThisSeason.orEmpty() + newMedia.popularThisSeason
+            if (!skipTrendingNow) _trendingAnime.value = _media.value?.trendingNow.orEmpty() + newMedia.trendingNow
+            _upcomingNextSeason.value = _media.value?.upcomingNextSeason.orEmpty() + newMedia.upcomingNextSeason
+            _allTimePopular.value = _media.value?.allTimePopular.orEmpty() + newMedia.allTimePopular
+            _top100.value = _media.value?.top100Anime.orEmpty() + newMedia.top100Anime
         }
     }
+
+    fun loadMorePopularAnime() {
+        Log.i(TAG, "More popular anime is being loaded")
+        viewModelScope.launch {
+            val newList = homeRepository.getMorePopularMedia(true).getOrDefault(emptyList())
+            _popularAnime.value = _popularAnime.value.orEmpty() + newList
+        }
+    }
+
+//    fun loadMoreTrendingAnime() {
+//        viewModelScope.launch {
+//            val newList = homeRepository.get(true).getOrDefault(emptyList())
+//            _popularAnime.value = _popularAnime.value.orEmpty() + newList
+//        }
+//    }
 
     fun loadTrendingAnime(increasePage: Boolean = false) {
         if (increasePage) {

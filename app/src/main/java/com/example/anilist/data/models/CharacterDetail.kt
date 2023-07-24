@@ -14,12 +14,13 @@ data class CharacterDetail(
     val isFavoriteBlocked: Boolean = false,
     val favorites: Int = -1,
     val voiceActors: List<StaffDetail> = emptyList(),
-    val relatedMedia: List<CharacterMediaConnectoin> = emptyList(),
+    val relatedMedia: List<CharacterMediaConnection> = emptyList(),
     val alternativeNames: List<String> = emptyList(),
     val alternativeSpoilerNames: List<String> = emptyList()
 )
 
-data class CharacterMediaConnectoin(
+data class CharacterMediaConnection(
+    val id: Int = -1,
     val title: String = "",
     val coverImage: String = "",
     val characterRole: String = ""
