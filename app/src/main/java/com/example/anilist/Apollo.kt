@@ -1,19 +1,20 @@
 package com.example.anilist
 
-import com.apollographql.apollo3.ApolloCall
 import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.Query
 import com.apollographql.apollo3.api.http.HttpHeader
 import com.apollographql.apollo3.cache.normalized.api.MemoryCacheFactory
 import com.apollographql.apollo3.cache.normalized.normalizedCache
-import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.data.models.Notification
 
 class Apollo {
     companion object Client {
         // Creates a 10MB MemoryCacheFactory
-        // todo decide cache duration
-        private val cacheFactory = MemoryCacheFactory(maxSizeBytes = 10 * 1024 * 1024)
+        // todo store cache in sql database
+        private const val ONE_HOUR_IN_MILLI_SECONDS: Long = 3600000L
+        private val cacheFactory = MemoryCacheFactory(
+            maxSizeBytes = 10 * 1024 * 1024,
+            ONE_HOUR_IN_MILLI_SECONDS
+        )
         val apolloClient =
             ApolloClient.Builder().httpHeaders(
                 listOf(
@@ -50,7 +51,6 @@ enum class ResultStatus {
     NO_DATA,
     ERROR
 }
-
 
 /**
  * Data is never null when status is successful

@@ -7,8 +7,8 @@
     <string name="manga">Manga</string>
     <string name="failed_to_load">Failed to load</string>
     <string name="mark_all_as_read">Mark all as read</string>
-    <string name="plus_one">+ 1</string>
-    <string name="minus_one">− 1</string>
+    <string name="plus_one" translatable="false">+ 1</string>
+    <string name="minus_one" translatable="false">− 1</string>
     <string name="plus_one_volume">+ 1 vol</string>
     <string name="plus_one_chapter">+ 1 ch</string>
     <string name="no_reviews">No reviews!</string>
@@ -18,4 +18,16 @@
     <string name="most_popular_year">#%1$d Most popular %2$d</string>
     <string name="highest_rated_season">#%1$d Highest rated %2$s %3$d</string>
     <string name="most_popular_season">#%1$d Most popular %2$s %3$d</string>
+    <plurals name="volume">
+        <item quantity="one">%1d Volume</item>
+        <item quantity="other">%1d Volumes</item>
+    </plurals>
+    <plurals name="episode">
+        <item quantity="one">%1d Episode</item>
+        <item quantity="other">%1d Episodes</item>
+    </plurals>
+    <plurals name="chapter">
+        <item quantity="one">%1d Chapter</item>
+        <item quantity="other">%1d Chapters</item>
+    </plurals>
 </resources>

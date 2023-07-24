@@ -5,12 +5,13 @@ import androidx.paging.PagingState
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.Apollo
+import com.example.anilist.GetCharacterDetailQuery
 import com.example.anilist.GetMediaDetailQuery
 import com.example.anilist.GetReviewDetailQuery
 import com.example.anilist.GetReviewsOfMediaQuery
 import com.example.anilist.GetStaffInfoQuery
-import com.example.anilist.GetStatsQuery
 import com.example.anilist.data.models.Character
+import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Relation
@@ -22,8 +23,10 @@ import com.example.anilist.data.models.Staff
 import com.example.anilist.data.models.Stats
 import com.example.anilist.data.models.Status
 import com.example.anilist.data.models.Tag
+import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaRankType
 import com.example.anilist.type.MediaSeason
+import com.example.anilist.type.MediaType
 import com.example.anilist.type.ReviewRating
 import java.util.Locale
 import javax.inject.Inject
@@ -113,27 +116,69 @@ class MediaDetailsRepository @Inject constructor() {
         return emptyList()
     }
 
-    suspend fun fetchStats(mediaId: Int): Stats? {
+//    suspend fun fetchStats(mediaId: Int): Stats {
+//        try {
+//            val result =
+//                Apollo.apolloClient.query(
+//                    GetStatsQuery(mediaId)
+//                )
+//                    .execute()
+//            if (result.hasErrors()) {
+//                // these errors are related to GraphQL errors
+//            }
+//            val data = result.data?.Media
+//            if (data != null) {
+//                return parseStats(data)
+//            }
+//        } catch (exception: ApolloException) {
+//            // handle exception here,, these are mainly for network errors
+//        }
+//        return Stats()
+//    }
+
+    suspend fun fetchCharacter(characterId: Int): CharacterDetail {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    GetStatsQuery(mediaId)
+                    GetCharacterDetailQuery(characterId)
                 )
                     .execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
             }
-            val data = result.data?.Media
+            val data = result.data?.Character
             if (data != null) {
-                return parseStats(data)
+                return parseCharacter(data)
             }
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
         }
-        return Stats()
+        return CharacterDetail()
     }
 
-    private fun parseStats(media: GetStatsQuery.Media): Stats {
+    private fun parseCharacter(data: GetCharacterDetailQuery.Character): CharacterDetail {
+        return CharacterDetail(
+            id = data.id,
+            userPreferredName = data.name?.userPreferred ?: "",
+            firstName = data.name?.first ?: "",
+            middleName = data.name?.middle ?: "",
+            lastName = data.name?.last ?: "",
+            fullName = data.name?.full ?: "",
+            nativeName = data.name?.native ?: "",
+            coverImage = data.image?.large ?: "",
+            // we take the outer p element out of the description, because otherwise there will be a margin between the blood type and description
+            description = "<strong>Birthday:</strong>${data.dateOfBirth?.fuzzyDate?.year}-${data.dateOfBirth?.fuzzyDate?.month}-${data.dateOfBirth?.fuzzyDate?.day}<br><strong>Age:</strong>${data.age}<br><strong>Gender:</strong>${data.gender}<br><strong>Blood type:</strong>${data.bloodType}<br>${data.description?.substringAfter("<p>")?.substringBeforeLast("</p>")}",
+            isFavorite = data.isFavourite,
+            isFavoriteBlocked = data.isFavouriteBlocked,
+            favorites = data.favourites ?: -1,
+            voiceActors = emptyList(),
+            relatedMedia = emptyList(),
+            alternativeNames = data.name?.alternative?.filterNotNull().orEmpty(),
+            alternativeSpoilerNames = data.name?.alternativeSpoiler?.filterNotNull().orEmpty()
+        )
+    }
+
+    private fun parseStats(media: GetMediaDetailQuery.Media?): Stats {
         var highestRatedAllTime: Int = -1
         var highestRatedYearRank: Int = -1
         var highestRatedYearNumber: Int = -1
@@ -146,15 +191,26 @@ class MediaDetailsRepository @Inject constructor() {
         var mostPopularSeasonRank: Int = -1
         var mostPopularSeasonSeason: Season = Season.UNKNOWN
         var mostPopularSeasonYear: Int = -1
-        val scoreDistribution: ScoreDistribution = ScoreDistribution()
-        val statusDistribution: Map<Status, Int> = mapOf(
+
+        var ten: Int = 0
+        var twenty: Int = 0
+        var thirty: Int = 0
+        var forty: Int = 0
+        var fifty: Int = 0
+        var sixty: Int = 0
+        var seventy: Int = 0
+        var eighty: Int = 0
+        var ninety: Int = 0
+        var hundred: Int = 0
+
+        val statusDistribution: MutableMap<Status, Int> = mutableMapOf(
             Status.CURRENT to 0,
             Status.PLANNING to 0,
             Status.COMPLETED to 0,
             Status.DROPPED to 0,
             Status.PAUSED to 0
         )
-        for (rank in media.rankings.orEmpty()) {
+        for (rank in media?.rankings.orEmpty()) {
             if (rank?.type == MediaRankType.RATED && rank?.allTime == true) {
                 highestRatedAllTime = rank.rank
             }
@@ -164,13 +220,7 @@ class MediaDetailsRepository @Inject constructor() {
             }
             if (rank?.type == MediaRankType.RATED && rank.season != null && rank.year != null) {
                 highestRatedSeasonRank = rank.rank
-                highestRatedSeasonSeason = when (rank.season) {
-                    MediaSeason.SPRING -> Season.SPRING
-                    MediaSeason.SUMMER -> Season.SUMMER
-                    MediaSeason.FALL -> Season.FALL
-                    MediaSeason.WINTER -> Season.WINTER
-                    MediaSeason.UNKNOWN__ -> Season.UNKNOWN
-                }
+                highestRatedSeasonSeason = rank.season.toAniHomeSeason()
                 highestRatedSeasonYear = rank.year
             }
 
@@ -183,17 +233,60 @@ class MediaDetailsRepository @Inject constructor() {
             }
             if (rank?.type == MediaRankType.POPULAR && rank.season != null && rank.year != null) {
                 mostPopularSeasonRank = rank.rank
-                mostPopularSeasonSeason = when (rank.season) {
-                    MediaSeason.SPRING -> Season.SPRING
-                    MediaSeason.SUMMER -> Season.SUMMER
-                    MediaSeason.FALL -> Season.FALL
-                    MediaSeason.WINTER -> Season.WINTER
-                    MediaSeason.UNKNOWN__ -> Season.UNKNOWN
-                }
+                mostPopularSeasonSeason = rank.season.toAniHomeSeason()
                 mostPopularSeasonYear = rank.year
             }
         }
+        for (stat in media?.stats?.scoreDistribution.orEmpty()) {
+            if (stat?.score == 10) {
+                ten = stat?.amount ?: 0
+            }
+            if (stat?.score == 20) {
+                twenty = stat?.amount ?: 0
+            }
+            if (stat?.score == 30) {
+                thirty = stat?.amount ?: 0
+            }
+            if (stat?.score == 40) {
+                forty = stat?.amount ?: 0
+            }
+            if (stat?.score == 50) {
+                fifty = stat?.amount ?: 0
+            }
+            if (stat?.score == 60) {
+                sixty = stat?.amount ?: 0
+            }
+            if (stat?.score == 70) {
+                seventy = stat?.amount ?: 0
+            }
+            if (stat?.score == 80) {
+                eighty = stat?.amount ?: 0
+            }
+            if (stat?.score == 90) {
+                ninety = stat?.amount ?: 0
+            }
+            if (stat?.score == 100) {
+                hundred = stat?.amount ?: 0
+            }
+        }
+
+        for (status in media?.stats?.statusDistribution.orEmpty()) {
+            statusDistribution[
+                when (status?.status) {
+                    MediaListStatus.CURRENT -> Status.CURRENT
+                    MediaListStatus.COMPLETED -> Status.COMPLETED
+                    MediaListStatus.PAUSED -> Status.PAUSED
+                    MediaListStatus.PLANNING -> Status.PLANNING
+                    MediaListStatus.DROPPED -> Status.DROPPED
+                    // the query does not return any data for repeating
+                    MediaListStatus.REPEATING -> Status.UNKNOWN
+                    MediaListStatus.UNKNOWN__ -> Status.UNKNOWN
+                    null -> Status.UNKNOWN
+                }
+            ] = status?.amount ?: 0
+        }
         return Stats(
+            ranksIsNotEmpty = media?.rankings?.isNotEmpty() ?: true,
             highestRatedAllTime = highestRatedAllTime,
             highestRatedYearRank = highestRatedYearRank,
             highestRatedYearNumber = highestRatedYearNumber,
@@ -206,7 +299,7 @@ class MediaDetailsRepository @Inject constructor() {
             mostPopularSeasonRank = mostPopularSeasonRank,
             mostPopularSeasonSeason = mostPopularSeasonSeason,
             mostPopularSeasonYear = mostPopularSeasonYear,
-            scoreDistribution = scoreDistribution,
+            scoreDistribution = ScoreDistribution(ten, twenty, thirty, forty, fifty, sixty, seventy, eighty, ninety, hundred),
             statusDistribution = statusDistribution
         )
     }
@@ -321,10 +414,14 @@ class MediaDetailsRepository @Inject constructor() {
         }
         val media = Media(
             title = anime?.title?.native ?: "Unknown",
+            type = anime?.type?.toAniHomeType() ?: com.example.anilist.data.models.MediaType.UNKNOWN,
             coverImage = anime?.coverImage?.extraLarge ?: "",
             format = anime?.format?.name ?: "Unknown",
+            season = anime?.season?.toAniHomeSeason() ?: Season.UNKNOWN,
             seasonYear = anime?.seasonYear.toString(),
             episodeAmount = anime?.episodes ?: 0,
+            volumes = anime?.volumes ?: -1,
+            chapters = anime?.chapters ?: -1,
             averageScore = anime?.averageScore ?: 0,
             genres = genres,
             description = anime?.description ?: "No description found",
@@ -352,7 +449,9 @@ class MediaDetailsRepository @Inject constructor() {
             // todo add dailymotion
             trailerLink = if (anime?.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${anime.trailer.id}" else if (anime?.trailer?.site == "dailymotion") "" else "",
             externalLinks = externalLinks,
-            note = ""
+            note = "",
+            stats = parseStats(anime),
+            characters = parseCharacters(anime)
         )
         return media
     }
@@ -361,19 +460,22 @@ class MediaDetailsRepository @Inject constructor() {
         val languages: MutableList<String> = mutableListOf()
         val characters: MutableList<Character> = mutableListOf()
         for (character in anime?.characters?.edges.orEmpty()) {
-            for (voiceActor in character?.voiceActors.orEmpty()) {
-                if (languages.contains(voiceActor?.languageV2) && voiceActor?.languageV2 != null) {
-                    languages.add(voiceActor.languageV2)
+            for (voiceActor in character?.voiceActorRoles.orEmpty()) {
+                if (languages.contains(voiceActor?.voiceActor?.languageV2) &&
+                    voiceActor?.voiceActor?.languageV2 != null
+                ) {
+                    languages.add(voiceActor.voiceActor.languageV2)
                 }
                 if (character != null && voiceActor != null) {
                     characters.add(
                         Character(
                             id = character.node?.id ?: 0,
+                            voiceActorId = voiceActor.voiceActor?.id ?: -1,
                             name = character.node?.name?.native ?: "",
                             coverImage = character.node?.image?.large ?: "",
-                            voiceActorName = voiceActor.name?.native ?: "",
-                            voiceActorCoverImage = voiceActor.image?.large ?: "",
-                            voiceActorLanguage = voiceActor.languageV2 ?: ""
+                            voiceActorName = voiceActor.voiceActor?.name?.userPreferred ?: "",
+                            voiceActorCoverImage = voiceActor.voiceActor?.image?.large ?: "",
+                            voiceActorLanguage = voiceActor.voiceActor?.languageV2 ?: ""
                         )
                     )
                 }
@@ -388,7 +490,7 @@ class MediaDetailsRepository @Inject constructor() {
             list.add(
                 Staff(
                     staff?.node?.name?.userPreferred ?: "Unknown",
-                    staff?.role ?: "Unkown",
+                    staff?.role ?: "Unknown",
                     staff?.node?.image?.large ?: "Unknown",
                     media?.staff?.pageInfo?.hasNextPage ?: false
                 )
@@ -457,4 +559,22 @@ class StaffPagingSource : PagingSource<Int, Staff>() {
      * Makes sure the paging key is never less than [STARTING_KEY]
      */
     private fun ensureValidKey(key: Int) = max(STARTING_KEY, key)
+}
+
+fun MediaSeason.toAniHomeSeason(): Season {
+    return when (this) {
+        MediaSeason.SPRING -> Season.SPRING
+        MediaSeason.SUMMER -> Season.SUMMER
+        MediaSeason.FALL -> Season.FALL
+        MediaSeason.WINTER -> Season.WINTER
+        MediaSeason.UNKNOWN__ -> Season.UNKNOWN
+    }
+}
+
+fun MediaType.toAniHomeType(): com.example.anilist.data.models.MediaType {
+    return when (this) {
+        MediaType.MANGA -> com.example.anilist.data.models.MediaType.MANGA
+        MediaType.ANIME -> com.example.anilist.data.models.MediaType.ANIME
+        MediaType.UNKNOWN__ -> com.example.anilist.data.models.MediaType.UNKNOWN
+    }
 }

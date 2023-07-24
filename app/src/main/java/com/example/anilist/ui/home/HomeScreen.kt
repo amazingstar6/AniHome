@@ -65,7 +65,6 @@ fun AniHome(
     val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
     Scaffold(topBar = {
         CenterAlignedTopAppBar(title = {
-
             Text("Home")
         }, navigationIcon = {
             IconButton(onClick = onNavigateToSettings) {

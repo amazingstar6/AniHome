@@ -40,12 +40,11 @@ import com.example.anilist.Utils
 import com.example.anilist.data.models.Notification
 import com.example.anilist.ui.Dimens
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun NotificationScreen(aniHomeViewModel: AniHomeViewModel, onNavigateBack: () -> Unit) {
     val notifications = aniHomeViewModel.notifications.observeAsState()
     Notifications(
-        notifications?.value?.data ?: emptyList(),
+        notifications.value?.data ?: emptyList(),
         aniHomeViewModel::markAllNotificationsAsRead,
         onNavigateBack = onNavigateBack
     )
@@ -80,8 +79,8 @@ private fun Notifications(
                 )
             }
         })
-    }) {
-        Column(modifier = Modifier.padding(top = it.calculateTopPadding())) {
+    }) { padding ->
+        Column(modifier = Modifier.padding(top = padding.calculateTopPadding())) {
             FlowRow(modifier = Modifier.padding(Dimens.PaddingNormal)) {
                 filterList.forEachIndexed { _, filter ->
                     val selected = filter == currentIndex
@@ -109,7 +108,7 @@ private fun Notifications(
             ) {
                 Text(text = stringResource(R.string.mark_all_as_read))
             }
-            LazyColumn() {
+            LazyColumn {
                 items(
                     notifications.filter {
                         when (currentIndex) {
@@ -139,14 +138,15 @@ private fun Notifications(
                         }
                     }
                 ) {
-                    Column() {
+                    Column {
                         Row {
                             AsyncImage(
                                 model = ImageRequest.Builder(LocalContext.current)
                                     .data(it.image)
                                     .crossfade(true)
                                     .build(),
-                                placeholder = painterResource(R.drawable.no_image),
+                                placeholder = painterResource(id = R.drawable.no_image),
+                                fallback = painterResource(id = R.drawable.no_image),
                                 contentDescription = "notification cover",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -175,15 +175,17 @@ private fun Notifications(
 }
 
 @Preview(showBackground = true)
+@Preview(locale = "nl")
 @Composable
 fun NotificationScreenPreview() {
     Notifications(
-        notifications = listOf<Notification>(
+        notifications = listOf(
             Notification(
                 type = "Airing",
                 airedEpisode = 2,
                 title = "时光代理人 第二季",
-                createdAt = 1689303604
+                createdAt = 1689303604,
+                image = ""
             )
         ),
         markAllAsRead = { },

@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.anilist.data.models.Character
+import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.Staff
@@ -28,9 +29,6 @@ class MediaDetailsViewModel @Inject constructor(
     private val _media = MutableLiveData<Media>()
     val media: LiveData<Media> = _media
 
-    private val _charachters = MutableLiveData<List<Character>>()
-    val charachters = _charachters
-
 //    private val _staff = Pager(
 //        config = PagingConfig(pageSize = 25, enablePlaceholders = false),
 //        pagingSourceFactory = { mediaDetailsRepository.pagingRepository()}
@@ -45,8 +43,12 @@ class MediaDetailsViewModel @Inject constructor(
     private val _review = MutableLiveData<Review>()
     val review = _review
 
-    private val _stats = MutableLiveData<Stats>()
-    val stats = _stats
+    private val _character = MutableLiveData<CharacterDetail>()
+    val character = _character
+
+
+//    private val _stats = MutableLiveData<Stats>()
+//    val stats = _stats
 
 //    init {
 //        fetchMedia()
@@ -56,13 +58,6 @@ class MediaDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             val data = mediaDetailsRepository.fetchMedia(mediaId)
             _media.value = data
-        }
-    }
-
-    fun fetchCharacters(mediaId: Int) {
-        viewModelScope.launch {
-            val data = mediaDetailsRepository.fetchCharacters(mediaId)
-            _charachters.value = data
         }
     }
 
@@ -80,11 +75,17 @@ class MediaDetailsViewModel @Inject constructor(
         }
     }
 
-    fun fetchStats(mediaId: Int) {
+    fun fetchCharacter(characterId: Int) {
         viewModelScope.launch {
-            _stats.value = mediaDetailsRepository.fetchStats(mediaId)
+            _character.value = mediaDetailsRepository.fetchCharacter(characterId)
         }
     }
+
+//    fun fetchStats(mediaId: Int) {
+//        viewModelScope.launch {
+//            _stats.value = mediaDetailsRepository.fetchStats(mediaId)
+//        }
+//    }
 
     fun fetchReview(reviewId: Int) {
         viewModelScope.launch {

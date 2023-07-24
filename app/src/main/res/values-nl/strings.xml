@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Anilist</string>
+    <string name="home">Home</string>
+    <string name="anime">Anime</string>
+    <string name="feed">Feed</string>
+    <string name="forum">Forum</string>
+    <string name="manga">Manga</string>
+    <string name="mark_all_as_read">Markeer alles als gelezen</string>
+    <string name="plus_one_chapter">+ 1 ch</string>
+    <string name="no_reviews">Geen reviews!</string>
+</resources>

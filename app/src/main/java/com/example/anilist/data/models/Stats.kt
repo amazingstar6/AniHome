@@ -1,6 +1,7 @@
 package com.example.anilist.data.models
 
 data class Stats(
+    val ranksIsNotEmpty: Boolean = true,
     val highestRatedAllTime: Int = -1,
     val highestRatedYearRank: Int = -1,
     val highestRatedYearNumber: Int = -1,
@@ -19,7 +20,8 @@ data class Stats(
         Status.PLANNING to 0,
         Status.COMPLETED to 0,
         Status.DROPPED to 0,
-        Status.PAUSED to 0
+        Status.PAUSED to 0,
+        Status.UNKNOWN to 0
     )
 )
 
@@ -32,7 +34,8 @@ data class ScoreDistribution(
     val sixty: Int = 0,
     val seventy: Int = 0,
     val eighty: Int = 0,
-    val ninety: Int = 0
+    val ninety: Int = 0,
+    val hundred: Int = 0
 )
 
 enum class Status {
@@ -40,7 +43,8 @@ enum class Status {
     PLANNING,
     COMPLETED,
     DROPPED,
-    PAUSED
+    PAUSED,
+    UNKNOWN
 }
 
 enum class Season {

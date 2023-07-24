@@ -5,6 +5,8 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.anilist.R
 
 object AniListRoute {
+    const val CHARACTER_DETAIL_ROUTE: String = "CharacterDetail"
+    const val STAFF_DETAIL_ROUTE: String = "StaffDetail"
     const val REVIEW_DETAIL_ROUTE: String = "ReviewDetail"
     const val SETTINGS: String = "Settings"
     const val NOTIFICATION_ROUTE: String = "Notification"
@@ -45,6 +47,18 @@ class AniListNavigationActions(private val navController: NavController) {
     fun navigateToReviewDetails(reviewId: Int) {
         navController.navigate(
             route = AniListRoute.REVIEW_DETAIL_ROUTE + "/$reviewId"
+        )
+    }
+
+    fun navigateToCharacter(id: Int) {
+        navController.navigate(
+            route = AniListRoute.CHARACTER_DETAIL_ROUTE + "/$id"
+        )
+    }
+
+    fun navigateToStaff(id: Int) {
+        navController.navigate(
+            route = AniListRoute.STAFF_DETAIL_ROUTE + "/$id"
         )
     }
 }

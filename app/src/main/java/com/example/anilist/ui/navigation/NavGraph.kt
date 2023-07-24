@@ -17,8 +17,10 @@ import com.example.anilist.ui.home.AniHome
 import com.example.anilist.ui.home.AniHomeViewModel
 import com.example.anilist.ui.home.NotificationScreen
 import com.example.anilist.ui.home.SettingsScreen
+import com.example.anilist.ui.mediadetails.CharacterDetailScreen
 import com.example.anilist.ui.mediadetails.MediaDetail
 import com.example.anilist.ui.mediadetails.ReviewDetailScreen
+import com.example.anilist.ui.mediadetails.StaffDetailScreen
 import com.example.anilist.ui.my_media.MyMediaScreen
 
 private const val TAG = "AniNavGraph"
@@ -62,15 +64,33 @@ fun AniNavGraph(
                     navController.popBackStack()
                 },
                 onNavigateToDetails = navigationActions::navigateToMediaDetails,
-                onNavigateToReviewDetails = navigationActions::navigateToReviewDetails
+                onNavigateToReviewDetails = navigationActions::navigateToReviewDetails,
+                navigateToCharacter = navigationActions::navigateToCharacter,
+                navigateToStaff = navigationActions::navigateToStaff
             )
         }
         composable(
+            route = AniListRoute.CHARACTER_DETAIL_ROUTE + "/{characterId}",
+            arguments = listOf(navArgument("characterId") { type = NavType.IntType }),
+            content = { backStackEntry ->
+                CharacterDetailScreen(id = backStackEntry.arguments?.getInt("characterId") ?: -1)
+            }
+        )
+        composable(
+            route = AniListRoute.STAFF_DETAIL_ROUTE + "/{staffId}",
+            arguments = listOf(navArgument("staffId") { type = NavType.IntType }),
+            content = { backStackEntry ->
+                StaffDetailScreen(id = backStackEntry.arguments?.getInt("characterId") ?: -1)
+            }
+        )
+        composable(
             route = AniListRoute.REVIEW_DETAIL_ROUTE + "/{reviewId}",
             arguments = listOf(navArgument("reviewId") { type = NavType.IntType }),
-            content = { backStackEntry -> ReviewDetailScreen(
-                reviewId = backStackEntry.arguments?.getInt("reviewId") ?: -1
-            ) }
+            content = { backStackEntry ->
+                ReviewDetailScreen(
+                    reviewId = backStackEntry.arguments?.getInt("reviewId") ?: -1
+                )
+            }
         )
         composable(
             AniListRoute.NOTIFICATION_ROUTE

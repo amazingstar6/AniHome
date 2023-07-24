@@ -4,20 +4,34 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.anilist.R
+import com.example.anilist.data.models.ScoreDistribution
 import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.Stats
+import com.example.anilist.data.models.Status
 import com.example.anilist.ui.Dimens
+import com.patrykandpatrick.vico.compose.axis.axisGuidelineComponent
+import com.patrykandpatrick.vico.compose.axis.axisLineComponent
+import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
+import com.patrykandpatrick.vico.compose.chart.Chart
+import com.patrykandpatrick.vico.compose.chart.column.columnChart
+import com.patrykandpatrick.vico.compose.component.textComponent
+import com.patrykandpatrick.vico.compose.m3.style.m3ChartStyle
+import com.patrykandpatrick.vico.compose.style.ProvideChartStyle
+import com.patrykandpatrick.vico.core.component.text.VerticalPosition
+import com.patrykandpatrick.vico.core.entry.entryModelOf
 
 @Composable
 fun Stats(stats: Stats) {
@@ -26,9 +40,11 @@ fun Stats(stats: Stats) {
             .fillMaxSize()
             .padding(Dimens.PaddingNormal)
     ) {
-        Heading("Rankings")
+        if (stats.ranksIsNotEmpty) {
+            Heading("Rankings")
+        }
 
-        if (stats.highestRatedAllTime != -1 ) {
+        if (stats.highestRatedAllTime != -1) {
             IconWithTextRankings(
                 stringResource(
                     id = R.string.highest_rated_all_time,
@@ -70,7 +86,7 @@ fun Stats(stats: Stats) {
             )
         }
 
-        if (stats.highestRatedSeasonRank != -1 ) {
+        if (stats.highestRatedSeasonRank != -1) {
             IconWithTextRankings(
                 stringResource(
                     id = R.string.highest_rated_season,
@@ -82,7 +98,7 @@ fun Stats(stats: Stats) {
             )
         }
 
-        if (stats.mostPopularSeasonRank != -1 ) {
+        if (stats.mostPopularSeasonRank != -1) {
             IconWithTextRankings(
                 stringResource(
                     id = R.string.most_popular_season,
@@ -95,8 +111,107 @@ fun Stats(stats: Stats) {
         }
 
         Heading("Score distribution")
+        val scoreDistribution = stats.scoreDistribution
+        val chartEntryModel = entryModelOf(
+            10 to scoreDistribution.ten,
+            20 to scoreDistribution.twenty,
+            30 to scoreDistribution.thirty,
+            40 to scoreDistribution.forty,
+            50 to scoreDistribution.fifty,
+            60 to scoreDistribution.sixty,
+            70 to scoreDistribution.seventy,
+            80 to scoreDistribution.eighty,
+            90 to scoreDistribution.ninety,
+            100 to scoreDistribution.hundred
+        )
+        ProvideChartStyle(m3ChartStyle()) {
+            Chart(
+                chart = columnChart(
+                    dataLabel = textComponent(color = MaterialTheme.colorScheme.onSurface),
+                    dataLabelVerticalPosition = VerticalPosition.Top
+                ),
+                model = chartEntryModel,
+                bottomAxis = bottomAxis(
+                    axis = axisLineComponent(),
+                    label = textComponent(color = MaterialTheme.colorScheme.onSurface),
+//                    valueFormatter = AxisValueFormatter {
+//                            value, chartValues
+//                        ->
+//                        "$chartValues"
+//                    },
+                    guideline = axisGuidelineComponent(thickness = 0.dp)
+                )
+//                marker = markerComponent(
+//                    label = textComponent(MaterialTheme.colorScheme.onSurface),
+//                    indicator = shapeComponent(Shapes.pillShape, MaterialTheme.colorScheme.surface),
+//                    guideline = axisGuidelineComponent()
+//                ),
+            )
+        }
         Heading("Status distribution")
+        val statusDistribution = stats.statusDistribution
+        val total = statusDistribution.values.sum()
+        val currentColor = Color.Red
+        val planningColor = Color.Black
+        val completedColor = Color.Green
+        val droppedColor = Color.Magenta
+        val pausedColor = Color.Gray
+
+        Row {
+            StatsLegendText(text = "Completed", completedColor)
+            StatsLegendText(text = "Current", currentColor)
+            StatsLegendText(text = "Planning", planningColor)
+            StatsLegendText(text = "Paused", pausedColor)
+            StatsLegendText(text = "Dropped", droppedColor)
+        }
+        Row {
+            Divider(
+                thickness = 12.dp,
+                modifier = Modifier.weight(
+                    (
+                        total / (
+                            statusDistribution[Status.COMPLETED]?.toFloat()
+                                ?: 1f
+                            )
+                        )
+                ),
+                color = completedColor
+            )
+            Divider(
+                thickness = 12.dp,
+                modifier = Modifier.weight(
+                    total / (statusDistribution[Status.CURRENT]?.toFloat() ?: 1f)
+                ),
+                color = currentColor
+            )
+            Divider(
+                thickness = 12.dp,
+                modifier = Modifier.weight(
+                    total / (statusDistribution[Status.PLANNING]?.toFloat() ?: 1f)
+                ),
+                color = planningColor
+            )
+            Divider(
+                thickness = 12.dp,
+                modifier = Modifier.weight(
+                    total / (statusDistribution[Status.PAUSED]?.toFloat() ?: 1f)
+                ),
+                color = pausedColor
+            )
+            Divider(
+                thickness = 12.dp,
+                modifier = Modifier.weight(
+                    total / (statusDistribution[Status.DROPPED]?.toFloat() ?: 1f)
+                ),
+                color = droppedColor
+            )
+        }
     }
+}
+
+@Composable
+private fun StatsLegendText(text: String, color: Color) {
+    Text(text = text, color = color)
 }
 
 @Composable
@@ -152,7 +267,18 @@ fun StatsPreview() {
             mostPopularYearRank = 65,
             highestRatedSeasonRank = 3,
             highestRatedSeasonSeason = Season.SUMMER,
-            highestRatedSeasonYear = 2023
+            highestRatedSeasonYear = 2023,
+            scoreDistribution = ScoreDistribution(
+                105,
+                34, 28, 28, 102, 143, 627, 1511, 3009, 2437
+            ),
+            statusDistribution = mapOf(
+                Status.COMPLETED to 100,
+                Status.CURRENT to 230,
+                Status.PLANNING to 500,
+                Status.DROPPED to 54,
+                Status.PAUSED to 20
+            )
         )
     )
 }

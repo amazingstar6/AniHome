@@ -8,18 +8,9 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.api.http.HttpHeader
-import com.apollographql.apollo3.api.http.HttpMethod
-import com.example.anilist.GetAnimeInfoQuery
-import com.example.anilist.GetMyAnimeQuery
 import com.example.anilist.GetTrendsQuery
-import com.example.anilist.data.models.Character
-import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.Relation
-import com.example.anilist.data.models.Tag
 import com.example.anilist.data.repository.HomeRepository
 import com.example.anilist.data.repository.NotificationRepository
 import com.example.anilist.data.repository.UserPreferencesRepository
@@ -28,7 +19,6 @@ import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaSort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Calendar
-import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -139,7 +129,7 @@ class AniHomeViewModel @Inject constructor(
                     Media(
                         id = media.id,
                         title = media.title.userPreferred,
-                        coverImage = media.coverImage?.extraLarge,
+                        coverImage = media.coverImage.extraLarge,
                         note = ""
                     )
                 )
@@ -302,171 +292,9 @@ class AniHomeViewModel @Inject constructor(
         }
     }
 
-    fun getAnimeDetails(id: Int) {
-        viewModelScope.launch {
-            val response =
-                apolloClient.query(GetAnimeInfoQuery(id)).execute()
-            _uiState.update { currentState ->
-                currentState.copy(
-                    currentDetailAnime = parseMedia(response.data?.Media),
-                    currentDetailCharacters = parseCharacters(response.data?.Media)
-                )
-            }
-        }
-    }
-
-    private fun parseCharacters(anime: GetAnimeInfoQuery.Media?): List<Character> {
-        val languages: MutableList<String> = mutableListOf()
-        val characters: MutableList<Character> = mutableListOf()
-        for (character in anime?.characters?.edges.orEmpty()) {
-            for (voiceActor in character?.voiceActors.orEmpty()) {
-                if (languages.contains(voiceActor?.languageV2) && voiceActor?.languageV2 != null) {
-                    languages.add(voiceActor.languageV2)
-                }
-                if (character != null && voiceActor != null) {
-                    characters.add(
-                        Character(
-                            id = character.node?.id ?: 0,
-                            name = character.node?.name?.native ?: "",
-                            coverImage = character.node?.image?.large ?: "",
-                            voiceActorName = voiceActor.name?.native ?: "",
-                            voiceActorCoverImage = voiceActor.image?.large ?: "",
-                            voiceActorLanguage = voiceActor.languageV2 ?: ""
-                        )
-                    )
-                }
-            }
-        }
-        return characters
-    }
-
-    private fun parseMedia(anime: GetAnimeInfoQuery.Media?): Media {
-        val tags: MutableList<Tag> = mutableListOf()
-        for (tag in anime?.tags.orEmpty()) {
-            if (tag != null) {
-                tags.add(Tag(tag.name, tag.rank ?: 0, tag.isMediaSpoiler ?: true))
-            }
-        }
-        val synonyms = buildString {
-            for (synonym in anime?.synonyms.orEmpty()) {
-                append(synonym)
-                if (anime?.synonyms?.last() != synonym) {
-                    append("\n")
-                }
-            }
-        }
-        val genres: MutableList<String> = mutableListOf()
-        for (genre in anime?.genres.orEmpty()) {
-            if (genre != null) {
-                genres.add(genre)
-            }
-        }
-        val externalLinks: MutableList<Link> = mutableListOf()
-        for (link in anime?.externalLinks.orEmpty()) {
-            if (link != null) {
-                externalLinks.add(
-                    Link(
-                        link.url ?: "",
-                        link.site,
-                        link.language ?: "",
-                        link.color ?: "",
-                        link.icon ?: ""
-                    )
-                )
-            }
-        }
-        val relations: MutableList<Relation> = mutableListOf()
-        for (relation in anime?.relations?.edges.orEmpty()) {
-            relations.add(
-                Relation(
-                    id = relation?.node?.id ?: 0,
-                    coverImage = relation?.node?.coverImage?.extraLarge ?: "",
-                    title = relation?.node?.title?.native ?: "",
-                    relation = relation?.relationType?.rawValue ?: ""
-                )
-            )
-        }
-        return Media(
-            title = anime?.title?.native ?: "Unknown",
-            coverImage = anime?.coverImage?.extraLarge ?: "",
-            format = anime?.format?.name ?: "Unknown",
-            seasonYear = anime?.seasonYear.toString(),
-            episodeAmount = anime?.episodes ?: 0,
-            averageScore = anime?.averageScore ?: 0,
-            genres = genres,
-            description = anime?.description ?: "No description found",
-            relations = relations,
-            infoList = mapOf(
-                "format" to anime?.format?.name.orEmpty(),
-                "status" to anime?.status?.name?.lowercase()
-                    ?.replaceFirstChar {
-                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-                    }
-                    .orEmpty(),
-                "startDate" to if (anime?.startDate != null) "${anime.startDate.day}-${anime.startDate.month}-${anime.startDate.year}" else "Unknown",
-                "endDate" to if (anime?.endDate?.year != null && anime.endDate.month != null && anime.endDate.day != null) "${anime.endDate.day}-${anime.endDate.month}-${anime.endDate.year}" else "Unknown",
-                "duration" to anime?.duration.toString(),
-                "country" to anime?.countryOfOrigin.toString(),
-                "source" to (anime?.source?.rawValue ?: "Unknown"),
-                "hashtag" to (anime?.hashtag ?: "Unknown"),
-                "licensed" to anime?.isLicensed.toString(),
-                "updatedAt" to anime?.updatedAt.toString(),
-                "synonyms" to synonyms,
-                "nsfw" to anime?.isAdult.toString()
-            ),
-            tags = tags,
-            trailerImage = anime?.trailer?.thumbnail ?: "",
-            // todo add dailymotion
-            trailerLink = if (anime?.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${anime.trailer.id}" else if (anime?.trailer?.site == "dailymotion") "" else "",
-            externalLinks = externalLinks,
-            note = ""
-        )
-    }
-
     override fun onCleared() {
         super.onCleared()
         Log.i(TAG, "AniHomeViewModel was just cleared!")
-    }
-
-    fun loadMyAnime(accessCode: String) {
-        Log.i(TAG, "My anime is being loaded!")
-        viewModelScope.launch {
-            val response: ApolloResponse<GetMyAnimeQuery.Data> =
-                apolloClient.query(
-                    GetMyAnimeQuery()
-                ).httpMethod(HttpMethod.Post)
-                    .httpHeaders(listOf(HttpHeader("Authorization", "Bearer $accessCode")))
-                    .execute()
-            _uiState.update { currentState ->
-                val list: List<GetMyAnimeQuery.List> =
-                    response.data?.MediaListCollection?.lists?.filterNotNull().orEmpty()
-                Log.i(
-                    TAG,
-                    "The size of the received anime list is ${list.size}"
-                )
-                Log.i(TAG, response.exception?.message ?: "")
-                currentState.copy(
-                    personalAnimeList = list.map {
-                        Log.i(
-                            TAG,
-                            "The title of the current anime being processed in my anime is ${
-                                it.entries?.get(0)?.media?.title?.userPreferred ?: ""
-                            }"
-                        )
-                        Media(
-                            id = it.entries?.get(0)?.media?.id ?: -1,
-                            title = it.entries?.get(0)?.media?.title?.userPreferred ?: "?",
-                            coverImage = it.entries?.get(0)?.media?.coverImage?.extraLarge ?: "",
-                            format = it.entries?.get(0)?.media?.format?.name ?: "",
-                            episodeAmount = it.entries?.get(0)?.media?.episodes ?: -1,
-                            personalRating = it.entries?.get(0)?.score ?: (-1).toDouble(),
-                            personalProgress = it.entries?.get(0)?.progress ?: -1,
-                            note = ""
-                        )
-                    }
-                )
-            }
-        }
     }
 
     fun markAllNotificationsAsRead() {

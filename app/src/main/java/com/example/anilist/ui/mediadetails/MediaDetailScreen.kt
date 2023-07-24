@@ -2,7 +2,6 @@ package com.example.anilist.ui.mediadetails
 
 import android.content.res.Configuration
 import android.util.Log
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,14 +15,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -31,7 +29,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
@@ -82,12 +79,14 @@ import com.example.anilist.R
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.MediaType
 import com.example.anilist.data.models.Relation
+import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.Stats
 import com.example.anilist.data.models.Tag
+import com.example.anilist.quantityStringResource
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.theme.AnilistTheme
-import kotlinx.coroutines.launch
 
 private const val TAG = "AnimeDetails"
 
@@ -99,7 +98,7 @@ enum class DetailTabs {
     Stats
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaDetail(
     mediaId: Int,
@@ -107,21 +106,20 @@ fun MediaDetail(
     mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
     onNavigateToDetails: (Int) -> Unit,
-    onNavigateToReviewDetails: (Int) -> Unit
+    onNavigateToReviewDetails: (Int) -> Unit,
+    navigateToStaff: (Int) -> Unit,
+    navigateToCharacter: (Int) -> Unit
 ) {
-    val pagerState = rememberPagerState(
-        initialPage = 0,
-        pageCount = { DetailTabs.values().size }
-    )
+//    val pagerState = rememberPagerState(
+//        initialPage = 0,
+//        pageCount = { DetailTabs.values().size }
+//    )
+    var index by remember { mutableStateOf(DetailTabs.Overview) }
+    rememberCoroutineScope()
 
-    val coroutineScope = rememberCoroutineScope()
-
-    val loading by mediaDetailsViewModel.dataLoading.observeAsState(initial = false)
     val media by mediaDetailsViewModel.media.observeAsState()
-    val characters by mediaDetailsViewModel.charachters.observeAsState(initial = emptyList())
     val staff by mediaDetailsViewModel.staff.observeAsState(initial = emptyList())
     val reviews by mediaDetailsViewModel.reviews.observeAsState()
-    val stats by mediaDetailsViewModel.stats.observeAsState()
 
     mediaDetailsViewModel.fetchMedia(mediaId)
 
@@ -153,56 +151,49 @@ fun MediaDetail(
             AniDetailTabs(
                 modifier = Modifier.padding(top = it.calculateTopPadding()),
                 titles = DetailTabs.values().map { it.name },
-                tabSelected = DetailTabs.values()[pagerState.currentPage]
-            ) { coroutineScope.launch { pagerState.animateScrollToPage(it.ordinal) } }
+                tabSelected = index
+            ) { index = it }
 
-            HorizontalPager(
-                state = pagerState
-            ) { page ->
-                when (page) {
-                    0 -> {
-                        if (media == null) {
-                            LoadingCircle()
-                        } else {
-                            Overview(
-                                media,
-                                onNavigateToDetails
-                            )
-                        }
-                    }
-
-                    1 -> {
-                        mediaDetailsViewModel.fetchCharacters(mediaId)
-                        Characters(
-                            characters.map { it.voiceActorLanguage }.distinct(),
-                            characters,
-                            navigateToCharacter = {}
+//            HorizontalPager(
+//                state = pagerState
+//            ) { page ->
+            when (index.ordinal) {
+                0 -> {
+                    if (media == null) {
+                        LoadingCircle()
+                    } else {
+                        Overview(
+                            media,
+                            onNavigateToDetails
                         )
                     }
+                }
 
-                    2 -> {
-                        mediaDetailsViewModel.fetchStaff(mediaId, 1)
-                        StaffScreen(staff) { mediaDetailsViewModel.fetchStaff(mediaId, it) }
-                    }
+                1 -> {
+                    Characters(
+                        media?.characters.orEmpty().map { it.voiceActorLanguage }.distinct(),
+                        media?.characters.orEmpty(),
+                        navigateToCharacter = navigateToCharacter,
+                        navigateToStaff = navigateToStaff
+                    )
+                }
 
-                    3 -> {
-                        mediaDetailsViewModel.fetchReviews(mediaId)
-                        if (reviews == null) {
-                            LoadingCircle()
-                        } else {
-                            Reviews(reviews.orEmpty(), onNavigateToReviewDetails)
-                        }
-                    }
+                2 -> {
+                    mediaDetailsViewModel.fetchStaff(mediaId, 1)
+                    StaffScreen(staff) { mediaDetailsViewModel.fetchStaff(mediaId, it) }
+                }
 
-                    4 -> {
-                        mediaDetailsViewModel.fetchStats(mediaId)
-                        if (stats == null) {
-                            LoadingCircle()
-                        } else {
-                            Stats(stats ?: Stats())
-                        }
+                3 -> {
+                    mediaDetailsViewModel.fetchReviews(mediaId)
+                    if (reviews == null) {
+                        LoadingCircle()
+                    } else {
+                        Reviews(reviews.orEmpty(), onNavigateToReviewDetails)
                     }
                 }
+
+                4 ->
+                    Stats(media?.stats ?: Stats())
             }
         }
     }
@@ -317,6 +308,7 @@ private fun OverviewTrailer(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { openUri() }
+                .padding(Dimens.PaddingNormal)
                 .clip(RoundedCornerShape(12.dp))
         )
     }
@@ -346,7 +338,8 @@ private fun AniDetailTabs(
 fun Characters(
     languages: List<String>,
     characters: List<Character>,
-    navigateToCharacter: (Int) -> Unit
+    navigateToCharacter: (Int) -> Unit,
+    navigateToStaff: (Int) -> Unit
 ) {
     var selected by remember { mutableIntStateOf(0) }
     Column(modifier = Modifier.padding(horizontal = 12.dp)) {
@@ -356,57 +349,43 @@ fun Characters(
                     selected = selected == index,
                     onClick = { selected = index },
                     label = { Text(text = language) },
-                    modifier = Modifier.padding(5.dp)
+                    modifier = Modifier.padding(end = Dimens.PaddingNormal)
                 )
             }
         }
         LazyVerticalGrid(columns = GridCells.Adaptive(120.dp)) {
-            items(characters.filter { it.voiceActorLanguage == languages[selected] }) {
-                Column {
+            items(characters.filter { it.voiceActorLanguage == languages[selected] }) { character ->
+                Column(modifier = Modifier.padding(bottom = Dimens.PaddingLarge)) {
                     Column(
                         modifier = Modifier
-                            .clickable { navigateToCharacter(it.id) }
+                            .clickable { navigateToCharacter(character.id) }
                             .padding(12.dp)
                             .align(Alignment.CenterHorizontally)
 
                     ) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(it.coverImage)
-                                .crossfade(true).build(),
-                            contentDescription = "Profile image of ${it.name}",
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .clip(RoundedCornerShape(12.dp))
-                        )
+                        ProfilePicture(character.coverImage, character.name)
                         Text(
-                            text = it.name,
+                            text = character.name,
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .padding(top = 6.dp, bottom = 6.dp)
+                                .height(50.dp)
                                 .fillMaxWidth()
                         )
                     }
                     Column(
                         modifier = Modifier
-                            .clickable { navigateToCharacter(it.id) }
+                            .clickable { navigateToStaff(character.voiceActorId) }
                             .padding(12.dp)
                             .align(Alignment.CenterHorizontally)
 
                     ) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(it.voiceActorCoverImage)
-                                .crossfade(true).build(),
-                            contentDescription = "Profile image of ${it.voiceActorName}",
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .clip(RoundedCornerShape(12.dp))
-                        )
+                        ProfilePicture(character.voiceActorCoverImage, character.voiceActorName)
                         Text(
-                            text = it.voiceActorName,
+                            text = character.voiceActorName,
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center,
@@ -422,6 +401,20 @@ fun Characters(
 }
 
 @Composable
+private fun ProfilePicture(coverImage: String, name: String) {
+    AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(coverImage)
+            .crossfade(true).build(),
+        contentDescription = "Profile image of $name",
+        contentScale = ContentScale.Crop,
+        modifier = Modifier.Companion
+            .size(150.dp)
+            .clip(RoundedCornerShape(12.dp))
+    )
+}
+
+@Composable
 @OptIn(ExperimentalLayoutApi::class)
 private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
     Row(modifier = Modifier.padding(Dimens.PaddingNormal)) {
@@ -431,14 +424,14 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
                     .crossfade(true).build(),
                 contentDescription = "Cover of ${anime1.title}",
                 placeholder = painterResource(id = R.drawable.no_image),
-//                fallBack = painterResource(id = R.drawable.no_image),
+                fallback = painterResource(id = R.drawable.no_image),
                 modifier = Modifier.clip(RoundedCornerShape(12.dp))
             )
         }
         Column {
             Text(
                 text = anime1.title,
-                modifier = Modifier.padding(start = 8.dp, bottom = 8.dp),
+                modifier = Modifier.padding(start = 24.dp, bottom = 8.dp),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -450,12 +443,40 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
                 )
                 IconWithText(
                     R.drawable.anime_details_calendar,
-                    anime1.seasonYear,
+                    text = if (anime1.type == MediaType.ANIME) {
+                        "${anime1.season.getName()} ${anime1.seasonYear}"
+                    } else {
+                        if (anime1.volumes != -1) {
+                            quantityStringResource(
+                                id = R.plurals.volume,
+                                quantity = anime1.volumes,
+                                anime1.volumes
+                            )
+                        } else {
+                            "?"
+                        }
+                    },
                     textColor = MaterialTheme.colorScheme.onSurface
                 )
                 IconWithText(
                     R.drawable.anime_details_timer,
-                    if (anime1.episodeAmount == 1) "${anime1.episodeAmount} Episode" else "${anime1.episodeAmount} Episodes",
+                    if (anime1.type == MediaType.ANIME) {
+                        quantityStringResource(
+                            id = R.plurals.episode,
+                            quantity = anime1.episodeAmount,
+                            anime1.episodeAmount
+                        )
+                    } else {
+                        if (anime1.chapters != -1) {
+                            quantityStringResource(
+                                id = R.plurals.chapter,
+                                quantity = anime1.chapters,
+                                anime1.chapters
+                            )
+                        } else {
+                            "?"
+                        }
+                    },
                     textColor = MaterialTheme.colorScheme.onSurface
                 )
                 IconWithText(
@@ -784,20 +805,6 @@ fun IconWithText(
     }
 }
 
-@Composable
-private fun Loading(reload: () -> Unit) {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        CircularProgressIndicator(modifier = Modifier.padding(12.dp))
-        Button(onClick = { reload() }) {
-            Text(text = "Reload")
-        }
-    }
-}
-
 @Preview(
     device = "id:pixel_6_pro",
     showBackground = true,
@@ -809,8 +816,19 @@ private fun Loading(reload: () -> Unit) {
 fun CharactersPreview() {
     Characters(
         listOf("Japanese", "Portuguese", "English", "French"),
-        characters = listOf(Character(1212321, "tanjirou", "", "花江夏樹", "", "Japanese")),
-        navigateToCharacter = {}
+        characters = listOf(
+            Character(
+                id = 1212321,
+                voiceActorId = 21312,
+                name = "tanjirou",
+                coverImage = "",
+                voiceActorName = "花江夏樹",
+                voiceActorCoverImage = "",
+                voiceActorLanguage = "Japanese"
+            )
+        ),
+        navigateToCharacter = { },
+        navigateToStaff = { }
     )
 }
 
@@ -834,9 +852,11 @@ fun OverviewPreview() {
                 onNavigateToDetails = {},
                 media = Media(
                     title = "鬼滅の刃 刀鍛冶の里編",
+                    type = MediaType.ANIME,
                     coverImage = "",
                     format = "TV",
-                    seasonYear = "Spring 2023",
+                    season = Season.SPRING,
+                    seasonYear = "2023",
                     episodeAmount = 11,
                     averageScore = 83,
                     genres = listOf("Action", "Adventure", "Drama", "Fantasy", "Supernatural"),

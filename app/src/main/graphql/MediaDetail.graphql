@@ -2,6 +2,7 @@ query getMediaDetail($id: Int!) {
     Media(id: $id) {
         id
         idMal
+        type
         title {
             romaji
             english
@@ -78,7 +79,7 @@ query getMediaDetail($id: Int!) {
                 }
             }
         }
-        characters {
+        characters(sort: RELEVANCE) {
             edges {
                 node {
                     id
@@ -91,19 +92,11 @@ query getMediaDetail($id: Int!) {
                 }
                 role
                 name
-                voiceActors {
-                    name {
-                        native
-                    }
-                    image {
-                        large
-                    }
-                    languageV2
-                }
                 voiceActorRoles {
                     voiceActor {
+                        id
                         name {
-                            native
+                            userPreferred
                         }
                         image {
                             large
@@ -112,14 +105,6 @@ query getMediaDetail($id: Int!) {
                     }
                     roleNotes
                     dubGroup
-                }
-            }
-            nodes {
-                name {
-                    native
-                }
-                image {
-                    large
                 }
             }
         }
@@ -159,12 +144,22 @@ query getMediaDetail($id: Int!) {
             site
         }
         rankings {
-            id,
             rank
             type
-            format
             year
             season
+            allTime
+            context
+        }
+        stats {
+            scoreDistribution {
+                score
+                amount
+            }
+            statusDistribution {
+                status
+                amount
+            }
         }
         mediaListEntry {
             id
@@ -194,37 +189,6 @@ query getMediaDetail($id: Int!) {
         isRecommendationBlocked
         isReviewBlocked
         modNotes
-    }
-}
-
-query GetStaffInfo($id:Int!, $page:Int = 1, $perPage:Int = 25) {
-    Media(id:$id) {
-        staff(page: $page, perPage: $perPage) {
-            edges {
-                node {
-                    name {
-                        first
-                        middle
-                        last
-                        full
-                        native
-                        alternative
-                        userPreferred
-                    }
-                    image {
-                        large
-                    }
-                }
-                role
-                favouriteOrder
-            }
-            pageInfo {
-                perPage
-                currentPage
-                lastPage
-                hasNextPage
-            }
-        }
     }
 }
 
@@ -260,26 +224,47 @@ query GetReviewsOfMedia($id: Int!, $page:Int = 1, $perPage:Int = 25) {
     }
 }
 
-query GetStats($id: Int!) {
-    Media(id: $id) {
-        stats {
-            scoreDistribution {
-                score
-                amount
-            }
-            statusDistribution {
-                status
-                amount
+query GetCharacterDetail($id: Int!) {
+    Character(id: $id) {
+        id
+        name {
+            first
+            middle
+            last
+            full
+            native
+            alternative
+            alternativeSpoiler
+            userPreferred
+        }
+        image {
+            large
+        }
+        description(asHtml: true)
+        gender
+        dateOfBirth {
+            ...FuzzyDate
+        }
+        age
+        bloodType
+        isFavourite
+        isFavouriteBlocked
+        siteUrl
+        media {
+            edges {
+                characterRole
+                node {
+                    title {
+                        userPreferred
+                    }
+                    coverImage {
+                        extraLarge
+                    }
+                }
             }
         }
-        rankings {
-            rank
-            type
-            year
-            season
-            allTime
-            context
-        }
+        favourites
+        modNotes
     }
 }
 
@@ -301,4 +286,41 @@ query GetReviewDetail($id: Int!) {
         ratingAmount
         userRating
     }
+}
+
+query GetStaffInfo($id:Int!, $page:Int = 1, $perPage:Int = 25) {
+    Media(id:$id) {
+        staff(page: $page, perPage: $perPage) {
+            edges {
+                node {
+                    name {
+                        first
+                        middle
+                        last
+                        full
+                        native
+                        alternative
+                        userPreferred
+                    }
+                    image {
+                        large
+                    }
+                }
+                role
+                favouriteOrder
+            }
+            pageInfo {
+                perPage
+                currentPage
+                lastPage
+                hasNextPage
+            }
+        }
+    }
+}
+
+fragment FuzzyDate on FuzzyDate {
+    year
+    month
+    day
 }
