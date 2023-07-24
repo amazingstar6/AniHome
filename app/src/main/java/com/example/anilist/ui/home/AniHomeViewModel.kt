@@ -11,6 +11,7 @@ import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
 import com.example.anilist.GetTrendsQuery
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.repository.HomeMedia
 import com.example.anilist.data.repository.HomeRepository
 import com.example.anilist.data.repository.NotificationRepository
 import com.example.anilist.data.repository.UserPreferencesRepository
@@ -84,12 +85,18 @@ class AniHomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AniHomeUiState())
     val uiState: StateFlow<AniHomeUiState> = _uiState.asStateFlow()
 
+    private val _media = MutableLiveData<HomeMedia>()
+    val media = _media
+
     init {
-        loadTrendingAnime()
-        loadPopularAnime()
-        loadUpcomingNextSeason()
-        loadAllTimePopular()
-        loadTop100Anime()
+//        loadTrendingAnime()
+//        loadPopularAnime()
+//        loadUpcomingNextSeason()
+//        loadAllTimePopular()
+//        loadTop100Anime()
+        viewModelScope.launch {
+            _media.value = homeRepository.getHomeMedia(true).getOrDefault(HomeMedia())
+        }
     }
 
     fun loadTrendingAnime(increasePage: Boolean = false) {

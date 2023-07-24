@@ -504,36 +504,34 @@ class MediaDetailsRepository @Inject constructor() {
     }
 }
 
+fun MediaSeason.toAniHomeSeason(): Season {
+    return when (this) {
+        MediaSeason.SPRING -> Season.SPRING
+        MediaSeason.SUMMER -> Season.SUMMER
+        MediaSeason.FALL -> Season.FALL
+        MediaSeason.WINTER -> Season.WINTER
+        MediaSeason.UNKNOWN__ -> Season.UNKNOWN
+    }
+}
+
+fun MediaType.toAniHomeType(): com.example.anilist.data.models.MediaType {
+    return when (this) {
+        MediaType.MANGA -> com.example.anilist.data.models.MediaType.MANGA
+        MediaType.ANIME -> com.example.anilist.data.models.MediaType.ANIME
+        MediaType.UNKNOWN__ -> com.example.anilist.data.models.MediaType.UNKNOWN
+    }
+}
+
 class StaffPagingSource : PagingSource<Int, Staff>() {
     private val STARTING_KEY = 0
 
-    /**
-     * Provide a [Key] used for the initial [load] for the next [PagingSource] due to invalidation
-     * of this [PagingSource]. The [Key] is provided to [load] via [LoadParams.key].
-     *
-     * The [Key] returned by this method should cause [load] to load enough items to
-     * fill the viewport around the last accessed position, allowing the next generation to
-     * transparently animate in. The last accessed position can be retrieved via
-     * [state.anchorPosition][PagingState.anchorPosition], which is typically
-     * the top-most or bottom-most item in the viewport due to access being triggered by binding
-     * items as they scroll into view.
-     *
-     * For example, if items are loaded based on integer position keys, you can return
-     * [state.anchorPosition][PagingState.anchorPosition].
-     *
-     * Alternately, if items contain a key used to load, get the key from the item in the page at
-     * index [state.anchorPosition][PagingState.anchorPosition].
-     *
-     * @param state [PagingState] of the currently fetched data, which includes the most recently
-     * accessed position in the list via [PagingState.anchorPosition].
-     *
-     * @return [Key] passed to [load] after invalidation used for initial load of the next
-     * generation. The [Key] returned by [getRefreshKey] should load pages centered around
-     * user's current viewport. If the correct [Key] cannot be determined, `null` can be returned
-     * to allow [load] decide what default key to use.
-     */
+    // The refresh key is used for the initial load of the next PagingSource, after invalidation
     override fun getRefreshKey(state: PagingState<Int, Staff>): Int? {
-        TODO("Not yet implemented")
+        // In our case we grab the item closest to the anchor position
+        // then return its id - (state.config.pageSize / 2) as a buffer
+        val anchorPosition = state.anchorPosition ?: return null
+        val article = state.closestItemToPosition(anchorPosition) ?: return null
+        return ensureValidKey(key = (state.config.pageSize / 2))
     }
 
     /**
@@ -559,22 +557,4 @@ class StaffPagingSource : PagingSource<Int, Staff>() {
      * Makes sure the paging key is never less than [STARTING_KEY]
      */
     private fun ensureValidKey(key: Int) = max(STARTING_KEY, key)
-}
-
-fun MediaSeason.toAniHomeSeason(): Season {
-    return when (this) {
-        MediaSeason.SPRING -> Season.SPRING
-        MediaSeason.SUMMER -> Season.SUMMER
-        MediaSeason.FALL -> Season.FALL
-        MediaSeason.WINTER -> Season.WINTER
-        MediaSeason.UNKNOWN__ -> Season.UNKNOWN
-    }
-}
-
-fun MediaType.toAniHomeType(): com.example.anilist.data.models.MediaType {
-    return when (this) {
-        MediaType.MANGA -> com.example.anilist.data.models.MediaType.MANGA
-        MediaType.ANIME -> com.example.anilist.data.models.MediaType.ANIME
-        MediaType.UNKNOWN__ -> com.example.anilist.data.models.MediaType.UNKNOWN
-    }
 }

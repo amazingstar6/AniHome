@@ -13,7 +13,7 @@ import com.example.anilist.data.repository.UserSettings
 import com.example.anilist.ui.PleaseLogin
 import com.example.anilist.ui.feed.FeedScreen
 import com.example.anilist.ui.forum.ForumScreen
-import com.example.anilist.ui.home.AniHome
+import com.example.anilist.ui.home.HomeScreen
 import com.example.anilist.ui.home.AniHomeViewModel
 import com.example.anilist.ui.home.NotificationScreen
 import com.example.anilist.ui.home.SettingsScreen
@@ -39,7 +39,7 @@ fun AniNavGraph(
         startDestination = AniListRoute.HOME_ROUTE
     ) {
         composable(AniListRoute.HOME_ROUTE) {
-            AniHome(
+            HomeScreen(
                 aniHomeViewModel = aniHomeViewModel,
                 onNavigateToNotification = {
                     navController.navigate(route = AniListRoute.NOTIFICATION_ROUTE)

@@ -30,9 +30,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.NonRestartableComposable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,19 +50,20 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.repository.HomeMedia
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 private const val TAG = "AniHome"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AniHome(
+fun HomeScreen(
     aniHomeViewModel: AniHomeViewModel,
     onNavigateToDetails: (Int) -> Unit,
     onNavigateToNotification: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
-    val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
+    val media by aniHomeViewModel.media.observeAsState(HomeMedia())
     Scaffold(topBar = {
         CenterAlignedTopAppBar(title = {
             Text("Home")
@@ -70,18 +71,17 @@ fun AniHome(
             IconButton(onClick = onNavigateToSettings) {
                 Icon(
                     imageVector = Icons.Outlined.Settings,
-                    contentDescription = "settings",
+                    contentDescription = "settings"
                 )
             }
         }, actions = {
             IconButton(onClick = onNavigateToNotification) {
                 Icon(
                     imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "notifications",
+                    contentDescription = "notifications"
 //                    modifier = Modifier.padding(Dimens.PaddingNormal)
                 )
             }
-
         })
     }) {
         Column(
@@ -93,41 +93,40 @@ fun AniHome(
             HeadlineText("Popular this season")
             AnimeRow(
                 onNavigateToDetails,
-                trendingAnimeUiState.popularAnime,
+                media.popularThisSeason,
                 { aniHomeViewModel.loadPopularAnime(true) },
                 aniHomeViewModel::loadPopularAnime
             )
             HeadlineText("Trending now")
             AnimeRow(
                 onNavigateToDetails,
-                trendingAnimeUiState.trendingAnime,
+                media.trendingNow,
                 { aniHomeViewModel.loadTrendingAnime(true) },
                 aniHomeViewModel::loadTrendingAnime
             )
             HeadlineText("Upcoming next season")
             AnimeRow(
                 onNavigateToDetails,
-                trendingAnimeUiState.upcomingNextSeason,
+                media.upcomingNextSeason,
                 { aniHomeViewModel.loadUpcomingNextSeason(true) },
                 aniHomeViewModel::loadUpcomingNextSeason
             )
             HeadlineText("All time popular")
             AnimeRow(
                 onNavigateToDetails,
-                trendingAnimeUiState.allTimePopular,
+                media.allTimePopular,
                 { aniHomeViewModel.loadAllTimePopular(true) },
                 aniHomeViewModel::loadAllTimePopular
             )
             HeadlineText("Top 100 anime")
             AnimeRow(
                 onNavigateToDetails,
-                trendingAnimeUiState.top100Anime,
+                media.top100Anime,
                 { aniHomeViewModel.loadTop100Anime(true) },
                 aniHomeViewModel::loadTop100Anime
             )
         }
     }
-
 }
 
 @Composable
@@ -150,7 +149,8 @@ private fun AniSearchBar() {
         },
         leadingIcon = {
             Icon(
-                painterResource(id = R.drawable.baseline_menu_24), "Menu"
+                painterResource(id = R.drawable.baseline_menu_24),
+                "Menu"
             )
         },
         trailingIcon = {
@@ -186,13 +186,17 @@ fun AnimeRow(
     if (animeList.isNotEmpty()) {
         val state = rememberLazyListState()
         LazyRow(
-            state = state,
+            state = state
         ) {
             items(animeList) { anime ->
                 AnimeCard(
-                    title = anime.title, coverImage = anime.coverImage, onNavigateToDetails = ({
-                        onNavigateToDetails(anime.id)
-                    })
+                    title = anime.title,
+                    coverImage = anime.coverImage,
+                    onNavigateToDetails = (
+                        {
+                            onNavigateToDetails(anime.id)
+                        }
+                        )
                 )
             }
         }
@@ -233,7 +237,11 @@ fun AnimeRow(
 
 @Composable
 fun HeadlineText(text: String, onNavigateToOverview: () -> Unit = {}) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Text(
             text,
             style = MaterialTheme.typography.headlineMedium,
@@ -254,12 +262,14 @@ fun AnimeCard(
     onNavigateToDetails: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = Modifier
-        .padding(start = 12.dp)
-        .width(120.dp)
-        .height(240.dp)
-        .then(modifier)
-        .clickable { onNavigateToDetails() }) {
+    Column(
+        modifier = Modifier
+            .padding(start = 12.dp)
+            .width(120.dp)
+            .height(240.dp)
+            .then(modifier)
+            .clickable { onNavigateToDetails() }
+    ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
                 .build(),

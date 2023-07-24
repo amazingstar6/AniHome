@@ -247,7 +247,7 @@ private fun OverviewRelations(
                     modifier = Modifier
                         .padding(start = Dimens.PaddingNormal)
                         .width(80.dp)
-                        .height(205.dp)
+                        .height(230.dp)
                         .clickable {
                             onNavigateToDetails(relation.id)
                         }
@@ -425,7 +425,8 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
                 contentDescription = "Cover of ${anime1.title}",
                 placeholder = painterResource(id = R.drawable.no_image),
                 fallback = painterResource(id = R.drawable.no_image),
-                modifier = Modifier.clip(RoundedCornerShape(12.dp))
+                contentScale = ContentScale.FillHeight,
+                modifier = Modifier.height(250.dp).clip(RoundedCornerShape(12.dp))
             )
         }
         Column {
