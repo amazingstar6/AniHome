@@ -1,6 +1,7 @@
 package com.example.anilist.ui.my_media
 
 import android.os.Build
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -70,6 +72,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.ui.Dimens
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -77,6 +80,16 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import java.time.Clock
+
+enum class MediaStatus {
+    CURRENT,
+    PLANNING,
+    COMPLETED,
+    DROPPED,
+    PAUSED,
+    REPEATING,
+    UNKNOWN
+}
 
 @Composable
 fun MyMediaScreen(
@@ -86,45 +99,32 @@ fun MyMediaScreen(
     accessCode: String,
     onNavigateToStatusEditor: () -> Unit
 ) {
-    val myAnime = myMediaViewModel.myAnime.observeAsState()
-    val myManga = myMediaViewModel.myManga.observeAsState()
+    val myAnime by myMediaViewModel.myAnime.observeAsState()
+    val myManga by myMediaViewModel.myManga.observeAsState()
+    val currentMap = if (isAnime) myAnime else myManga
+    myMediaViewModel.fetchMyMedia(isAnime)
     MyMedia(
         isAnime = isAnime,
-        myMedia = if (isAnime) myAnime.value.orEmpty() else myManga.value.orEmpty(),
+        myMedia = currentMap,
         navigateToDetails = navigateToDetails,
-        increaseEpisodeProgress = myMediaViewModel::increaseEpisodeProgress,
 //        onNavigateToStatusEditor = onNavigateToStatusEditor,
-        refreshList = {
-            if (isAnime) myMediaViewModel.refreshAnime() else myMediaViewModel.refreshManga()
-        },
-        filter = {
-        }
-    )
+        increaseEpisodeProgress = myMediaViewModel::increaseEpisodeProgress,
+    ) { myMediaViewModel.updateProgress(it) }
 }
 
-enum class MediaStatus {
-    ALL,
-    WATCHING,
-    REWATCHING,
-    DROPPED,
-    COMPLETED,
-    PLANNING
-}
 sealed class BottomSheetScreen {
     object FilterScreen : BottomSheetScreen()
     class EditStatusScreen(val media: Media) : BottomSheetScreen()
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 private fun MyMedia(
     isAnime: Boolean,
-    myMedia: List<Media>,
+    myMedia: Map<MediaStatus, List<Media>>?,
     navigateToDetails: (Int) -> Unit,
-    refreshList: () -> Unit,
     increaseEpisodeProgress: (mediaId: Int, newProgress: Int) -> Unit,
-//    onNavigateToStatusEditor: () -> Unit,
-    filter: (MediaStatus) -> Unit
+    saveStatus: (StatusUpdate) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberBottomSheetScaffoldState(
@@ -144,25 +144,18 @@ private fun MyMedia(
             scaffoldState.bottomSheetState.expand()
         }
     }
+    var filter by remember { mutableStateOf(MediaStatus.UNKNOWN) }
     BottomSheetScaffold(
-//        modifier = Modifier.pointerInput(Unit) {
-//            detectTapGestures {
-//                scope.launch {
-//                    if (scaffoldState.bottomSheetState.isVisible) {
-//                        scaffoldState.bottomSheetState.hide()
-//                    }
-//                }
-//            }
-//        },
         scaffoldState = scaffoldState,
         sheetContent = {
             currentBottomSheet.let { currentSheet ->
                 when (currentSheet) {
                     BottomSheetScreen.FilterScreen -> {
-                        FilterScreen(filter, scope, scaffoldState, isAnime, closeSheet)
+                        FilterScreen({ filter = it }, scope, scaffoldState, isAnime, closeSheet)
                     }
+
                     is BottomSheetScreen.EditStatusScreen -> {
-                        EditStatusScreen(isAnime, closeSheet, scope, currentSheet.media)
+                        EditStatusScreen(isAnime, closeSheet, scope, currentSheet.media, saveStatus)
                     }
                 }
             }
@@ -177,11 +170,11 @@ private fun MyMedia(
         val refreshScope = rememberCoroutineScope()
         var refreshing by remember { mutableStateOf(false) }
 
-        fun refresh() = refreshScope.launch {
-            refreshing = true
-            refreshList()
-            refreshing = false
-        }
+//        fun refresh() = refreshScope.launch {
+//            refreshing = true
+//            refreshList()
+//            refreshing = false
+//        }
 
 //        val state = rememberPullRefreshState(refreshing, ::refresh)
 
@@ -191,8 +184,73 @@ private fun MyMedia(
                 .fillMaxSize()
         ) {
             LazyColumn(modifier = Modifier.padding(top = it.calculateTopPadding())) {
-                if (!refreshing) {
-                    items(myMedia) { media ->
+                if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.CURRENT) {
+                    stickyHeader {
+                        MyMediaHeadline("Current")
+                    }
+                    items(myMedia?.get(MediaStatus.CURRENT).orEmpty()) { media ->
+                        MediaCard(
+                            navigateToDetails,
+                            increaseEpisodeProgress,
+                            media,
+                            { openSheet(BottomSheetScreen.EditStatusScreen(media)) },
+                            isAnime = isAnime
+                        )
+                    }
+                }
+                if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.REPEATING) {
+                    stickyHeader { MyMediaHeadline(text = "Repeating") }
+                    items(myMedia?.get(MediaStatus.REPEATING).orEmpty()) { media ->
+                        MediaCard(
+                            navigateToDetails,
+                            increaseEpisodeProgress,
+                            media,
+                            { openSheet(BottomSheetScreen.EditStatusScreen(media)) },
+                            isAnime = isAnime
+                        )
+                    }
+                }
+                if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.PLANNING) {
+                    stickyHeader { MyMediaHeadline(text = "Planning") }
+                    items(myMedia?.get(MediaStatus.PLANNING).orEmpty()) { media ->
+                        MediaCard(
+                            navigateToDetails,
+                            increaseEpisodeProgress,
+                            media,
+                            { openSheet(BottomSheetScreen.EditStatusScreen(media)) },
+                            isAnime = isAnime
+                        )
+                    }
+                }
+                if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.COMPLETED) {
+                    stickyHeader { MyMediaHeadline(text = "Completed") }
+                    items(myMedia?.get(MediaStatus.COMPLETED).orEmpty()) { media ->
+                        MediaCard(
+                            navigateToDetails,
+                            increaseEpisodeProgress,
+                            media,
+                            { openSheet(BottomSheetScreen.EditStatusScreen(media)) },
+                            isAnime = isAnime
+                        )
+                    }
+                }
+                if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.DROPPED) {
+                    stickyHeader { MyMediaHeadline(text = "Dropped") }
+                    items(myMedia?.get(MediaStatus.DROPPED).orEmpty()) { media ->
+                        MediaCard(
+                            navigateToDetails,
+                            increaseEpisodeProgress,
+                            media,
+                            { openSheet(BottomSheetScreen.EditStatusScreen(media)) },
+                            isAnime = isAnime
+                        )
+                    }
+                }
+                if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.PAUSED) {
+                    stickyHeader {
+                        MyMediaHeadline(text = "Paused")
+                    }
+                    items(myMedia?.get(MediaStatus.PAUSED).orEmpty()) { media ->
                         MediaCard(
                             navigateToDetails,
                             increaseEpisodeProgress,
@@ -237,13 +295,26 @@ private fun MyMedia(
     }
 }
 
+@Composable
+private fun MyMediaHeadline(text: String) {
+    Surface(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditStatusScreen(
     isAnime: Boolean,
     closeSheet: () -> Unit,
     scope: CoroutineScope,
-    media: Media
+    media: Media,
+    saveStatus: (StatusUpdate) -> Unit
 ) {
 //    val options = listOf(
 //        "Watching",
@@ -254,6 +325,7 @@ fun EditStatusScreen(
 //        "Dropped"
 //    )
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+        var selectedOptionText by remember { mutableStateOf(MediaStatus.values()[0]) }
         CenterAlignedTopAppBar(
             title = {
                 Text(
@@ -276,12 +348,31 @@ fun EditStatusScreen(
                 }
             },
             actions = {
-                TextButton(onClick = { /*TODO*/ }) {
+                TextButton(onClick = {
+                    saveStatus(
+                        StatusUpdate(
+                            mediaId = media.id,
+                            status = selectedOptionText,
+                            scoreRaw = null,
+                            progress = null,
+                            progressVolumes = null,
+                            repeat = null,
+                            priority = null,
+                            privateToUser = null,
+                            notes = null,
+                            hiddenFromStatusList = null,
+                            customLists = null,
+                            advancedScores = null,
+                            startedAt = null,
+                            completedAt = null
+                        )
+                    )
+                }) {
                     Text("Save")
                 }
             }
         )
-        DropDownMenuStatus()
+        DropDownMenuStatus(selectedOptionText) { selectedOptionText = it }
 
         NumberTextField(
             media,
@@ -464,9 +555,11 @@ private fun DatePickerDialogue(label: String) {
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun DropDownMenuStatus() {
+fun DropDownMenuStatus(
+    selectedOptionText: MediaStatus,
+    setSelectedOptionText: (MediaStatus) -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedOptionText by remember { mutableStateOf(MediaStatus.values()[0]) }
     // We want to react on tap/press on TextField to show menu
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -493,7 +586,7 @@ fun DropDownMenuStatus() {
                 DropdownMenuItem(
                     text = { Text(selectionOption.name) },
                     onClick = {
-                        selectedOptionText = selectionOption
+                        setSelectedOptionText(selectionOption)
                         expanded = false
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
@@ -515,8 +608,7 @@ private fun NumberTextField(media: Media, label: String, initialValue: String, h
     ) {
         OutlinedTextField(
             value = text,
-            onValueChange = {
-                    newInput ->
+            onValueChange = { newInput ->
                 text = newInput
             },
             label = { Text(label) },
@@ -587,7 +679,7 @@ private fun FilterScreen(
         }
     })
     TextButton(onClick = {
-        filter(MediaStatus.ALL)
+        filter(MediaStatus.UNKNOWN)
         scope.launch {
             scaffoldState.bottomSheetState.hide()
         }
@@ -595,7 +687,7 @@ private fun FilterScreen(
         Text("All")
     }
     TextButton(onClick = {
-        filter(MediaStatus.WATCHING)
+        filter(MediaStatus.CURRENT)
         scope.launch {
             scaffoldState.bottomSheetState.hide()
         }
@@ -603,7 +695,7 @@ private fun FilterScreen(
         Text(if (isAnime) "Watching" else "Reading")
     }
     TextButton(onClick = {
-        filter(MediaStatus.REWATCHING)
+        filter(MediaStatus.REPEATING)
         scope.launch {
             scaffoldState.bottomSheetState.hide()
         }
@@ -840,51 +932,52 @@ fun EditStatusScreenPreview() {
             personalRating = 6.0,
             personalProgress = 1,
             note = ""
-        )
+        ),
+        saveStatus = {}
     )
 }
 
 @Preview(showBackground = true, group = "fullscreen")
 @Composable
 fun MyAnimePreview() {
-    MyMedia(
-        isAnime = false,
-        myMedia = listOf(
-            Media(
-                title = "鬼滅の刃",
-                format = "TV",
-                chapters = 80,
-                volumes = 6,
-                personalRating = 6.0,
-                personalProgress = 20,
-                personalVolumeProgress = 3,
-                note = ""
-            ),
-            Media(
-                title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
-                format = "TV",
-                chapters = 1012,
-                personalRating = 10.0,
-                personalProgress = 120,
-                note = "",
-                personalVolumeProgress = 2,
-                volumes = 5
-            ),
-            Media(
-                title = "ONE PIECE",
-                format = "TV",
-                episodeAmount = 101,
-                personalRating = 3.0,
-                personalProgress = 101,
-                note = "",
-                volumes = 3,
-                personalVolumeProgress = 2
-            )
-        ),
-        navigateToDetails = {},
-        increaseEpisodeProgress = { _, _ -> },
-//        onNavigateToStatusEditor = {},
-        refreshList = {},
-        filter = { }
-    )
+//    MyMedia(
+//        isAnime = false,
+//        myMedia = listOf(
+//            Media(
+//                title = "鬼滅の刃",
+//                format = "TV",
+//                chapters = 80,
+//                volumes = 6,
+//                personalRating = 6.0,
+//                personalProgress = 20,
+//                personalVolumeProgress = 3,
+//                note = ""
+//            ),
+//            Media(
+//                title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
+//                format = "TV",
+//                chapters = 1012,
+//                personalRating = 10.0,
+//                personalProgress = 120,
+//                note = "",
+//                personalVolumeProgress = 2,
+//                volumes = 5
+//            ),
+//            Media(
+//                title = "ONE PIECE",
+//                format = "TV",
+//                episodeAmount = 101,
+//                personalRating = 3.0,
+//                personalProgress = 101,
+//                note = "",
+//                volumes = 3,
+//                personalVolumeProgress = 2
+//            )
+//        ),
+//        navigateToDetails = {},
+////        onNavigateToStatusEditor = {},
+//        increaseEpisodeProgress = { _, _ -> },
+//        filter = { },
+//        saveStatus = { }
+//    )
 }

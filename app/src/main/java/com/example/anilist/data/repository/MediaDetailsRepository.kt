@@ -604,6 +604,7 @@ class MediaDetailsRepository @Inject constructor() {
                 )
             )
         }
+        val infoList = mutableMapOf<String, String>()
         val media = Media(
             title = anime?.title?.native ?: "Unknown",
             type = anime?.type?.toAniHomeType()
@@ -628,7 +629,7 @@ class MediaDetailsRepository @Inject constructor() {
                     .orEmpty(),
                 "startDate" to if (anime?.startDate != null) "${anime.startDate.day}-${anime.startDate.month}-${anime.startDate.year}" else "Unknown",
                 "endDate" to if (anime?.endDate?.year != null && anime.endDate.month != null && anime.endDate.day != null) "${anime.endDate.day}-${anime.endDate.month}-${anime.endDate.year}" else "Unknown",
-                "duration" to anime?.duration.toString(),
+                "duration" to if (anime?.duration == null) "Unknown" else anime.duration.toString(),
                 "country" to anime?.countryOfOrigin.toString(),
                 "source" to (anime?.source?.rawValue ?: "Unknown"),
                 "hashtag" to (anime?.hashtag ?: "Unknown"),

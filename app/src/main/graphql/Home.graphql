@@ -1,38 +1,75 @@
-query GetTrendingMedia($page: Int = 1, $type: MediaType!, $currentSeason: MediaSeason!, $nextSeason: MediaSeason!, $currentYear: Int = 2023, $nextYear: Int = 2023){
-
+query GetTrendingMedia(
+    $page: Int!,
+    $type: MediaType!,
+    $currentSeason: MediaSeason!,
+    $nextSeason: MediaSeason!,
+    $currentYear: Int!,
+    $nextYear: Int!,
+    $skipTrendingNow: Boolean = false,
+    $skipPopularThisSeason: Boolean = false,
+    $skipUpcomingNextSeason: Boolean = false,
+    $skipAllTimePopular: Boolean = false,
+    $skipTop100Anime: Boolean = false
+){
+#       Default per page is 25, since the limit is 25
         popularThisSeason:
-        Page(page: $page) {
+        Page(page: $page)@skip(if: $skipPopularThisSeason) {
             media(sort:POPULARITY_DESC, type: $type, season: $currentSeason, seasonYear: $currentYear) {
                 ...mediaTitleCover
             }
         }
         trendingNow:
-        Page {
+        Page(page: $page)@skip(if: $skipTrendingNow) {
             media(sort: TRENDING, type:$type) {
                 ...mediaTitleCover
             }
         }
         upcomingNextSeason:
-        Page {
+        Page(page: $page)@skip(if: $skipUpcomingNextSeason) {
             media(sort: POPULARITY_DESC, type: $type, season: $nextSeason, seasonYear: $nextYear) {
                 ...mediaTitleCover
             }
         }
         allTimePopular:
-        Page {
+        Page(page: $page)@skip(if: $skipAllTimePopular) {
             media(sort: POPULARITY_DESC, type:$type) {
                 ...mediaTitleCover
             }
         }
         top100Anime:
-        Page {
+        Page(page: $page)@skip(if: $skipTop100Anime) {
             media(sort: SCORE_DESC, type: $type) {
             ...mediaTitleCover
             }
         }
+}
 
+query GetMorePopularThisSeason(
+    $page: Int!,
+    $type: MediaType!,
+    $currentSeason: MediaSeason!,
+    $currentYear: Int!
+) {
+    popularThisSeason:
+    Page(page: $page) {
+        media(sort:POPULARITY_DESC, type: $type, season: $currentSeason, seasonYear: $currentYear) {
+            ...mediaTitleCover
+        }
+    }
+}
 
-
+query GetMoreTrendingNow(
+    $page: Int!,
+    $type: MediaType!,
+    $currentSeason: MediaSeason!,
+    $currentYear: Int!
+) {
+    trendingNow:
+    Page {
+        media(sort: TRENDING, type:$type) {
+            ...mediaTitleCover
+        }
+    }
 }
 
 fragment mediaTitleCover on Media {

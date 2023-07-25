@@ -1,7 +1,9 @@
 package com.example.anilist.ui.home
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,12 +20,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
@@ -64,15 +66,32 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit
 ) {
     val media by aniHomeViewModel.media.observeAsState(HomeMedia())
+    val popularAnime by aniHomeViewModel.popularAnime.observeAsState(emptyList())
+    val trendingAnime by aniHomeViewModel.trendingAnime.observeAsState(emptyList())
+    val upcomingNextSeason by aniHomeViewModel.upcomingNextSeason.observeAsState(emptyList())
+
+    var popularPage by remember { mutableStateOf(1) }
+    var trendingPage by remember { mutableStateOf(1) }
+
     Scaffold(topBar = {
         CenterAlignedTopAppBar(title = {
             Text("Home")
         }, navigationIcon = {
-            IconButton(onClick = onNavigateToSettings) {
-                Icon(
-                    imageVector = Icons.Outlined.Settings,
-                    contentDescription = "settings"
-                )
+            Box {
+                PlainTooltipBox(
+                    tooltip = { Text(text = "Settings   ") },
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                ) {
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier.tooltipTrigger()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Settings,
+                            contentDescription = "settings"
+                        )
+                    }
+                }
             }
         }, actions = {
             IconButton(onClick = onNavigateToNotification) {
@@ -90,41 +109,53 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             AniSearchBar()
-            HeadlineText("Popular this season")
-            AnimeRow(
-                onNavigateToDetails,
-                media.popularThisSeason,
-                { aniHomeViewModel.loadPopularAnime(true) },
-                aniHomeViewModel::loadPopularAnime
-            )
             HeadlineText("Trending now")
             AnimeRow(
                 onNavigateToDetails,
-                media.trendingNow,
-                { aniHomeViewModel.loadTrendingAnime(true) },
-                aniHomeViewModel::loadTrendingAnime
-            )
+                trendingAnime
+            ) {
+                trendingPage += 1
+                aniHomeViewModel.fetchMedia(
+                    isAnime = true,
+                    page = trendingPage,
+                    skipTrendingNow = false
+                )
+            }
+            HeadlineText("Popular this season")
+            AnimeRow(
+                onNavigateToDetails,
+                popularAnime
+            ) {
+                popularPage += 1
+                aniHomeViewModel.fetchMedia(
+                    isAnime = true,
+                    page = popularPage,
+                    skipPopularThisSeason = false
+                )
+            }
             HeadlineText("Upcoming next season")
             AnimeRow(
                 onNavigateToDetails,
-                media.upcomingNextSeason,
-                { aniHomeViewModel.loadUpcomingNextSeason(true) },
-                aniHomeViewModel::loadUpcomingNextSeason
-            )
-            HeadlineText("All time popular")
-            AnimeRow(
-                onNavigateToDetails,
-                media.allTimePopular,
-                { aniHomeViewModel.loadAllTimePopular(true) },
-                aniHomeViewModel::loadAllTimePopular
-            )
-            HeadlineText("Top 100 anime")
-            AnimeRow(
-                onNavigateToDetails,
-                media.top100Anime,
-                { aniHomeViewModel.loadTop100Anime(true) },
-                aniHomeViewModel::loadTop100Anime
-            )
+                upcomingNextSeason
+            ) {
+                aniHomeViewModel.fetchMedia(
+                    isAnime = true,
+                    page = 1,
+                    skipUpcomingNextSeason = false
+                )
+            }
+//            HeadlineText("All time popular")
+//            AnimeRow(
+//                onNavigateToDetails,
+//                media.allTimePopular,
+//                { aniHomeViewModel.loadAllTimePopular(true) }
+//            )
+//            HeadlineText("Top 100 anime")
+//            AnimeRow(
+//                onNavigateToDetails,
+//                media.top100Anime,
+//                { aniHomeViewModel.loadTop100Anime(true) }
+//            )
         }
     }
 }
@@ -180,57 +211,40 @@ private fun AniSearchBar() {
 fun AnimeRow(
     onNavigateToDetails: (Int) -> Unit,
     animeList: List<Media>,
-    loadMoreAnime: () -> Unit,
-    reloadAnime: () -> Unit
+    loadMoreAnime: () -> Unit
 ) {
-    if (animeList.isNotEmpty()) {
-        val state = rememberLazyListState()
-        LazyRow(
-            state = state
-        ) {
-            items(animeList) { anime ->
-                AnimeCard(
-                    title = anime.title,
-                    coverImage = anime.coverImage,
-                    onNavigateToDetails = (
-                        {
-                            onNavigateToDetails(anime.id)
-                        }
-                        )
-                )
-            }
+    val state = rememberLazyListState()
+    LazyRow(
+        state = state
+    ) {
+        items(animeList) { anime ->
+            AnimeCard(
+                title = anime.title,
+                coverImage = anime.coverImage,
+                onNavigateToDetails = (
+                    {
+                        onNavigateToDetails(anime.id)
+                    }
+                    )
+            )
         }
+    }
 
-        val needNextPage by remember {
-            derivedStateOf {
-                val layoutInfo = state.layoutInfo
-                val totalItems = layoutInfo.totalItemsCount
-                val lastItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) + 1
-                val buffer = 5
-                lastItemIndex > (totalItems - buffer)
-            }
+    val needNextPage by remember {
+        derivedStateOf {
+            val layoutInfo = state.layoutInfo
+            val totalItems = layoutInfo.totalItemsCount
+            val lastItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) + 1
+            val buffer = 3
+            lastItemIndex > (totalItems - buffer)
         }
-        LaunchedEffect(needNextPage) {
-            snapshotFlow {
-                needNextPage
-            }.distinctUntilChanged().collect {
-                if (needNextPage) loadMoreAnime()
-            }
-        }
-    } else {
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .height(400.dp)
-                .fillMaxWidth()
-        ) {
-            Button(
-                onClick = reloadAnime,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-            ) {
-                Text(text = "Reload Anime")
-            }
+    }
+    LaunchedEffect(needNextPage) {
+        Log.i(TAG, "Next page is needed")
+        snapshotFlow {
+            needNextPage
+        }.distinctUntilChanged().collect {
+            if (needNextPage) loadMoreAnime()
         }
     }
 }

@@ -1,9 +1,9 @@
 package com.example.anilist.data.repository
 
-import android.os.Build
-import androidx.annotation.RequiresApi
+import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.Apollo
+import com.example.anilist.GetMorePopularThisSeasonQuery
 import com.example.anilist.GetTrendingMediaQuery
 import com.example.anilist.data.models.Media
 import com.example.anilist.fragment.MediaTitleCover
@@ -26,7 +26,7 @@ enum class HomeTrendingTypes {
 }
 
 data class HomeMedia(
-    val popularThisSeason: List<Media> = emptyList(),
+    var popularThisSeason: List<Media> = emptyList(),
     val trendingNow: List<Media> = emptyList(),
     val upcomingNextSeason: List<Media> = emptyList(),
     val allTimePopular: List<Media> = emptyList(),
@@ -35,10 +35,17 @@ data class HomeMedia(
 
 @Singleton
 class HomeRepository @Inject constructor() {
-    val popularThisSeasonPage: Int = 1
+    private var popularThisSeasonPage: Int = 1
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun getHomeMedia(isAnime: Boolean): Result<HomeMedia> {
+    suspend fun getHomeMedia(
+        isAnime: Boolean,
+        page: Int,
+        skipTrendingNow: Boolean = true,
+        skipPopularThisSeason: Boolean = true,
+        skipUpcomingNextSeason: Boolean = true,
+        skipAllTimePopular: Boolean = true,
+        skipTop100Anime: Boolean = true
+    ): Result<HomeMedia> {
         try {
             val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
 
@@ -49,12 +56,23 @@ class HomeRepository @Inject constructor() {
             // we add four because one season is four months long
             val nextSeason = getMediaSeasonFromMonth((month.number + 4) % 12)
 
+            val year = instant.year
+            val nextYear = if (nextSeason == MediaSeason.SPRING) year + 1 else year
+
             val result =
                 Apollo.apolloClient.query(
                     GetTrendingMediaQuery(
+                        page = page,
                         type = param,
                         currentSeason = season,
-                        nextSeason = nextSeason
+                        nextSeason = nextSeason,
+                        currentYear = year,
+                        nextYear = nextYear,
+                        skipPopularThisSeason = Optional.present(skipPopularThisSeason),
+                        skipTrendingNow = Optional.present(skipTrendingNow),
+                        skipUpcomingNextSeason = Optional.present(skipUpcomingNextSeason),
+                        skipAllTimePopular = Optional.present(skipAllTimePopular),
+                        skipTop100Anime = Optional.present(skipTop100Anime)
                     )
                 )
                     .execute()
@@ -73,7 +91,96 @@ class HomeRepository @Inject constructor() {
         return Result.success(HomeMedia())
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    suspend fun getMorePopularMedia(isAnime: Boolean): Result<List<Media>> {
+        try {
+            val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
+
+            val instant = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+            val month = instant.month
+
+            val season = getMediaSeasonFromMonth(month.number)
+            // we add four because one season is four months long
+            val nextSeason = getMediaSeasonFromMonth((month.number + 4) % 12)
+
+            val year = instant.year
+            val nextYear = if (nextSeason == MediaSeason.SPRING) year + 1 else year
+
+            popularThisSeasonPage += 1
+            val result =
+                Apollo.apolloClient.query(
+                    GetMorePopularThisSeasonQuery(
+                        page = popularThisSeasonPage,
+                        type = param,
+                        currentSeason = season,
+                        currentYear = year
+                    )
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+                return Result.success(emptyList())
+            }
+            val data = result.data
+            if (data != null) {
+                return Result.success(parseTemp(data))
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here, these are mainly for network errors
+            return Result.failure(exception)
+        }
+        return Result.success(emptyList())
+    }
+
+    suspend fun getMoreTrendingAnime(isAnime: Boolean): Result<List<Media>> {
+        try {
+            val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
+
+            val instant = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+            val month = instant.month
+
+            val season = getMediaSeasonFromMonth(month.number)
+            // we add four because one season is four months long
+            val nextSeason = getMediaSeasonFromMonth((month.number + 4) % 12)
+
+            val year = instant.year
+            val nextYear = if (nextSeason == MediaSeason.SPRING) year + 1 else year
+
+            popularThisSeasonPage += 1
+            val result =
+                Apollo.apolloClient.query(
+                    GetMorePopularThisSeasonQuery(
+                        page = popularThisSeasonPage,
+                        type = param,
+                        currentSeason = season,
+                        currentYear = year
+                    )
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+                return Result.success(emptyList())
+            }
+            val data = result.data
+            if (data != null) {
+                return Result.success(parseTemp(data))
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here, these are mainly for network errors
+            return Result.failure(exception)
+        }
+        return Result.success(emptyList())
+    }
+
+    private fun parseTemp(data: GetMorePopularThisSeasonQuery.Data): List<Media> {
+        val result = mutableListOf<Media>()
+        for (media in data.popularThisSeason?.media.orEmpty()) {
+            if (media != null) {
+                result.add(parseMediaTitleCover(media.mediaTitleCover))
+            }
+        }
+        return result
+    }
+
     private fun getMediaSeasonFromMonth(
         month: Int
     ): MediaSeason {
