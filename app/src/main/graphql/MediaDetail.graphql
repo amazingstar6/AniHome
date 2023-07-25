@@ -57,6 +57,8 @@ query getMediaDetail($id: Int!) {
         isLocked
         # amount of related activity in the past hour
         trending
+        isFavourite
+        isFavouriteBlocked
         favourites
         tags {
             id
@@ -293,6 +295,8 @@ query GetStaffDetail($id: Int!) {
         }
         languageV2
         favourites
+        isFavourite
+        isFavouriteBlocked
         description(asHtml: true)
         primaryOccupations
         gender
@@ -309,8 +313,8 @@ query GetStaffDetail($id: Int!) {
         ## FIXME THIS IS PAGED
         characters {
             edges {
-                id
                 node {
+                    id
                     name {
                         userPreferred
                     }
@@ -406,13 +410,54 @@ fragment FuzzyDate on FuzzyDate {
     day
 }
 
-mutation ToggleFavoriteCharacter($id: Int!) {
-    ToggleFavourite(characterId: $id) {
+mutation ToggleFavoriteCharacter(
+    $characterId: Int,
+    $staffId: Int,
+    $animeId: Int,
+    $mangaId: Int,
+    $studioId: Int
+) {
+    ToggleFavourite(characterId: $characterId, staffId: $staffId, animeId: $animeId, mangaId: $mangaId, studioId: $studioId) {
         characters {
             nodes {
+                id
                 isFavourite
                 isFavouriteBlocked
             }
         }
+        staff {
+            nodes {
+                id
+                isFavourite
+                isFavouriteBlocked
+            }
+        }
+        anime {
+            nodes {
+                id
+                isFavourite
+                isFavouriteBlocked
+            }
+        }
+        manga {
+            nodes {
+                id
+                isFavourite
+                isFavouriteBlocked
+            }
+        }
+        studios {
+            nodes {
+                id
+                isFavourite
+            }
+        }
+    }
+}
+
+mutation RateReview($rating: ReviewRating!, $id: Int!) {
+    RateReview(rating: $rating, reviewId: $id) {
+        id
+        userRating
     }
 }

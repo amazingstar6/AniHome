@@ -29,9 +29,13 @@ fun ReviewDetailScreen(
     reviewId: Int,
     mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel()
 ) {
-    val review by mediaDetailsViewModel.review.observeAsState(initial = Review())
+    val review by mediaDetailsViewModel.review.observeAsState()
     mediaDetailsViewModel.fetchReview(reviewId)
-    ReviewDetail(review)
+    if (review != null) {
+        ReviewDetail(review ?: Review())
+    } else {
+        LoadingCircle()
+    }
 }
 
 @Composable
@@ -96,7 +100,8 @@ fun AvatarNameDate(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(Dimens.PaddingSmall).then(modifier),
+            .padding(Dimens.PaddingSmall)
+            .then(modifier),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {

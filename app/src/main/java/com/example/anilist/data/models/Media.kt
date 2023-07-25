@@ -29,7 +29,11 @@ data class Media(
     val personalVolumeProgress: Int = -1,
     val chapters: Int = -1,
     val characters: List<Character> = emptyList(),
-    val stats: Stats = Stats()
+    val stats: Stats = Stats(),
+
+    val favourites: Int = -1,
+    val isFavourite: Boolean = false,
+    val isFavouriteBlocked: Boolean = false
 )
 
 enum class MediaType {

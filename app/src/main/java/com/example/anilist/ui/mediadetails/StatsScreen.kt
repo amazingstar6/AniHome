@@ -42,73 +42,9 @@ fun Stats(stats: Stats) {
     ) {
         if (stats.ranksIsNotEmpty) {
             Heading("Rankings")
+            Rankings(stats)
         }
 
-        if (stats.highestRatedAllTime != -1) {
-            IconWithTextRankings(
-                stringResource(
-                    id = R.string.highest_rated_all_time,
-                    stats.highestRatedAllTime
-                ),
-                false
-            )
-        }
-
-        if (stats.mostPopularAllTime != -1) {
-            IconWithTextRankings(
-                stringResource(
-                    id = R.string.most_popular_all_time,
-                    stats.mostPopularAllTime
-                ),
-                true
-            )
-        }
-
-        if (stats.highestRatedYearRank != -1) {
-            IconWithTextRankings(
-                stringResource(
-                    id = R.string.highest_rated_year,
-                    stats.highestRatedYearRank,
-                    stats.highestRatedYearNumber
-                ),
-                false
-            )
-        }
-
-        if (stats.mostPopularYearRank != -1) {
-            IconWithTextRankings(
-                stringResource(
-                    id = R.string.most_popular_year,
-                    stats.mostPopularYearRank,
-                    stats.mostPopularYearNumber
-                ),
-                true
-            )
-        }
-
-        if (stats.highestRatedSeasonRank != -1) {
-            IconWithTextRankings(
-                stringResource(
-                    id = R.string.highest_rated_season,
-                    stats.highestRatedSeasonRank,
-                    stats.highestRatedSeasonSeason.getName(),
-                    stats.highestRatedSeasonYear
-                ),
-                false
-            )
-        }
-
-        if (stats.mostPopularSeasonRank != -1) {
-            IconWithTextRankings(
-                stringResource(
-                    id = R.string.most_popular_season,
-                    stats.mostPopularSeasonRank,
-                    stats.mostPopularSeasonSeason.getName(),
-                    stats.mostPopularSeasonYear
-                ),
-                true
-            )
-        }
 
         Heading("Score distribution")
         val scoreDistribution = stats.scoreDistribution
@@ -204,6 +140,77 @@ fun Stats(stats: Stats) {
                     total / (statusDistribution[Status.DROPPED]?.toFloat() ?: 1f)
                 ),
                 color = droppedColor
+            )
+        }
+    }
+}
+
+@Composable
+fun Rankings(stats: Stats, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        if (stats.highestRatedAllTime != -1) {
+            IconWithTextRankings(
+                stringResource(
+                    id = R.string.highest_rated_all_time,
+                    stats.highestRatedAllTime
+                ),
+                false
+            )
+        }
+
+        if (stats.mostPopularAllTime != -1) {
+            IconWithTextRankings(
+                stringResource(
+                    id = R.string.most_popular_all_time,
+                    stats.mostPopularAllTime
+                ),
+                true
+            )
+        }
+
+        if (stats.highestRatedYearRank != -1) {
+            IconWithTextRankings(
+                stringResource(
+                    id = R.string.highest_rated_year,
+                    stats.highestRatedYearRank,
+                    stats.highestRatedYearNumber
+                ),
+                false
+            )
+        }
+
+        if (stats.mostPopularYearRank != -1) {
+            IconWithTextRankings(
+                stringResource(
+                    id = R.string.most_popular_year,
+                    stats.mostPopularYearRank,
+                    stats.mostPopularYearNumber
+                ),
+                true
+            )
+        }
+
+        if (stats.highestRatedSeasonRank != -1) {
+            IconWithTextRankings(
+                stringResource(
+                    id = R.string.highest_rated_season,
+                    stats.highestRatedSeasonRank,
+                    stats.highestRatedSeasonSeason.getName(),
+                    stats.highestRatedSeasonYear
+                ),
+                false
+            )
+        }
+
+        if (stats.mostPopularSeasonRank != -1) {
+            IconWithTextRankings(
+                stringResource(
+                    id = R.string.most_popular_season,
+                    stats.mostPopularSeasonRank,
+                    stats.mostPopularSeasonSeason.getName(),
+                    stats.mostPopularSeasonYear
+                ),
+                true
             )
         }
     }

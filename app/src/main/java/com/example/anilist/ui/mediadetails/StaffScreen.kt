@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -40,7 +40,7 @@ fun StaffScreen(
 ) {
     val state = rememberLazyGridState()
     var page by remember {
-        mutableIntStateOf(1)
+        mutableStateOf(1)
     }
     LazyVerticalGrid(state = state, columns = GridCells.Fixed(2), content = {
         items(

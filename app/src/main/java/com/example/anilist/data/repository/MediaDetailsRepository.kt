@@ -41,6 +41,7 @@ import kotlin.math.max
 
 
 private const val TAG = "MediaDetailRepository"
+
 @Singleton
 class MediaDetailsRepository @Inject constructor() {
 
@@ -130,9 +131,11 @@ class MediaDetailsRepository @Inject constructor() {
             coverImage = staff.image?.large ?: "",
             userPreferredName = staff.name?.userPreferred ?: "",
             alternativeNames = staff.name?.alternative?.filterNotNull().orEmpty(),
-            favorites = staff.favourites ?: -1,
+            favourites = staff.favourites ?: -1,
             language = staff.languageV2 ?: "",
             description = staff.description ?: "",
+            isFavourite = staff.isFavourite,
+            isFavouriteBlocked = staff.isFavouriteBlocked,
             voicedCharacters = parseVoicedCharactersForStaff(staff.characters),
             animeStaffRole = parseMediaForStaff(staff.anime?.staffMedia),
             mangaStaffRole = parseMediaForStaff(staff.manga?.staffMedia)
@@ -167,7 +170,7 @@ class MediaDetailsRepository @Inject constructor() {
         for (character in characters?.edges.orEmpty()) {
             result.add(
                 Character(
-                    id = character?.id ?: -1,
+                    id = character?.node?.id ?: -1,
                     name = character?.node?.name?.userPreferred ?: "",
                     role = character?.role?.name ?: "",
                     coverImage = character?.node?.image?.large ?: ""
@@ -297,7 +300,7 @@ class MediaDetailsRepository @Inject constructor() {
             coverImage = data.image?.large ?: "",
             // we take the outer p element out of the description, because otherwise there will be a margin between the blood type and description
             description = description,
-            isFavorite = data.isFavourite,
+            isFavourite = data.isFavourite,
             isFavoriteBlocked = data.isFavouriteBlocked,
             favorites = data.favourites ?: -1,
             voiceActors = parseVoiceActorsForCharacter(data.media),
@@ -401,17 +404,17 @@ class MediaDetailsRepository @Inject constructor() {
 
         for (status in media?.stats?.statusDistribution.orEmpty()) {
             statusDistribution[
-                when (status?.status) {
-                    MediaListStatus.CURRENT -> Status.CURRENT
-                    MediaListStatus.COMPLETED -> Status.COMPLETED
-                    MediaListStatus.PAUSED -> Status.PAUSED
-                    MediaListStatus.PLANNING -> Status.PLANNING
-                    MediaListStatus.DROPPED -> Status.DROPPED
-                    // the query does not return any data for repeating
-                    MediaListStatus.REPEATING -> Status.UNKNOWN
-                    MediaListStatus.UNKNOWN__ -> Status.UNKNOWN
-                    null -> Status.UNKNOWN
-                }
+                    when (status?.status) {
+                        MediaListStatus.CURRENT -> Status.CURRENT
+                        MediaListStatus.COMPLETED -> Status.COMPLETED
+                        MediaListStatus.PAUSED -> Status.PAUSED
+                        MediaListStatus.PLANNING -> Status.PLANNING
+                        MediaListStatus.DROPPED -> Status.DROPPED
+                        // the query does not return any data for repeating
+                        MediaListStatus.REPEATING -> Status.UNKNOWN
+                        MediaListStatus.UNKNOWN__ -> Status.UNKNOWN
+                        null -> Status.UNKNOWN
+                    }
             ] = status?.amount ?: 0
         }
         return Stats(
@@ -428,7 +431,18 @@ class MediaDetailsRepository @Inject constructor() {
             mostPopularSeasonRank = mostPopularSeasonRank,
             mostPopularSeasonSeason = mostPopularSeasonSeason,
             mostPopularSeasonYear = mostPopularSeasonYear,
-            scoreDistribution = ScoreDistribution(ten, twenty, thirty, forty, fifty, sixty, seventy, eighty, ninety, hundred),
+            scoreDistribution = ScoreDistribution(
+                ten,
+                twenty,
+                thirty,
+                forty,
+                fifty,
+                sixty,
+                seventy,
+                eighty,
+                ninety,
+                hundred
+            ),
             statusDistribution = statusDistribution
         )
     }
@@ -469,21 +483,49 @@ class MediaDetailsRepository @Inject constructor() {
         return Review()
     }
 
-    suspend fun toggleFavouriteCharacter(id: Int): Boolean {
+    enum class LikeAbleType {
+        CHARACTER,
+        STAFF,
+        ANIME,
+        MANGA,
+        STUDIO;
+    }
+
+    suspend fun toggleFavourite(type: LikeAbleType, id: Int): Boolean {
         try {
+            val mutation: ToggleFavoriteCharacterMutation = when (type) {
+                LikeAbleType.CHARACTER -> ToggleFavoriteCharacterMutation(
+                    characterId = Optional.present(
+                        id
+                    )
+                )
+
+                LikeAbleType.STAFF -> ToggleFavoriteCharacterMutation(staffId = Optional.present(id))
+                LikeAbleType.ANIME -> ToggleFavoriteCharacterMutation(animeId = Optional.present(id))
+                LikeAbleType.MANGA -> ToggleFavoriteCharacterMutation(mangaId = Optional.present(id))
+                LikeAbleType.STUDIO -> ToggleFavoriteCharacterMutation(
+                    studioId = Optional.present(
+                        id
+                    )
+                )
+            }
             val result =
                 Apollo.apolloClient.mutation(
-                    ToggleFavoriteCharacterMutation(id)
+                    mutation
                 )
                     .execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
             }
-            val data = result.data?.ToggleFavourite?.characters?.nodes
-            if (data != null) {
-                Log.i(TAG, "Data from like is empty: ${data.isEmpty()}")
-                return data.isNotEmpty()
+            // the result is a list of all the things you've already liked of the same type
+            val isFavourite = when (type) {
+                LikeAbleType.CHARACTER -> result.data?.ToggleFavourite?.characters?.nodes?.any {it?.id == id}
+                LikeAbleType.STAFF -> result.data?.ToggleFavourite?.staff?.nodes?.any { it?.id == id }
+                LikeAbleType.ANIME -> result.data?.ToggleFavourite?.anime?.nodes?.any { it?.id == id}
+                LikeAbleType.MANGA -> result.data?.ToggleFavourite?.manga?.nodes?.any { it?.id == id}
+                LikeAbleType.STUDIO -> result.data?.ToggleFavourite?.studios?.nodes?.any { it?.id == id}
             }
+            return isFavourite ?: false
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
         }
@@ -564,7 +606,8 @@ class MediaDetailsRepository @Inject constructor() {
         }
         val media = Media(
             title = anime?.title?.native ?: "Unknown",
-            type = anime?.type?.toAniHomeType() ?: com.example.anilist.data.models.MediaType.UNKNOWN,
+            type = anime?.type?.toAniHomeType()
+                ?: com.example.anilist.data.models.MediaType.UNKNOWN,
             coverImage = anime?.coverImage?.extraLarge ?: "",
             format = anime?.format?.name ?: "Unknown",
             season = anime?.season?.toAniHomeSeason() ?: Season.UNKNOWN,
@@ -601,7 +644,10 @@ class MediaDetailsRepository @Inject constructor() {
             externalLinks = externalLinks,
             note = "",
             stats = parseStats(anime),
-            characters = parseCharacters(anime)
+            characters = parseCharacters(anime),
+            favourites = anime?.favourites ?: -1,
+            isFavourite = anime?.isFavourite ?: false,
+            isFavouriteBlocked = anime?.isFavouriteBlocked ?: false
         )
         return media
     }

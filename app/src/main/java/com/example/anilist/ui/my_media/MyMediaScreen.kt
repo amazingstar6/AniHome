@@ -1,7 +1,6 @@
 package com.example.anilist.ui.my_media
 
 import android.os.Build
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,24 +11,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.BottomSheetScaffoldState
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
@@ -49,9 +41,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -60,7 +49,6 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -73,8 +61,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -85,13 +71,12 @@ import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.Media
 import com.example.anilist.ui.Dimens
-import java.time.Clock
-import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import java.time.Clock
 
 @Composable
 fun MyMediaScreen(
@@ -131,7 +116,7 @@ sealed class BottomSheetScreen {
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 private fun MyMedia(
     isAnime: Boolean,
     myMedia: List<Media>,
@@ -198,11 +183,11 @@ private fun MyMedia(
             refreshing = false
         }
 
-        val state = rememberPullRefreshState(refreshing, ::refresh)
+//        val state = rememberPullRefreshState(refreshing, ::refresh)
 
         Box(
             Modifier
-                .pullRefresh(state)
+//                .pullRefresh(state)
                 .fillMaxSize()
         ) {
             LazyColumn(modifier = Modifier.padding(top = it.calculateTopPadding())) {
@@ -218,11 +203,11 @@ private fun MyMedia(
                     }
                 }
             }
-            PullRefreshIndicator(
-                refreshing = refreshing,
-                state = state,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
+//            PullRefreshIndicator(
+//                refreshing = refreshing,
+//                state = state,
+//                modifier = Modifier.align(Alignment.TopCenter)
+//            )
             ExtendedFloatingActionButton(
                 text = { Text("Filter") },
                 icon = {
@@ -314,59 +299,59 @@ fun EditStatusScreen(
             mutableStateOf("")
         }
 
-        val sliderState = remember {
-            SliderState(
-                valueRange = 0f..100f,
-                onValueChangeFinished = {
-                    // launch some business logic update with the state you hold
-                    // viewModel.updateSelectedSliderValue(sliderPosition)
-                    // todo
-                },
-                steps = 100
-            )
-        }
-        OutlinedTextField(
-            value = sliderState.value.roundToInt().toString(),
-            onValueChange = {
-                    newInput ->
-                text = newInput
-            },
-            label = { Text("Score") },
-            suffix = { Text(text = "/100") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            placeholder = { Text(text = "?") },
-            modifier = Modifier
-                .padding(Dimens.PaddingNormal)
-//                .weight(1f)
-        )
-        val interactionSource = MutableInteractionSource()
-        val colors = SliderDefaults.colors(
-            thumbColor = MaterialTheme.colorScheme.secondary,
-            activeTrackColor = MaterialTheme.colorScheme.secondary
-        )
-        Slider(
-            state = sliderState,
-            modifier = Modifier
-                .semantics {
-                    contentDescription = "Localized Description"
-                }
-                .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingNormal),
-            interactionSource = interactionSource,
-            thumb = {
-                Icon(
-                    imageVector = Icons.Filled.Favorite,
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                    tint = MaterialTheme.colorScheme.secondary
-                )
-            },
-            track = {
-                SliderDefaults.Track(
-                    colors = colors,
-                    sliderState = sliderState
-                )
-            }
-        )
+//        val sliderState = remember {
+//            SliderState(
+//                valueRange = 0f..100f,
+//                onValueChangeFinished = {
+//                    // launch some business logic update with the state you hold
+//                    // viewModel.updateSelectedSliderValue(sliderPosition)
+//                    // todo
+//                },
+//                steps = 100
+//            )
+//        }
+//        OutlinedTextField(
+//            value = sliderState.value.roundToInt().toString(),
+//            onValueChange = {
+//                    newInput ->
+//                text = newInput
+//            },
+//            label = { Text("Score") },
+//            suffix = { Text(text = "/100") },
+//            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+//            placeholder = { Text(text = "?") },
+//            modifier = Modifier
+//                .padding(Dimens.PaddingNormal)
+////                .weight(1f)
+//        )
+//        val interactionSource = MutableInteractionSource()
+//        val colors = SliderDefaults.colors(
+//            thumbColor = MaterialTheme.colorScheme.secondary,
+//            activeTrackColor = MaterialTheme.colorScheme.secondary
+//        )
+//        Slider(
+//            state = sliderState,
+//            modifier = Modifier
+//                .semantics {
+//                    contentDescription = "Localized Description"
+//                }
+//                .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingNormal),
+//            interactionSource = interactionSource,
+//            thumb = {
+//                Icon(
+//                    imageVector = Icons.Filled.Favorite,
+//                    contentDescription = null,
+//                    modifier = Modifier.size(ButtonDefaults.IconSize),
+//                    tint = MaterialTheme.colorScheme.secondary
+//                )
+//            },
+//            track = {
+//                SliderDefaults.Track(
+//                    colors = colors,
+//                    sliderState = sliderState
+//                )
+//            }
+//        )
 
 //        DatePicker(state = datePickerState, modifier = Modifier.padding(16.dp))
         // Decoupled snackbar host state from scaffold state for demo purposes.
@@ -660,7 +645,7 @@ private fun MediaCard(
     onNavigateToStatusEditor: () -> Unit,
     isAnime: Boolean
 ) {
-    var personalEpisodeProgress by remember { mutableIntStateOf(media.personalProgress) }
+    var personalEpisodeProgress by remember { mutableStateOf(media.personalProgress) }
     Card(
         onClick = { navigateToDetails(media.id) },
         modifier = Modifier

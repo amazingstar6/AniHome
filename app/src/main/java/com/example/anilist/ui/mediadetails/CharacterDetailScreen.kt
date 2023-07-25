@@ -1,5 +1,6 @@
 package com.example.anilist.ui.mediadetails
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
@@ -32,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,8 +45,12 @@ import com.example.anilist.R
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.CharacterMediaConnection
 import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.repository.MediaDetailsRepository
+import com.example.anilist.data.repository.MediaRepository
 import com.example.anilist.ui.Dimens
 import de.charlex.compose.HtmlText
+
+private const val TAG = "CharacterDetailScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +62,7 @@ fun CharacterDetailScreen(
     onNavigateBack: () -> Unit
 ) {
     val character by mediaDetailsViewModel.character.observeAsState()
+//    val isFavourite by mediaDetailsViewModel.isFavouriteCharacter.observeAsState(false)
     mediaDetailsViewModel.fetchCharacter(id)
     Scaffold(topBar = {
         TopAppBar(title = {
@@ -76,13 +83,14 @@ fun CharacterDetailScreen(
         AnimatedVisibility(visible = character != null) {
             CharacterDetail(
                 character = character ?: CharacterDetail(),
+                isFavorite = character?.isFavourite ?: false,
                 onNavigateToStaff = onNavigateToStaff,
                 onNavigateToMedia = onNavigateToMedia,
                 modifier = Modifier.padding(
                     top = it.calculateTopPadding(),
                     bottom = Dimens.PaddingNormal
                 ),
-                toggleFavorite = { mediaDetailsViewModel.toggleFavouriteCharacter(id) }
+                toggleFavorite = { mediaDetailsViewModel.toggleFavourite(MediaDetailsRepository.LikeAbleType.CHARACTER, id) }
             )
         }
     }
@@ -95,6 +103,7 @@ fun CharacterDetailScreen(
 @Composable
 private fun CharacterDetail(
     character: CharacterDetail,
+    isFavorite: Boolean,
     onNavigateToStaff: (Int) -> Unit,
     onNavigateToMedia: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -112,8 +121,8 @@ private fun CharacterDetail(
             character.alternativeSpoilerNames,
             character.favorites,
             modifier = Modifier.padding(Dimens.PaddingNormal),
-            isFavorite = character.isFavorite,
-            toggleFavorite = toggleFavorite
+            isFavorite = isFavorite,
+            toggleFavourite = toggleFavorite
         )
         Description(character.description)
         Headline("Voice actors")
@@ -220,7 +229,7 @@ fun AvatarAndName(
     favorites: Int,
     isFavorite: Boolean,
     modifier: Modifier = Modifier,
-    toggleFavorite: () -> Unit
+    toggleFavourite: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -237,11 +246,13 @@ fun AvatarAndName(
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Text(
-                text = alternativeNames.joinToString(separator = ", "),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (alternativeNames.isNotEmpty()) {
+                Text(
+                    text = alternativeNames.joinToString(separator = ", "),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (alternativeSpoilerNames.isNotEmpty()) {
                 var showSpoilerNames by remember { mutableStateOf(false) }
                 val textModifier = if (!showSpoilerNames) {
@@ -272,12 +283,16 @@ fun AvatarAndName(
 
                 )
             }
+            Log.i(TAG, "Current favourite status is $isFavorite")
             IconWithText(
                 icon = if (isFavorite) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart,
                 text = favorites.toString(),
                 textColor = MaterialTheme.colorScheme.onSurface,
                 iconTint = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.clickable {toggleFavorite() }
+                modifier = Modifier.clickable {
+                    Log.i(TAG, "Clicked on favourite")
+                    toggleFavourite()
+                }
             )
         }
     }
@@ -295,6 +310,8 @@ private fun CoverImage(
             .crossfade(true).build(),
         contentDescription = "Profile image of $userPreferredName",
         contentScale = ContentScale.FillHeight,
+        placeholder = painterResource(id = R.drawable.no_image),
+        fallback = painterResource(id = R.drawable.no_image),
         modifier = Modifier
             .height(200.dp)
             .then(modifier)
@@ -311,9 +328,10 @@ fun CharacterDetailPreview() {
             userPreferredName = "虎杖悠仁",
             description = "A muscular teenager with big light brown eyes and light brown spiky hair. Yuuji is a fair person who cares greatly for not only his comrades but anyone he views as people with their own wills, despite how deep or shallow his connection to them is. He cares greatly for the \"value of a life\" and to this end, he will ensure that others receive a \"proper death.\" He is easy to anger in the face of pure cruelty and unfair judgment of other people.\n" +
                     "He doesn't have the born talent required to use cursed techniques, but he has incredible athletic abilities and he is considered very strong for his age, as shown by when he easily beat a coach in Steel Ball Throw.",
-            alternativeNames = listOf("Footabller", "Cool dude", "Not so cool dude"),
+            alternativeNames = listOf("Footballer", "Cool dude", "Not so cool dude"),
             alternativeSpoilerNames = listOf("Secret name", "Actually a spy")
         ),
+        isFavorite = true,
         onNavigateToMedia = {},
         onNavigateToStaff = {},
         toggleFavorite = {}

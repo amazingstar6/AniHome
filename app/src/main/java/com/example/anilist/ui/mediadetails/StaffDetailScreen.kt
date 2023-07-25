@@ -20,14 +20,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.anilist.R
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.CharacterMediaConnection
-import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,7 +62,16 @@ fun StaffDetailScreen(
                 staff = staff ?: StaffDetail(),
                 onNavigateToCharacter = onNavigateToCharacter,
                 onNavigateToMedia = onNavigateToMedia,
-                modifier = Modifier.padding(top = it.calculateTopPadding(), bottom = Dimens.PaddingNormal)
+                modifier = Modifier.padding(
+                    top = it.calculateTopPadding(),
+                    bottom = Dimens.PaddingNormal
+                ),
+                toggleFavourite = {
+                    mediaDetailsViewModel.toggleFavourite(
+                        MediaDetailsRepository.LikeAbleType.STAFF,
+                        id
+                    )
+                }
             )
         }
     }
@@ -75,18 +83,23 @@ private fun StaffDetail(
     staff: StaffDetail,
     onNavigateToCharacter: (Int) -> Unit,
     onNavigateToMedia: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    toggleFavourite: () -> Unit
 ) {
-    Column(modifier = Modifier.verticalScroll(rememberScrollState()).then(modifier)) {
+    Column(
+        modifier = Modifier
+            .verticalScroll(rememberScrollState())
+            .then(modifier)
+    ) {
         AvatarAndName(
             staff.coverImage,
             staff.userPreferredName,
             staff.alternativeNames,
             emptyList(),
-            staff.favorites,
+            staff.favourites,
             modifier = Modifier.padding(Dimens.PaddingNormal),
-            isFavorite = false , //todo
-            toggleFavorite = { /* todo */}
+            isFavorite = staff.isFavourite,
+            toggleFavourite = toggleFavourite
         )
         Description(staff.description)
         if (staff.voicedCharacters.isNotEmpty()) {

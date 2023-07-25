@@ -1,11 +1,10 @@
 package com.example.anilist.ui.mediadetails
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Review
@@ -50,12 +49,9 @@ class MediaDetailsViewModel @Inject constructor(
     private val _character = MutableLiveData<CharacterDetail>()
     val character: LiveData<CharacterDetail> = _character
 
-//    private val _stats = MutableLiveData<Stats>()
-//    val stats = _stats
-
-//    init {
-//        fetchMedia()
-//    }
+    private val _isFavouriteCharacter =
+        MutableLiveData<Boolean>(_character.value?.isFavourite ?: false)
+    val isFavouriteCharacter: LiveData<Boolean> = _isFavouriteCharacter
 
     fun fetchMedia(mediaId: Int) {
         viewModelScope.launch {
@@ -103,12 +99,28 @@ class MediaDetailsViewModel @Inject constructor(
         }
     }
 
-    fun toggleFavouriteCharacter(id: Int) {
+    fun toggleFavourite(type: MediaDetailsRepository.LikeAbleType, id: Int) {
         viewModelScope.launch {
-            val isFavorite = mediaDetailsRepository.toggleFavouriteCharacter(id)
-            val newCharacter = _character.value
-            newCharacter?.isFavorite = isFavorite
-            _character.value = newCharacter ?: CharacterDetail()
+            val isFavourite = mediaDetailsRepository.toggleFavourite(type, id)
+            Log.i(TAG, "Favourite status in view model is $isFavourite")
+            when (type) {
+                MediaDetailsRepository.LikeAbleType.CHARACTER -> _character.value =
+                    _character.value!!.copy(isFavourite = isFavourite)
+
+                MediaDetailsRepository.LikeAbleType.STAFF -> _staff.value =
+                    _staff.value!!.copy(isFavourite = isFavourite)
+
+                MediaDetailsRepository.LikeAbleType.ANIME -> _media.value =
+                    _media.value!!.copy(isFavourite = isFavourite)
+
+                MediaDetailsRepository.LikeAbleType.MANGA -> _media.value =
+                    _media.value!!.copy(isFavourite = isFavourite)
+
+                MediaDetailsRepository.LikeAbleType.STUDIO -> Unit/* todo _studio.value = _character.value!!.copy(isFavourite = isFavourite)*/
+            }
+
+//            _character.value?.isFavorite = isFavourite
+//            _isFavouriteCharacter.value = isFavourite
         }
     }
 

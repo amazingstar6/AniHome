@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -29,13 +28,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -55,7 +51,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -93,6 +88,7 @@ import com.example.anilist.data.models.Relation
 import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.Stats
 import com.example.anilist.data.models.Tag
+import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.quantityStringResource
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.theme.AnilistTheme
@@ -157,6 +153,28 @@ fun MediaDetail(
             val context = LocalContext.current
             val uriHandler = LocalUriHandler.current
             val uri = "https://anilist.co/${if (isAnime) "anime" else "manga"}/$mediaId"
+            PlainTooltipBox(tooltip = {
+                Text(
+                    text = "Favourite",
+                )
+            }) {
+                IconButton(
+                    onClick = {
+                        mediaDetailsViewModel.toggleFavourite(
+                            if (isAnime) MediaDetailsRepository.LikeAbleType.ANIME else MediaDetailsRepository.LikeAbleType.MANGA,
+                            mediaId
+                        )
+                    },
+                    modifier = Modifier.tooltipTrigger()
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            id = if (media?.isFavourite == true) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart
+                        ),
+                        contentDescription = "open in browser"
+                    )
+                }
+            }
             PlainTooltipBox(tooltip = {
                 Text(
                     text = "Open in browser",
@@ -407,7 +425,7 @@ fun Characters(
     navigateToStaff: (Int) -> Unit
 ) {
     if (characters.isNotEmpty()) {
-        var selected by remember { mutableIntStateOf(0) }
+        var selected by remember { mutableStateOf(0) }
         Column(modifier = Modifier.padding(horizontal = 12.dp)) {
             FlowRow(modifier = Modifier.padding(Dimens.PaddingNormal)) {
                 languages.forEachIndexed { index, language ->
@@ -505,6 +523,7 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
                 modifier = Modifier
                     .height(250.dp)
                     .clip(RoundedCornerShape(12.dp))
+                    .clickable { }
             )
         }
         Column {
@@ -581,24 +600,25 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
             }
         }
     }
-    if (anime1.highestRated != "") {
-        IconWithText(
-            icon = R.drawable.anime_details_rating_star,
-            text = anime1.highestRated,
-            iconTint = MaterialTheme.colorScheme.secondary,
-            textColor = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
-        )
-    }
-    if (anime1.mostPopular != "") {
-        IconWithText(
-            icon = R.drawable.anime_details_heart,
-            text = anime1.mostPopular,
-            iconTint = MaterialTheme.colorScheme.secondary,
-            textColor = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
-        )
-    }
+    Rankings(stats = anime1.stats, modifier = Modifier.padding(horizontal = Dimens.PaddingNormal))
+//    if (anime1.highestRated != "") {
+//        IconWithText(
+//            icon = R.drawable.anime_details_rating_star,
+//            text = anime1.highestRated,
+//            iconTint = MaterialTheme.colorScheme.secondary,
+//            textColor = MaterialTheme.colorScheme.onSurface,
+//            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+//        )
+//    }
+//    if (anime1.mostPopular != "") {
+//        IconWithText(
+//            icon = R.drawable.anime_details_heart,
+//            text = anime1.mostPopular,
+//            iconTint = MaterialTheme.colorScheme.secondary,
+//            textColor = MaterialTheme.colorScheme.onSurface,
+//            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+//        )
+//    }
 }
 
 @Composable

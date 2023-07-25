@@ -14,7 +14,7 @@
     <string name="no_reviews">No reviews!</string>
     <string name="highest_rated_all_time">#%1$d Highest rated all time</string>
     <string name="most_popular_all_time">#%1$d Most popular all time</string>
-    <string name="highest_rated_year">#%1$2d Highest rated %2$d</string>
+    <string name="highest_rated_year">#%1$d Highest rated %2$d</string>
     <string name="most_popular_year">#%1$d Most popular %2$d</string>
     <string name="highest_rated_season">#%1$d Highest rated %2$s %3$d</string>
     <string name="most_popular_season">#%1$d Most popular %2$s %3$d</string>
