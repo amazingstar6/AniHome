@@ -61,6 +61,10 @@ class AniListNavigationActions(private val navController: NavController) {
             route = AniListRoute.STAFF_DETAIL_ROUTE + "/$id"
         )
     }
+
+    fun navigateBack() {
+        navController.popBackStack()
+    }
 }
 
 val TOP_LEVEL_DESTINATIONS = listOf(

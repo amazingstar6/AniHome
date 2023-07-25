@@ -23,7 +23,7 @@ import com.example.anilist.ui.home.AniHomeViewModel
 import com.example.anilist.ui.navigation.AniListBottomNavigationBar
 import com.example.anilist.ui.navigation.AniListNavigationActions
 import com.example.anilist.ui.navigation.AniListRoute
-import com.example.anilist.ui.navigation.AniNavGraph
+import com.example.anilist.ui.navigation.AniNavHost
 import com.example.anilist.ui.theme.AnilistTheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.ZonedDateTime
@@ -92,22 +92,23 @@ class MainActivity : ComponentActivity() {
                         accessCode
                     )
 
-                    var visible by remember {
+                    var showBottomBar by remember {
                         mutableStateOf(true)
                     }
                     Scaffold(bottomBar = {
                         AniListBottomNavigationBar(
                             selectedDestination = selectedDestination,
                             navigateToTopLevelDestination = navigationAction::navigateTo,
-                            visible
+                            showBottomBar
                         )
-                    }) {
-                        AniNavGraph(
+                    }) { it ->
+                        AniNavHost(
                             navController = navController,
                             navigationActions = navigationAction,
                             modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
                             aniHomeViewModel = aniHomeViewModel,
-                            userSettings = userSettings
+                            userSettings = userSettings,
+                            setBottomBarState = { newValue -> showBottomBar = newValue }
                         )
                     }
                 }

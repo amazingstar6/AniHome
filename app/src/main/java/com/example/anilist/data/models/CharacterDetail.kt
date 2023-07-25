@@ -10,7 +10,7 @@ data class CharacterDetail(
     val nativeName: String = "",
     val coverImage: String = "",
     val description: String = "",
-    val isFavorite: Boolean = false,
+    var isFavorite: Boolean = false,
     val isFavoriteBlocked: Boolean = false,
     val favorites: Int = -1,
     val voiceActors: List<StaffDetail> = emptyList(),

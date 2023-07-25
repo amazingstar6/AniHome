@@ -1,6 +1,9 @@
 package com.example.anilist.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -16,7 +19,11 @@ fun AniListBottomNavigationBar(
     navigateToTopLevelDestination: (AnilistTopLevelDestination) -> Unit,
     visible: Boolean
 ) {
-    AnimatedVisibility(visible = visible) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInVertically(initialOffsetY = { it }),
+        exit = slideOutVertically(targetOffsetY = { it })
+    ) {
         NavigationBar {
             TOP_LEVEL_DESTINATIONS.forEach { destination ->
                 NavigationBarItem(

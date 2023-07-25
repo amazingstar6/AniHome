@@ -281,6 +281,73 @@ query GetCharacterDetail($id: Int!) {
     }
 }
 
+query GetStaffDetail($id: Int!) {
+    Staff(id: $id) {
+        id
+        image {
+            large
+        }
+        name {
+            userPreferred
+            alternative
+        }
+        languageV2
+        favourites
+        description(asHtml: true)
+        primaryOccupations
+        gender
+        dateOfBirth {
+            ...FuzzyDate
+        }
+        dateOfDeath {
+            ...FuzzyDate
+        }
+        age
+        yearsActive
+        homeTown
+        bloodType
+        ## FIXME THIS IS PAGED
+        characters {
+            edges {
+                id
+                node {
+                    name {
+                        userPreferred
+                    }
+                    image {
+                        large
+                    }
+                }
+                role
+                name
+            }
+        }
+        ## FIXME THIS IS ALSO PAGED
+        anime:staffMedia(type: ANIME) {
+            ...StaffMedia
+        }
+
+        manga:staffMedia(type: MANGA) {
+            ...StaffMedia
+        }
+    }
+}
+
+fragment StaffMedia on MediaConnection {
+    edges {
+        node {
+            id
+            coverImage {
+                extraLarge
+            }
+            title {
+                userPreferred
+            }
+        }
+        staffRole
+    }
+}
+
 query GetReviewDetail($id: Int!) {
     Review(id: $id) {
         id
@@ -337,4 +404,15 @@ fragment FuzzyDate on FuzzyDate {
     year
     month
     day
+}
+
+mutation ToggleFavoriteCharacter($id: Int!) {
+    ToggleFavourite(characterId: $id) {
+        characters {
+            nodes {
+                isFavourite
+                isFavouriteBlocked
+            }
+        }
+    }
 }

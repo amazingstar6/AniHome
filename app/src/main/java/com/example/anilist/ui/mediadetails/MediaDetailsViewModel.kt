@@ -3,13 +3,14 @@ package com.example.anilist.ui.mediadetails
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
-import com.example.anilist.data.models.Character
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.Staff
-import com.example.anilist.data.models.Stats
+import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.MediaDetailsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -33,9 +34,12 @@ class MediaDetailsViewModel @Inject constructor(
 //        config = PagingConfig(pageSize = 25, enablePlaceholders = false),
 //        pagingSourceFactory = { mediaDetailsRepository.pagingRepository()}
 //    )
-    private val _staff = MutableLiveData<List<Staff>>()
 
-    val staff: LiveData<List<Staff>> = _staff
+    private val _staffList = MutableLiveData<List<Staff>>()
+    val staffList: LiveData<List<Staff>> = _staffList
+
+    private val _staff = MutableLiveData<StaffDetail>()
+    val staff: LiveData<StaffDetail> = _staff
 
     private val _reviews = MutableLiveData<List<Review>>()
     val reviews: LiveData<List<Review>> = _reviews
@@ -45,7 +49,6 @@ class MediaDetailsViewModel @Inject constructor(
 
     private val _character = MutableLiveData<CharacterDetail>()
     val character: LiveData<CharacterDetail> = _character
-
 
 //    private val _stats = MutableLiveData<Stats>()
 //    val stats = _stats
@@ -61,10 +64,16 @@ class MediaDetailsViewModel @Inject constructor(
         }
     }
 
-    fun fetchStaff(mediaId: Int, page: Int) {
+    fun fetchStaffList(mediaId: Int, page: Int) {
         viewModelScope.launch {
-            val data = mediaDetailsRepository.fetchStaff(mediaId, page)
-            _staff.value = (_staff.value?.plus(data)) ?: data
+            val data = mediaDetailsRepository.fetchStaffList(mediaId, page)
+            _staffList.value = (_staffList.value?.plus(data)) ?: data
+        }
+    }
+
+    fun fetchStaff(id: Int) {
+        viewModelScope.launch {
+            _staff.value = mediaDetailsRepository.fetchStaff(id)
         }
     }
 
@@ -91,6 +100,15 @@ class MediaDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             val data = mediaDetailsRepository.fetchReview(reviewId)
             _review.value = data
+        }
+    }
+
+    fun toggleFavouriteCharacter(id: Int) {
+        viewModelScope.launch {
+            val isFavorite = mediaDetailsRepository.toggleFavouriteCharacter(id)
+            val newCharacter = _character.value
+            newCharacter?.isFavorite = isFavorite
+            _character.value = newCharacter ?: CharacterDetail()
         }
     }
 

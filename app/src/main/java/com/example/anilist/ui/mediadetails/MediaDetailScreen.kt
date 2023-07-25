@@ -1,5 +1,6 @@
 package com.example.anilist.ui.mediadetails
 
+import android.content.Intent
 import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
@@ -67,6 +70,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -75,6 +79,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
@@ -120,12 +125,14 @@ fun MediaDetail(
 //        pageCount = { DetailTabs.values().size }
 //    )
     var index by rememberSaveable { mutableStateOf(DetailTabs.Overview) }
+
     rememberCoroutineScope()
 
     val media by mediaDetailsViewModel.media.observeAsState()
-    val staff by mediaDetailsViewModel.staff.observeAsState(initial = emptyList())
+    val staff by mediaDetailsViewModel.staffList.observeAsState(initial = emptyList())
     val reviews by mediaDetailsViewModel.reviews.observeAsState()
 
+    val isAnime = media?.type == MediaType.ANIME
     var showDropDownMenu by remember {
         mutableStateOf(false)
     }
@@ -147,25 +154,54 @@ fun MediaDetail(
                 )
             }
         }, actions = {
-            Box(
-                modifier = Modifier.fillMaxWidth()
-                    .wrapContentSize(Alignment.TopEnd)
-            ) {
-                IconButton(onClick = { showDropDownMenu = !showDropDownMenu }) {
-                    Icon(Icons.Default.MoreVert, "More")
-                }
-                DropdownMenu(
-                    expanded = showDropDownMenu,
-                    onDismissRequest = { showDropDownMenu = false },
-                    modifier = Modifier.align(Alignment.TopEnd)
+            val context = LocalContext.current
+            val uriHandler = LocalUriHandler.current
+            val uri = "https://anilist.co/${if (isAnime) "anime" else "manga"}/$mediaId"
+            PlainTooltipBox(tooltip = {
+                Text(
+                    text = "Open in browser",
+                )
+            }) {
+                IconButton(
+                    onClick = { uriHandler.openUri(uri) },
+                    modifier = Modifier.tooltipTrigger()
                 ) {
-                    val uriHandler = LocalUriHandler.current
-                    DropdownMenuItem(text = {
-                        Text(text = "Open in AniList.co")
-                    }, onClick = { uriHandler.openUri("https://anilist.co/anime/$mediaId") })
-                    DropdownMenuItem(text = { Text(text = "Copy URL") }, onClick = { /*TODO*/ })
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
+                        contentDescription = "open in browser"
+                    )
                 }
             }
+            PlainTooltipBox(tooltip = { Text(stringResource(id = R.string.share)) }) {
+                IconButton(onClick = {
+                    val sendIntent: Intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, uri)
+                        putExtra(Intent.EXTRA_TITLE, "Share AniList.co URL")
+                        type = "text/plain"
+                    }
+
+                    val shareIntent = Intent.createChooser(sendIntent, "Share AniList.co URL")
+                    startActivity(context, shareIntent, null)
+                }, modifier = Modifier.tooltipTrigger()) {
+                    Icon(
+                        imageVector = Icons.Default.Share, contentDescription = stringResource(
+                            id = R.string.share
+                        )
+                    )
+                }
+            }
+//            IconButton(onClick = { showDropDownMenu = !showDropDownMenu }) {
+//                Icon(Icons.Default.MoreVert, "More")
+//            }
+//                    DropdownMenu(
+//                        expanded = showDropDownMenu,
+//                        onDismissRequest = { showDropDownMenu = false }
+//                    ) {
+//                        DropdownMenuItem(text = { Text(text = "Copy URL") }, onClick = { /*TODO*/ })
+//                    }
+
+
         })
     }, floatingActionButton = {
         FloatingActionButton(
@@ -206,9 +242,9 @@ fun MediaDetail(
                 }
 
                 2 -> {
-                    mediaDetailsViewModel.fetchStaff(mediaId, 1)
+                    mediaDetailsViewModel.fetchStaffList(mediaId, 1)
                     StaffScreen(staff, getMoreStaff = {
-                        mediaDetailsViewModel.fetchStaff(mediaId, it)
+                        mediaDetailsViewModel.fetchStaffList(mediaId, it)
                     }, onNavigateToStaff)
                 }
 
@@ -370,61 +406,71 @@ fun Characters(
     navigateToCharacter: (Int) -> Unit,
     navigateToStaff: (Int) -> Unit
 ) {
-    var selected by remember { mutableIntStateOf(0) }
-    Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-        FlowRow(modifier = Modifier.padding(Dimens.PaddingNormal)) {
-            languages.forEachIndexed { index, language ->
-                FilterChip(
-                    selected = selected == index,
-                    onClick = { selected = index },
-                    label = { Text(text = language) },
-                    modifier = Modifier.padding(end = Dimens.PaddingNormal)
-                )
+    if (characters.isNotEmpty()) {
+        var selected by remember { mutableIntStateOf(0) }
+        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+            FlowRow(modifier = Modifier.padding(Dimens.PaddingNormal)) {
+                languages.forEachIndexed { index, language ->
+                    FilterChip(
+                        selected = selected == index,
+                        onClick = { selected = index },
+                        label = { Text(text = language) },
+                        modifier = Modifier.padding(end = Dimens.PaddingNormal)
+                    )
+                }
             }
-        }
-        LazyVerticalGrid(columns = GridCells.Adaptive(120.dp)) {
-            items(characters.filter { it.voiceActorLanguage == languages[selected] }) { character ->
-                Column(modifier = Modifier.padding(bottom = Dimens.PaddingLarge)) {
-                    Column(
-                        modifier = Modifier
-                            .clickable { navigateToCharacter(character.id) }
-                            .padding(12.dp)
-                            .align(Alignment.CenterHorizontally)
-
-                    ) {
-                        ProfilePicture(character.coverImage, character.name)
-                        Text(
-                            text = character.name,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            textAlign = TextAlign.Center,
-                            overflow = TextOverflow.Ellipsis,
+            LazyVerticalGrid(columns = GridCells.Adaptive(120.dp)) {
+                items(characters.filter { it.voiceActorLanguage == languages[selected] }) { character ->
+                    Column(modifier = Modifier.padding(bottom = Dimens.PaddingLarge)) {
+                        Column(
                             modifier = Modifier
-                                .padding(top = 6.dp, bottom = 6.dp)
-                                .height(50.dp)
-                                .fillMaxWidth()
-                        )
-                    }
-                    Column(
-                        modifier = Modifier
-                            .clickable { navigateToStaff(character.voiceActorId) }
-                            .padding(12.dp)
-                            .align(Alignment.CenterHorizontally)
+                                .clickable { navigateToCharacter(character.id) }
+                                .padding(12.dp)
+                                .align(Alignment.CenterHorizontally)
 
-                    ) {
-                        ProfilePicture(character.voiceActorCoverImage, character.voiceActorName)
-                        Text(
-                            text = character.voiceActorName,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            textAlign = TextAlign.Center,
+                        ) {
+                            ProfilePicture(character.coverImage, character.name)
+                            Text(
+                                text = character.name,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .padding(top = 6.dp, bottom = 6.dp)
+                                    .height(50.dp)
+                                    .fillMaxWidth()
+                            )
+                        }
+                        Column(
                             modifier = Modifier
-                                .padding(top = 6.dp, bottom = 6.dp)
-                                .fillMaxWidth()
-                        )
+                                .clickable { navigateToStaff(character.voiceActorId) }
+                                .padding(12.dp)
+                                .align(Alignment.CenterHorizontally)
+
+                        ) {
+                            ProfilePicture(character.voiceActorCoverImage, character.voiceActorName)
+                            Text(
+                                text = character.voiceActorName,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .padding(top = 6.dp, bottom = 6.dp)
+                                    .fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
+        }
+    } else {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            Text(
+                text = stringResource(R.string.no_characters),
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
@@ -446,6 +492,7 @@ private fun ProfilePicture(coverImage: String, name: String) {
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
+    val isAnime = anime1.type == MediaType.ANIME
     Row(modifier = Modifier.padding(Dimens.PaddingNormal)) {
         if (anime1.coverImage != "") {
             AsyncImage(
@@ -455,7 +502,9 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
                 placeholder = painterResource(id = R.drawable.no_image),
                 fallback = painterResource(id = R.drawable.no_image),
                 contentScale = ContentScale.FillHeight,
-                modifier = Modifier.height(250.dp).clip(RoundedCornerShape(12.dp))
+                modifier = Modifier
+                    .height(250.dp)
+                    .clip(RoundedCornerShape(12.dp))
             )
         }
         Column {
@@ -473,7 +522,7 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
                 )
                 IconWithText(
                     R.drawable.anime_details_calendar,
-                    text = if (anime1.type == MediaType.ANIME) {
+                    text = if (isAnime) {
                         "${anime1.season.getName()} ${anime1.seasonYear}"
                     } else {
                         if (anime1.volumes != -1) {
@@ -490,7 +539,7 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
                 )
                 IconWithText(
                     R.drawable.anime_details_timer,
-                    if (anime1.type == MediaType.ANIME) {
+                    if (isAnime) {
                         quantityStringResource(
                             id = R.plurals.episode,
                             quantity = anime1.episodeAmount,

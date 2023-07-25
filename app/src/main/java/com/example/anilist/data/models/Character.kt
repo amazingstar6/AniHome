@@ -7,5 +7,6 @@ data class Character(
     val coverImage: String = "",
     val voiceActorName: String = "",
     val voiceActorCoverImage: String = "",
-    val voiceActorLanguage: String = ""
+    val voiceActorLanguage: String = "",
+    val role: String = ""
 )

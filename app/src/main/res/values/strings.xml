@@ -18,6 +18,9 @@
     <string name="most_popular_year">#%1$d Most popular %2$d</string>
     <string name="highest_rated_season">#%1$d Highest rated %2$s %3$d</string>
     <string name="most_popular_season">#%1$d Most popular %2$s %3$d</string>
+    <string name="no_characters">No characters!</string>
+    <string name="share">Share</string>
+    <string name="question_mark">\?</string>
     <plurals name="volume">
         <item quantity="one">%1d Volume</item>
         <item quantity="other">%1d Volumes</item>

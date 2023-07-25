@@ -1,5 +1,6 @@
 package com.example.anilist.data.repository
 
+import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.apollographql.apollo3.api.Optional
@@ -9,7 +10,9 @@ import com.example.anilist.GetCharacterDetailQuery
 import com.example.anilist.GetMediaDetailQuery
 import com.example.anilist.GetReviewDetailQuery
 import com.example.anilist.GetReviewsOfMediaQuery
+import com.example.anilist.GetStaffDetailQuery
 import com.example.anilist.GetStaffInfoQuery
+import com.example.anilist.ToggleFavoriteCharacterMutation
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.CharacterMediaConnection
@@ -25,6 +28,7 @@ import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.models.Stats
 import com.example.anilist.data.models.Status
 import com.example.anilist.data.models.Tag
+import com.example.anilist.fragment.StaffMedia
 import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaRankType
 import com.example.anilist.type.MediaSeason
@@ -35,6 +39,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
 
+
+private const val TAG = "MediaDetailRepository"
 @Singleton
 class MediaDetailsRepository @Inject constructor() {
 
@@ -78,7 +84,7 @@ class MediaDetailsRepository @Inject constructor() {
         return emptyList()
     }
 
-    suspend fun fetchStaff(mediaId: Int, page: Int): List<Staff> {
+    suspend fun fetchStaffList(mediaId: Int, page: Int): List<Staff> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -90,12 +96,85 @@ class MediaDetailsRepository @Inject constructor() {
             }
             val data = result.data?.Media
             if (data != null) {
-                return parseStaff(data)
+                return parseStaffList(data)
             }
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
         }
         return emptyList()
+    }
+
+    suspend fun fetchStaff(id: Int): StaffDetail {
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    GetStaffDetailQuery(id)
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+            }
+            val data = result.data?.Staff
+            if (data != null) {
+                return parseStaff(data)
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here,, these are mainly for network errors
+        }
+        return StaffDetail()
+    }
+
+    private fun parseStaff(staff: GetStaffDetailQuery.Staff): StaffDetail {
+        return StaffDetail(
+            id = staff.id,
+            coverImage = staff.image?.large ?: "",
+            userPreferredName = staff.name?.userPreferred ?: "",
+            alternativeNames = staff.name?.alternative?.filterNotNull().orEmpty(),
+            favorites = staff.favourites ?: -1,
+            language = staff.languageV2 ?: "",
+            description = staff.description ?: "",
+            voicedCharacters = parseVoicedCharactersForStaff(staff.characters),
+            animeStaffRole = parseMediaForStaff(staff.anime?.staffMedia),
+            mangaStaffRole = parseMediaForStaff(staff.manga?.staffMedia)
+        )
+    }
+
+    /**
+     * We need to extract coverImage, title, characterRole and id into the object
+     */
+    private fun parseMediaForStaff(staffMedia: StaffMedia?): List<CharacterMediaConnection> {
+        val result = mutableListOf<CharacterMediaConnection>()
+        for (media in staffMedia?.edges.orEmpty()) {
+            if (media != null) {
+                result.add(
+                    CharacterMediaConnection(
+                        id = media.node?.id ?: -1,
+                        title = media.node?.title?.userPreferred ?: "",
+                        characterRole = media.staffRole ?: "",
+                        coverImage = media.node?.coverImage?.extraLarge ?: ""
+                    )
+                )
+            }
+        }
+        return result
+    }
+
+    /**
+     * We need coverImage, name, role and id in Character object
+     */
+    private fun parseVoicedCharactersForStaff(characters: GetStaffDetailQuery.Characters?): List<Character> {
+        val result = mutableListOf<Character>()
+        for (character in characters?.edges.orEmpty()) {
+            result.add(
+                Character(
+                    id = character?.id ?: -1,
+                    name = character?.node?.name?.userPreferred ?: "",
+                    role = character?.role?.name ?: "",
+                    coverImage = character?.node?.image?.large ?: ""
+                )
+            )
+        }
+        return result
     }
 
     suspend fun fetchReviews(mediaId: Int): List<Review> {
@@ -180,7 +259,7 @@ class MediaDetailsRepository @Inject constructor() {
                 result.add(
                     StaffDetail(
                         id = voiceActor?.voiceActor?.id ?: -1,
-                        name = voiceActor?.voiceActor?.name?.userPreferred ?: "",
+                        userPreferredName = voiceActor?.voiceActor?.name?.userPreferred ?: "",
                         coverImage = voiceActor?.voiceActor?.image?.large ?: "",
                         language = voiceActor?.voiceActor?.languageV2 ?: ""
                     )
@@ -390,6 +469,27 @@ class MediaDetailsRepository @Inject constructor() {
         return Review()
     }
 
+    suspend fun toggleFavouriteCharacter(id: Int): Boolean {
+        try {
+            val result =
+                Apollo.apolloClient.mutation(
+                    ToggleFavoriteCharacterMutation(id)
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+            }
+            val data = result.data?.ToggleFavourite?.characters?.nodes
+            if (data != null) {
+                Log.i(TAG, "Data from like is empty: ${data.isEmpty()}")
+                return data.isNotEmpty()
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here,, these are mainly for network errors
+        }
+        return false
+    }
+
     private fun parseReview(reviews: GetReviewsOfMediaQuery.Reviews?): List<Review> {
         val list = mutableListOf<Review>()
         for (review in reviews?.nodes.orEmpty()) {
@@ -534,7 +634,7 @@ class MediaDetailsRepository @Inject constructor() {
         return characters
     }
 
-    private fun parseStaff(media: GetStaffInfoQuery.Media?): List<Staff> {
+    private fun parseStaffList(media: GetStaffInfoQuery.Media?): List<Staff> {
         val list = mutableListOf<Staff>()
         for (staff in media?.staff?.edges.orEmpty()) {
             list.add(

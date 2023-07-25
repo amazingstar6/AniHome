@@ -26,12 +26,13 @@ import com.example.anilist.ui.my_media.MyMediaScreen
 private const val TAG = "AniNavGraph"
 
 @Composable
-fun AniNavGraph(
+fun AniNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     navigationActions: AniListNavigationActions,
     aniHomeViewModel: AniHomeViewModel,
-    userSettings: UserSettings?
+    userSettings: UserSettings?,
+    setBottomBarState: (Boolean) -> Unit
 ) {
     NavHost(
         modifier = modifier,
@@ -39,6 +40,7 @@ fun AniNavGraph(
         startDestination = AniListRoute.HOME_ROUTE
     ) {
         composable(AniListRoute.HOME_ROUTE) {
+            setBottomBarState(true)
             HomeScreen(
                 aniHomeViewModel = aniHomeViewModel,
                 onNavigateToNotification = {
@@ -58,11 +60,10 @@ fun AniNavGraph(
                 }
             )
         ) { backStackEntry ->
+            setBottomBarState(false)
             MediaDetail(
                 mediaId = backStackEntry.arguments?.getInt("animeId") ?: -1,
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
+                onNavigateBack = navigationActions::navigateBack,
                 onNavigateToDetails = navigationActions::navigateToMediaDetails,
                 onNavigateToReviewDetails = navigationActions::navigateToReviewDetails,
                 navigateToStaff = navigationActions::navigateToStaff,
@@ -77,7 +78,8 @@ fun AniNavGraph(
                 CharacterDetailScreen(
                     id = backStackEntry.arguments?.getInt("characterId") ?: -1,
                     onNavigateToMedia = navigationActions::navigateToMediaDetails,
-                    onNavigateToStaff = navigationActions::navigateToStaff
+                    onNavigateToStaff = navigationActions::navigateToStaff,
+                    onNavigateBack = navigationActions::navigateBack
                 )
             }
         )
@@ -85,7 +87,12 @@ fun AniNavGraph(
             route = AniListRoute.STAFF_DETAIL_ROUTE + "/{staffId}",
             arguments = listOf(navArgument("staffId") { type = NavType.IntType }),
             content = { backStackEntry ->
-                StaffDetailScreen(id = backStackEntry.arguments?.getInt("characterId") ?: -1)
+                StaffDetailScreen(
+                    id = backStackEntry.arguments?.getInt("staffId") ?: -1,
+                    onNavigateToCharacter = navigationActions::navigateToCharacter,
+                    onNavigateToMedia = navigationActions::navigateToMediaDetails,
+                    onNavigateBack = navigationActions::navigateBack
+                )
             }
         )
         composable(
@@ -100,6 +107,7 @@ fun AniNavGraph(
         composable(
             AniListRoute.NOTIFICATION_ROUTE
         ) {
+            setBottomBarState(false)
             NotificationScreen(
                 aniHomeViewModel = aniHomeViewModel,
                 { navController.popBackStack() }
@@ -108,18 +116,18 @@ fun AniNavGraph(
         composable(
             AniListRoute.SETTINGS
         ) {
+            setBottomBarState(false)
             SettingsScreen()
         }
         composable(AniListRoute.ANIME_ROUTE) {
+            setBottomBarState(true)
 //            val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
             Log.i(TAG, "Access code in #3 is ${userSettings?.accessCode}")
             if (userSettings?.accessCode != "" && userSettings == null) {
                 Log.i(TAG, "ACCESS CODE STORED IS ${userSettings?.accessCode}")
                 MyMediaScreen(
-//                    aniHomeViewModel,
                     navigateToDetails = { id ->
                         navController.navigate(route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id")
-//                        toggleNavBarOff()
                     },
                     isAnime = true,
 //                        accessCode = userSettings.accessCode ?: ""
@@ -131,8 +139,8 @@ fun AniNavGraph(
             }
         }
         composable(AniListRoute.MANGA_ROUTE) {
+            setBottomBarState(true)
             MyMediaScreen(
-//                aniHomeViewModel,
                 navigateToDetails = { id ->
                     navController.navigate(route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id")
                 },
@@ -142,9 +150,11 @@ fun AniNavGraph(
             )
         }
         composable(AniListRoute.FEED_ROUTE) {
+            setBottomBarState(true)
             FeedScreen()
         }
         composable(AniListRoute.FORUM_ROUTE) {
+            setBottomBarState(true)
             ForumScreen()
         }
     }
