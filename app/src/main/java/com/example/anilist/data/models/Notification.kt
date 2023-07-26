@@ -6,5 +6,5 @@ data class Notification(
     val createdAt: Int = -1,
     val image: String = "",
     val airedEpisode: Int = -1,
-    val title: String = ""
+    val title: String = "",
 )

@@ -21,13 +21,13 @@ fun PleaseLogin() {
     Column(
         Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = "Please login to use this feature",
             style = MaterialTheme.typography.displayMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
         Button(onClick = {
 //            uriHandler.openUri("https://anilist.co/api/v2/oauth/authorize?client_id=13616&redirect_uri=anihome://login&response_type=code")

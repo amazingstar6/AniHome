@@ -38,7 +38,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
 
-
 private const val TAG = "MediaDetailRepository"
 
 @Singleton
@@ -48,7 +47,7 @@ class MediaDetailsRepository @Inject constructor() {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    GetMediaDetailQuery(mediaId)
+                    GetMediaDetailQuery(mediaId),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -68,7 +67,7 @@ class MediaDetailsRepository @Inject constructor() {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    GetMediaDetailQuery(mediaId)
+                    GetMediaDetailQuery(mediaId),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -88,7 +87,7 @@ class MediaDetailsRepository @Inject constructor() {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    GetStaffInfoQuery(mediaId, Optional.present(page))
+                    GetStaffInfoQuery(mediaId, Optional.present(page)),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -108,7 +107,7 @@ class MediaDetailsRepository @Inject constructor() {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    GetStaffDetailQuery(id)
+                    GetStaffDetailQuery(id),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -137,7 +136,7 @@ class MediaDetailsRepository @Inject constructor() {
             isFavouriteBlocked = staff.isFavouriteBlocked,
             voicedCharacters = parseVoicedCharactersForStaff(staff.characters),
             animeStaffRole = parseMediaForStaff(staff.anime?.staffMedia),
-            mangaStaffRole = parseMediaForStaff(staff.manga?.staffMedia)
+            mangaStaffRole = parseMediaForStaff(staff.manga?.staffMedia),
         )
     }
 
@@ -153,8 +152,8 @@ class MediaDetailsRepository @Inject constructor() {
                         id = media.node?.id ?: -1,
                         title = media.node?.title?.userPreferred ?: "",
                         characterRole = media.staffRole ?: "",
-                        coverImage = media.node?.coverImage?.extraLarge ?: ""
-                    )
+                        coverImage = media.node?.coverImage?.extraLarge ?: "",
+                    ),
                 )
             }
         }
@@ -172,8 +171,8 @@ class MediaDetailsRepository @Inject constructor() {
                     id = character?.node?.id ?: -1,
                     name = character?.node?.name?.userPreferred ?: "",
                     role = character?.role?.name ?: "",
-                    coverImage = character?.node?.image?.large ?: ""
-                )
+                    coverImage = character?.node?.image?.large ?: "",
+                ),
             )
         }
         return result
@@ -183,7 +182,7 @@ class MediaDetailsRepository @Inject constructor() {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    GetReviewsOfMediaQuery(mediaId)
+                    GetReviewsOfMediaQuery(mediaId),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -223,7 +222,7 @@ class MediaDetailsRepository @Inject constructor() {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    GetCharacterDetailQuery(characterId)
+                    GetCharacterDetailQuery(characterId),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -247,8 +246,8 @@ class MediaDetailsRepository @Inject constructor() {
                     id = media?.node?.id ?: -1,
                     title = media?.node?.title?.userPreferred ?: "",
                     coverImage = media?.node?.coverImage?.extraLarge ?: "",
-                    characterRole = media?.characterRole?.name ?: ""
-                )
+                    characterRole = media?.characterRole?.name ?: "",
+                ),
             )
         }
         return result
@@ -263,8 +262,8 @@ class MediaDetailsRepository @Inject constructor() {
                         id = voiceActor?.voiceActor?.id ?: -1,
                         userPreferredName = voiceActor?.voiceActor?.name?.userPreferred ?: "",
                         coverImage = voiceActor?.voiceActor?.image?.large ?: "",
-                        language = voiceActor?.voiceActor?.languageV2 ?: ""
-                    )
+                        language = voiceActor?.voiceActor?.languageV2 ?: "",
+                    ),
                 )
             }
         }
@@ -275,7 +274,7 @@ class MediaDetailsRepository @Inject constructor() {
         val description = buildString {
             if (!(data.dateOfBirth?.fuzzyDate?.year == null && data.dateOfBirth?.fuzzyDate?.month == null && data.dateOfBirth?.fuzzyDate?.day == null)) {
                 append(
-                    "<strong>Birthday:</strong>${data.dateOfBirth.fuzzyDate.year ?: "?"}-${data.dateOfBirth.fuzzyDate.month ?: "?"}-${data.dateOfBirth.fuzzyDate.day ?: "?"}<br>"
+                    "<strong>Birthday:</strong>${data.dateOfBirth.fuzzyDate.year ?: "?"}-${data.dateOfBirth.fuzzyDate.month ?: "?"}-${data.dateOfBirth.fuzzyDate.day ?: "?"}<br>",
                 )
             }
             if (data.age != null) append("<strong>Age:</strong>${data.age}<br>")
@@ -284,7 +283,7 @@ class MediaDetailsRepository @Inject constructor() {
             if (data.description != null) {
                 append(
                     data.description.substringAfter("<p>")
-                        .substringBeforeLast("</p>")
+                        .substringBeforeLast("</p>"),
                 )
             }
         }
@@ -305,7 +304,7 @@ class MediaDetailsRepository @Inject constructor() {
             voiceActors = parseVoiceActorsForCharacter(data.media),
             relatedMedia = parseMediaCharacter(data.media),
             alternativeNames = data.name?.alternative?.filterNotNull().orEmpty(),
-            alternativeSpoilerNames = data.name?.alternativeSpoiler?.filterNotNull().orEmpty()
+            alternativeSpoilerNames = data.name?.alternativeSpoiler?.filterNotNull().orEmpty(),
         )
     }
 
@@ -339,7 +338,7 @@ class MediaDetailsRepository @Inject constructor() {
             Status.PLANNING to 0,
             Status.COMPLETED to 0,
             Status.DROPPED to 0,
-            Status.PAUSED to 0
+            Status.PAUSED to 0,
         )
         for (rank in media?.rankings.orEmpty()) {
             if (rank?.type == MediaRankType.RATED && rank?.allTime == true) {
@@ -413,7 +412,7 @@ class MediaDetailsRepository @Inject constructor() {
                     MediaListStatus.REPEATING -> Status.UNKNOWN
                     MediaListStatus.UNKNOWN__ -> Status.UNKNOWN
                     null -> Status.UNKNOWN
-                }
+                },
             ] = status?.amount ?: 0
         }
         return Stats(
@@ -440,9 +439,9 @@ class MediaDetailsRepository @Inject constructor() {
                 seventy,
                 eighty,
                 ninety,
-                hundred
+                hundred,
             ),
-            statusDistribution = statusDistribution
+            statusDistribution = statusDistribution,
         )
     }
 
@@ -450,7 +449,7 @@ class MediaDetailsRepository @Inject constructor() {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    GetReviewDetailQuery(reviewId)
+                    GetReviewDetailQuery(reviewId),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -473,7 +472,7 @@ class MediaDetailsRepository @Inject constructor() {
                         ReviewRating.DOWN_VOTE -> ReviewRatingStatus.DOWN_VOTE
                         else -> ReviewRatingStatus.NO_VOTE
                     },
-                    userAvatar = review?.user?.avatar?.large ?: ""
+                    userAvatar = review?.user?.avatar?.large ?: "",
                 )
             }
         } catch (exception: ApolloException) {
@@ -487,7 +486,7 @@ class MediaDetailsRepository @Inject constructor() {
         STAFF,
         ANIME,
         MANGA,
-        STUDIO;
+        STUDIO,
     }
 
     suspend fun toggleFavourite(type: LikeAbleType, id: Int): Boolean {
@@ -495,8 +494,8 @@ class MediaDetailsRepository @Inject constructor() {
             val mutation: ToggleFavoriteCharacterMutation = when (type) {
                 LikeAbleType.CHARACTER -> ToggleFavoriteCharacterMutation(
                     characterId = Optional.present(
-                        id
-                    )
+                        id,
+                    ),
                 )
 
                 LikeAbleType.STAFF -> ToggleFavoriteCharacterMutation(staffId = Optional.present(id))
@@ -504,13 +503,13 @@ class MediaDetailsRepository @Inject constructor() {
                 LikeAbleType.MANGA -> ToggleFavoriteCharacterMutation(mangaId = Optional.present(id))
                 LikeAbleType.STUDIO -> ToggleFavoriteCharacterMutation(
                     studioId = Optional.present(
-                        id
-                    )
+                        id,
+                    ),
                 )
             }
             val result =
                 Apollo.apolloClient.mutation(
-                    mutation
+                    mutation,
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -550,8 +549,8 @@ class MediaDetailsRepository @Inject constructor() {
                         ReviewRating.DOWN_VOTE -> ReviewRatingStatus.DOWN_VOTE
                         else -> ReviewRatingStatus.NO_VOTE
                     },
-                    userAvatar = review?.user?.avatar?.large ?: ""
-                )
+                    userAvatar = review?.user?.avatar?.large ?: "",
+                ),
             )
         }
         return list
@@ -587,8 +586,8 @@ class MediaDetailsRepository @Inject constructor() {
                         link.site,
                         link.language ?: "",
                         link.color ?: "",
-                        link.icon ?: ""
-                    )
+                        link.icon ?: "",
+                    ),
                 )
             }
         }
@@ -599,8 +598,8 @@ class MediaDetailsRepository @Inject constructor() {
                     id = relation?.node?.id ?: 0,
                     coverImage = relation?.node?.coverImage?.extraLarge ?: "",
                     title = relation?.node?.title?.native ?: "",
-                    relation = relation?.relationType?.rawValue ?: ""
-                )
+                    relation = relation?.relationType?.rawValue ?: "",
+                ),
             )
         }
         val infoList = mutableMapOf<String, String>()
@@ -635,7 +634,7 @@ class MediaDetailsRepository @Inject constructor() {
                 "licensed" to anime?.isLicensed.toString(),
                 "updatedAt" to anime?.updatedAt.toString(),
                 "synonyms" to synonyms,
-                "nsfw" to anime?.isAdult.toString()
+                "nsfw" to anime?.isAdult.toString(),
             ),
             tags = tags,
             trailerImage = anime?.trailer?.thumbnail ?: "",
@@ -647,7 +646,7 @@ class MediaDetailsRepository @Inject constructor() {
             characters = parseCharacters(anime),
             favourites = anime?.favourites ?: -1,
             isFavourite = anime?.isFavourite ?: false,
-            isFavouriteBlocked = anime?.isFavouriteBlocked ?: false
+            isFavouriteBlocked = anime?.isFavouriteBlocked ?: false,
         )
         return media
     }
@@ -671,8 +670,8 @@ class MediaDetailsRepository @Inject constructor() {
                             coverImage = character.node?.image?.large ?: "",
                             voiceActorName = voiceActor.voiceActor?.name?.userPreferred ?: "",
                             voiceActorCoverImage = voiceActor.voiceActor?.image?.large ?: "",
-                            voiceActorLanguage = voiceActor.voiceActor?.languageV2 ?: ""
-                        )
+                            voiceActorLanguage = voiceActor.voiceActor?.languageV2 ?: "",
+                        ),
                     )
                 }
             }
@@ -689,8 +688,8 @@ class MediaDetailsRepository @Inject constructor() {
                     name = staff?.node?.name?.userPreferred ?: "Unknown",
                     role = staff?.role ?: "Unknown",
                     coverImage = staff?.node?.image?.large ?: "Unknown",
-                    hasNextPage = media?.staff?.pageInfo?.hasNextPage ?: false
-                )
+                    hasNextPage = media?.staff?.pageInfo?.hasNextPage ?: false,
+                ),
             )
         }
         return list
@@ -746,7 +745,7 @@ class StaffPagingSource : PagingSource<Int, Staff>() {
                 STARTING_KEY -> null
                 else -> ensureValidKey(key = range.first - params.loadSize)
             },
-            nextKey = range.last + 1
+            nextKey = range.last + 1,
         )
     }
 

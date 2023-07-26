@@ -29,12 +29,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-
 private const val TAG = "MainActivity"
 
 // for data store
 // At the top level of your kotlin file:
-//private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "USER_SETTINGS")
+// private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "USER_SETTINGS")
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -46,7 +45,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // processing the uri received for logging in
         if (intent?.data != null) {
-            Log.i(TAG, "Data is ${intent.data.toString()}")
+            Log.i(TAG, "Data is ${intent.data}")
 //            val code: String = intent.data.toString().substringAfter("anihome:://login?code=")
             val uri = intent.data.toString()
             val query = uri.substringAfter("#")
@@ -60,16 +59,15 @@ class MainActivity : ComponentActivity() {
             val expiresIn = parameterMap["expires_in"]
             Log.i(
                 TAG,
-                "Access code is $accessCode, token type is $tokenType, expires in $expiresIn seconds"
+                "Access code is $accessCode, token type is $tokenType, expires in $expiresIn seconds",
             )
-
         }
 
         setContent {
             AnilistTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     val navController = rememberNavController()
                     val navigationAction = remember(navController) {
@@ -86,10 +84,9 @@ class MainActivity : ComponentActivity() {
                         observePreferenceChanges()
                     }
 
-
                     val userSettings by aniHomeViewModel.userSettings.observeAsState()
                     aniHomeViewModel.setAccessCode(
-                        accessCode
+                        accessCode,
                     )
 
                     var showBottomBar by remember {
@@ -99,7 +96,7 @@ class MainActivity : ComponentActivity() {
                         AniListBottomNavigationBar(
                             selectedDestination = selectedDestination,
                             navigateToTopLevelDestination = navigationAction::navigateTo,
-                            showBottomBar
+                            showBottomBar,
                         )
                     }) { it ->
                         AniNavHost(
@@ -108,7 +105,7 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
                             aniHomeViewModel = aniHomeViewModel,
                             userSettings = userSettings,
-                            setBottomBarState = { newValue -> showBottomBar = newValue }
+                            setBottomBarState = { newValue -> showBottomBar = newValue },
                         )
                     }
                 }
@@ -118,7 +115,7 @@ class MainActivity : ComponentActivity() {
 
     private fun observePreferenceChanges() {
 //        aniHomeViewModel.userSettings.observe(this) { userSettings ->
-////            updateTaskFilters(userSettings.sortOrder, tasksUiModel.showCompleted)
+// //            updateTaskFilters(userSettings.sortOrder, tasksUiModel.showCompleted)
 //            accessCode = userSettings.accessCode
 //        }
     }
@@ -129,6 +126,4 @@ class MainActivity : ComponentActivity() {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
         return currentTime.format(formatter)
     }
-
-
 }

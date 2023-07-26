@@ -80,8 +80,6 @@ query getAnimeInfo($id: Int!) {
         }
         season
         seasonYear
-        #   The year & season
-        seasonInt
         episodes
         duration
         chapters @include(if:false)

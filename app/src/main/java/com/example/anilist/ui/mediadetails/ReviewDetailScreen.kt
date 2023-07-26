@@ -27,7 +27,7 @@ import de.charlex.compose.HtmlText
 @Composable
 fun ReviewDetailScreen(
     reviewId: Int,
-    mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel()
+    mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
 ) {
     val review by mediaDetailsViewModel.review.observeAsState()
     mediaDetailsViewModel.fetchReview(reviewId)
@@ -40,51 +40,51 @@ fun ReviewDetailScreen(
 
 @Composable
 private fun ReviewDetail(
-    review: Review
+    review: Review,
 ) {
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
             .padding(Dimens.PaddingNormal),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = review.title,
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+            modifier = Modifier.padding(bottom = Dimens.PaddingSmall),
         )
         AvatarNameDate(
             review.userAvatar,
             review.userName,
-            Utils.convertEpochToString(review.createdAt.toLong())
+            Utils.convertEpochToString(review.createdAt.toLong()),
         )
         HtmlText(
             text = review.body,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
 //                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
-            modifier = Modifier.padding(top = Dimens.PaddingNormal)
+            modifier = Modifier.padding(top = Dimens.PaddingNormal),
         )
         Divider(
-            modifier = Modifier.padding(horizontal = 34.dp)
+            modifier = Modifier.padding(horizontal = 34.dp),
         )
         Text(
             "${review.score}/100",
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = Dimens.PaddingSmall, top = Dimens.PaddingLarge)
+            modifier = Modifier.padding(bottom = Dimens.PaddingSmall, top = Dimens.PaddingLarge),
         )
         Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
             UpDownVote(
                 review.upvotes,
                 R.drawable.media_detail_thumbs_up,
-                "upvote"
+                "upvote",
             )
             UpDownVote(
                 review.totalVotes - review.upvotes,
                 iconId = R.drawable.media_detail_thumb_down,
-                contentDescription = "downvote"
+                contentDescription = "downvote",
             )
         }
     }
@@ -95,7 +95,7 @@ fun AvatarNameDate(
     avatar: String,
     userName: String,
     date: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = Modifier
@@ -103,20 +103,20 @@ fun AvatarNameDate(
             .padding(Dimens.PaddingSmall)
             .then(modifier),
         horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Avatar(avatar = avatar, userName = userName)
         Column(modifier = Modifier.padding(start = Dimens.PaddingNormal)) {
             Text(
                 text = userName,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 text = date,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = Dimens.PaddingSmall)
+                modifier = Modifier.padding(top = Dimens.PaddingSmall),
             )
         }
     }
@@ -133,7 +133,7 @@ fun ReviewDetailScreenPreview() {
             upvotes = 43,
             totalVotes = 64,
             score = 80,
-            createdAt = 1533109209
-        )
+            createdAt = 1533109209,
+        ),
     )
 }

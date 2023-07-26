@@ -18,5 +18,5 @@ data class AniHomeUiState(
     var currentDetailCharacters: List<Character> = emptyList(),
     val personalAnimeList: List<Media> = emptyList(),
     val isLoggedIn: Boolean = false,
-    val accessCode: String = ""
+    val accessCode: String = "",
 )

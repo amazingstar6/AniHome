@@ -39,11 +39,11 @@ data class Media(
     val startedAt: FuzzyDate? = null,
     val completedAt: FuzzyDate? = null,
 
-    val rawScore: Double = -1.0
+    val rawScore: Double = -1.0,
 )
 
 enum class MediaType {
     ANIME,
     MANGA,
-    UNKNOWN
+    UNKNOWN,
 }

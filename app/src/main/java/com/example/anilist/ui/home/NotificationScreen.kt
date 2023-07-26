@@ -46,7 +46,7 @@ fun NotificationScreen(aniHomeViewModel: AniHomeViewModel, onNavigateBack: () ->
     Notifications(
         notifications.value?.data ?: emptyList(),
         aniHomeViewModel::markAllNotificationsAsRead,
-        onNavigateBack = onNavigateBack
+        onNavigateBack = onNavigateBack,
     )
 }
 
@@ -56,7 +56,7 @@ enum class FilterList {
     ACTIVITY,
     FORUM,
     FOLLOWS,
-    MEDIA
+    MEDIA,
 }
 
 @Composable
@@ -64,7 +64,7 @@ enum class FilterList {
 private fun Notifications(
     notifications: List<Notification>,
     markAllAsRead: () -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     var currentIndex by remember {
         mutableStateOf(FilterList.ALL)
@@ -75,7 +75,7 @@ private fun Notifications(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.Outlined.ArrowBack,
-                    contentDescription = "back"
+                    contentDescription = "back",
                 )
             }
         })
@@ -91,12 +91,12 @@ private fun Notifications(
                             if (selected) {
                                 Icon(
                                     Icons.Outlined.Check,
-                                    contentDescription = null
+                                    contentDescription = null,
                                 )
                             }
                         },
                         label = { Text(text = filter.name) },
-                        modifier = Modifier.padding(end = Dimens.PaddingSmall)
+                        modifier = Modifier.padding(end = Dimens.PaddingSmall),
                     )
                 }
             }
@@ -104,7 +104,7 @@ private fun Notifications(
                 onClick = markAllAsRead,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.PaddingNormal)
+                    .padding(horizontal = Dimens.PaddingNormal),
             ) {
                 Text(text = stringResource(R.string.mark_all_as_read))
             }
@@ -136,7 +136,7 @@ private fun Notifications(
                                 it.type == "Media"
                             }
                         }
-                    }
+                    },
                 ) {
                     Column {
                         Row {
@@ -151,18 +151,18 @@ private fun Notifications(
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
                                     .padding(Dimens.PaddingNormal)
-                                    .clip(MaterialTheme.shapes.medium)
+                                    .clip(MaterialTheme.shapes.medium),
                             )
                             Column(modifier = Modifier.padding(Dimens.PaddingNormal)) {
                                 Text(
                                     text = Utils.getRelativeTime(it.createdAt.toLong()),
                                     style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 Text(
                                     text = "Episode ${it.airedEpisode} of ${it.title} aired",
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                                 Text("Type is: ${it.type}")
                             }
@@ -185,10 +185,10 @@ fun NotificationScreenPreview() {
                 airedEpisode = 2,
                 title = "时光代理人 第二季",
                 createdAt = 1689303604,
-                image = ""
-            )
+                image = "",
+            ),
         ),
         markAllAsRead = { },
-        onNavigateBack = { }
+        onNavigateBack = { },
     )
 }

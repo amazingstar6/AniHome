@@ -85,3 +85,9 @@ mutation IncreaseEpisodeProgress($mediaId: Int!, $newProgress: Int!){
         progress
     }
 }
+
+mutation DeleteEntry($id: Int!) {
+    DeleteMediaListEntry(id: $id) {
+        deleted
+    }
+}

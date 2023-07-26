@@ -3,7 +3,7 @@ package com.example.anilist.data.models
 enum class ReviewRatingStatus {
     NO_VOTE,
     UP_VOTE,
-    DOWN_VOTE
+    DOWN_VOTE,
 }
 
 data class Review(
@@ -17,5 +17,5 @@ data class Review(
     val upvotes: Int = -1,
     val totalVotes: Int = -1,
     val userRating: ReviewRatingStatus = ReviewRatingStatus.NO_VOTE,
-    val userAvatar: String = ""
+    val userAvatar: String = "",
 )

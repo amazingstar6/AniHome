@@ -16,12 +16,12 @@ data class CharacterDetail(
     val voiceActors: List<StaffDetail> = emptyList(),
     val relatedMedia: List<CharacterMediaConnection> = emptyList(),
     val alternativeNames: List<String> = emptyList(),
-    val alternativeSpoilerNames: List<String> = emptyList()
+    val alternativeSpoilerNames: List<String> = emptyList(),
 )
 
 data class CharacterMediaConnection(
     val id: Int = -1,
     val title: String = "",
     val coverImage: String = "",
-    val characterRole: String = ""
+    val characterRole: String = "",
 )

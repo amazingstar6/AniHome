@@ -5,5 +5,5 @@ data class Staff(
     val name: String = "",
     val role: String = "",
     val coverImage: String = "",
-    val hasNextPage: Boolean = false
+    val hasNextPage: Boolean = false,
 )

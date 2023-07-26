@@ -23,7 +23,7 @@ enum class Title {
 data class UserSettings(
     val accessCode: String,
     val expiresIn: String,
-    val titleFormat: Title
+    val titleFormat: Title,
 )
 
 class UserPreferencesRepository @Inject constructor(private val dataStore: DataStore<Preferences>) {
@@ -66,7 +66,6 @@ class UserPreferencesRepository @Inject constructor(private val dataStore: DataS
         }
     }
 
-
 //    suspend fun saveToDataStore(userSettings: UserSettings) {
 //        dataStore.edit { settings ->
 //            settings[PreferencesKeys.ACCESS_CODE] = userSettings.accessCode
@@ -87,5 +86,4 @@ class UserPreferencesRepository @Inject constructor(private val dataStore: DataS
 
     suspend fun fetchInitialPreferences() =
         mapUserSettings(dataStore.data.first().toPreferences())
-
 }

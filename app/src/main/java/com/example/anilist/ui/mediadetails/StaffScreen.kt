@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 fun StaffScreen(
     staffList: List<Staff>,
     getMoreStaff: (Int) -> Unit,
-    onNavigateToStaff: (Int) -> Unit
+    onNavigateToStaff: (Int) -> Unit,
 ) {
     val state = rememberLazyGridState()
     var page by remember {
@@ -44,12 +44,12 @@ fun StaffScreen(
     }
     LazyVerticalGrid(state = state, columns = GridCells.Fixed(2), content = {
         items(
-            staffList
+            staffList,
         ) { staff ->
             Row(
                 modifier = Modifier.padding(Dimens.PaddingNormal).clickable {
                     onNavigateToStaff(staff.id)
-                }
+                },
             ) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current).data(staff.coverImage)
@@ -62,19 +62,19 @@ fun StaffScreen(
                         .fillMaxHeight()
 //                        .width(100.dp)
                         .padding(end = Dimens.PaddingNormal)
-                        .clip(MaterialTheme.shapes.medium)
+                        .clip(MaterialTheme.shapes.medium),
 
                 )
                 Column() {
                     Text(
                         text = staff.name,
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text = staff.role,
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(text = staff.hasNextPage.toString())
                 }
@@ -105,7 +105,7 @@ fun StaffScreen(
 fun StaffPreview() {
     StaffScreen(
         listOf(Staff(123, "吾峠呼世晴", "Original Creator"), Staff(1234, "外崎春雄", "Director")),
-        {}
+        {},
     ) {
     }
 }

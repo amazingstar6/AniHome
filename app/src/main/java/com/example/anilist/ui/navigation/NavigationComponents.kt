@@ -1,7 +1,6 @@
 package com.example.anilist.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.material3.Icon
@@ -17,12 +16,12 @@ import androidx.compose.ui.tooling.preview.Preview
 fun AniListBottomNavigationBar(
     selectedDestination: String,
     navigateToTopLevelDestination: (AnilistTopLevelDestination) -> Unit,
-    visible: Boolean
+    visible: Boolean,
 ) {
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(initialOffsetY = { it }),
-        exit = slideOutVertically(targetOffsetY = { it })
+        exit = slideOutVertically(targetOffsetY = { it }),
     ) {
         NavigationBar {
             TOP_LEVEL_DESTINATIONS.forEach { destination ->
@@ -34,20 +33,20 @@ fun AniListBottomNavigationBar(
                             Icon(
                                 painter = painterResource(id = destination.selectedIcon),
                                 contentDescription = stringResource(
-                                    id = destination.iconTextId
-                                )
+                                    id = destination.iconTextId,
+                                ),
                             )
                         } else {
                             Icon(
                                 painter = painterResource(id = destination.unselectedIcon),
                                 contentDescription = stringResource(
-                                    id = destination.iconTextId
-                                )
+                                    id = destination.iconTextId,
+                                ),
                             )
                         }
                     },
                     label = { Text(stringResource(id = destination.iconTextId)) },
-                    alwaysShowLabel = true
+                    alwaysShowLabel = true,
                 )
             }
         }
@@ -60,6 +59,6 @@ fun AniBottomNavigationBarPreview() {
     AniListBottomNavigationBar(
         selectedDestination = AniListRoute.HOME_ROUTE,
         navigateToTopLevelDestination = { },
-        visible = true
+        visible = true,
     )
 }

@@ -19,11 +19,11 @@ fun rememberMediaDetailState(
     // will be created, and the old one will be destroyed.
     return remember(mediaId, viewModel) {
         MediaDetailState(
-            viewModel, mediaId
+            viewModel,
+            mediaId,
         )
     }
 }
-
 
 /**
  * Responsible for holding state and containing UI-related logic related to [MediaDetail].

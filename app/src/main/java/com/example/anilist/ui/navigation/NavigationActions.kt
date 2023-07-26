@@ -22,7 +22,7 @@ data class AnilistTopLevelDestination(
     val route: String,
     val selectedIcon: Int,
     val unselectedIcon: Int,
-    val iconTextId: Int
+    val iconTextId: Int,
 )
 
 class AniListNavigationActions(private val navController: NavController) {
@@ -40,25 +40,25 @@ class AniListNavigationActions(private val navController: NavController) {
 
     fun navigateToMediaDetails(mediaId: Int) {
         navController.navigate(
-            route = AniListRoute.ANIME_DETAIL_ROUTE + "/$mediaId"
+            route = AniListRoute.ANIME_DETAIL_ROUTE + "/$mediaId",
         )
     }
 
     fun navigateToReviewDetails(reviewId: Int) {
         navController.navigate(
-            route = AniListRoute.REVIEW_DETAIL_ROUTE + "/$reviewId"
+            route = AniListRoute.REVIEW_DETAIL_ROUTE + "/$reviewId",
         )
     }
 
     fun navigateToCharacter(id: Int) {
         navController.navigate(
-            route = AniListRoute.CHARACTER_DETAIL_ROUTE + "/$id"
+            route = AniListRoute.CHARACTER_DETAIL_ROUTE + "/$id",
         )
     }
 
     fun navigateToStaff(id: Int) {
         navController.navigate(
-            route = AniListRoute.STAFF_DETAIL_ROUTE + "/$id"
+            route = AniListRoute.STAFF_DETAIL_ROUTE + "/$id",
         )
     }
 
@@ -72,30 +72,30 @@ val TOP_LEVEL_DESTINATIONS = listOf(
         route = AniListRoute.HOME_ROUTE,
         selectedIcon = R.drawable.navigation_home_filled,
         unselectedIcon = R.drawable.navigation_home_outlined,
-        iconTextId = R.string.home
+        iconTextId = R.string.home,
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.ANIME_ROUTE,
         selectedIcon = R.drawable.navigation_anime_filled,
         unselectedIcon = R.drawable.navigation_anime_outlined,
-        iconTextId = R.string.anime
+        iconTextId = R.string.anime,
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.MANGA_ROUTE,
         selectedIcon = R.drawable.navigation_manga_filled,
         unselectedIcon = R.drawable.navigation_manga_outlined,
-        iconTextId = R.string.manga
+        iconTextId = R.string.manga,
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.FEED_ROUTE,
         selectedIcon = R.drawable.navigation_feed_filled,
         unselectedIcon = R.drawable.navigation_feed_outlined,
-        iconTextId = R.string.feed
+        iconTextId = R.string.feed,
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.FORUM_ROUTE,
         selectedIcon = R.drawable.navigation_forum_filled,
         unselectedIcon = R.drawable.navigation_forum_outlined,
-        iconTextId = R.string.forum
-    )
+        iconTextId = R.string.forum,
+    ),
 )

@@ -4,9 +4,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.data.repository.MyMediaRepository
@@ -18,7 +16,7 @@ private const val TAG = "MyMediaViewModel"
 
 @HiltViewModel
 class MyMediaViewModel @Inject constructor(
-    private val myMediaRepository: MyMediaRepository
+    private val myMediaRepository: MyMediaRepository,
 ) : ViewModel() {
     private val _myAnime = MutableLiveData<Map<MediaStatus, List<Media>>>()
     val myAnime: LiveData<Map<MediaStatus, List<Media>>> = _myAnime
@@ -28,6 +26,7 @@ class MyMediaViewModel @Inject constructor(
     fun fetchMyMedia(isAnime: Boolean) {
         viewModelScope.launch {
             val data = myMediaRepository.getMyMedia(isAnime)
+            Log.d(TAG, "Media is being fetched, isAnime is: $isAnime")
             if (isAnime) {
                 _myAnime.value = data
             } else {
@@ -35,6 +34,7 @@ class MyMediaViewModel @Inject constructor(
             }
         }
     }
+
     fun increaseEpisodeProgress(mediaId: Int, newProgress: Int) {
         Log.i(TAG, "Episode progress is being increased in view model")
         viewModelScope.launch {
@@ -43,14 +43,19 @@ class MyMediaViewModel @Inject constructor(
     }
 
     fun updateProgress(
-        statusUpdate: StatusUpdate
+        statusUpdate: StatusUpdate,
     ) {
         Log.d(TAG, "Progress is being updated in view model!")
         viewModelScope.launch {
             myMediaRepository.updateProgress(
-                statusUpdate
+                statusUpdate,
             )
         }
     }
 
+    fun deleteEntry(id: Int) {
+        viewModelScope.launch {
+            myMediaRepository.deleteEntry(id)
+        }
+    }
 }

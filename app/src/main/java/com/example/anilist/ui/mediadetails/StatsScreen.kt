@@ -38,13 +38,12 @@ fun Stats(stats: Stats) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(Dimens.PaddingNormal)
+            .padding(Dimens.PaddingNormal),
     ) {
         if (stats.ranksIsNotEmpty) {
             Heading("Rankings")
             Rankings(stats)
         }
-
 
         Heading("Score distribution")
         val scoreDistribution = stats.scoreDistribution
@@ -58,13 +57,13 @@ fun Stats(stats: Stats) {
             70 to scoreDistribution.seventy,
             80 to scoreDistribution.eighty,
             90 to scoreDistribution.ninety,
-            100 to scoreDistribution.hundred
+            100 to scoreDistribution.hundred,
         )
         ProvideChartStyle(m3ChartStyle()) {
             Chart(
                 chart = columnChart(
                     dataLabel = textComponent(color = MaterialTheme.colorScheme.onSurface),
-                    dataLabelVerticalPosition = VerticalPosition.Top
+                    dataLabelVerticalPosition = VerticalPosition.Top,
                 ),
                 model = chartEntryModel,
                 bottomAxis = bottomAxis(
@@ -75,8 +74,8 @@ fun Stats(stats: Stats) {
 //                        ->
 //                        "$chartValues"
 //                    },
-                    guideline = axisGuidelineComponent(thickness = 0.dp)
-                )
+                    guideline = axisGuidelineComponent(thickness = 0.dp),
+                ),
 //                marker = markerComponent(
 //                    label = textComponent(MaterialTheme.colorScheme.onSurface),
 //                    indicator = shapeComponent(Shapes.pillShape, MaterialTheme.colorScheme.surface),
@@ -109,37 +108,37 @@ fun Stats(stats: Stats) {
                             statusDistribution[Status.COMPLETED]?.toFloat()
                                 ?: 1f
                             )
-                        )
+                        ),
                 ),
-                color = completedColor
+                color = completedColor,
             )
             Divider(
                 thickness = 12.dp,
                 modifier = Modifier.weight(
-                    total / (statusDistribution[Status.CURRENT]?.toFloat() ?: 1f)
+                    total / (statusDistribution[Status.CURRENT]?.toFloat() ?: 1f),
                 ),
-                color = currentColor
+                color = currentColor,
             )
             Divider(
                 thickness = 12.dp,
                 modifier = Modifier.weight(
-                    total / (statusDistribution[Status.PLANNING]?.toFloat() ?: 1f)
+                    total / (statusDistribution[Status.PLANNING]?.toFloat() ?: 1f),
                 ),
-                color = planningColor
+                color = planningColor,
             )
             Divider(
                 thickness = 12.dp,
                 modifier = Modifier.weight(
-                    total / (statusDistribution[Status.PAUSED]?.toFloat() ?: 1f)
+                    total / (statusDistribution[Status.PAUSED]?.toFloat() ?: 1f),
                 ),
-                color = pausedColor
+                color = pausedColor,
             )
             Divider(
                 thickness = 12.dp,
                 modifier = Modifier.weight(
-                    total / (statusDistribution[Status.DROPPED]?.toFloat() ?: 1f)
+                    total / (statusDistribution[Status.DROPPED]?.toFloat() ?: 1f),
                 ),
-                color = droppedColor
+                color = droppedColor,
             )
         }
     }
@@ -152,9 +151,9 @@ fun Rankings(stats: Stats, modifier: Modifier = Modifier) {
             IconWithTextRankings(
                 stringResource(
                     id = R.string.highest_rated_all_time,
-                    stats.highestRatedAllTime
+                    stats.highestRatedAllTime,
                 ),
-                false
+                false,
             )
         }
 
@@ -162,9 +161,9 @@ fun Rankings(stats: Stats, modifier: Modifier = Modifier) {
             IconWithTextRankings(
                 stringResource(
                     id = R.string.most_popular_all_time,
-                    stats.mostPopularAllTime
+                    stats.mostPopularAllTime,
                 ),
-                true
+                true,
             )
         }
 
@@ -173,9 +172,9 @@ fun Rankings(stats: Stats, modifier: Modifier = Modifier) {
                 stringResource(
                     id = R.string.highest_rated_year,
                     stats.highestRatedYearRank,
-                    stats.highestRatedYearNumber
+                    stats.highestRatedYearNumber,
                 ),
-                false
+                false,
             )
         }
 
@@ -184,9 +183,9 @@ fun Rankings(stats: Stats, modifier: Modifier = Modifier) {
                 stringResource(
                     id = R.string.most_popular_year,
                     stats.mostPopularYearRank,
-                    stats.mostPopularYearNumber
+                    stats.mostPopularYearNumber,
                 ),
-                true
+                true,
             )
         }
 
@@ -196,9 +195,9 @@ fun Rankings(stats: Stats, modifier: Modifier = Modifier) {
                     id = R.string.highest_rated_season,
                     stats.highestRatedSeasonRank,
                     stats.highestRatedSeasonSeason.getName(),
-                    stats.highestRatedSeasonYear
+                    stats.highestRatedSeasonYear,
                 ),
-                false
+                false,
             )
         }
 
@@ -208,9 +207,9 @@ fun Rankings(stats: Stats, modifier: Modifier = Modifier) {
                     id = R.string.most_popular_season,
                     stats.mostPopularSeasonRank,
                     stats.mostPopularSeasonSeason.getName(),
-                    stats.mostPopularSeasonYear
+                    stats.mostPopularSeasonYear,
                 ),
-                true
+                true,
             )
         }
     }
@@ -226,7 +225,7 @@ private fun Heading(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleLarge,
-        color = MaterialTheme.colorScheme.onSurface
+        color = MaterialTheme.colorScheme.onSurface,
     )
 }
 
@@ -236,7 +235,7 @@ private fun IconWithTextRankings(text: String, showHeart: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .padding(vertical = 4.dp)
-            .then(Modifier)
+            .then(Modifier),
     ) {
         Icon(
             painter = painterResource(
@@ -244,16 +243,16 @@ private fun IconWithTextRankings(text: String, showHeart: Boolean) {
                     R.drawable.anime_details_heart
                 } else {
                     R.drawable.anime_details_rating_star
-                }
+                },
             ),
             contentDescription = text,
-            tint = MaterialTheme.colorScheme.secondary
+            tint = MaterialTheme.colorScheme.secondary,
         )
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 6.dp),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -277,15 +276,15 @@ fun StatsPreview() {
             highestRatedSeasonYear = 2023,
             scoreDistribution = ScoreDistribution(
                 105,
-                34, 28, 28, 102, 143, 627, 1511, 3009, 2437
+                34, 28, 28, 102, 143, 627, 1511, 3009, 2437,
             ),
             statusDistribution = mapOf(
                 Status.COMPLETED to 100,
                 Status.CURRENT to 230,
                 Status.PLANNING to 500,
                 Status.DROPPED to 54,
-                Status.PAUSED to 20
-            )
-        )
+                Status.PAUSED to 20,
+            ),
+        ),
     )
 }

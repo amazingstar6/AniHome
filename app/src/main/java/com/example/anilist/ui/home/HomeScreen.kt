@@ -63,7 +63,7 @@ fun HomeScreen(
     aniHomeViewModel: AniHomeViewModel,
     onNavigateToDetails: (Int) -> Unit,
     onNavigateToNotification: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
 ) {
     val media by aniHomeViewModel.media.observeAsState(HomeMedia())
     val popularAnime by aniHomeViewModel.popularAnime.observeAsState(emptyList())
@@ -80,15 +80,15 @@ fun HomeScreen(
             Box {
                 PlainTooltipBox(
                     tooltip = { Text(text = "Settings   ") },
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 ) {
                     IconButton(
                         onClick = onNavigateToSettings,
-                        modifier = Modifier.tooltipTrigger()
+                        modifier = Modifier.tooltipTrigger(),
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Settings,
-                            contentDescription = "settings"
+                            contentDescription = "settings",
                         )
                     }
                 }
@@ -97,7 +97,7 @@ fun HomeScreen(
             IconButton(onClick = onNavigateToNotification) {
                 Icon(
                     imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "notifications"
+                    contentDescription = "notifications",
 //                    modifier = Modifier.padding(Dimens.PaddingNormal)
                 )
             }
@@ -106,42 +106,42 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .padding(top = it.calculateTopPadding())
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
         ) {
             AniSearchBar()
             HeadlineText("Trending now")
             AnimeRow(
                 onNavigateToDetails,
-                trendingAnime
+                trendingAnime,
             ) {
                 trendingPage += 1
                 aniHomeViewModel.fetchMedia(
                     isAnime = true,
                     page = trendingPage,
-                    skipTrendingNow = false
+                    skipTrendingNow = false,
                 )
             }
             HeadlineText("Popular this season")
             AnimeRow(
                 onNavigateToDetails,
-                popularAnime
+                popularAnime,
             ) {
                 popularPage += 1
                 aniHomeViewModel.fetchMedia(
                     isAnime = true,
                     page = popularPage,
-                    skipPopularThisSeason = false
+                    skipPopularThisSeason = false,
                 )
             }
             HeadlineText("Upcoming next season")
             AnimeRow(
                 onNavigateToDetails,
-                upcomingNextSeason
+                upcomingNextSeason,
             ) {
                 aniHomeViewModel.fetchMedia(
                     isAnime = true,
                     page = 1,
-                    skipUpcomingNextSeason = false
+                    skipUpcomingNextSeason = false,
                 )
             }
 //            HeadlineText("All time popular")
@@ -181,7 +181,7 @@ private fun AniSearchBar() {
         leadingIcon = {
             Icon(
                 painterResource(id = R.drawable.baseline_menu_24),
-                "Menu"
+                "Menu",
             )
         },
         trailingIcon = {
@@ -189,18 +189,18 @@ private fun AniSearchBar() {
                 Icon(
                     painterResource(id = R.drawable.baseline_search_24),
                     "Search",
-                    modifier = Modifier.padding(end = 16.dp)
+                    modifier = Modifier.padding(end = 16.dp),
                 )
                 Icon(
                     painterResource(id = R.drawable.baseline_more_vert_24),
                     "More options",
-                    modifier = Modifier.padding(end = 16.dp)
+                    modifier = Modifier.padding(end = 16.dp),
                 )
             }
         },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 12.dp),
     ) {
         Text(text = "Show top/trending anime/search history")
     }
@@ -211,11 +211,11 @@ private fun AniSearchBar() {
 fun AnimeRow(
     onNavigateToDetails: (Int) -> Unit,
     animeList: List<Media>,
-    loadMoreAnime: () -> Unit
+    loadMoreAnime: () -> Unit,
 ) {
     val state = rememberLazyListState()
     LazyRow(
-        state = state
+        state = state,
     ) {
         items(animeList) { anime ->
             AnimeCard(
@@ -225,7 +225,7 @@ fun AnimeRow(
                     {
                         onNavigateToDetails(anime.id)
                     }
-                    )
+                    ),
             )
         }
     }
@@ -254,12 +254,12 @@ fun HeadlineText(text: String, onNavigateToOverview: () -> Unit = {}) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
             text,
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(12.dp),
         )
         IconButton(onClick = onNavigateToOverview) {
             Icon(imageVector = Icons.Outlined.ArrowForward, contentDescription = "anime overview")
@@ -274,7 +274,7 @@ fun AnimeCard(
     title: String,
     coverImage: String,
     onNavigateToDetails: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = Modifier
@@ -282,7 +282,7 @@ fun AnimeCard(
             .width(120.dp)
             .height(240.dp)
             .then(modifier)
-            .clickable { onNavigateToDetails() }
+            .clickable { onNavigateToDetails() },
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
@@ -292,7 +292,7 @@ fun AnimeCard(
             modifier = Modifier
 //                .fillMaxWidth()
                 .height(160.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(12.dp)),
 
         )
         Text(
@@ -300,7 +300,7 @@ fun AnimeCard(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(10.dp),
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

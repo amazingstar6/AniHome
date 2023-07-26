@@ -12,5 +12,5 @@ data class StaffDetail(
     val description: String = "",
     val voicedCharacters: List<Character> = emptyList(),
     val animeStaffRole: List<CharacterMediaConnection> = emptyList(),
-    val mangaStaffRole: List<CharacterMediaConnection> = emptyList()
+    val mangaStaffRole: List<CharacterMediaConnection> = emptyList(),
 )

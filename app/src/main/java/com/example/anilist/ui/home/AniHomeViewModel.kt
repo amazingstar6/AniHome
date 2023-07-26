@@ -19,13 +19,13 @@ import com.example.anilist.data.repository.UserSettings
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaSort
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.Calendar
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import javax.inject.Inject
 
 private const val TAG = "AniHomeViewModel"
 
@@ -33,7 +33,7 @@ private const val TAG = "AniHomeViewModel"
 class AniHomeViewModel @Inject constructor(
     notificationRepository: NotificationRepository,
     private val homeRepository: HomeRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
 ) :
     ViewModel() {
 
@@ -111,7 +111,7 @@ class AniHomeViewModel @Inject constructor(
             skipTrendingNow = false,
             skipUpcomingNextSeason = false,
             skipAllTimePopular = false,
-            skipTop100Anime = false
+            skipTop100Anime = false,
         )
     }
 
@@ -122,7 +122,7 @@ class AniHomeViewModel @Inject constructor(
         skipTrendingNow: Boolean = true,
         skipUpcomingNextSeason: Boolean = true,
         skipAllTimePopular: Boolean = true,
-        skipTop100Anime: Boolean = true
+        skipTop100Anime: Boolean = true,
     ) {
         viewModelScope.launch {
             val newMedia = homeRepository.getHomeMedia(
@@ -132,7 +132,7 @@ class AniHomeViewModel @Inject constructor(
                 skipPopularThisSeason,
                 skipUpcomingNextSeason,
                 skipAllTimePopular,
-                skipTop100Anime
+                skipTop100Anime,
             ).getOrDefault(HomeMedia())
             if (!skipPopularThisSeason) _popularAnime.value = _media.value?.popularThisSeason.orEmpty() + newMedia.popularThisSeason
             if (!skipTrendingNow) _trendingAnime.value = _media.value?.trendingNow.orEmpty() + newMedia.trendingNow
@@ -169,9 +169,9 @@ class AniHomeViewModel @Inject constructor(
                     GetTrendsQuery(
                         Optional.Present(_uiState.value.trendingPage),
                         Optional.Present(
-                            listOf(MediaSort.TRENDING_DESC)
-                        )
-                    )
+                            listOf(MediaSort.TRENDING_DESC),
+                        ),
+                    ),
                 ).execute()
             val data = response.data?.trending?.media
 //            if (data == null) Log.i(TAG, "Trending data list is empty!")
@@ -179,8 +179,8 @@ class AniHomeViewModel @Inject constructor(
                 currentState.copy(
                     trendingAnime = currentState.trendingAnime + parseMediaHome(
                         data?.filterNotNull()
-                            .orEmpty()
-                    )
+                            .orEmpty(),
+                    ),
                 )
             }
         }
@@ -195,8 +195,8 @@ class AniHomeViewModel @Inject constructor(
                         id = media.id,
                         title = media.title.userPreferred,
                         coverImage = media.coverImage.extraLarge,
-                        note = ""
-                    )
+                        note = "",
+                    ),
                 )
             }
         }
@@ -239,15 +239,15 @@ class AniHomeViewModel @Inject constructor(
                         Optional.Present(_uiState.value.popularPage),
                         Optional.Present(listOf(MediaSort.POPULARITY_DESC)),
                         Optional.Present(season),
-                        Optional.Present(year)
-                    )
+                        Optional.Present(year),
+                    ),
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
                     popularAnime = currentState.popularAnime + parseMediaHome(
                         response.data?.trending?.media?.filterNotNull()
-                            .orEmpty()
-                    )
+                            .orEmpty(),
+                    ),
                 )
             }
         }
@@ -257,7 +257,7 @@ class AniHomeViewModel @Inject constructor(
         if (increasePage) {
             _uiState.update { currentState ->
                 currentState.copy(
-                    upcomingNextSeasonPage = currentState.upcomingNextSeasonPage.inc()
+                    upcomingNextSeasonPage = currentState.upcomingNextSeasonPage.inc(),
                 )
             }
         }
@@ -293,15 +293,15 @@ class AniHomeViewModel @Inject constructor(
                         Optional.Present(_uiState.value.upcomingNextSeasonPage),
                         Optional.Present(listOf(MediaSort.POPULARITY_DESC)),
                         Optional.Present(season),
-                        Optional.Present(year)
-                    )
+                        Optional.Present(year),
+                    ),
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
                     upcomingNextSeason = currentState.upcomingNextSeason + parseMediaHome(
                         response.data?.trending?.media?.filterNotNull()
-                            .orEmpty()
-                    )
+                            .orEmpty(),
+                    ),
                 )
             }
         }
@@ -318,15 +318,15 @@ class AniHomeViewModel @Inject constructor(
                 apolloClient.query(
                     GetTrendsQuery(
                         Optional.Present(_uiState.value.allTimePopularPage),
-                        Optional.Present(listOf(MediaSort.POPULARITY_DESC))
-                    )
+                        Optional.Present(listOf(MediaSort.POPULARITY_DESC)),
+                    ),
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
                     allTimePopular = currentState.allTimePopular + parseMediaHome(
                         response.data?.trending?.media?.filterNotNull()
-                            .orEmpty()
-                    )
+                            .orEmpty(),
+                    ),
                 )
             }
         }
@@ -343,15 +343,15 @@ class AniHomeViewModel @Inject constructor(
                 apolloClient.query(
                     GetTrendsQuery(
                         Optional.Present(_uiState.value.top100AnimePage),
-                        Optional.Present(listOf(MediaSort.SCORE_DESC))
-                    )
+                        Optional.Present(listOf(MediaSort.SCORE_DESC)),
+                    ),
                 ).execute()
             _uiState.update { currentState ->
                 currentState.copy(
                     top100Anime = currentState.top100Anime + parseMediaHome(
                         response.data?.trending?.media?.filterNotNull()
-                            .orEmpty()
-                    )
+                            .orEmpty(),
+                    ),
                 )
             }
         }

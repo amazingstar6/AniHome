@@ -65,8 +65,8 @@ query GetMoreTrendingNow(
     $currentYear: Int!
 ) {
     trendingNow:
-    Page {
-        media(sort: TRENDING, type:$type) {
+    Page(page: $page) {
+        media(sort: TRENDING, type:$type, season: $currentSeason, seasonYear: $currentYear) {
             ...mediaTitleCover
         }
     }

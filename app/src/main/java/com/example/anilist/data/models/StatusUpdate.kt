@@ -16,5 +16,5 @@ data class StatusUpdate(
     val customLists: List<String>?,
     val advancedScores: List<Double>?,
     val startedAt: FuzzyDate?,
-    val completedAt: FuzzyDate?
+    val completedAt: FuzzyDate?,
 )

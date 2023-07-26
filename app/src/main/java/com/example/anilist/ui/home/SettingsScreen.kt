@@ -25,7 +25,7 @@ private fun Section(text: String) {
         text = text,
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(vertical = Dimens.PaddingSmall)
+        modifier = Modifier.padding(vertical = Dimens.PaddingSmall),
     )
 }
 
@@ -34,12 +34,12 @@ fun TitleSubtitle(title: String, subTitle: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface
+        color = MaterialTheme.colorScheme.onSurface,
     )
     Text(
         text = subTitle,
         style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 

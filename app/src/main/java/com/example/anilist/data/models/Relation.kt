@@ -4,5 +4,5 @@ data class Relation(
     val id: Int,
     val coverImage: String,
     val title: String,
-    val relation: String
+    val relation: String,
 )

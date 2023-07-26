@@ -5,7 +5,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,24 +17,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -48,8 +55,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.SliderState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -68,7 +73,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -87,7 +94,7 @@ import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.ui.Dimens
-import com.patrykandpatrick.vico.core.extension.round
+import com.example.anilist.ui.mediadetails.LoadingCircle
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -103,7 +110,19 @@ enum class MediaStatus {
     DROPPED,
     PAUSED,
     REPEATING,
-    UNKNOWN
+    UNKNOWN, ;
+
+    fun getString(isAnime: Boolean): String {
+        return when (this) {
+            CURRENT -> if (isAnime) "Watching" else "Reading"
+            PLANNING -> if (isAnime) "Plan to watch" else "Plan to read"
+            COMPLETED -> "Completed"
+            DROPPED -> "Dropped"
+            PAUSED -> "Paused"
+            REPEATING -> if (isAnime) "Rewatching" else "Rereading"
+            UNKNOWN -> "None"
+        }
+    }
 }
 
 private const val TAG = "MyMediaScreen"
@@ -112,25 +131,29 @@ private const val TAG = "MyMediaScreen"
 fun MyMediaScreen(
     myMediaViewModel: MyMediaViewModel = hiltViewModel(),
     navigateToDetails: (Int) -> Unit,
-    isAnime: Boolean
+    isAnime: Boolean,
 ) {
     val myAnime by myMediaViewModel.myAnime.observeAsState()
     val myManga by myMediaViewModel.myManga.observeAsState()
-    val currentMap = if (isAnime) myAnime else myManga
     myMediaViewModel.fetchMyMedia(isAnime)
-    MyMedia(
-        isAnime = isAnime,
-        myMedia = currentMap,
-        navigateToDetails = navigateToDetails,
-        increaseEpisodeProgress = myMediaViewModel::increaseEpisodeProgress,
-        saveStatus = {
-            Log.d(TAG, "Clicked on save button!")
-            myMediaViewModel.updateProgress(it)
-        },
-        reloadMyMedia = {
-            myMediaViewModel.fetchMyMedia(isAnime)
-        }
-    )
+    if ((if (isAnime) myAnime else myManga) != null) {
+        MyMedia(
+            isAnime = isAnime,
+            myMedia = if (isAnime) myAnime else myManga,
+            navigateToDetails = navigateToDetails,
+            increaseEpisodeProgress = myMediaViewModel::increaseEpisodeProgress,
+            saveStatus = {
+                Log.d(TAG, "Clicked on save button!")
+                myMediaViewModel.updateProgress(it)
+            },
+            reloadMyMedia = {
+                myMediaViewModel.fetchMyMedia(isAnime)
+            },
+            deleteListEntry = { myMediaViewModel.deleteEntry(it) }
+        )
+    } else {
+        LoadingCircle()
+    }
 }
 
 @Composable
@@ -141,7 +164,8 @@ private fun MyMedia(
     navigateToDetails: (Int) -> Unit,
     increaseEpisodeProgress: (mediaId: Int, newProgress: Int) -> Unit,
     saveStatus: (StatusUpdate) -> Unit,
-    reloadMyMedia: () -> Unit
+    reloadMyMedia: () -> Unit,
+    deleteListEntry: (id: Int) -> Unit,
 ) {
     val modalSheetScope = rememberCoroutineScope()
     var currentMedia by remember {
@@ -149,22 +173,19 @@ private fun MyMedia(
     }
 
     val filterSheetState = rememberModalBottomSheetState()
-    val editSheetState = rememberModalBottomSheetState()
-
+    val editSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val showFilterSheet: () -> Unit = { modalSheetScope.launch { filterSheetState.show() } }
     val hideFilterSheet: () -> Unit = { modalSheetScope.launch { filterSheetState.hide() } }
 
-    Log.d(TAG, "Raw score received in media screen is ${currentMedia.rawScore}")
-    // used for rating
     var personalProgress: Int = currentMedia.personalProgress
-    val progressVolumes: Int = currentMedia.personalVolumeProgress
+    var progressVolumes: Int = currentMedia.personalVolumeProgress
     var rewatches: Int = currentMedia.rewatches
     var privateToUser: Boolean = currentMedia.isPrivate
     var startedAt: FuzzyDate? = currentMedia.startedAt
     var completedAt: FuzzyDate? = currentMedia.completedAt
     var rawScore: Double = currentMedia.rawScore
-
+    var notes: String = currentMedia.note
 
     val showEditSheet: (Media) -> Unit = {
         currentMedia = it
@@ -172,11 +193,16 @@ private fun MyMedia(
     }
     val hideEditSheet: () -> Unit = { modalSheetScope.launch { editSheetState.hide() } }
 
-
     var filter by remember { mutableStateOf(MediaStatus.UNKNOWN) }
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(text = if (isAnime) "Watching" else "Reading") })
+            TopAppBar(title = { Text(text = if (isAnime) "Watching" else "Reading") }, actions = {
+                IconButton(
+                    onClick = reloadMyMedia
+                ) {
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
+                }
+            })
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -185,29 +211,68 @@ private fun MyMedia(
                     Icon(
                         painter = painterResource(id = R.drawable.my_media_filter),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
                 },
                 onClick = showFilterSheet,
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier
-                    .padding(Dimens.PaddingNormal)
+                    .padding(Dimens.PaddingNormal),
             )
         },
     ) {
         Box(
             Modifier
-                .fillMaxSize()
+                .fillMaxSize(),
         ) {
             MyMediaLazyList(
                 it,
                 filter,
                 myMedia,
                 navigateToDetails,
-                increaseEpisodeProgress,
+                increaseEpisodeProgress = { entryId, newProgress ->
+                    saveStatus(
+                        StatusUpdate(
+                            id = entryId,
+                            progressVolumes = null,
+                            status = null,
+                            scoreRaw = null,
+                            progress = newProgress,
+                            repeat = null,
+                            priority = null,
+                            privateToUser = null,
+                            notes = null,
+                            hiddenFromStatusList = null,
+                            customLists = null,
+                            advancedScores = null,
+                            startedAt = null,
+                            completedAt = null,
+                        )
+                    )
+                },
+                increaseVolumeProgress = { entryId, newProgress ->
+                    saveStatus(
+                        StatusUpdate(
+                            id = entryId,
+                            progressVolumes = newProgress,
+                            status = null,
+                            scoreRaw = null,
+                            progress = null,
+                            repeat = null,
+                            priority = null,
+                            privateToUser = null,
+                            notes = null,
+                            hiddenFromStatusList = null,
+                            customLists = null,
+                            advancedScores = null,
+                            startedAt = null,
+                            completedAt = null,
+                        )
+                    )
+                },
                 showEditSheet,
-                isAnime
+                isAnime,
             )
             if (editSheetState.isVisible) {
                 ModalBottomSheet(sheetState = editSheetState, onDismissRequest = hideEditSheet) {
@@ -215,23 +280,21 @@ private fun MyMedia(
                         val currentStatus =
                             myMedia?.entries?.find { it.value.any { media -> media.id == currentMedia.id } }?.key
                                 ?: MediaStatus.UNKNOWN
-//                        val currentStatus =
-//                            myMedia?.filterValues { entry -> entry.any { media -> media.id == currentMedia.id } }?.keys
                         var selectedOptionText by remember { mutableStateOf(currentStatus) }
                         CenterAlignedTopAppBar(
                             title = {
                                 Text(
-                                    text = if (isAnime) "Edit anime status" else "Edit manga status"
+                                    text = currentMedia.title,
                                 )
                             },
                             navigationIcon = {
                                 IconButton(
                                     onClick = hideEditSheet,
-                                    modifier = Modifier.padding(Dimens.PaddingNormal)
+                                    modifier = Modifier.padding(Dimens.PaddingNormal),
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "close"
+                                        contentDescription = "close",
                                     )
                                 }
                             },
@@ -239,7 +302,7 @@ private fun MyMedia(
                                 TextButton(onClick = {
                                     Log.d(TAG, "progress in my media screen is $personalProgress")
                                     saveStatus(
-                                        //todo fill these
+                                        // todo fill these
                                         StatusUpdate(
                                             id = currentMedia.listEntryId,
                                             status = selectedOptionText,
@@ -249,59 +312,88 @@ private fun MyMedia(
                                             repeat = rewatches,
                                             priority = null,
                                             privateToUser = privateToUser,
-                                            notes = null,
+                                            notes = notes,
                                             hiddenFromStatusList = null,
                                             customLists = null,
                                             advancedScores = null,
                                             startedAt = startedAt,
-                                            completedAt = completedAt
-                                        )
+                                            completedAt = completedAt,
+                                        ),
                                     )
+                                    hideEditSheet()
                                     reloadMyMedia()
                                 }) {
                                     Text("Save")
                                 }
-                            }
+                            },
                         )
-                        DropDownMenuStatus(selectedOptionText) { selectedOptionText = it }
+                        DropDownMenuStatus(
+                            selectedOptionText,
+                            isAnime = isAnime
+                        ) { selectedOptionText = it }
 
                         NumberTextField(
-                            suffix = currentMedia.episodeAmount.toString(),
-                            label = "Episodes",
+                            suffix = if (isAnime) currentMedia.episodeAmount.toString() else currentMedia.chapters.toString(),
+                            label = if (isAnime) "Episodes" else "Chapters",
                             initialValue = personalProgress,
                             setValue = {
-                                Log.d(TAG, "Personal progress value is now $it")
                                 personalProgress = it
                             },
-                            maxCount = currentMedia.episodeAmount
+                            maxCount = if (isAnime) {
+                                if (currentMedia.episodeAmount != -1) {
+                                    currentMedia.episodeAmount
+                                } else {
+                                    Int.MAX_VALUE
+                                }
+                            } else {
+                                if (currentMedia.chapters != -1) {
+                                    currentMedia.chapters
+                                } else {
+                                    Int.MAX_VALUE
+                                }
+                            },
                         )
+                        if (!isAnime) {
+                            NumberTextField(
+                                suffix = currentMedia.volumes.toString(),
+                                label = "Volumes",
+                                initialValue = progressVolumes,
+                                setValue = {
+                                    progressVolumes = it
+                                },
+                                maxCount = currentMedia.volumes,
+                            )
+                        }
                         NumberTextField(
                             suffix = "",
-                            label = "Total rewatches",
+                            label = if (isAnime) "Total rewatches" else "Total rereads",
                             initialValue = rewatches,
                             setValue = { rewatches = it },
-                            maxCount = Int.MAX_VALUE
+                            maxCount = Int.MAX_VALUE,
                         )
                         var sliderPosition by remember {
                             mutableFloatStateOf(
-                                rawScore.roundToInt().toFloat()
+                                rawScore.roundToInt().toFloat(),
                             )
                         }
                         var text by remember {
-                            mutableStateOf("$sliderPosition")
+                            mutableStateOf("${sliderPosition.toInt()}")
                         }
                         OutlinedTextField(
                             value = text,
                             onValueChange = { newInput ->
                                 text = newInput
-                                sliderPosition = newInput.toFloat()
+                                sliderPosition = try {
+                                    newInput.toFloat()
+                                } catch (e: NumberFormatException) {
+                                    0f
+                                }
                             },
                             label = { Text("Score") },
                             suffix = { Text(text = "/100") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            placeholder = { Text(text = "?") },
                             modifier = Modifier
-                                .padding(Dimens.PaddingNormal)
+                                .padding(Dimens.PaddingNormal),
                         )
                         Slider(
                             modifier = Modifier
@@ -316,74 +408,136 @@ private fun MyMedia(
                                 rawScore = it.roundToInt().toDouble()
                                 text = it.roundToInt().toString()
                             },
-                            steps = 100
+                            steps = 100,
                         )
 
                         DatePickerDialogue(
                             "Start date",
                             initialValue = currentMedia.startedAt,
-                            setValue = { startedAt = it })
+                            setValue = { startedAt = it },
+                        )
                         DatePickerDialogue(
                             "Finish date",
                             initialValue = currentMedia.completedAt,
-                            setValue = { completedAt = it })
+                            setValue = { completedAt = it },
+                        )
 
                         var check by remember {
                             mutableStateOf(privateToUser)
                         }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start
+                            horizontalArrangement = Arrangement.Start,
+                            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
                         ) {
                             Checkbox(checked = check, onCheckedChange = {
                                 privateToUser = it
                                 check = it
-                            }, modifier = Modifier.padding(Dimens.PaddingNormal))
+                            })
                             Text(
                                 "Private",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
                         }
 
-                        var note by remember { mutableStateOf(currentMedia.note) }
+                        var note by remember { mutableStateOf(notes) }
                         OutlinedTextField(
                             value = note,
                             label = { Text("Notes") },
-                            onValueChange = { note = it },
+                            onValueChange = { note = it; notes = it },
                             modifier = Modifier
-                                .padding(Dimens.PaddingNormal)
+                                .fillMaxWidth()
+                                .padding(
+                                    start = Dimens.PaddingNormal,
+                                    end = Dimens.PaddingNormal,
+                                    bottom = Dimens.PaddingLarge
+                                ),
+                            minLines = 5,
+                            trailingIcon = {
+                                if (text.isNotBlank()) {
+                                    IconButton(onClick = { note = ""; notes = "" }) {
+                                        Box {
+                                            Icon(
+                                                imageVector = Icons.Default.Clear,
+                                                contentDescription = "clear",
+                                                modifier = Modifier.align(Alignment.TopEnd)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         )
 
+                        var showDeleteConfirmation by remember { mutableStateOf(false) }
+                        AnimatedVisibility(visible = showDeleteConfirmation) {
+                            AlertDialog(
+                                title = { Text(text = "Delete entry?") },
+                                dismissButton = {
+                                    TextButton(onClick = { showDeleteConfirmation = false }) {
+                                        Text(text = stringResource(R.string.cancel))
+                                    }
+                                },
+                                confirmButton = {
+                                    TextButton(onClick = {
+                                        deleteListEntry(currentMedia.listEntryId); showDeleteConfirmation =
+                                        false; hideEditSheet()
+                                    }) {
+                                        Text(stringResource(R.string.delete))
+                                    }
+                                },
+                                onDismissRequest = { showDeleteConfirmation = false })
+                        }
 
+                        Button(
+                            onClick = {
+                                showDeleteConfirmation = true
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    start = Dimens.PaddingNormal,
+                                    end = Dimens.PaddingNormal,
+                                    bottom = Dimens.PaddingNormal
+                                )
+                        ) {
+                            Text(
+                                text = "Delete entry",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
                 }
             }
-            //fixme animation not working
+            // fixme animation not working
             AnimatedVisibility(
                 visible = filterSheetState.isVisible,
                 enter = fadeIn(),
-                exit = ExitTransition.None
+                exit = ExitTransition.None,
             ) {
                 ModalBottomSheet(
                     sheetState = filterSheetState,
-                    onDismissRequest = hideFilterSheet
+                    onDismissRequest = hideFilterSheet,
                 ) {
                     val filterFunction = { it: MediaStatus -> filter = it }
                     val modifier = Modifier
                         .fillMaxWidth()
                     CenterAlignedTopAppBar(title = {
                         Text(
-                            text = "Filter"
+                            text = stringResource(R.string.filter),
                         )
                     }, navigationIcon = {
                         IconButton(
                             onClick = hideFilterSheet,
-                            modifier = Modifier.padding(Dimens.PaddingNormal)
+                            modifier = Modifier.padding(Dimens.PaddingNormal),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "close"
+                                contentDescription = stringResource(R.string.close),
                             )
                         }
                     })
@@ -391,37 +545,55 @@ private fun MyMedia(
                         filterFunction(MediaStatus.UNKNOWN)
                         hideFilterSheet()
                     }, modifier = modifier, shape = RectangleShape) {
-                        Text("All")
+                        Text(
+                            stringResource(R.string.all),
+                            color = if (filter == MediaStatus.UNKNOWN) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                     TextButton(onClick = {
                         filterFunction(MediaStatus.CURRENT)
                         hideFilterSheet()
                     }, modifier = modifier, shape = RectangleShape) {
-                        Text(if (isAnime) "Watching" else "Reading")
+                        Text(
+                            if (isAnime) stringResource(R.string.watching) else stringResource(R.string.reading),
+                            color = if (filter == MediaStatus.CURRENT) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                     TextButton(onClick = {
                         filterFunction(MediaStatus.REPEATING)
                         hideFilterSheet()
                     }, modifier = modifier, shape = RectangleShape) {
-                        Text(if (isAnime) "Rewatching" else "Rereading")
+                        Text(
+                            if (isAnime) stringResource(R.string.rewatching) else stringResource(R.string.rereading),
+                            color = if (filter == MediaStatus.REPEATING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                     TextButton(onClick = {
                         filterFunction(MediaStatus.DROPPED)
                         hideFilterSheet()
                     }, modifier = modifier, shape = RectangleShape) {
-                        Text("Dropped")
+                        Text(
+                            "Dropped",
+                            color = if (filter == MediaStatus.DROPPED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                     TextButton(onClick = {
                         filterFunction(MediaStatus.COMPLETED)
                         hideFilterSheet()
                     }, modifier = modifier, shape = RectangleShape) {
-                        Text("Completed")
+                        Text(
+                            "Completed",
+                            color = if (filter == MediaStatus.COMPLETED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                     TextButton(onClick = {
                         filterFunction(MediaStatus.PLANNING)
                         hideFilterSheet()
                     }, modifier = modifier, shape = RectangleShape) {
-                        Text("Planning")
+                        Text(
+                            "Planning",
+                            color = if (filter == MediaStatus.PLANNING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
@@ -436,70 +608,92 @@ private fun MyMediaLazyList(
     filter: MediaStatus,
     myMedia: Map<MediaStatus, List<Media>>?,
     navigateToDetails: (Int) -> Unit,
-    increaseEpisodeProgress: (mediaId: Int, newProgress: Int) -> Unit,
+    increaseEpisodeProgress: (entryId: Int, newProgress: Int) -> Unit,
+    increaseVolumeProgress: (entryId: Int, newProgress: Int) -> Unit,
     showEditSheet: (Media) -> Unit,
-    isAnime: Boolean
+    isAnime: Boolean,
 ) {
     LazyColumn(modifier = Modifier.padding(top = it.calculateTopPadding())) {
         if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.CURRENT) {
             stickyHeader {
-                MyMediaHeadline("Current")
+                MyMediaHeadline(
+                    if (isAnime) stringResource(id = R.string.watching) else stringResource(
+                        id = R.string.reading
+                    )
+                )
             }
             items(myMedia?.get(MediaStatus.CURRENT).orEmpty()) { media ->
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
+                    increaseVolumeProgress,
                     media,
                     { showEditSheet(media) },
-                    isAnime = isAnime
+                    isAnime = isAnime,
                 )
             }
         }
         if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.REPEATING) {
-            stickyHeader { MyMediaHeadline(text = "Repeating") }
+            stickyHeader {
+                MyMediaHeadline(
+                    text = if (isAnime) stringResource(id = R.string.rewatching) else stringResource(
+                        id = R.string.rereading
+                    )
+                )
+            }
             items(myMedia?.get(MediaStatus.REPEATING).orEmpty()) { media ->
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
+                    increaseVolumeProgress,
                     media,
                     { showEditSheet(media) },
-                    isAnime = isAnime
+                    isAnime = isAnime,
                 )
             }
         }
         if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.PLANNING) {
-            stickyHeader { MyMediaHeadline(text = "Planning") }
+            stickyHeader {
+                MyMediaHeadline(
+                    text = if (isAnime) stringResource(R.string.plan_to_watch) else stringResource(
+                        R.string.plan_to_read
+                    )
+                )
+            }
             items(myMedia?.get(MediaStatus.PLANNING).orEmpty()) { media ->
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
+                    increaseVolumeProgress,
                     media,
                     { showEditSheet(media) },
-                    isAnime = isAnime
+                    isAnime = isAnime,
                 )
             }
         }
         if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.COMPLETED) {
-            stickyHeader { MyMediaHeadline(text = "Completed") }
+            stickyHeader { MyMediaHeadline(text = stringResource(R.string.completed)) }
             items(myMedia?.get(MediaStatus.COMPLETED).orEmpty()) { media ->
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
+                    increaseVolumeProgress,
                     media,
                     { showEditSheet(media) },
-                    isAnime = isAnime
+                    isAnime = isAnime,
                 )
             }
         }
         if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.DROPPED) {
-            stickyHeader { MyMediaHeadline(text = "Dropped") }
+            stickyHeader { MyMediaHeadline(text = stringResource(R.string.dropped)) }
             items(myMedia?.get(MediaStatus.DROPPED).orEmpty()) { media ->
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
+                    increaseVolumeProgress,
                     media,
                     { showEditSheet(media) },
-                    isAnime = isAnime
+                    isAnime = isAnime,
                 )
             }
         }
@@ -511,9 +705,10 @@ private fun MyMediaLazyList(
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
+                    increaseVolumeProgress,
                     media,
                     { showEditSheet(media) },
-                    isAnime = isAnime
+                    isAnime = isAnime,
                 )
             }
         }
@@ -522,12 +717,20 @@ private fun MyMediaLazyList(
 
 @Composable
 private fun MyMediaHeadline(text: String) {
-    Surface(modifier = Modifier.fillMaxWidth()) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+//            .padding(bottom = Dimens.PaddingSmall)
+    ) {
         Text(
             text = text,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+            modifier = Modifier.padding(
+                start = Dimens.PaddingNormal,
+                end = Dimens.PaddingNormal,
+                bottom = Dimens.PaddingSmall
+            ),
         )
     }
 }
@@ -537,33 +740,41 @@ private fun MyMediaHeadline(text: String) {
 private fun DatePickerDialogue(
     label: String,
     initialValue: FuzzyDate?,
-    setValue: (FuzzyDate?) -> Unit
+    setValue: (FuzzyDate?) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = if (initialValue == null) null else LocalDate(
-            initialValue.year,
-            initialValue.month,
-            initialValue.day
-        ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+        initialSelectedDateMillis = if (initialValue == null) {
+            null
+        } else {
+            LocalDate(
+                initialValue.year,
+                initialValue.month,
+                initialValue.day,
+            ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+        },
     )
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.padding(Dimens.PaddingNormal)
+        modifier = Modifier.padding(Dimens.PaddingNormal),
     ) {
         val time =
             datePickerState.selectedDateMillis?.let {
                 Instant.fromEpochMilliseconds(
-                    it
+                    it,
                 ).toLocalDateTime(TimeZone.UTC)
             }
         setValue(
-            if (time != null) FuzzyDate(
-                time.year,
-                time.monthNumber,
-                time.dayOfMonth
-            ) else null
+            if (time != null) {
+                FuzzyDate(
+                    time.year,
+                    time.monthNumber,
+                    time.dayOfMonth,
+                )
+            } else {
+                null
+            },
         )
         val timeString =
             if (time != null) {
@@ -571,9 +782,11 @@ private fun DatePickerDialogue(
                     "%04d-%02d-%02d",
                     time.year,
                     time.monthNumber,
-                    time.dayOfMonth
+                    time.dayOfMonth,
                 )
-            } else ""
+            } else {
+                ""
+            }
         OutlinedTextField(
             // The `menuAnchor` modifier must be passed to the text field for correctness.
             modifier = Modifier
@@ -586,7 +799,7 @@ private fun DatePickerDialogue(
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
         )
     }
     if (expanded) {
@@ -601,7 +814,7 @@ private fun DatePickerDialogue(
                 TextButton(
                     onClick = {
                         expanded = false
-                    }
+                    },
                 ) {
                     Text("OK")
                 }
@@ -610,11 +823,11 @@ private fun DatePickerDialogue(
                 TextButton(
                     onClick = {
                         expanded = false
-                    }
+                    },
                 ) {
                     Text("Cancel")
                 }
-            }
+            },
         ) {
             DatePicker(state = datePickerState)
         }
@@ -625,14 +838,15 @@ private fun DatePickerDialogue(
 @OptIn(ExperimentalMaterial3Api::class)
 fun DropDownMenuStatus(
     selectedOptionText: MediaStatus,
-    setSelectedOptionText: (MediaStatus) -> Unit
+    isAnime: Boolean,
+    setSelectedOptionText: (MediaStatus) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     // We want to react on tap/press on TextField to show menu
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.padding(Dimens.PaddingNormal)
+        modifier = Modifier.padding(Dimens.PaddingNormal),
     ) {
         OutlinedTextField(
             // The `menuAnchor` modifier must be passed to the text field for correctness.
@@ -640,25 +854,25 @@ fun DropDownMenuStatus(
                 .menuAnchor()
                 .fillMaxWidth(),
             readOnly = true,
-            value = selectedOptionText.name,
+            value = selectedOptionText.getString(isAnime),
             onValueChange = {},
             label = { Text("Status") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
         )
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
         ) {
             MediaStatus.values().forEach { selectionOption ->
                 DropdownMenuItem(
-                    text = { Text(selectionOption.name) },
+                    text = { Text(selectionOption.getString(isAnime)) },
                     onClick = {
                         setSelectedOptionText(selectionOption)
                         expanded = false
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                    colors = MenuDefaults.itemColors()
+                    colors = MenuDefaults.itemColors(),
                 )
             }
         }
@@ -671,17 +885,17 @@ private fun NumberTextField(
     label: String,
     initialValue: Int,
     setValue: (Int) -> Unit,
-    maxCount: Int
+    maxCount: Int,
 ) {
     var text by remember {
         mutableStateOf(initialValue.toString())
     }
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         OutlinedTextField(
-            value = text.toString(),
+            value = text,
             onValueChange = { newInput ->
                 text = newInput
                 setValue(
@@ -689,7 +903,7 @@ private fun NumberTextField(
                         newInput.toInt()
                     } catch (e: NumberFormatException) {
                         0
-                    }
+                    },
                 )
             },
             label = { Text(label) },
@@ -698,7 +912,7 @@ private fun NumberTextField(
             placeholder = { Text(text = "?") },
             modifier = Modifier
                 .padding(Dimens.PaddingNormal)
-                .weight(1f)
+                .weight(1f),
         )
         TextButton(onClick = {
             try {
@@ -721,7 +935,6 @@ private fun NumberTextField(
                 if (text.toInt() < maxCount) {
                     setValue(text.toInt().inc())
                     text = text.toInt().inc().toString()
-                } else {
                 }
             } catch (e: NumberFormatException) {
                 setValue(0)
@@ -734,141 +947,170 @@ private fun NumberTextField(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 private fun MediaCard(
     navigateToDetails: (Int) -> Unit,
     increaseEpisodeProgress: (mediaId: Int, newProgress: Int) -> Unit,
+    increaseVolumeProgress: (mediaId: Int, newProgress: Int) -> Unit,
     media: Media,
-    onNavigateToStatusEditor: () -> Unit,
-    isAnime: Boolean
+    openEditStatusSheet: () -> Unit,
+    isAnime: Boolean,
 ) {
-    var personalEpisodeProgress by remember { mutableIntStateOf(media.personalProgress) }
-    Card(
-        onClick = { navigateToDetails(media.id) },
-        modifier = Modifier
-            .padding(Dimens.PaddingSmall)
-            .height(150.dp)
-            .fillMaxWidth()
-    ) {
-        Row {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(media.coverImage)
-                    .crossfade(true).build(),
-                contentDescription = "",
-                placeholder = painterResource(id = R.drawable.no_image),
-                fallback = painterResource(id = R.drawable.no_image),
-                contentScale = ContentScale.FillHeight,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(100.dp)
-                    .clip(MaterialTheme.shapes.medium)
-            )
-            Row(
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        top = Dimens.PaddingSmall,
-                        bottom = Dimens.PaddingSmall,
-                        start = Dimens.PaddingSmall
-                    )
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxHeight(),
-                    verticalArrangement = Arrangement.SpaceBetween
+    val personalEpisodeProgress by remember { mutableIntStateOf(media.personalProgress) }
+
+    Box(modifier = Modifier.padding(vertical = Dimens.PaddingSmall)) {
+        ElevatedCard(
+            shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
+            modifier = Modifier
+                .padding(horizontal = Dimens.PaddingSmall)
+                .height(150.dp)
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = { navigateToDetails(media.id) },
+                    onLongClick = openEditStatusSheet
+                ),
+        ) {
+            Row {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current).data(media.coverImage)
+                        .crossfade(true).build(),
+                    contentDescription = "",
+                    placeholder = painterResource(id = R.drawable.no_image),
+                    fallback = painterResource(id = R.drawable.no_image),
+                    contentScale = ContentScale.FillHeight,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(100.dp)
+                        .clip(RoundedCornerShape(12.dp, 12.dp, 12.dp, 0.dp)),
+                )
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            top = Dimens.PaddingSmall,
+                            bottom = Dimens.PaddingSmall,
+                            start = Dimens.PaddingSmall,
+                        ),
                 ) {
-                    Text(
-                        text = media.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.width(175.dp),
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 2
-                    )
-                    Text(
-                        text = media.format,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
+                    Column(
+                        modifier = Modifier.fillMaxHeight(),
+                        verticalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Icon(
-                            painterResource(id = R.drawable.anime_details_rating_star),
-                            contentDescription = "star",
-                            tint = MaterialTheme.colorScheme.secondary
+                        Text(
+                            text = media.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.width(175.dp),
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 2,
                         )
                         Text(
-                            text = media.personalRating.div(10).toString(),
+                            text = media.format,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
-                    }
-                    if (isAnime) {
-                        Text(
-                            text = "$personalEpisodeProgress/${media.episodeAmount}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    } else {
-                        Text(
-                            text = "${media.personalProgress}/${media.chapters}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "${media.personalVolumeProgress}/${media.volumes}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    IconButton(
-                        onClick = onNavigateToStatusEditor
-//                        modifier = Modifier.weight(1f, false)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "edit"
-                        )
-                    }
-                    if (isAnime) {
-                        if (media.personalProgress != media.episodeAmount) {
-                            IncreaseProgress(
-                                increaseEpisodeProgress,
-                                media,
-                                personalEpisodeProgress,
-                                stringResource(id = R.string.plus_one)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start,
+                        ) {
+                            Icon(
+                                painterResource(id = R.drawable.anime_details_rating_star),
+                                contentDescription = "star",
+                                tint = MaterialTheme.colorScheme.secondary,
+                            )
+                            Text(
+                                text = media.personalRating.div(10).toString(),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
                         }
-                    } else {
-                        if (media.chapters != media.personalProgress) {
-                            IncreaseProgress(
-                                increaseEpisodeProgress,
-                                media,
-                                personalEpisodeProgress,
-                                stringResource(id = R.string.plus_one_chapter)
+                        if (isAnime) {
+                            Text(
+                                text = "$personalEpisodeProgress/${
+                                    if (media.episodeAmount != -1) media.episodeAmount else stringResource(
+                                        id = R.string.question_mark
+                                    )
+                                }",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        } else {
+                            Text(
+                                text = "${media.personalProgress}/${
+                                    if (media.chapters != -1) media.chapters else stringResource(
+                                        id = R.string.question_mark
+                                    )
+                                }",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = "${media.personalVolumeProgress}/${
+                                    if (media.volumes != -1) media.volumes else stringResource(
+                                        id = R.string.question_mark
+                                    )
+                                }",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
                         }
-                        if (media.personalVolumeProgress != media.volumes) {
-                            IncreaseProgress(
-                                increaseEpisodeProgress,
-                                media,
-                                personalEpisodeProgress,
-                                stringResource(
-                                    id = R.string.plus_one_volume
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        IconButton(
+                            onClick = openEditStatusSheet,
+                            //                        modifier = Modifier.weight(1f, false)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "edit",
+                            )
+                        }
+                        if (isAnime) {
+                            if (media.personalProgress != media.episodeAmount) {
+                                IncreaseProgress(
+                                    increaseEpisodeProgress,
+                                    media.listEntryId,
+                                    personalEpisodeProgress,
+                                    stringResource(id = R.string.plus_one),
                                 )
-                            )
+                            }
+                        } else {
+                            if (media.chapters != media.personalProgress) {
+                                IncreaseProgress(
+                                    increaseEpisodeProgress,
+                                    media.listEntryId,
+                                    personalEpisodeProgress,
+                                    stringResource(id = R.string.plus_one_chapter),
+                                )
+                            }
+                            if (media.personalVolumeProgress != media.volumes) {
+                                IncreaseProgress(
+                                    increaseVolumeProgress,
+                                    media.listEntryId,
+                                    media.personalVolumeProgress,
+                                    stringResource(
+                                        id = R.string.plus_one_volume,
+                                    ),
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+        val progress =
+            (media.personalProgress / (if (isAnime) media.episodeAmount.toFloat() else media.chapters.toFloat()))
         LinearProgressIndicator(
-            progress = (personalEpisodeProgress / media.episodeAmount.toFloat()) * 100
+            progress = progress,
+            strokeCap = StrokeCap.Square,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Dimens.PaddingSmall)
+                .align(
+                    Alignment.BottomCenter
+                )
         )
     }
 }
@@ -876,21 +1118,21 @@ private fun MediaCard(
 @Composable
 private fun IncreaseProgress(
     increaseEpisodeProgress: (mediaId: Int, newProgress: Int) -> Unit,
-    media: Media,
+    listEntryId: Int,
     personalEpisodeProgress: Int,
-    label: String
+    label: String,
 ) {
     var personalEpisodeProgress1 = personalEpisodeProgress
     OutlinedButton(
         onClick = {
             increaseEpisodeProgress(
-                media.id,
-                personalEpisodeProgress1 + 1
+                listEntryId,
+                personalEpisodeProgress1 + 1,
             )
             personalEpisodeProgress1++
         },
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-//                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+        modifier = Modifier.padding(end = Dimens.PaddingSmall)
     ) {
 //                            Row(
 //                                verticalAlignment = Alignment.CenterVertically,
@@ -900,18 +1142,18 @@ private fun IncreaseProgress(
         Text(
             text = label,
             color = MaterialTheme.colorScheme.secondary,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
         )
     }
 }
 
-//@Preview(
+// @Preview(
 //    showBackground = true,
 //    group = "bottomSheet",
 //    device = "spec:width=392.7dp,height=2000dp,dpi=440"
-//)
-//@Composable
-//fun EditStatusScreenPreview() {
+// )
+// @Composable
+// fun EditStatusScreenPreview() {
 //    EditStatusScreen(
 //        isAnime = false,
 //        closeSheet = { },
@@ -925,7 +1167,7 @@ private fun IncreaseProgress(
 //        ),
 //        saveStatus = {}
 //    )
-//}
+// }
 
 @Preview(showBackground = true, group = "fullscreen")
 @Composable
@@ -942,7 +1184,7 @@ fun MyAnimePreview() {
                     personalRating = 6.0,
                     personalProgress = 20,
                     personalVolumeProgress = 3,
-                    note = ""
+                    note = "",
                 ),
                 Media(
                     title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
@@ -952,7 +1194,7 @@ fun MyAnimePreview() {
                     personalProgress = 120,
                     note = "",
                     personalVolumeProgress = 2,
-                    volumes = 5
+                    volumes = 5,
                 ),
                 Media(
                     title = "ONE PIECE",
@@ -962,14 +1204,14 @@ fun MyAnimePreview() {
                     personalProgress = 101,
                     note = "",
                     volumes = 3,
-                    personalVolumeProgress = 2
-                )
-            )
+                    personalVolumeProgress = 2,
+                ),
+            ),
         ),
         navigateToDetails = {},
         increaseEpisodeProgress = { _, _ -> },
         saveStatus = { },
-        reloadMyMedia = { }
+        reloadMyMedia = { }, deleteListEntry = {}
     )
 }
 
@@ -984,5 +1226,3 @@ fun DatePickerPreview() {
 fun DatePickerNoDatePreview() {
     DatePickerDialogue("Start date", initialValue = null, setValue = {})
 }
-
-

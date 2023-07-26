@@ -46,7 +46,6 @@ import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.CharacterMediaConnection
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.MediaDetailsRepository
-import com.example.anilist.data.repository.MediaRepository
 import com.example.anilist.ui.Dimens
 import de.charlex.compose.HtmlText
 
@@ -59,7 +58,7 @@ fun CharacterDetailScreen(
     mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
     onNavigateToStaff: (Int) -> Unit,
     onNavigateToMedia: (Int) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val character by mediaDetailsViewModel.character.observeAsState()
 //    val isFavourite by mediaDetailsViewModel.isFavouriteCharacter.observeAsState(false)
@@ -68,14 +67,14 @@ fun CharacterDetailScreen(
         TopAppBar(title = {
             AnimatedVisibility(visible = character?.userPreferredName != null, enter = fadeIn()) {
                 Text(
-                    text = character?.userPreferredName ?: stringResource(R.string.question_mark)
+                    text = character?.userPreferredName ?: stringResource(R.string.question_mark),
                 )
             }
         }, navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = Icons.Default.ArrowBack.toString()
+                    contentDescription = Icons.Default.ArrowBack.toString(),
                 )
             }
         })
@@ -88,9 +87,9 @@ fun CharacterDetailScreen(
                 onNavigateToMedia = onNavigateToMedia,
                 modifier = Modifier.padding(
                     top = it.calculateTopPadding(),
-                    bottom = Dimens.PaddingNormal
+                    bottom = Dimens.PaddingNormal,
                 ),
-                toggleFavorite = { mediaDetailsViewModel.toggleFavourite(MediaDetailsRepository.LikeAbleType.CHARACTER, id) }
+                toggleFavorite = { mediaDetailsViewModel.toggleFavourite(MediaDetailsRepository.LikeAbleType.CHARACTER, id) },
             )
         }
     }
@@ -107,12 +106,12 @@ private fun CharacterDetail(
     onNavigateToStaff: (Int) -> Unit,
     onNavigateToMedia: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    toggleFavorite: () -> Unit
+    toggleFavorite: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
-            .then(modifier)
+            .then(modifier),
     ) {
         AvatarAndName(
             character.coverImage,
@@ -122,7 +121,7 @@ private fun CharacterDetail(
             character.favorites,
             modifier = Modifier.padding(Dimens.PaddingNormal),
             isFavorite = isFavorite,
-            toggleFavourite = toggleFavorite
+            toggleFavourite = toggleFavorite,
         )
         Description(character.description)
         Headline("Voice actors")
@@ -135,7 +134,7 @@ private fun CharacterDetail(
 @Composable
 fun RelatedMedia(
     relatedMedia: List<CharacterMediaConnection>,
-    onNavigateToMedia: (Int) -> Unit
+    onNavigateToMedia: (Int) -> Unit,
 ) {
     LazyRow {
         items(relatedMedia) { media ->
@@ -144,7 +143,7 @@ fun RelatedMedia(
                 media.title,
                 media.characterRole,
                 media.id,
-                onNavigateToMedia
+                onNavigateToMedia,
             )
         }
     }
@@ -159,7 +158,7 @@ fun VoiceActors(voiceActors: List<StaffDetail>, onNavigateToStaff: (Int) -> Unit
                 staff.userPreferredName,
                 staff.language,
                 staff.id,
-                onNavigateToStaff
+                onNavigateToStaff,
             )
         }
     }
@@ -171,26 +170,27 @@ fun ImageWithTitleAndSubTitle(
     title: String,
     subTitle: String,
     id: Int,
-    onClick: (Int) -> Unit
+    onClick: (Int) -> Unit,
 ) {
     Column(
         Modifier
             .padding(start = Dimens.PaddingNormal)
-            .clickable { onClick(id) }) {
+            .clickable { onClick(id) },
+    ) {
         CoverImage(
             coverImage = coverImage,
-            userPreferredName = title
+            userPreferredName = title,
         )
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(vertical = Dimens.PaddingSmall)
+            modifier = Modifier.padding(vertical = Dimens.PaddingSmall),
         )
         Text(
             text = subTitle,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -205,8 +205,8 @@ fun Headline(text: String) {
             bottom = Dimens.PaddingSmall,
             top = Dimens.PaddingNormal,
             start = Dimens.PaddingNormal,
-            end = Dimens.PaddingNormal
-        )
+            end = Dimens.PaddingNormal,
+        ),
     )
 }
 
@@ -216,7 +216,7 @@ fun Description(description: String) {
         text = description,
         color = MaterialTheme.colorScheme.onSurface,
         fontSize = 16.sp,
-        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
     )
 }
 
@@ -229,28 +229,28 @@ fun AvatarAndName(
     favorites: Int,
     isFavorite: Boolean,
     modifier: Modifier = Modifier,
-    toggleFavourite: () -> Unit
+    toggleFavourite: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .padding(bottom = Dimens.PaddingNormal)
-            .then(modifier)
+            .then(modifier),
     ) {
         CoverImage(
             coverImage,
-            userPreferredName
+            userPreferredName,
         )
         Column(modifier = Modifier.padding(start = Dimens.PaddingNormal)) {
             Text(
                 text = userPreferredName,
                 style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             if (alternativeNames.isNotEmpty()) {
                 Text(
                     text = alternativeNames.joinToString(separator = ", "),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             if (alternativeSpoilerNames.isNotEmpty()) {
@@ -259,7 +259,7 @@ fun AvatarAndName(
                     Modifier
                         .background(
                             MaterialTheme.colorScheme.errorContainer,
-                            shape = MaterialTheme.shapes.medium
+                            shape = MaterialTheme.shapes.medium,
                         )
                         .padding(Dimens.PaddingSmall)
                 } else {
@@ -268,7 +268,7 @@ fun AvatarAndName(
                 Text(
                     text = if (showSpoilerNames) {
                         alternativeSpoilerNames.joinToString(
-                            separator = ", "
+                            separator = ", ",
                         )
                     } else {
                         "Show spoiler names"
@@ -279,7 +279,7 @@ fun AvatarAndName(
                         .clickable {
                             showSpoilerNames = !showSpoilerNames
                         }
-                        .then(textModifier)
+                        .then(textModifier),
 
                 )
             }
@@ -292,7 +292,7 @@ fun AvatarAndName(
                 modifier = Modifier.clickable {
                     Log.i(TAG, "Clicked on favourite")
                     toggleFavourite()
-                }
+                },
             )
         }
     }
@@ -302,7 +302,7 @@ fun AvatarAndName(
 private fun CoverImage(
     coverImage: String,
     userPreferredName: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     AsyncImage(
         model = ImageRequest.Builder(LocalContext.current)
@@ -315,7 +315,7 @@ private fun CoverImage(
         modifier = Modifier
             .height(200.dp)
             .then(modifier)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(12.dp)),
     )
 }
 
@@ -327,13 +327,13 @@ fun CharacterDetailPreview() {
             id = 12312,
             userPreferredName = "虎杖悠仁",
             description = "A muscular teenager with big light brown eyes and light brown spiky hair. Yuuji is a fair person who cares greatly for not only his comrades but anyone he views as people with their own wills, despite how deep or shallow his connection to them is. He cares greatly for the \"value of a life\" and to this end, he will ensure that others receive a \"proper death.\" He is easy to anger in the face of pure cruelty and unfair judgment of other people.\n" +
-                    "He doesn't have the born talent required to use cursed techniques, but he has incredible athletic abilities and he is considered very strong for his age, as shown by when he easily beat a coach in Steel Ball Throw.",
+                "He doesn't have the born talent required to use cursed techniques, but he has incredible athletic abilities and he is considered very strong for his age, as shown by when he easily beat a coach in Steel Ball Throw.",
             alternativeNames = listOf("Footballer", "Cool dude", "Not so cool dude"),
-            alternativeSpoilerNames = listOf("Secret name", "Actually a spy")
+            alternativeSpoilerNames = listOf("Secret name", "Actually a spy"),
         ),
         isFavorite = true,
         onNavigateToMedia = {},
         onNavigateToStaff = {},
-        toggleFavorite = {}
+        toggleFavorite = {},
     )
 }

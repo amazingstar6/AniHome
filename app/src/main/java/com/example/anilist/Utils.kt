@@ -9,13 +9,13 @@ class Utils {
         fun convertEpochToString(epochSeconds: Long): String {
             val time =
                 Instant.fromEpochSeconds(
-                    epochSeconds
+                    epochSeconds,
                 ).toLocalDateTime(TimeZone.UTC)
             return String.format(
                 "%04d-%02d-%02d",
                 time.year,
                 time.monthNumber,
-                time.dayOfMonth
+                time.dayOfMonth,
             )
         }
 

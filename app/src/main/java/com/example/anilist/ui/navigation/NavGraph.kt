@@ -32,12 +32,12 @@ fun AniNavHost(
     navigationActions: AniListNavigationActions,
     aniHomeViewModel: AniHomeViewModel,
     userSettings: UserSettings?,
-    setBottomBarState: (Boolean) -> Unit
+    setBottomBarState: (Boolean) -> Unit,
 ) {
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = AniListRoute.HOME_ROUTE
+        startDestination = AniListRoute.HOME_ROUTE,
     ) {
         composable(AniListRoute.HOME_ROUTE) {
             setBottomBarState(true)
@@ -49,7 +49,7 @@ fun AniNavHost(
                 onNavigateToDetails = navigationActions::navigateToMediaDetails,
                 onNavigateToSettings = {
                     navController.navigate(route = AniListRoute.SETTINGS)
-                }
+                },
             )
         }
         composable(
@@ -57,8 +57,8 @@ fun AniNavHost(
             arguments = listOf(
                 navArgument("animeId") {
                     type = NavType.IntType
-                }
-            )
+                },
+            ),
         ) { backStackEntry ->
             setBottomBarState(false)
             MediaDetail(
@@ -68,7 +68,7 @@ fun AniNavHost(
                 onNavigateToReviewDetails = navigationActions::navigateToReviewDetails,
                 navigateToStaff = navigationActions::navigateToStaff,
                 navigateToCharacter = navigationActions::navigateToCharacter,
-                onNavigateToStaff = navigationActions::navigateToStaff
+                onNavigateToStaff = navigationActions::navigateToStaff,
             )
         }
         composable(
@@ -79,9 +79,9 @@ fun AniNavHost(
                     id = backStackEntry.arguments?.getInt("characterId") ?: -1,
                     onNavigateToMedia = navigationActions::navigateToMediaDetails,
                     onNavigateToStaff = navigationActions::navigateToStaff,
-                    onNavigateBack = navigationActions::navigateBack
+                    onNavigateBack = navigationActions::navigateBack,
                 )
-            }
+            },
         )
         composable(
             route = AniListRoute.STAFF_DETAIL_ROUTE + "/{staffId}",
@@ -91,30 +91,30 @@ fun AniNavHost(
                     id = backStackEntry.arguments?.getInt("staffId") ?: -1,
                     onNavigateToCharacter = navigationActions::navigateToCharacter,
                     onNavigateToMedia = navigationActions::navigateToMediaDetails,
-                    onNavigateBack = navigationActions::navigateBack
+                    onNavigateBack = navigationActions::navigateBack,
                 )
-            }
+            },
         )
         composable(
             route = AniListRoute.REVIEW_DETAIL_ROUTE + "/{reviewId}",
             arguments = listOf(navArgument("reviewId") { type = NavType.IntType }),
             content = { backStackEntry ->
                 ReviewDetailScreen(
-                    reviewId = backStackEntry.arguments?.getInt("reviewId") ?: -1
+                    reviewId = backStackEntry.arguments?.getInt("reviewId") ?: -1,
                 )
-            }
+            },
         )
         composable(
-            AniListRoute.NOTIFICATION_ROUTE
+            AniListRoute.NOTIFICATION_ROUTE,
         ) {
             setBottomBarState(false)
             NotificationScreen(
                 aniHomeViewModel = aniHomeViewModel,
-                { navController.popBackStack() }
+                { navController.popBackStack() },
             )
         }
         composable(
-            AniListRoute.SETTINGS
+            AniListRoute.SETTINGS,
         ) {
             setBottomBarState(false)
             SettingsScreen()
@@ -141,7 +141,7 @@ fun AniNavHost(
                 navigateToDetails = { id ->
                     navController.navigate(route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id")
                 },
-                isAnime = false
+                isAnime = false,
             )
         }
         composable(AniListRoute.FEED_ROUTE) {

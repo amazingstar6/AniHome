@@ -21,8 +21,8 @@ data class Stats(
         Status.COMPLETED to 0,
         Status.DROPPED to 0,
         Status.PAUSED to 0,
-        Status.UNKNOWN to 0
-    )
+        Status.UNKNOWN to 0,
+    ),
 )
 
 data class ScoreDistribution(
@@ -35,7 +35,7 @@ data class ScoreDistribution(
     val seventy: Int = 0,
     val eighty: Int = 0,
     val ninety: Int = 0,
-    val hundred: Int = 0
+    val hundred: Int = 0,
 )
 
 enum class Status {
@@ -44,7 +44,7 @@ enum class Status {
     COMPLETED,
     DROPPED,
     PAUSED,
-    UNKNOWN
+    UNKNOWN,
 }
 
 enum class Season {
@@ -52,7 +52,8 @@ enum class Season {
     SPRING,
     SUMMER,
     FALL,
-    WINTER;
+    WINTER,
+    ;
 
     fun getName(): String {
         return when (this) {

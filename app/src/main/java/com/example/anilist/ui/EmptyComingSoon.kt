@@ -16,7 +16,7 @@ fun EmptyComingSoon() {
         Text(
             "Not yet implemented",
             style = MaterialTheme.typography.displayMedium,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }

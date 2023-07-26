@@ -36,7 +36,7 @@ fun StaffDetailScreen(
     mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
     onNavigateToCharacter: (Int) -> Unit,
     onNavigateToMedia: (Int) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val staff by mediaDetailsViewModel.staff.observeAsState()
     mediaDetailsViewModel.fetchStaff(id)
@@ -45,14 +45,14 @@ fun StaffDetailScreen(
         TopAppBar(title = {
             AnimatedVisibility(visible = staff?.userPreferredName != null, enter = fadeIn()) {
                 Text(
-                    text = staff?.userPreferredName ?: stringResource(R.string.question_mark)
+                    text = staff?.userPreferredName ?: stringResource(R.string.question_mark),
                 )
             }
         }, navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = Icons.Default.ArrowBack.toString()
+                    contentDescription = Icons.Default.ArrowBack.toString(),
                 )
             }
         })
@@ -64,18 +64,17 @@ fun StaffDetailScreen(
                 onNavigateToMedia = onNavigateToMedia,
                 modifier = Modifier.padding(
                     top = it.calculateTopPadding(),
-                    bottom = Dimens.PaddingNormal
+                    bottom = Dimens.PaddingNormal,
                 ),
                 toggleFavourite = {
                     mediaDetailsViewModel.toggleFavourite(
                         MediaDetailsRepository.LikeAbleType.STAFF,
-                        id
+                        id,
                     )
-                }
+                },
             )
         }
     }
-
 }
 
 @Composable
@@ -84,12 +83,12 @@ private fun StaffDetail(
     onNavigateToCharacter: (Int) -> Unit,
     onNavigateToMedia: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    toggleFavourite: () -> Unit
+    toggleFavourite: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
-            .then(modifier)
+            .then(modifier),
     ) {
         AvatarAndName(
             staff.coverImage,
@@ -99,7 +98,7 @@ private fun StaffDetail(
             staff.favourites,
             modifier = Modifier.padding(Dimens.PaddingNormal),
             isFavorite = staff.isFavourite,
-            toggleFavourite = toggleFavourite
+            toggleFavourite = toggleFavourite,
         )
         Description(staff.description)
         if (staff.voicedCharacters.isNotEmpty()) {
@@ -126,7 +125,7 @@ fun MangaStaffRole(media: List<CharacterMediaConnection>, onNavigateToMedia: (In
                 media.title,
                 media.characterRole,
                 media.id,
-                onNavigateToMedia
+                onNavigateToMedia,
             )
         }
     }
@@ -141,7 +140,7 @@ fun AnimeStaffRole(media: List<CharacterMediaConnection>, onNavigateToMedia: (In
                 media.title,
                 media.characterRole,
                 media.id,
-                onNavigateToMedia
+                onNavigateToMedia,
             )
         }
     }
@@ -156,7 +155,7 @@ fun VoiceCharacters(characters: List<Character>, onNavigateToCharacter: (Int) ->
                 character.name,
                 character.role,
                 character.id,
-                onNavigateToCharacter
+                onNavigateToCharacter,
             )
         }
     }

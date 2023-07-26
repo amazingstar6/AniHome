@@ -26,13 +26,16 @@ class NotificationRepository @Inject constructor() {
         }
         val data = result.data
         emit(
-            if (data == null) ResultData(ResultStatus.NO_DATA) else ResultData(
-                ResultStatus.SUCCESSFUL,
-                data = parseNotification(data)
-            )
+            if (data == null) {
+                ResultData(ResultStatus.NO_DATA)
+            } else {
+                ResultData(
+                    ResultStatus.SUCCESSFUL,
+                    data = parseNotification(data),
+                )
+            },
         )
     }
-
 
     private fun parseNotification(data: GetNotificationsQuery.Data?): List<Notification> {
         val list = mutableListOf<Notification>()
@@ -47,8 +50,8 @@ class NotificationRepository @Inject constructor() {
                             ?: "",
                         airedEpisode = onAiringNotification?.episode ?: -1,
                         createdAt = onAiringNotification?.createdAt ?: -1,
-                        title = onAiringNotification?.media?.title?.userPreferred ?: ","
-                    )
+                        title = onAiringNotification?.media?.title?.userPreferred ?: ",",
+                    ),
                 )
             }
             notification?.onThreadCommentSubscribedNotification.let {
@@ -59,7 +62,7 @@ class NotificationRepository @Inject constructor() {
                         type = notification?.__typename ?: "",
                         image = onThreadCommentSubscribedNotification?.user?.avatar?.large ?: "",
                         createdAt = onThreadCommentSubscribedNotification?.createdAt ?: -1,
-                    )
+                    ),
                 )
             }
         }

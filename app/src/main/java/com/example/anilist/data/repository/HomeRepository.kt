@@ -9,20 +9,20 @@ import com.example.anilist.data.models.Media
 import com.example.anilist.fragment.MediaTitleCover
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaType
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
+import javax.inject.Inject
+import javax.inject.Singleton
 
 enum class HomeTrendingTypes {
     POPULAR_THIS_SEASON,
     TRENDING_NOW,
     UPCOMING_NEXT_SEASON,
     ALL_TIME_POPULAR,
-    TOP_100_ANIME
+    TOP_100_ANIME,
 }
 
 data class HomeMedia(
@@ -30,7 +30,7 @@ data class HomeMedia(
     val trendingNow: List<Media> = emptyList(),
     val upcomingNextSeason: List<Media> = emptyList(),
     val allTimePopular: List<Media> = emptyList(),
-    val top100Anime: List<Media> = emptyList()
+    val top100Anime: List<Media> = emptyList(),
 )
 
 @Singleton
@@ -44,7 +44,7 @@ class HomeRepository @Inject constructor() {
         skipPopularThisSeason: Boolean = true,
         skipUpcomingNextSeason: Boolean = true,
         skipAllTimePopular: Boolean = true,
-        skipTop100Anime: Boolean = true
+        skipTop100Anime: Boolean = true,
     ): Result<HomeMedia> {
         try {
             val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
@@ -72,8 +72,8 @@ class HomeRepository @Inject constructor() {
                         skipTrendingNow = Optional.present(skipTrendingNow),
                         skipUpcomingNextSeason = Optional.present(skipUpcomingNextSeason),
                         skipAllTimePopular = Optional.present(skipAllTimePopular),
-                        skipTop100Anime = Optional.present(skipTop100Anime)
-                    )
+                        skipTop100Anime = Optional.present(skipTop100Anime),
+                    ),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -112,8 +112,8 @@ class HomeRepository @Inject constructor() {
                         page = popularThisSeasonPage,
                         type = param,
                         currentSeason = season,
-                        currentYear = year
-                    )
+                        currentYear = year,
+                    ),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -152,8 +152,8 @@ class HomeRepository @Inject constructor() {
                         page = popularThisSeasonPage,
                         type = param,
                         currentSeason = season,
-                        currentYear = year
-                    )
+                        currentYear = year,
+                    ),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -182,7 +182,7 @@ class HomeRepository @Inject constructor() {
     }
 
     private fun getMediaSeasonFromMonth(
-        month: Int
+        month: Int,
     ): MediaSeason {
         return when (month) {
             Month.JANUARY.number -> MediaSeason.WINTER
@@ -247,7 +247,7 @@ class HomeRepository @Inject constructor() {
             trendingNow,
             upcomingNextSeason,
             allTimePopular,
-            top100Anime
+            top100Anime,
         )
     }
 
@@ -255,7 +255,7 @@ class HomeRepository @Inject constructor() {
         return Media(
             id = media.id,
             title = media.title?.userPreferred ?: "",
-            coverImage = media.coverImage?.extraLarge ?: ""
+            coverImage = media.coverImage?.extraLarge ?: "",
         )
     }
 

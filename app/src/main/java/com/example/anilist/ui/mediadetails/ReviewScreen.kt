@@ -46,20 +46,20 @@ fun Reviews(reviews: List<Review>, onNavigateToReviewDetails: (Int) -> Unit) {
                         top = Dimens.PaddingNormal,
                         bottom = Dimens.PaddingSmall,
                         start = Dimens.PaddingNormal,
-                        end = Dimens.PaddingNormal
-                    )
+                        end = Dimens.PaddingNormal,
+                    ),
                 ) {
                     AvatarNameDate(
                         avatar = review.userAvatar,
                         userName = review.userName,
                         date = Utils.getRelativeTime(review.createdAt.toLong()),
-                        modifier = Modifier.padding(Dimens.PaddingSmall)
+                        modifier = Modifier.padding(Dimens.PaddingSmall),
                     )
                     Text(
                         text = review.title,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+                        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
                     )
                     de.charlex.compose.HtmlText(
                         text = review.body,
@@ -68,30 +68,30 @@ fun Reviews(reviews: List<Review>, onNavigateToReviewDetails: (Int) -> Unit) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
 //                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
-                        modifier = Modifier.padding(Dimens.PaddingNormal)
+                        modifier = Modifier.padding(Dimens.PaddingNormal),
                     )
                 }
                 Row(
                     modifier = Modifier.padding(horizontal = Dimens.PaddingNormal).fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     UpDownVote(
                         review.upvotes,
                         R.drawable.media_detail_thumbs_up,
-                        "upvote"
+                        "upvote",
                     )
                     UpDownVote(
                         review.totalVotes - review.upvotes,
                         iconId = R.drawable.media_detail_thumb_down,
                         contentDescription = "downvote",
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                     Text(
                         text = "${review.score}/100",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(end = Dimens.PaddingSmall)
+                        modifier = Modifier.padding(end = Dimens.PaddingSmall),
                     )
                 }
             }
@@ -101,7 +101,7 @@ fun Reviews(reviews: List<Review>, onNavigateToReviewDetails: (Int) -> Unit) {
             Text(
                 text = stringResource(R.string.no_reviews),
                 style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
     }
@@ -117,7 +117,7 @@ fun Avatar(avatar: String, userName: String) {
         contentScale = ContentScale.Crop,
         modifier = Modifier
             .clip(CircleShape)
-            .size(60.dp)
+            .size(60.dp),
     )
 }
 
@@ -126,13 +126,13 @@ fun UpDownVote(
     totalVotes: Int,
     iconId: Int,
     contentDescription: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
         IconButton(onClick = { /*TODO*/ }) {
             Icon(
                 painter = painterResource(id = iconId),
-                contentDescription = contentDescription
+                contentDescription = contentDescription,
             )
         }
         Text(text = totalVotes.toString(), modifier = Modifier.padding(end = Dimens.PaddingSmall))
@@ -151,9 +151,9 @@ fun ReviewListPreview() {
                 upvotes = 43,
                 totalVotes = 64,
                 score = 80,
-                createdAt = 1533109209
-            )
-        )
+                createdAt = 1533109209,
+            ),
+        ),
     ) { }
 }
 
@@ -161,6 +161,6 @@ fun ReviewListPreview() {
 @Composable
 fun NoReviewsPreview() {
     Reviews(
-        emptyList()
+        emptyList(),
     ) { }
 }

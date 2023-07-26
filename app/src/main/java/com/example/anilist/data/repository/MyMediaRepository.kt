@@ -4,6 +4,7 @@ import android.util.Log
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.Apollo
+import com.example.anilist.DeleteEntryMutation
 import com.example.anilist.GetMyMediaQuery
 import com.example.anilist.IncreaseEpisodeProgressMutation
 import com.example.anilist.UpdateStatusMutation
@@ -42,6 +43,7 @@ class MyMediaRepository @Inject constructor() {
                     }
                     resultMap[statusList?.status?.toAniStatus() ?: MediaStatus.UNKNOWN] = list
                 }
+                Log.d(TAG, resultMap.toString())
                 return resultMap
             }
         } catch (exception: ApolloException) {
@@ -52,7 +54,7 @@ class MyMediaRepository @Inject constructor() {
     }
 
     suspend fun updateProgress(
-        statusUpdate: StatusUpdate
+        statusUpdate: StatusUpdate,
     ): Media {
         try {
             val status = when (statusUpdate.status) {
@@ -68,93 +70,157 @@ class MyMediaRepository @Inject constructor() {
             Log.d(
                 TAG,
                 "Progress before mutation in repository is ${
-                    if (statusUpdate.progress == null) Optional.Absent else Optional.present(
-                        statusUpdate.progress
-                    )
-                }"
+                    if (statusUpdate.progress == null) {
+                        Optional.Absent
+                    } else {
+                        Optional.present(
+                            statusUpdate.progress,
+                        )
+                    }
+                }",
             )
             Log.d(
                 TAG,
                 "Rewatches before mutation is ${
-                    if (statusUpdate.repeat == null) Optional.Absent else Optional.present(
-                        statusUpdate.repeat
-                    )
-                }"
+                    if (statusUpdate.repeat == null) {
+                        Optional.Absent
+                    } else {
+                        Optional.present(
+                            statusUpdate.repeat,
+                        )
+                    }
+                }",
             )
             Log.d(
                 TAG,
                 "Start date before mutation is ${
-                    if (statusUpdate.startedAt == null) Optional.Absent else Optional.present(
-                        FuzzyDateInput(
-                            Optional.present(statusUpdate.startedAt.year),
-                            Optional.present(statusUpdate.startedAt.month),
-                            Optional.present(statusUpdate.startedAt.day)
+                    if (statusUpdate.startedAt == null) {
+                        Optional.Absent
+                    } else {
+                        Optional.present(
+                            FuzzyDateInput(
+                                Optional.present(statusUpdate.startedAt.year),
+                                Optional.present(statusUpdate.startedAt.month),
+                                Optional.present(statusUpdate.startedAt.day),
+                            ),
                         )
-                    )
-                }"
+                    }
+                }",
             )
             Log.d(
                 TAG,
                 "End date before mutation is ${
-                    if (statusUpdate.completedAt == null) Optional.Absent else Optional.present(
-                        FuzzyDateInput(
-                            Optional.present(statusUpdate.completedAt.year),
-                            Optional.present(statusUpdate.completedAt.month),
-                            Optional.present(statusUpdate.completedAt.day)
+                    if (statusUpdate.completedAt == null) {
+                        Optional.Absent
+                    } else {
+                        Optional.present(
+                            FuzzyDateInput(
+                                Optional.present(statusUpdate.completedAt.year),
+                                Optional.present(statusUpdate.completedAt.month),
+                                Optional.present(statusUpdate.completedAt.day),
+                            ),
                         )
-                    )
-                }"
+                    }
+                }",
             )
             val result =
                 Apollo.apolloClient.mutation(
                     UpdateStatusMutation(
                         id = statusUpdate.id,
                         status = status,
-                        scoreRaw = if (statusUpdate.scoreRaw == null) Optional.Absent else Optional.present(
-                            statusUpdate.scoreRaw
-                        ),
-                        progress = if (statusUpdate.progress == null) Optional.Absent else Optional.present(
-                            statusUpdate.progress
-                        ),
-                        progressVolumes = if (statusUpdate.progressVolumes == null) Optional.Absent else Optional.present(
-                            statusUpdate.progressVolumes
-                        ),
-                        repeat = if (statusUpdate.repeat == null) Optional.Absent else Optional.present(
-                            statusUpdate.repeat
-                        ),
-                        priority = if (statusUpdate.priority == null) Optional.Absent else Optional.present(
-                            statusUpdate.priority
-                        ),
-                        private = if (statusUpdate.privateToUser == null) Optional.Absent else Optional.present(
-                            statusUpdate.privateToUser
-                        ),
-                        notes = if (statusUpdate.notes == null) Optional.Absent else Optional.present(
-                            statusUpdate.notes
-                        ),
-                        hiddenFromStatusLists = if (statusUpdate.hiddenFromStatusList == null) Optional.Absent else Optional.present(
-                            statusUpdate.hiddenFromStatusList
-                        ),
-                        customLists = if (statusUpdate.customLists == null) Optional.Absent else Optional.present(
-                            statusUpdate.customLists
-                        ),
-                        advancedScores = if (statusUpdate.advancedScores == null) Optional.Absent else Optional.present(
-                            statusUpdate.advancedScores
-                        ),
-                        startedAt = if (statusUpdate.startedAt == null) Optional.Absent else Optional.present(
-                            FuzzyDateInput(
-                                Optional.present(statusUpdate.startedAt.year),
-                                Optional.present(statusUpdate.startedAt.month),
-                                Optional.present(statusUpdate.startedAt.day)
+                        scoreRaw = if (statusUpdate.scoreRaw == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                statusUpdate.scoreRaw,
                             )
-                        ),
-                        completedAt = if (statusUpdate.completedAt == null) Optional.Absent else Optional.present(
-                            FuzzyDateInput(
-                                Optional.present(statusUpdate.completedAt.year),
-                                Optional.present(statusUpdate.completedAt.month),
-                                Optional.present(statusUpdate.completedAt.day)
+                        },
+                        progress = if (statusUpdate.progress == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                statusUpdate.progress,
                             )
-                        ),
-                    )
+                        },
+                        progressVolumes = if (statusUpdate.progressVolumes == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                statusUpdate.progressVolumes,
+                            )
+                        },
+                        repeat = if (statusUpdate.repeat == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                statusUpdate.repeat,
+                            )
+                        },
+                        priority = if (statusUpdate.priority == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                statusUpdate.priority,
+                            )
+                        },
+                        private = if (statusUpdate.privateToUser == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                statusUpdate.privateToUser,
+                            )
+                        },
+                        notes = if (statusUpdate.notes == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                statusUpdate.notes,
+                            )
+                        },
+                        hiddenFromStatusLists = if (statusUpdate.hiddenFromStatusList == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                statusUpdate.hiddenFromStatusList,
+                            )
+                        },
+                        customLists = if (statusUpdate.customLists == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                statusUpdate.customLists,
+                            )
+                        },
+                        advancedScores = if (statusUpdate.advancedScores == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                statusUpdate.advancedScores,
+                            )
+                        },
+                        startedAt = if (statusUpdate.startedAt == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                FuzzyDateInput(
+                                    Optional.present(statusUpdate.startedAt.year),
+                                    Optional.present(statusUpdate.startedAt.month),
+                                    Optional.present(statusUpdate.startedAt.day),
+                                ),
+                            )
+                        },
+                        completedAt = if (statusUpdate.completedAt == null) {
+                            Optional.Absent
+                        } else {
+                            Optional.present(
+                                FuzzyDateInput(
+                                    Optional.present(statusUpdate.completedAt.year),
+                                    Optional.present(statusUpdate.completedAt.month),
+                                    Optional.present(statusUpdate.completedAt.day),
+                                ),
+                            )
+                        },
+                    ),
                 ).execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
@@ -188,17 +254,21 @@ class MyMediaRepository @Inject constructor() {
                 FuzzyDate(
                     data.startedAt.year,
                     data.startedAt.month,
-                    data.startedAt.day
+                    data.startedAt.day,
                 )
-            } else null,
+            } else {
+                null
+            },
             completedAt = if (data?.completedAt?.year != null && data.completedAt.month != null && data.completedAt.day != null) {
                 FuzzyDate(
                     data.completedAt.year,
                     data.completedAt.month,
-                    data.completedAt.day
+                    data.completedAt.day,
                 )
-            } else null,
-            rawScore = data?.score ?: -1.0
+            } else {
+                null
+            },
+            rawScore = data?.score ?: -1.0,
         )
     }
 
@@ -209,8 +279,8 @@ class MyMediaRepository @Inject constructor() {
                 Apollo.apolloClient.mutation(
                     IncreaseEpisodeProgressMutation(
                         mediaId,
-                        newProgress
-                    )
+                        newProgress,
+                    ),
                 ).execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
@@ -224,10 +294,33 @@ class MyMediaRepository @Inject constructor() {
         }
     }
 
+    /**
+     * Delete a media list entry
+     * @param id id of the list entry (not the media id!)
+     * @return whether the deletion was successful
+     */
+    suspend fun deleteEntry(id: Int): Boolean {
+        try {
+            val result =
+                Apollo.apolloClient.mutation(
+                    DeleteEntryMutation(
+                        id
+                    ),
+                ).execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+                Log.d(TAG, result.errors.toString())
+            }
+            return result.data?.DeleteMediaListEntry?.deleted ?: false
+        } catch (exception: ApolloException) {
+            // handle exception here,, these are mainly for network errors
+            Log.d(TAG, exception.message ?: "No exception message")
+            return false
+        }
+    }
 }
 
-
-//suspend fun reloadMedia(isAnime: Boolean): List<Media> {
+// suspend fun reloadMedia(isAnime: Boolean): List<Media> {
 //    try {
 //        val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
 //        val result =
@@ -235,7 +328,7 @@ class MyMediaRepository @Inject constructor() {
 //                .execute()
 //        if (result.hasErrors()) {
 //            // these errors are related to GraphQL errors
-////                emit(ResultData(ResultStatus.ERROR, result.errors.toString()))
+// //                emit(ResultData(ResultStatus.ERROR, result.errors.toString()))
 //        }
 //        val data = result.data
 //        if (data != null) {
@@ -243,10 +336,10 @@ class MyMediaRepository @Inject constructor() {
 //        }
 //    } catch (exception: ApolloException) {
 //        // handle exception here,, these are mainly for network errors
-////            emit(ResultData(ResultStatus.ERROR, exception.message ?: "No error message"))
+// //            emit(ResultData(ResultStatus.ERROR, exception.message ?: "No error message"))
 //    }
 //    return emptyList()
-//}
+// }
 
 fun MediaListStatus.toAniStatus(): MediaStatus {
     return when (this) {

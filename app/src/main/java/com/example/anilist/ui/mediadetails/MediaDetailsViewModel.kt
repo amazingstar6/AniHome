@@ -12,8 +12,8 @@ import com.example.anilist.data.models.Staff
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.MediaDetailsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 // data class MediaDetailsUiState(
 //    val Anime: Anime? = null,
@@ -23,7 +23,7 @@ private const val TAG = "MediaDetailsViewModel"
 
 @HiltViewModel
 class MediaDetailsViewModel @Inject constructor(
-    private val mediaDetailsRepository: MediaDetailsRepository
+    private val mediaDetailsRepository: MediaDetailsRepository,
 ) : ViewModel() {
 
     private val _media = MutableLiveData<Media>()
@@ -104,19 +104,23 @@ class MediaDetailsViewModel @Inject constructor(
             val isFavourite = mediaDetailsRepository.toggleFavourite(type, id)
             Log.i(TAG, "Favourite status in view model is $isFavourite")
             when (type) {
-                MediaDetailsRepository.LikeAbleType.CHARACTER -> _character.value =
-                    _character.value!!.copy(isFavourite = isFavourite)
+                MediaDetailsRepository.LikeAbleType.CHARACTER ->
+                    _character.value =
+                        _character.value!!.copy(isFavourite = isFavourite)
 
-                MediaDetailsRepository.LikeAbleType.STAFF -> _staff.value =
-                    _staff.value!!.copy(isFavourite = isFavourite)
+                MediaDetailsRepository.LikeAbleType.STAFF ->
+                    _staff.value =
+                        _staff.value!!.copy(isFavourite = isFavourite)
 
-                MediaDetailsRepository.LikeAbleType.ANIME -> _media.value =
-                    _media.value!!.copy(isFavourite = isFavourite)
+                MediaDetailsRepository.LikeAbleType.ANIME ->
+                    _media.value =
+                        _media.value!!.copy(isFavourite = isFavourite)
 
-                MediaDetailsRepository.LikeAbleType.MANGA -> _media.value =
-                    _media.value!!.copy(isFavourite = isFavourite)
+                MediaDetailsRepository.LikeAbleType.MANGA ->
+                    _media.value =
+                        _media.value!!.copy(isFavourite = isFavourite)
 
-                MediaDetailsRepository.LikeAbleType.STUDIO -> Unit/* todo _studio.value = _character.value!!.copy(isFavourite = isFavourite)*/
+                MediaDetailsRepository.LikeAbleType.STUDIO -> Unit /* todo _studio.value = _character.value!!.copy(isFavourite = isFavourite)*/
             }
 
 //            _character.value?.isFavorite = isFavourite

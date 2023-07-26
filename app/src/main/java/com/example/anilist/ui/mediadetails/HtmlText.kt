@@ -13,7 +13,7 @@ class HtmlText @JvmOverloads constructor(
     text: String,
     color: Int,
     attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
+    defStyleAttr: Int = 0,
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
     init {

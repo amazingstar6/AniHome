@@ -100,7 +100,7 @@ enum class DetailTabs {
     Characters,
     Staff,
     Reviews,
-    Stats
+    Stats,
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,7 +114,7 @@ fun MediaDetail(
     onNavigateToReviewDetails: (Int) -> Unit,
     navigateToStaff: (Int) -> Unit,
     navigateToCharacter: (Int) -> Unit,
-    onNavigateToStaff: (Int) -> Unit
+    onNavigateToStaff: (Int) -> Unit,
 ) {
 //    val pagerState = rememberPagerState(
 //        initialPage = 0,
@@ -140,13 +140,13 @@ fun MediaDetail(
             Text(
                 text = media?.title ?: "",
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }, navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = Icons.Default.ArrowBack.toString()
+                    contentDescription = Icons.Default.ArrowBack.toString(),
                 )
             }
         }, actions = {
@@ -162,16 +162,16 @@ fun MediaDetail(
                     onClick = {
                         mediaDetailsViewModel.toggleFavourite(
                             if (isAnime) MediaDetailsRepository.LikeAbleType.ANIME else MediaDetailsRepository.LikeAbleType.MANGA,
-                            mediaId
+                            mediaId,
                         )
                     },
-                    modifier = Modifier.tooltipTrigger()
+                    modifier = Modifier.tooltipTrigger(),
                 ) {
                     Icon(
                         painter = painterResource(
-                            id = if (media?.isFavourite == true) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart
+                            id = if (media?.isFavourite == true) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart,
                         ),
-                        contentDescription = "open in browser"
+                        contentDescription = "open in browser",
                     )
                 }
             }
@@ -182,11 +182,11 @@ fun MediaDetail(
             }) {
                 IconButton(
                     onClick = { uriHandler.openUri(uri) },
-                    modifier = Modifier.tooltipTrigger()
+                    modifier = Modifier.tooltipTrigger(),
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
-                        contentDescription = "open in browser"
+                        contentDescription = "open in browser",
                     )
                 }
             }
@@ -203,9 +203,10 @@ fun MediaDetail(
                     startActivity(context, shareIntent, null)
                 }, modifier = Modifier.tooltipTrigger()) {
                     Icon(
-                        imageVector = Icons.Default.Share, contentDescription = stringResource(
-                            id = R.string.share
-                        )
+                        imageVector = Icons.Default.Share,
+                        contentDescription = stringResource(
+                            id = R.string.share,
+                        ),
                     )
                 }
             }
@@ -218,12 +219,10 @@ fun MediaDetail(
 //                    ) {
 //                        DropdownMenuItem(text = { Text(text = "Copy URL") }, onClick = { /*TODO*/ })
 //                    }
-
-
         })
     }, floatingActionButton = {
         FloatingActionButton(
-            onClick = { /*TODO*/ }
+            onClick = { /*TODO*/ },
         ) {
             Icon(imageVector = Icons.Outlined.Edit, contentDescription = "edit")
         }
@@ -232,7 +231,7 @@ fun MediaDetail(
             AniDetailTabs(
                 modifier = Modifier.padding(top = it.calculateTopPadding()),
                 titles = DetailTabs.values().map { it.name },
-                tabSelected = index
+                tabSelected = index,
             ) { index = it }
 
 //            HorizontalPager(
@@ -245,7 +244,7 @@ fun MediaDetail(
                     } else {
                         Overview(
                             media,
-                            onNavigateToDetails
+                            onNavigateToDetails,
                         )
                     }
                 }
@@ -255,7 +254,7 @@ fun MediaDetail(
                         media?.characters.orEmpty().map { it.voiceActorLanguage }.distinct(),
                         media?.characters.orEmpty(),
                         navigateToCharacter = navigateToCharacter,
-                        navigateToStaff = navigateToStaff
+                        navigateToStaff = navigateToStaff,
                     )
                 }
 
@@ -286,7 +285,7 @@ fun MediaDetail(
 fun LoadingCircle() {
     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
         CircularProgressIndicator(
-            modifier = Modifier
+            modifier = Modifier,
         )
     }
 }
@@ -294,11 +293,11 @@ fun LoadingCircle() {
 @Composable
 private fun Overview(
     media: Media?,
-    onNavigateToDetails: (Int) -> Unit
+    onNavigateToDetails: (Int) -> Unit,
 ) {
     Column(
         modifier = Modifier
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()),
 //            .padding(20.dp)
     ) {
         val anime: Media = media ?: Media(note = "")
@@ -320,7 +319,7 @@ private fun Overview(
 @Composable
 private fun OverviewRelations(
     relations: List<Relation>,
-    onNavigateToDetails: (Int) -> Unit
+    onNavigateToDetails: (Int) -> Unit,
 ) {
     if (relations.isNotEmpty()) {
         HeadLine("Relations")
@@ -333,7 +332,7 @@ private fun OverviewRelations(
                         .height(230.dp)
                         .clickable {
                             onNavigateToDetails(relation.id)
-                        }
+                        },
                 ) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
@@ -343,7 +342,7 @@ private fun OverviewRelations(
                         modifier = Modifier
                             .height(140.dp)
                             .padding(bottom = Dimens.PaddingSmall)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(12.dp)),
                     )
                     Text(
                         text = relation.title,
@@ -351,14 +350,14 @@ private fun OverviewRelations(
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(bottom = 10.dp),
                         maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         text = relation.relation,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 10.dp),
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -369,7 +368,7 @@ private fun OverviewRelations(
 @Composable
 private fun OverviewTrailer(
     trailerImage: String,
-    openUri: () -> Unit
+    openUri: () -> Unit,
 ) {
     if (trailerImage == "") {
 //        Image(
@@ -392,7 +391,7 @@ private fun OverviewTrailer(
                 .fillMaxWidth()
                 .clickable { openUri() }
                 .padding(Dimens.PaddingNormal)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(12.dp)),
         )
     }
 }
@@ -402,7 +401,7 @@ private fun AniDetailTabs(
     modifier: Modifier = Modifier,
     titles: List<String>,
     tabSelected: DetailTabs,
-    onTabSelected: (DetailTabs) -> Unit
+    onTabSelected: (DetailTabs) -> Unit,
 ) {
     ScrollableTabRow(selectedTabIndex = tabSelected.ordinal, modifier = modifier, tabs = {
         titles.forEachIndexed { index, title ->
@@ -410,7 +409,7 @@ private fun AniDetailTabs(
             Tab(
                 selected = selected,
                 onClick = { onTabSelected(DetailTabs.values()[index]) },
-                text = { Text(text = title) }
+                text = { Text(text = title) },
             )
         }
     })
@@ -422,7 +421,7 @@ fun Characters(
     languages: List<String>,
     characters: List<Character>,
     navigateToCharacter: (Int) -> Unit,
-    navigateToStaff: (Int) -> Unit
+    navigateToStaff: (Int) -> Unit,
 ) {
     if (characters.isNotEmpty()) {
         var selected by remember { mutableStateOf(0) }
@@ -433,7 +432,7 @@ fun Characters(
                         selected = selected == index,
                         onClick = { selected = index },
                         label = { Text(text = language) },
-                        modifier = Modifier.padding(end = Dimens.PaddingNormal)
+                        modifier = Modifier.padding(end = Dimens.PaddingNormal),
                     )
                 }
             }
@@ -444,7 +443,7 @@ fun Characters(
                             modifier = Modifier
                                 .clickable { navigateToCharacter(character.id) }
                                 .padding(12.dp)
-                                .align(Alignment.CenterHorizontally)
+                                .align(Alignment.CenterHorizontally),
 
                         ) {
                             ProfilePicture(character.coverImage, character.name)
@@ -457,14 +456,14 @@ fun Characters(
                                 modifier = Modifier
                                     .padding(top = 6.dp, bottom = 6.dp)
                                     .height(50.dp)
-                                    .fillMaxWidth()
+                                    .fillMaxWidth(),
                             )
                         }
                         Column(
                             modifier = Modifier
                                 .clickable { navigateToStaff(character.voiceActorId) }
                                 .padding(12.dp)
-                                .align(Alignment.CenterHorizontally)
+                                .align(Alignment.CenterHorizontally),
 
                         ) {
                             ProfilePicture(character.voiceActorCoverImage, character.voiceActorName)
@@ -475,7 +474,7 @@ fun Characters(
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier
                                     .padding(top = 6.dp, bottom = 6.dp)
-                                    .fillMaxWidth()
+                                    .fillMaxWidth(),
                             )
                         }
                     }
@@ -487,7 +486,7 @@ fun Characters(
             Text(
                 text = stringResource(R.string.no_characters),
                 style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
     }
@@ -503,7 +502,7 @@ private fun ProfilePicture(coverImage: String, name: String) {
         contentScale = ContentScale.Crop,
         modifier = Modifier.Companion
             .size(150.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(12.dp)),
     )
 }
 
@@ -523,7 +522,7 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
                 modifier = Modifier
                     .height(250.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { }
+                    .clickable { },
             )
         }
         Column {
@@ -531,13 +530,13 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
                 text = anime1.title,
                 modifier = Modifier.padding(start = 24.dp, bottom = 8.dp),
                 style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Column(modifier = Modifier.padding(start = 24.dp)) {
                 IconWithText(
                     R.drawable.anime_details_movie,
                     anime1.format,
-                    textColor = MaterialTheme.colorScheme.onSurface
+                    textColor = MaterialTheme.colorScheme.onSurface,
                 )
                 IconWithText(
                     R.drawable.anime_details_calendar,
@@ -548,13 +547,13 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
                             quantityStringResource(
                                 id = R.plurals.volume,
                                 quantity = anime1.volumes,
-                                anime1.volumes
+                                anime1.volumes,
                             )
                         } else {
                             "?"
                         }
                     },
-                    textColor = MaterialTheme.colorScheme.onSurface
+                    textColor = MaterialTheme.colorScheme.onSurface,
                 )
                 IconWithText(
                     R.drawable.anime_details_timer,
@@ -562,25 +561,25 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
                         quantityStringResource(
                             id = R.plurals.episode,
                             quantity = anime1.episodeAmount,
-                            anime1.episodeAmount
+                            anime1.episodeAmount,
                         )
                     } else {
                         if (anime1.chapters != -1) {
                             quantityStringResource(
                                 id = R.plurals.chapter,
                                 quantity = anime1.chapters,
-                                anime1.chapters
+                                anime1.chapters,
                             )
                         } else {
                             "?"
                         }
                     },
-                    textColor = MaterialTheme.colorScheme.onSurface
+                    textColor = MaterialTheme.colorScheme.onSurface,
                 )
                 IconWithText(
                     R.drawable.anime_details_heart,
                     "${anime1.averageScore}% Average score",
-                    textColor = MaterialTheme.colorScheme.onSurface
+                    textColor = MaterialTheme.colorScheme.onSurface,
                 )
             }
         }
@@ -589,12 +588,12 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier
             .padding(top = 12.dp, start = Dimens.PaddingNormal, end = Dimens.PaddingNormal)
-            .fillMaxWidth()
+            .fillMaxWidth(),
     ) {
         for (genre in genres) {
             FilledTonalButton(
                 onClick = { },
-                modifier = Modifier.padding(bottom = 6.dp, end = 12.dp)
+                modifier = Modifier.padding(bottom = 6.dp, end = 12.dp),
             ) {
                 Text(text = genre)
             }
@@ -630,7 +629,7 @@ private fun OverviewDescription(description: String) {
         text = description,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
 //                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
     )
 //    AndroidView(factory = { context ->
@@ -642,7 +641,7 @@ private fun OverviewDescription(description: String) {
 @OptIn(ExperimentalLayoutApi::class)
 private fun OverviewExternalLinks(
     anime1: Media,
-    openUri: (String) -> Unit
+    openUri: (String) -> Unit,
 ) {
     if (anime1.externalLinks.isNotEmpty()) {
         HeadLine("External links")
@@ -650,11 +649,11 @@ private fun OverviewExternalLinks(
             for (link in anime1.externalLinks) {
                 OutlinedButton(
                     onClick = { openUri(link.url) },
-                    modifier = Modifier.padding(end = 8.dp, bottom = 4.dp)
+                    modifier = Modifier.padding(end = 8.dp, bottom = 4.dp),
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (link.icon.isNotBlank()) {
                             AsyncImage(
@@ -663,8 +662,8 @@ private fun OverviewExternalLinks(
                                     .crossfade(true).build(),
                                 contentDescription = link.site,
                                 colorFilter = ColorFilter.tint(
-                                    Color(link.color.toColorInt())
-                                )
+                                    Color(link.color.toColorInt()),
+                                ),
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                         }
@@ -681,12 +680,12 @@ private fun OverviewExternalLinks(
 private fun OverViewTags(
     tags: List<Tag>,
     showSpoilers: Boolean,
-    toggleSpoilers: () -> Unit
+    toggleSpoilers: () -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         HeadLine("Tags")
         if (tags.any { tag -> tag.isMediaSpoiler }) {
@@ -697,31 +696,31 @@ private fun OverViewTags(
                 textColor = MaterialTheme.colorScheme.error,
                 modifier = Modifier
                     .clickable { toggleSpoilers() }
-                    .padding(end = Dimens.PaddingNormal)
+                    .padding(end = Dimens.PaddingNormal),
             )
         }
     }
     FlowRow(
         horizontalArrangement = Arrangement.Start,
-        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
     ) {
         for (tag in tags) {
             if (!tag.isMediaSpoiler) {
                 ElevatedButton(
                     onClick = { },
-                    modifier = Modifier.padding(end = 12.dp, bottom = 4.dp)
+                    modifier = Modifier.padding(end = 12.dp, bottom = 4.dp),
                 ) {
                     Text(
                         buildAnnotatedString {
                             withStyle(
-                                style = SpanStyle(color = MaterialTheme.colorScheme.secondary)
+                                style = SpanStyle(color = MaterialTheme.colorScheme.secondary),
                             ) {
                                 append("${tag.rank}% ")
                             }
                             withStyle(style = SpanStyle()) {
                                 append(tag.name)
                             }
-                        }
+                        },
                     )
 //                        Text(text = tag.name, style = MaterialTheme.typography.labelMedium)
                 }
@@ -733,22 +732,22 @@ private fun OverViewTags(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
                         contentColor = MaterialTheme.colorScheme.onErrorContainer,
                         disabledContainerColor = MaterialTheme.colorScheme.onErrorContainer,
-                        disabledContentColor = MaterialTheme.colorScheme.onErrorContainer
-                    )
+                        disabledContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
                 ) {
                     Text(
                         buildAnnotatedString {
                             withStyle(
                                 style = SpanStyle(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                ),
                             ) {
                                 append("${tag.rank}% ")
                             }
                             withStyle(style = SpanStyle()) {
                                 append(tag.name)
                             }
-                        }
+                        },
                     )
                 }
             }
@@ -764,7 +763,7 @@ private fun OverViewInfo(anime1: Media) {
             modifier = Modifier
                 .fillMaxHeight()
                 .padding(horizontal = Dimens.PaddingNormal),
-            verticalArrangement = Arrangement.Bottom
+            verticalArrangement = Arrangement.Bottom,
         ) {
             if (anime1.infoList.containsKey("format")) {
                 InfoName("Format")
@@ -852,7 +851,7 @@ private fun InfoName(text: String, modifier: Modifier = Modifier) {
         text = text,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
@@ -862,7 +861,7 @@ private fun InfoData(text: String, modifier: Modifier = Modifier) {
         text = text,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurface,
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
@@ -872,7 +871,7 @@ private fun HeadLine(text: String) {
         text = text,
         style = MaterialTheme.typography.headlineMedium,
         color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(bottom = 4.dp, top = 8.dp, start = Dimens.PaddingNormal)
+        modifier = Modifier.padding(bottom = 4.dp, top = 8.dp, start = Dimens.PaddingNormal),
     )
 }
 
@@ -882,24 +881,24 @@ fun IconWithText(
     text: String,
     modifier: Modifier = Modifier,
     iconTint: Color = MaterialTheme.colorScheme.onSurface,
-    textColor: Color
+    textColor: Color,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .padding(vertical = 4.dp)
-            .then(modifier)
+            .then(modifier),
     ) {
         Icon(
             painter = painterResource(id = icon),
             contentDescription = text,
-            tint = iconTint
+            tint = iconTint,
         )
         Text(
             text,
             modifier = Modifier.padding(horizontal = 6.dp),
             style = MaterialTheme.typography.bodyMedium,
-            color = textColor
+            color = textColor,
         )
     }
 }
@@ -909,7 +908,7 @@ fun IconWithText(
     showBackground = true,
     uiMode = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL,
     wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE,
-    group = "Characters"
+    group = "Characters",
 )
 @Composable
 fun CharactersPreview() {
@@ -923,11 +922,11 @@ fun CharactersPreview() {
                 coverImage = "",
                 voiceActorName = "花江夏樹",
                 voiceActorCoverImage = "",
-                voiceActorLanguage = "Japanese"
-            )
+                voiceActorLanguage = "Japanese",
+            ),
         ),
         navigateToCharacter = { },
-        navigateToStaff = { }
+        navigateToStaff = { },
     )
 }
 
@@ -935,13 +934,13 @@ fun CharactersPreview() {
     name = "Light mode",
     showBackground = true,
     heightDp = 2000,
-    group = "Overview"
+    group = "Overview",
 )
 @Preview(
     name = "Night mode",
     showBackground = true,
     uiMode = Configuration.UI_MODE_NIGHT_YES,
-    group = "Overview"
+    group = "Overview",
 )
 @Composable
 fun OverviewPreview() {
@@ -975,11 +974,11 @@ fun OverviewPreview() {
                         "licensed" to "Yes",
                         "updatedAt" to "04-06-2023",
                         "synonyms" to "KnY 3ดาบพิฆาตอสูร ภาค 3 บทหมู่บ้านช่างตีดาบ\n" + "Demon Slayer: Kimetsu no Yaiba - Le village des forgerons\n" + "Истребитель демонов: Kimetsu no Yaiba. Деревня кузнецов",
-                        "nsfw" to "No"
+                        "nsfw" to "No",
                     ),
                     tags = listOf(
                         Tag(name = "Demons", 96, false),
-                        Tag(name = "Shounen", rank = 40, true)
+                        Tag(name = "Shounen", rank = 40, true),
                         //                        "Shounen",
                         //                        "Swordplay",
                         //                        "Male Protagonist",
@@ -1001,10 +1000,10 @@ fun OverviewPreview() {
                             "Official Site",
                             "Japanese",
                             "",
-                            ""
-                        )
-                    )
-                )
+                            "",
+                        ),
+                    ),
+                ),
             )
         }
     }

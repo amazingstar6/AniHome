@@ -5,5 +5,5 @@ data class Link(
     val site: String,
     val language: String,
     val color: String,
-    val icon: String
+    val icon: String,
 )
