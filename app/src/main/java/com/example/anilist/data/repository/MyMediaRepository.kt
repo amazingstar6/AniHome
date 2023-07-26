@@ -7,9 +7,11 @@ import com.example.anilist.Apollo
 import com.example.anilist.GetMyMediaQuery
 import com.example.anilist.IncreaseEpisodeProgressMutation
 import com.example.anilist.UpdateStatusMutation
+import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.fragment.MyMedia
+import com.example.anilist.type.FuzzyDateInput
 import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaType
 import com.example.anilist.ui.my_media.MediaStatus
@@ -21,7 +23,6 @@ private const val TAG = "MyMediaRepository"
 @Singleton
 class MyMediaRepository @Inject constructor() {
     suspend fun getMyMedia(isAnime: Boolean): Map<MediaStatus, List<Media>> {
-        Log.i(TAG, "My anime is being loaded!")
         try {
             val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
             val result =
@@ -29,7 +30,7 @@ class MyMediaRepository @Inject constructor() {
                     .execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
-//                emit(ResultData(ResultStatus.ERROR, result.errors.toString()))
+                //                emit(ResultData(ResultStatus.ERROR, result.errors.toString()))
             }
             val data = result.data
             if (data != null) {
@@ -64,6 +65,46 @@ class MyMediaRepository @Inject constructor() {
                 MediaStatus.UNKNOWN -> Optional.present(MediaListStatus.UNKNOWN__)
                 null -> Optional.Absent
             }
+            Log.d(
+                TAG,
+                "Progress before mutation in repository is ${
+                    if (statusUpdate.progress == null) Optional.Absent else Optional.present(
+                        statusUpdate.progress
+                    )
+                }"
+            )
+            Log.d(
+                TAG,
+                "Rewatches before mutation is ${
+                    if (statusUpdate.repeat == null) Optional.Absent else Optional.present(
+                        statusUpdate.repeat
+                    )
+                }"
+            )
+            Log.d(
+                TAG,
+                "Start date before mutation is ${
+                    if (statusUpdate.startedAt == null) Optional.Absent else Optional.present(
+                        FuzzyDateInput(
+                            Optional.present(statusUpdate.startedAt.year),
+                            Optional.present(statusUpdate.startedAt.month),
+                            Optional.present(statusUpdate.startedAt.day)
+                        )
+                    )
+                }"
+            )
+            Log.d(
+                TAG,
+                "End date before mutation is ${
+                    if (statusUpdate.completedAt == null) Optional.Absent else Optional.present(
+                        FuzzyDateInput(
+                            Optional.present(statusUpdate.completedAt.year),
+                            Optional.present(statusUpdate.completedAt.month),
+                            Optional.present(statusUpdate.completedAt.day)
+                        )
+                    )
+                }"
+            )
             val result =
                 Apollo.apolloClient.mutation(
                     UpdateStatusMutation(
@@ -99,8 +140,20 @@ class MyMediaRepository @Inject constructor() {
                         advancedScores = if (statusUpdate.advancedScores == null) Optional.Absent else Optional.present(
                             statusUpdate.advancedScores
                         ),
-                        startedAt = Optional.Absent, /*if (statusUpdate.startedAt == null) Optional.Absent else Optional.present(statusUpdate.startedAt)*/
-                        completedAt = Optional.Absent, /*if (statusUpdate.completedAt == null) Optional.Absent else Optional.present(statusUpdate.completedAt)*/
+                        startedAt = if (statusUpdate.startedAt == null) Optional.Absent else Optional.present(
+                            FuzzyDateInput(
+                                Optional.present(statusUpdate.startedAt.year),
+                                Optional.present(statusUpdate.startedAt.month),
+                                Optional.present(statusUpdate.startedAt.day)
+                            )
+                        ),
+                        completedAt = if (statusUpdate.completedAt == null) Optional.Absent else Optional.present(
+                            FuzzyDateInput(
+                                Optional.present(statusUpdate.completedAt.year),
+                                Optional.present(statusUpdate.completedAt.month),
+                                Optional.present(statusUpdate.completedAt.day)
+                            )
+                        ),
                     )
                 ).execute()
             if (result.hasErrors()) {
@@ -129,7 +182,22 @@ class MyMediaRepository @Inject constructor() {
             rewatches = data?.repeat ?: -1,
             chapters = data?.media?.chapters ?: -1,
             volumes = data?.media?.volumes ?: -1,
-            note = data?.notes ?: ""
+            note = data?.notes ?: "",
+            isPrivate = data?.private ?: false,
+            startedAt = if (data?.startedAt?.year != null && data.startedAt.month != null && data.startedAt.day != null) {
+                FuzzyDate(
+                    data.startedAt.year,
+                    data.startedAt.month,
+                    data.startedAt.day
+                )
+            } else null,
+            completedAt = if (data?.completedAt?.year != null && data.completedAt.month != null && data.completedAt.day != null) {
+                FuzzyDate(
+                    data.completedAt.year,
+                    data.completedAt.month,
+                    data.completedAt.day
+                )
+            } else null
         )
     }
 
@@ -156,10 +224,6 @@ class MyMediaRepository @Inject constructor() {
     }
 
 }
-
-
-
-
 
 
 //suspend fun reloadMedia(isAnime: Boolean): List<Media> {

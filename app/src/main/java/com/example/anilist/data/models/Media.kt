@@ -1,5 +1,7 @@
 package com.example.anilist.data.models
 
+import kotlinx.datetime.LocalDate
+
 data class Media(
     val id: Int = -1,
     val listEntryId: Int = -1,
@@ -34,7 +36,10 @@ data class Media(
 
     val favourites: Int = -1,
     val isFavourite: Boolean = false,
-    val isFavouriteBlocked: Boolean = false
+    val isFavouriteBlocked: Boolean = false,
+
+    val startedAt: FuzzyDate? = null,
+    val completedAt: FuzzyDate? = null
 )
 
 enum class MediaType {

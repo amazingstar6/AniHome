@@ -1,6 +1,5 @@
 package com.example.anilist.data.repository
 
-import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.apollographql.apollo3.api.Optional
@@ -404,17 +403,17 @@ class MediaDetailsRepository @Inject constructor() {
 
         for (status in media?.stats?.statusDistribution.orEmpty()) {
             statusDistribution[
-                    when (status?.status) {
-                        MediaListStatus.CURRENT -> Status.CURRENT
-                        MediaListStatus.COMPLETED -> Status.COMPLETED
-                        MediaListStatus.PAUSED -> Status.PAUSED
-                        MediaListStatus.PLANNING -> Status.PLANNING
-                        MediaListStatus.DROPPED -> Status.DROPPED
-                        // the query does not return any data for repeating
-                        MediaListStatus.REPEATING -> Status.UNKNOWN
-                        MediaListStatus.UNKNOWN__ -> Status.UNKNOWN
-                        null -> Status.UNKNOWN
-                    }
+                when (status?.status) {
+                    MediaListStatus.CURRENT -> Status.CURRENT
+                    MediaListStatus.COMPLETED -> Status.COMPLETED
+                    MediaListStatus.PAUSED -> Status.PAUSED
+                    MediaListStatus.PLANNING -> Status.PLANNING
+                    MediaListStatus.DROPPED -> Status.DROPPED
+                    // the query does not return any data for repeating
+                    MediaListStatus.REPEATING -> Status.UNKNOWN
+                    MediaListStatus.UNKNOWN__ -> Status.UNKNOWN
+                    null -> Status.UNKNOWN
+                }
             ] = status?.amount ?: 0
         }
         return Stats(
@@ -519,11 +518,11 @@ class MediaDetailsRepository @Inject constructor() {
             }
             // the result is a list of all the things you've already liked of the same type
             val isFavourite = when (type) {
-                LikeAbleType.CHARACTER -> result.data?.ToggleFavourite?.characters?.nodes?.any {it?.id == id}
+                LikeAbleType.CHARACTER -> result.data?.ToggleFavourite?.characters?.nodes?.any { it?.id == id }
                 LikeAbleType.STAFF -> result.data?.ToggleFavourite?.staff?.nodes?.any { it?.id == id }
-                LikeAbleType.ANIME -> result.data?.ToggleFavourite?.anime?.nodes?.any { it?.id == id}
-                LikeAbleType.MANGA -> result.data?.ToggleFavourite?.manga?.nodes?.any { it?.id == id}
-                LikeAbleType.STUDIO -> result.data?.ToggleFavourite?.studios?.nodes?.any { it?.id == id}
+                LikeAbleType.ANIME -> result.data?.ToggleFavourite?.anime?.nodes?.any { it?.id == id }
+                LikeAbleType.MANGA -> result.data?.ToggleFavourite?.manga?.nodes?.any { it?.id == id }
+                LikeAbleType.STUDIO -> result.data?.ToggleFavourite?.studios?.nodes?.any { it?.id == id }
             }
             return isFavourite ?: false
         } catch (exception: ApolloException) {

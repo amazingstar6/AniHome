@@ -57,6 +57,7 @@ fragment MyMedia on MediaList {
     progressVolumes
     repeat
     notes
+    private
     advancedScores
     startedAt {
         year
