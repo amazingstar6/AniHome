@@ -33,21 +33,21 @@ class MyMediaRepository @Inject constructor() {
             }
             val data = result.data
             if (data != null) {
-                val result = mutableMapOf<MediaStatus, List<Media>>()
+                val resultMap = mutableMapOf<MediaStatus, List<Media>>()
                 for (statusList in data.MediaListCollection?.lists.orEmpty()) {
                     val list = mutableListOf<Media>()
                     for (entries in statusList?.entries.orEmpty()) {
                         list.add(parseMedia(entries?.myMedia))
                     }
-                    result[statusList?.status?.toAniStatus() ?: MediaStatus.UNKNOWN] = list
+                    resultMap[statusList?.status?.toAniStatus() ?: MediaStatus.UNKNOWN] = list
                 }
-                return result
+                return resultMap
             }
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
 //            emit(ResultData(ResultStatus.ERROR, exception.message ?: "No error message"))
         }
-        return emptyMap<MediaStatus, List<Media>>()
+        return emptyMap()
     }
 
     suspend fun updateProgress(
@@ -67,7 +67,7 @@ class MyMediaRepository @Inject constructor() {
             val result =
                 Apollo.apolloClient.mutation(
                     UpdateStatusMutation(
-                        mediaId = statusUpdate.mediaId,
+                        id = statusUpdate.id,
                         status = status,
                         scoreRaw = if (statusUpdate.scoreRaw == null) Optional.Absent else Optional.present(
                             statusUpdate.scoreRaw
@@ -118,6 +118,7 @@ class MyMediaRepository @Inject constructor() {
     private fun parseMedia(data: MyMedia?): Media {
         return Media(
             id = data?.media?.id ?: -1,
+            listEntryId = data?.id ?: -1,
             title = data?.media?.title?.userPreferred ?: "?",
             coverImage = data?.media?.coverImage?.extraLarge ?: "",
             format = data?.media?.format?.name ?: "",

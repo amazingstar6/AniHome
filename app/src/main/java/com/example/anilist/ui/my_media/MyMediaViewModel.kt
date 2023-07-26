@@ -45,6 +45,7 @@ class MyMediaViewModel @Inject constructor(
     fun updateProgress(
         statusUpdate: StatusUpdate
     ) {
+        Log.d(TAG, "Progress is being updated in view model!")
         viewModelScope.launch {
             myMediaRepository.updateProgress(
                 statusUpdate

@@ -2,6 +2,7 @@ package com.example.anilist.data.models
 
 data class Media(
     val id: Int = -1,
+    val listEntryId: Int = -1,
     val type: MediaType = MediaType.UNKNOWN,
     val title: String = "?",
     val coverImage: String = "",

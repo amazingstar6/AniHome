@@ -12,7 +12,7 @@ query getMyMedia($type: MediaType, $userId: Int = 808626) {
 
 
 mutation UpdateStatus(
-    $mediaId: Int!,
+    $id: Int!,
     $status: MediaListStatus,
     $scoreRaw: Int,
     $progress: Int,
@@ -27,7 +27,11 @@ mutation UpdateStatus(
     $startedAt: FuzzyDateInput,
     $completedAt: FuzzyDateInput
 ) {
-    SaveMediaListEntry(id: $mediaId) {
+    SaveMediaListEntry(
+        id: $id, status: $status, scoreRaw: $scoreRaw, progress: $progress, progressVolumes: $progressVolumes,
+        repeat: $repeat, priority: $priority, private: $private, notes: $notes, hiddenFromStatusLists: $hiddenFromStatusLists, customLists: $customLists,
+        advancedScores: $advancedScores, startedAt: $startedAt, completedAt: $completedAt
+    ) {
         ...MyMedia
     }
 }
