@@ -52,7 +52,7 @@ fragment MyMedia on MediaList {
         volumes
     }
     status
-    score
+    score(format: POINT_100)
     progress
     progressVolumes
     repeat

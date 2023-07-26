@@ -59,6 +59,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,15 +87,13 @@ import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.ui.Dimens
-import com.patrykandpatrick.vico.compose.axis.vertical.startAxis
+import com.patrykandpatrick.vico.core.extension.round
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import java.time.Clock
 import kotlin.math.roundToInt
 
 enum class MediaStatus {
@@ -156,24 +155,16 @@ private fun MyMedia(
     val showFilterSheet: () -> Unit = { modalSheetScope.launch { filterSheetState.show() } }
     val hideFilterSheet: () -> Unit = { modalSheetScope.launch { filterSheetState.hide() } }
 
+    Log.d(TAG, "Raw score received in media screen is ${currentMedia.rawScore}")
     // used for rating
-    val sliderState = remember {
-        SliderState(
-            valueRange = 0f..100f,
-            onValueChangeFinished = {
-                // launch some business logic update with the state you hold
-                // viewModel.updateSelectedSliderValue(sliderPosition)
-                // todo
-            },
-            steps = 100
-        )
-    }
     var personalProgress: Int = currentMedia.personalProgress
     val progressVolumes: Int = currentMedia.personalVolumeProgress
     var rewatches: Int = currentMedia.rewatches
     var privateToUser: Boolean = currentMedia.isPrivate
     var startedAt: FuzzyDate? = currentMedia.startedAt
     var completedAt: FuzzyDate? = currentMedia.completedAt
+    var rawScore: Double = currentMedia.rawScore
+
 
     val showEditSheet: (Media) -> Unit = {
         currentMedia = it
@@ -252,7 +243,7 @@ private fun MyMedia(
                                         StatusUpdate(
                                             id = currentMedia.listEntryId,
                                             status = selectedOptionText,
-                                            scoreRaw = sliderState.value.toInt(),
+                                            scoreRaw = rawScore.toInt(),
                                             progress = personalProgress,
                                             progressVolumes = if (!isAnime) progressVolumes else null,
                                             repeat = rewatches,
@@ -291,14 +282,19 @@ private fun MyMedia(
                             setValue = { rewatches = it },
                             maxCount = Int.MAX_VALUE
                         )
-                        var text by remember {
-                            mutableStateOf("")
+                        var sliderPosition by remember {
+                            mutableFloatStateOf(
+                                rawScore.roundToInt().toFloat()
+                            )
                         }
-
+                        var text by remember {
+                            mutableStateOf("$sliderPosition")
+                        }
                         OutlinedTextField(
-                            value = sliderState.value.roundToInt().toString(),
+                            value = text,
                             onValueChange = { newInput ->
                                 text = newInput
+                                sliderPosition = newInput.toFloat()
                             },
                             label = { Text("Score") },
                             suffix = { Text(text = "/100") },
@@ -307,36 +303,20 @@ private fun MyMedia(
                             modifier = Modifier
                                 .padding(Dimens.PaddingNormal)
                         )
-                        val interactionSource = MutableInteractionSource()
-                        val colors = SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.secondary,
-                            activeTrackColor = MaterialTheme.colorScheme.secondary
-                        )
                         Slider(
-                            state = sliderState,
                             modifier = Modifier
                                 .semantics {
                                     contentDescription = "Localized Description"
                                 }
-                                .padding(
-                                    horizontal = Dimens.PaddingLarge,
-                                    vertical = Dimens.PaddingNormal
-                                ),
-                            interactionSource = interactionSource,
-                            thumb = {
-                                Icon(
-                                    imageVector = Icons.Filled.Favorite,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                                    tint = MaterialTheme.colorScheme.secondary
-                                )
+                                .padding(Dimens.PaddingNormal),
+                            valueRange = 1f..100f,
+                            value = sliderPosition,
+                            onValueChange = {
+                                sliderPosition = it
+                                rawScore = it.roundToInt().toDouble()
+                                text = it.roundToInt().toString()
                             },
-                            track = {
-                                SliderDefaults.Track(
-                                    colors = colors,
-                                    sliderState = sliderState
-                                )
-                            }
+                            steps = 100
                         )
 
                         DatePickerDialogue(
@@ -358,7 +338,7 @@ private fun MyMedia(
                             Checkbox(checked = check, onCheckedChange = {
                                 privateToUser = it
                                 check = it
-                            })
+                            }, modifier = Modifier.padding(Dimens.PaddingNormal))
                             Text(
                                 "Private",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -783,20 +763,6 @@ private fun MediaCard(
                     .width(100.dp)
                     .clip(MaterialTheme.shapes.medium)
             )
-//            Column(
-//                modifier = Modifier.padding(start = Dimens.PaddingNormal),
-//                verticalArrangement = Arrangement.SpaceBetween
-//            ) {
-//                Row(
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(top = Dimens.PaddingSmall)
-//                ) {
-//
-//
-//                }
             Row(
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -835,7 +801,7 @@ private fun MediaCard(
                             tint = MaterialTheme.colorScheme.secondary
                         )
                         Text(
-                            text = media.personalRating.toString(),
+                            text = media.personalRating.div(10).toString(),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface
                         )

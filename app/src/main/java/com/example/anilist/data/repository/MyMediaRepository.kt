@@ -197,7 +197,8 @@ class MyMediaRepository @Inject constructor() {
                     data.completedAt.month,
                     data.completedAt.day
                 )
-            } else null
+            } else null,
+            rawScore = data?.score ?: -1.0
         )
     }
 
