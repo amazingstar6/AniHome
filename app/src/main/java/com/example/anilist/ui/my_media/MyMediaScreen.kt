@@ -69,6 +69,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -193,7 +194,7 @@ private fun MyMedia(
     }
     val hideEditSheet: () -> Unit = { modalSheetScope.launch { editSheetState.hide() } }
 
-    var filter by remember { mutableStateOf(MediaStatus.UNKNOWN) }
+    var filter by rememberSaveable { mutableStateOf(MediaStatus.UNKNOWN) }
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(text = if (isAnime) "Watching" else "Reading") }, actions = {

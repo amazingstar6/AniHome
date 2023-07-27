@@ -22,14 +22,18 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
@@ -51,6 +55,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -66,6 +71,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -92,6 +98,8 @@ import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.quantityStringResource
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.theme.AnilistTheme
+import kotlinx.coroutines.launch
+import org.jsoup.Jsoup
 
 private const val TAG = "AnimeDetails"
 
@@ -329,7 +337,6 @@ private fun OverviewRelations(
                     modifier = Modifier
                         .padding(start = Dimens.PaddingNormal)
                         .width(80.dp)
-                        .height(230.dp)
                         .clickable {
                             onNavigateToDetails(relation.id)
                         },
@@ -348,7 +355,7 @@ private fun OverviewRelations(
                         text = relation.title,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(bottom = 10.dp),
+                        modifier = Modifier.padding(bottom = 10.dp).width(80.dp),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -424,19 +431,35 @@ fun Characters(
     navigateToStaff: (Int) -> Unit,
 ) {
     if (characters.isNotEmpty()) {
-        var selected by remember { mutableStateOf(0) }
-        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-            FlowRow(modifier = Modifier.padding(Dimens.PaddingNormal)) {
-                languages.forEachIndexed { index, language ->
+        var selected by remember { mutableIntStateOf(0) }
+        Column() {
+            val lazyGridState = rememberLazyGridState()
+            val coroutineScope = rememberCoroutineScope()
+            LazyRow(
+                modifier = Modifier.padding(
+//                    horizontal = Dimens.PaddingNormal,
+                    vertical = Dimens.PaddingSmall
+                )
+            ) {
+                itemsIndexed(languages) { index, language ->
                     FilterChip(
                         selected = selected == index,
-                        onClick = { selected = index },
+                        onClick = {
+                            coroutineScope.launch {
+                                lazyGridState.animateScrollToItem(0)
+                            }
+                            selected = index
+                        },
                         label = { Text(text = language) },
-                        modifier = Modifier.padding(end = Dimens.PaddingNormal),
+                        modifier = Modifier.padding(start = Dimens.PaddingNormal),
                     )
                 }
             }
-            LazyVerticalGrid(columns = GridCells.Adaptive(120.dp)) {
+            LazyVerticalGrid(
+                state = lazyGridState,
+                columns = GridCells.Adaptive(120.dp),
+                modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+            ) {
                 items(characters.filter { it.voiceActorLanguage == languages[selected] }) { character ->
                     Column(modifier = Modifier.padding(bottom = Dimens.PaddingLarge)) {
                         Column(
@@ -445,7 +468,7 @@ fun Characters(
                                 .padding(12.dp)
                                 .align(Alignment.CenterHorizontally),
 
-                        ) {
+                            ) {
                             ProfilePicture(character.coverImage, character.name)
                             Text(
                                 text = character.name,
@@ -455,8 +478,8 @@ fun Characters(
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier
                                     .padding(top = 6.dp, bottom = 6.dp)
-                                    .height(50.dp)
-                                    .fillMaxWidth(),
+                                    .width(120.dp)
+//                                    .fillMaxWidth(),
                             )
                         }
                         Column(
@@ -465,7 +488,7 @@ fun Characters(
                                 .padding(12.dp)
                                 .align(Alignment.CenterHorizontally),
 
-                        ) {
+                            ) {
                             ProfilePicture(character.voiceActorCoverImage, character.voiceActorName)
                             Text(
                                 text = character.voiceActorName,
@@ -625,17 +648,21 @@ private fun OverviewDescription(description: String) {
     HeadLine("Description")
 //    val color = MaterialTheme.colorScheme.onSurface.toArgb()
 //    HtmlText(text = description, style = MaterialTheme.typography.bodyMedium)
-    de.charlex.compose.HtmlText(
-        text = description,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
+    Column {
+        de.charlex.compose.HtmlText(
+            text = description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
 //                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
-    )
+        )
+    }
 //    AndroidView(factory = { context ->
 //        HtmlText(context, description, color)
 //    })
 }
+
+
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -689,15 +716,7 @@ private fun OverViewTags(
     ) {
         HeadLine("Tags")
         if (tags.any { tag -> tag.isMediaSpoiler }) {
-            IconWithText(
-                icon = if (showSpoilers) R.drawable.anime_detail_not_visible else R.drawable.anime_detail_visible,
-                text = if (showSpoilers) "Hide spoilers" else "Show spoilers",
-                iconTint = MaterialTheme.colorScheme.error,
-                textColor = MaterialTheme.colorScheme.error,
-                modifier = Modifier
-                    .clickable { toggleSpoilers() }
-                    .padding(end = Dimens.PaddingNormal),
-            )
+            ShowHideSpoiler(showSpoilers, toggleSpoilers)
         }
     }
     FlowRow(
@@ -753,6 +772,19 @@ private fun OverViewTags(
             }
         }
     }
+}
+
+@Composable
+fun ShowHideSpoiler(showSpoilers: Boolean, toggleSpoilers: () -> Unit) {
+    IconWithText(
+        icon = if (showSpoilers) R.drawable.anime_detail_not_visible else R.drawable.anime_detail_visible,
+        text = if (showSpoilers) "Hide spoilers" else "Show spoilers",
+        iconTint = MaterialTheme.colorScheme.error,
+        textColor = MaterialTheme.colorScheme.error,
+        modifier = Modifier
+            .clickable { toggleSpoilers() }
+            .padding(end = Dimens.PaddingNormal),
+    )
 }
 
 @Composable

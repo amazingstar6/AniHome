@@ -366,6 +366,12 @@ class AniHomeViewModel @Inject constructor(
         // todo
     }
 
+    fun search(text: String) {
+        viewModelScope.launch {
+            homeRepository.search(text)
+        }
+    }
+
 //    fun saveLoginDetails(userSettings: UserSettings) {
 //        viewModelScope.launch {
 //            dataStoreManager.saveToDataStore(userSettings)

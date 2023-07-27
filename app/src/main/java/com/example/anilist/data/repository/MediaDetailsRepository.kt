@@ -1,5 +1,6 @@
 package com.example.anilist.data.repository
 
+import android.text.Html
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.apollographql.apollo3.api.Optional
@@ -271,18 +272,25 @@ class MediaDetailsRepository @Inject constructor() {
     }
 
     private fun parseCharacter(data: GetCharacterDetailQuery.Character): CharacterDetail {
+        val regex = Regex("<span class='markdown_spoiler'>(.*?)</span>")
+        val matches = regex.findAll(data.description ?: "")
+
+
+
+//        Html.fromHtml(data.description, Html.FROM_HTML_MODE_COMPACT, null, )
         val description = buildString {
             if (!(data.dateOfBirth?.fuzzyDate?.year == null && data.dateOfBirth?.fuzzyDate?.month == null && data.dateOfBirth?.fuzzyDate?.day == null)) {
                 append(
-                    "<strong>Birthday:</strong>${data.dateOfBirth.fuzzyDate.year ?: "?"}-${data.dateOfBirth.fuzzyDate.month ?: "?"}-${data.dateOfBirth.fuzzyDate.day ?: "?"}<br>",
+                    "<div><strong>Birthday:</strong>${data.dateOfBirth.fuzzyDate.year ?: "?"}-${data.dateOfBirth.fuzzyDate.month ?: "?"}-${data.dateOfBirth.fuzzyDate.day ?: "?"}</div>",
                 )
             }
-            if (data.age != null) append("<strong>Age:</strong>${data.age}<br>")
-            if (data.gender != null) append("<strong>Gender:</strong>${data.gender}<br>")
-            if (data.bloodType != null) append("<strong>Blood type:</strong>${data.bloodType}<br>")
+            if (data.age != null) append("<div><strong>Age:</strong>${data.age}</div>")
+            if (data.gender != null) append("<div><strong>Gender:</strong>${data.gender}</div>")
+            if (data.bloodType != null) append("<div><strong>Blood type:</strong>${data.bloodType}</div>")
             if (data.description != null) {
                 append(
-                    data.description.substringAfter("<p>")
+                    data.description
+                        .substringAfter("<p>")
                         .substringBeforeLast("</p>"),
                 )
             }

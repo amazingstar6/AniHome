@@ -81,3 +81,11 @@ fragment mediaTitleCover on Media {
         extraLarge
     }
 }
+
+query SearchAnime($search: String) {
+    Media(search: $search) {
+        title {
+            userPreferred
+        }
+    }
+}

@@ -259,6 +259,10 @@ class HomeRepository @Inject constructor() {
         )
     }
 
+    fun search(text: String) {
+        TODO("Not yet implemented")
+    }
+
 //    fun getTrendingAnime() = flow {
 //        try {
 //            val result = Apollo.apolloClient.query(GetTrendingMediaQuery()).execute()

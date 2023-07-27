@@ -2,20 +2,46 @@ package com.example.anilist.ui.home
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.anilist.R
 import com.example.anilist.ui.Dimens
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen() {
-    Column(modifier = Modifier.padding(Dimens.PaddingNormal)) {
-        Section("Display")
-        TitleSubtitle("Theme", "Material theme")
-        Section("Account settings")
-        TitleSubtitle("Title", "Native")
+fun SettingsScreen(navigateBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Settings") },
+                navigationIcon = {
+                    IconButton(onClick = navigateBack) {
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "back")
+                    }
+                })
+        },
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(top = it.calculateTopPadding())
+                .padding(Dimens.PaddingNormal)
+        ) {
+            Section("Display")
+            TitleSubtitle("Theme", "Material theme")
+            Section("Account settings")
+            TitleSubtitle("Title", "Native")
+        }
     }
 }
 
@@ -46,5 +72,5 @@ fun TitleSubtitle(title: String, subTitle: String) {
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
-    SettingsScreen()
+    SettingsScreen({ })
 }

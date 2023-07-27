@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!--        todo; do we still need usescleartexttraffic?-->
     <application
         android:name=".AniHomeApplication"
         android:allowBackup="true"
@@ -13,6 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Anilist"
         android:localeConfig="@xml/locales_config"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"

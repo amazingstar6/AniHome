@@ -1,6 +1,8 @@
 package com.example.anilist.ui.home
 
 import android.util.Log
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
@@ -35,6 +38,7 @@ import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -45,6 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,6 +58,7 @@ import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.repository.HomeMedia
+import com.example.anilist.ui.Dimens
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 private const val TAG = "AniHome"
@@ -70,8 +76,8 @@ fun HomeScreen(
     val trendingAnime by aniHomeViewModel.trendingAnime.observeAsState(emptyList())
     val upcomingNextSeason by aniHomeViewModel.upcomingNextSeason.observeAsState(emptyList())
 
-    var popularPage by remember { mutableStateOf(1) }
-    var trendingPage by remember { mutableStateOf(1) }
+    var popularPage by remember { mutableIntStateOf(1) }
+    var trendingPage by remember { mutableIntStateOf(1) }
 
     Scaffold(topBar = {
         CenterAlignedTopAppBar(title = {
@@ -103,106 +109,102 @@ fun HomeScreen(
             }
         })
     }) {
-        Column(
-            modifier = Modifier
-                .padding(top = it.calculateTopPadding())
-                .verticalScroll(rememberScrollState()),
-        ) {
-            AniSearchBar()
-            HeadlineText("Trending now")
-            AnimeRow(
-                onNavigateToDetails,
-                trendingAnime,
+        Box {
+            Column(
+                modifier = Modifier
+                    .padding(top = it.calculateTopPadding())
+                    .verticalScroll(rememberScrollState()),
             ) {
-                trendingPage += 1
-                aniHomeViewModel.fetchMedia(
-                    isAnime = true,
-                    page = trendingPage,
-                    skipTrendingNow = false,
-                )
+                HeadlineText("Trending now")
+                AnimeRow(
+                    onNavigateToDetails,
+                    trendingAnime,
+                ) {
+                    trendingPage += 1
+                    aniHomeViewModel.fetchMedia(
+                        isAnime = true,
+                        page = trendingPage,
+                        skipTrendingNow = false,
+                    )
+                }
+                HeadlineText("Popular this season")
+                AnimeRow(
+                    onNavigateToDetails,
+                    popularAnime,
+                ) {
+                    popularPage += 1
+                    aniHomeViewModel.fetchMedia(
+                        isAnime = true,
+                        page = popularPage,
+                        skipPopularThisSeason = false,
+                    )
+                }
+                HeadlineText("Upcoming next season")
+                AnimeRow(
+                    onNavigateToDetails,
+                    upcomingNextSeason,
+                ) {
+                    aniHomeViewModel.fetchMedia(
+                        isAnime = true,
+                        page = 1,
+                        skipUpcomingNextSeason = false,
+                    )
+                }
+                //            HeadlineText("All time popular")
+                //            AnimeRow(
+                //                onNavigateToDetails,
+                //                media.allTimePopular,
+                //                { aniHomeViewModel.loadAllTimePopular(true) }
+                //            )
+                //            HeadlineText("Top 100 anime")
+                //            AnimeRow(
+                //                onNavigateToDetails,
+                //                media.top100Anime,
+                //                { aniHomeViewModel.loadTop100Anime(true) }
+                //            )
             }
-            HeadlineText("Popular this season")
-            AnimeRow(
-                onNavigateToDetails,
-                popularAnime,
-            ) {
-                popularPage += 1
-                aniHomeViewModel.fetchMedia(
-                    isAnime = true,
-                    page = popularPage,
-                    skipPopularThisSeason = false,
-                )
-            }
-            HeadlineText("Upcoming next season")
-            AnimeRow(
-                onNavigateToDetails,
-                upcomingNextSeason,
-            ) {
-                aniHomeViewModel.fetchMedia(
-                    isAnime = true,
-                    page = 1,
-                    skipUpcomingNextSeason = false,
-                )
-            }
-//            HeadlineText("All time popular")
-//            AnimeRow(
-//                onNavigateToDetails,
-//                media.allTimePopular,
-//                { aniHomeViewModel.loadAllTimePopular(true) }
-//            )
-//            HeadlineText("Top 100 anime")
-//            AnimeRow(
-//                onNavigateToDetails,
-//                media.top100Anime,
-//                { aniHomeViewModel.loadTop100Anime(true) }
-//            )
-        }
-    }
-}
 
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun AniSearchBar() {
-    var text by remember {
-        mutableStateOf("")
-    }
-    var active by remember {
-        mutableStateOf(false)
-    }
-    SearchBar(
-        query = text,
-        onQueryChange = { },
-        onSearch = { },
-        active = active,
-        onActiveChange = { },
-        placeholder = {
-            Text(text = "Search for Anime, Manga...")
-        },
-        leadingIcon = {
-            Icon(
-                painterResource(id = R.drawable.baseline_menu_24),
-                "Menu",
-            )
-        },
-        trailingIcon = {
-            Row {
-                Icon(
-                    painterResource(id = R.drawable.baseline_search_24),
-                    "Search",
-                    modifier = Modifier.padding(end = 16.dp),
-                )
-                Icon(
-                    painterResource(id = R.drawable.baseline_more_vert_24),
-                    "More options",
-                    modifier = Modifier.padding(end = 16.dp),
-                )
+            var text by remember {
+                mutableStateOf("")
             }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp),
-    ) {
-        Text(text = "Show top/trending anime/search history")
+            var active by remember {
+                mutableStateOf(false)
+            }
+            val padding by animateDpAsState(targetValue = if (!active) Dimens.PaddingNormal else 0.dp)
+            SearchBar(
+                query = text,
+                onQueryChange = { text = it },
+                onSearch = { aniHomeViewModel.search(text) },
+                active = active,
+                onActiveChange = { active = it },
+                placeholder = {
+                    Text(text = "Search for Anime, Manga...")
+                },
+                trailingIcon = {
+                    if (text == "") {
+                        Icon(
+                            painterResource(id = R.drawable.baseline_search_24),
+                            "Search",
+                            modifier = Modifier.padding(end = 16.dp),
+                        )
+                    } else {
+                        IconButton(onClick = { text = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = stringResource(R.string.clear)
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .animateContentSize()
+                    .fillMaxWidth()
+                    .padding(horizontal = padding)
+                    .padding(top = it.calculateTopPadding()),
+            ) {
+                Text(text = "Show top/trending anime/search history")
+            }
+        }
     }
 }
 
@@ -222,10 +224,10 @@ fun AnimeRow(
                 title = anime.title,
                 coverImage = anime.coverImage,
                 onNavigateToDetails = (
-                    {
-                        onNavigateToDetails(anime.id)
-                    }
-                    ),
+                        {
+                            onNavigateToDetails(anime.id)
+                        }
+                        ),
             )
         }
     }
@@ -294,7 +296,7 @@ fun AnimeCard(
                 .height(160.dp)
                 .clip(RoundedCornerShape(12.dp)),
 
-        )
+            )
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,

@@ -117,7 +117,7 @@ fun AniNavHost(
             AniListRoute.SETTINGS,
         ) {
             setBottomBarState(false)
-            SettingsScreen()
+            SettingsScreen(navigationActions::navigateBack)
         }
         composable(AniListRoute.ANIME_ROUTE) {
             setBottomBarState(true)
