@@ -1,6 +1,5 @@
 package com.example.anilist.data.repository
 
-import android.text.Html
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.apollographql.apollo3.api.Optional
@@ -274,7 +273,6 @@ class MediaDetailsRepository @Inject constructor() {
     private fun parseCharacter(data: GetCharacterDetailQuery.Character): CharacterDetail {
         val regex = Regex("<span class='markdown_spoiler'>(.*?)</span>")
         val matches = regex.findAll(data.description ?: "")
-
 
 
 //        Html.fromHtml(data.description, Html.FROM_HTML_MODE_COMPACT, null, )
@@ -564,29 +562,29 @@ class MediaDetailsRepository @Inject constructor() {
         return list
     }
 
-    private fun parseMedia(anime: GetMediaDetailQuery.Media?): Media {
+    private fun parseMedia(media: GetMediaDetailQuery.Media?): Media {
         val tags: MutableList<Tag> = mutableListOf()
-        for (tag in anime?.tags.orEmpty()) {
+        for (tag in media?.tags.orEmpty()) {
             if (tag != null) {
                 tags.add(Tag(tag.name, tag.rank ?: 0, tag.isMediaSpoiler ?: true))
             }
         }
         val synonyms = buildString {
-            for (synonym in anime?.synonyms.orEmpty()) {
+            for (synonym in media?.synonyms.orEmpty()) {
                 append(synonym)
-                if (anime?.synonyms?.last() != synonym) {
+                if (media?.synonyms?.last() != synonym) {
                     append("\n")
                 }
             }
         }
         val genres: MutableList<String> = mutableListOf()
-        for (genre in anime?.genres.orEmpty()) {
+        for (genre in media?.genres.orEmpty()) {
             if (genre != null) {
                 genres.add(genre)
             }
         }
         val externalLinks: MutableList<Link> = mutableListOf()
-        for (link in anime?.externalLinks.orEmpty()) {
+        for (link in media?.externalLinks.orEmpty()) {
             if (link != null) {
                 externalLinks.add(
                     Link(
@@ -600,7 +598,7 @@ class MediaDetailsRepository @Inject constructor() {
             }
         }
         val relations: MutableList<Relation> = mutableListOf()
-        for (relation in anime?.relations?.edges.orEmpty()) {
+        for (relation in media?.relations?.edges.orEmpty()) {
             relations.add(
                 Relation(
                     id = relation?.node?.id ?: 0,
@@ -610,51 +608,50 @@ class MediaDetailsRepository @Inject constructor() {
                 ),
             )
         }
-        val infoList = mutableMapOf<String, String>()
         val media = Media(
-            title = anime?.title?.native ?: "Unknown",
-            type = anime?.type?.toAniHomeType()
+            title = media?.title?.native ?: "Unknown",
+            type = media?.type?.toAniHomeType()
                 ?: com.example.anilist.data.models.MediaType.UNKNOWN,
-            coverImage = anime?.coverImage?.extraLarge ?: "",
-            format = anime?.format?.name ?: "Unknown",
-            season = anime?.season?.toAniHomeSeason() ?: Season.UNKNOWN,
-            seasonYear = anime?.seasonYear.toString(),
-            episodeAmount = anime?.episodes ?: 0,
-            volumes = anime?.volumes ?: -1,
-            chapters = anime?.chapters ?: -1,
-            averageScore = anime?.averageScore ?: 0,
+            coverImage = media?.coverImage?.extraLarge ?: "",
+            format = media?.format?.toCapitalizedString() ?: "",
+            season = media?.season?.toAniHomeSeason() ?: Season.UNKNOWN,
+            seasonYear = media?.seasonYear ?: -1,
+            episodeAmount = media?.episodes ?: 0,
+            volumes = media?.volumes ?: -1,
+            chapters = media?.chapters ?: -1,
+            averageScore = media?.averageScore ?: 0,
             genres = genres,
-            description = anime?.description ?: "No description found",
+            description = media?.description ?: "No description found",
             relations = relations,
             infoList = mapOf(
-                "format" to anime?.format?.name.orEmpty(),
-                "status" to anime?.status?.name?.lowercase()
+                "format" to media?.format?.name.orEmpty(),
+                "status" to media?.status?.name?.lowercase()
                     ?.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
                     }
                     .orEmpty(),
-                "startDate" to if (anime?.startDate != null) "${anime.startDate.day}-${anime.startDate.month}-${anime.startDate.year}" else "Unknown",
-                "endDate" to if (anime?.endDate?.year != null && anime.endDate.month != null && anime.endDate.day != null) "${anime.endDate.day}-${anime.endDate.month}-${anime.endDate.year}" else "Unknown",
-                "duration" to if (anime?.duration == null) "Unknown" else anime.duration.toString(),
-                "country" to anime?.countryOfOrigin.toString(),
-                "source" to (anime?.source?.rawValue ?: "Unknown"),
-                "hashtag" to (anime?.hashtag ?: "Unknown"),
-                "licensed" to anime?.isLicensed.toString(),
-                "updatedAt" to anime?.updatedAt.toString(),
+                "startDate" to if (media?.startDate != null) "${media.startDate.day}-${media.startDate.month}-${media.startDate.year}" else "Unknown",
+                "endDate" to if (media?.endDate?.year != null && media.endDate.month != null && media.endDate.day != null) "${media.endDate.day}-${media.endDate.month}-${media.endDate.year}" else "Unknown",
+                "duration" to if (media?.duration == null) "Unknown" else media.duration.toString(),
+                "country" to media?.countryOfOrigin.toString(),
+                "source" to (media?.source?.rawValue ?: "Unknown"),
+                "hashtag" to (media?.hashtag ?: "Unknown"),
+                "licensed" to media?.isLicensed.toString(),
+                "updatedAt" to media?.updatedAt.toString(),
                 "synonyms" to synonyms,
-                "nsfw" to anime?.isAdult.toString(),
+                "nsfw" to media?.isAdult.toString(),
             ),
             tags = tags,
-            trailerImage = anime?.trailer?.thumbnail ?: "",
+            trailerImage = media?.trailer?.thumbnail ?: "",
             // todo add dailymotion
-            trailerLink = if (anime?.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${anime.trailer.id}" else if (anime?.trailer?.site == "dailymotion") "" else "",
+            trailerLink = if (media?.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${media.trailer.id}" else if (media?.trailer?.site == "dailymotion") "" else "",
             externalLinks = externalLinks,
             note = "",
-            stats = parseStats(anime),
-            characters = parseCharacters(anime),
-            favourites = anime?.favourites ?: -1,
-            isFavourite = anime?.isFavourite ?: false,
-            isFavouriteBlocked = anime?.isFavouriteBlocked ?: false,
+            stats = parseStats(media),
+            characters = parseCharacters(media),
+            favourites = media?.favourites ?: -1,
+            isFavourite = media?.isFavourite ?: false,
+            isFavouriteBlocked = media?.isFavouriteBlocked ?: false,
         )
         return media
     }

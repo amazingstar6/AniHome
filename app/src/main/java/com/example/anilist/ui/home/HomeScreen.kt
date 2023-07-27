@@ -7,11 +7,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -19,12 +22,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,11 +47,14 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -56,60 +65,101 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
+import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.MediaType
+import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.HomeMedia
 import com.example.anilist.ui.Dimens
+import com.example.anilist.ui.mediadetails.LoadingCircle
+import com.example.anilist.ui.mediadetails.QuickInfo
 import kotlinx.coroutines.flow.distinctUntilChanged
+import java.util.Locale
 
 private const val TAG = "AniHome"
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     aniHomeViewModel: AniHomeViewModel,
-    onNavigateToDetails: (Int) -> Unit,
+    onNavigateToMediaDetails: (Int) -> Unit,
     onNavigateToNotification: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToCharacterDetails: (Int) -> Unit,
+    onNavigateToStaffDetails: (Int) -> Unit
 ) {
     val media by aniHomeViewModel.media.observeAsState(HomeMedia())
     val popularAnime by aniHomeViewModel.popularAnime.observeAsState(emptyList())
     val trendingAnime by aniHomeViewModel.trendingAnime.observeAsState(emptyList())
     val upcomingNextSeason by aniHomeViewModel.upcomingNextSeason.observeAsState(emptyList())
+    val searchResultsMedia by aniHomeViewModel.searchResultsMedia.observeAsState()
+    val searchResultsCharacter by aniHomeViewModel.searchResultsCharacter.observeAsState()
+    val searchResultsStaff by aniHomeViewModel.searchResultsStaff.observeAsState()
 
     var popularPage by remember { mutableIntStateOf(1) }
     var trendingPage by remember { mutableIntStateOf(1) }
 
+    var active by rememberSaveable {
+        mutableStateOf(false)
+    }
+    val focusRequester by remember { mutableStateOf(FocusRequester()) }
+    var selectedChip by rememberSaveable { mutableStateOf(SearchFilter.MEDIA) }
+
     Scaffold(topBar = {
-        CenterAlignedTopAppBar(title = {
-            Text("Home")
-        }, navigationIcon = {
-            Box {
-                PlainTooltipBox(
-                    tooltip = { Text(text = "Settings   ") },
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                ) {
-                    IconButton(
-                        onClick = onNavigateToSettings,
-                        modifier = Modifier.tooltipTrigger(),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Settings,
-                            contentDescription = "settings",
-                        )
-                    }
-                }
-            }
-        }, actions = {
-            IconButton(onClick = onNavigateToNotification) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "notifications",
-//                    modifier = Modifier.padding(Dimens.PaddingNormal)
-                )
-            }
-        })
+        AniSearchBar(
+            active = active,
+            setActive = { active = it },
+            search = { aniHomeViewModel.search(it, selectedChip) },
+            searchResultsMedia = searchResultsMedia,
+            searchResultsCharacter = searchResultsCharacter.orEmpty(),
+            searchResultStaff = searchResultsStaff.orEmpty(),
+            onNavigateToMediaDetails = onNavigateToMediaDetails,
+            onNavigateToNotification = onNavigateToNotification,
+            onNavigateToSettings = onNavigateToSettings,
+            focusRequester = focusRequester,
+            selectedChip = selectedChip,
+            setSelectedChipValue = { selectedChip = it },
+            onNavigateToCharacterDetails = onNavigateToCharacterDetails,
+            onNavigateToStaffDetails = onNavigateToStaffDetails
+        )
+//        CenterAlignedTopAppBar(title = {
+//            Text("Home")
+//        }, navigationIcon = {
+//            Box {
+//                PlainTooltipBox(
+//                    tooltip = { Text(text = "Settings   ") },
+//                    modifier = Modifier.align(Alignment.BottomCenter),
+//                ) {
+//                    IconButton(
+//                        onClick = onNavigateToSettings,
+//                        modifier = Modifier.tooltipTrigger(),
+//                    ) {
+//                        Icon(
+//                            imageVector = Icons.Outlined.Settings,
+//                            contentDescription = "settings",
+//                        )
+//                    }
+//                }
+//            }
+//        }, actions = {
+//            IconButton(onClick = onNavigateToNotification) {
+//                Icon(
+//                    imageVector = Icons.Outlined.Notifications,
+//                    contentDescription = "notifications",
+////                    modifier = Modifier.padding(Dimens.PaddingNormal)
+//                )
+//            }
+//        })
+    }, floatingActionButton = {
+        FloatingActionButton(
+            onClick = { active = true; focusRequester.requestFocus() },
+        ) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = stringResource(id = R.string.search),
+            )
+        }
     }) {
-        Box {
+        if (popularAnime.isNotEmpty() || trendingAnime.isNotEmpty() || upcomingNextSeason.isNotEmpty()) {
             Column(
                 modifier = Modifier
                     .padding(top = it.calculateTopPadding())
@@ -117,7 +167,7 @@ fun HomeScreen(
             ) {
                 HeadlineText("Trending now")
                 AnimeRow(
-                    onNavigateToDetails,
+                    onNavigateToMediaDetails,
                     trendingAnime,
                 ) {
                     trendingPage += 1
@@ -129,7 +179,7 @@ fun HomeScreen(
                 }
                 HeadlineText("Popular this season")
                 AnimeRow(
-                    onNavigateToDetails,
+                    onNavigateToMediaDetails,
                     popularAnime,
                 ) {
                     popularPage += 1
@@ -141,7 +191,7 @@ fun HomeScreen(
                 }
                 HeadlineText("Upcoming next season")
                 AnimeRow(
-                    onNavigateToDetails,
+                    onNavigateToMediaDetails,
                     upcomingNextSeason,
                 ) {
                     aniHomeViewModel.fetchMedia(
@@ -163,47 +213,245 @@ fun HomeScreen(
                 //                { aniHomeViewModel.loadTop100Anime(true) }
                 //            )
             }
+        } else {
+            LoadingCircle()
+        }
+    }
+}
 
-            var text by remember {
-                mutableStateOf("")
-            }
-            var active by remember {
-                mutableStateOf(false)
-            }
-            val padding by animateDpAsState(targetValue = if (!active) Dimens.PaddingNormal else 0.dp)
-            SearchBar(
-                query = text,
-                onQueryChange = { text = it },
-                onSearch = { aniHomeViewModel.search(text) },
-                active = active,
-                onActiveChange = { active = it },
-                placeholder = {
-                    Text(text = "Search for Anime, Manga...")
-                },
-                trailingIcon = {
-                    if (text == "") {
-                        Icon(
-                            painterResource(id = R.drawable.baseline_search_24),
-                            "Search",
-                            modifier = Modifier.padding(end = 16.dp),
-                        )
-                    } else {
-                        IconButton(onClick = { text = "" }) {
+enum class SearchFilter {
+    MEDIA,
+    ANIME,
+    MANGA,
+    CHARACTERS,
+    STAFF;
+//    STUDIOS,
+//    FORUM,
+//    USER;
+
+    override fun toString(): String {
+        return this.name.lowercase()
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+private fun AniSearchBar(
+    active: Boolean,
+    setActive: (Boolean) -> Unit,
+    search: (String) -> Unit,
+    searchResultsMedia: List<Media>?,
+    searchResultsCharacter: List<CharacterDetail>,
+    searchResultStaff: List<StaffDetail>,
+    onNavigateToMediaDetails: (Int) -> Unit,
+    onNavigateToNotification: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    focusRequester: FocusRequester,
+    selectedChip: SearchFilter,
+    setSelectedChipValue: (SearchFilter) -> Unit,
+    onNavigateToCharacterDetails: (Int) -> Unit,
+    onNavigateToStaffDetails: (Int) -> Unit
+) {
+    var text by rememberSaveable {
+        mutableStateOf("")
+    }
+    val padding by animateDpAsState(
+        targetValue = if (!active) Dimens.PaddingNormal else 0.dp,
+        label = "increase padding" +
+                ""
+    )
+    SearchBar(
+        query = text,
+        onQueryChange = { text = it },
+        onSearch = { search(text) },
+        active = active,
+        onActiveChange = {
+//            if (!it) {
+//                text = ""
+//            }
+            setActive(it)
+        },
+        placeholder = {
+            Text(text = "Search for Anime, Manga...")
+        },
+        leadingIcon = {
+            if (active) {
+                IconButton(onClick = { setActive(false) }) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = stringResource(id = R.string.back)
+                    )
+                }
+            } else {
+                Box {
+                    PlainTooltipBox(
+                        tooltip = { Text(text = "Settings") },
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    ) {
+                        IconButton(
+                            onClick = onNavigateToSettings,
+                            modifier = Modifier.tooltipTrigger(),
+                        ) {
                             Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = stringResource(R.string.clear)
+                                imageVector = Icons.Outlined.Settings,
+                                contentDescription = "settings",
                             )
                         }
                     }
-                },
-                modifier = Modifier
-                    .animateContentSize()
-                    .fillMaxWidth()
-                    .padding(horizontal = padding)
-                    .padding(top = it.calculateTopPadding()),
-            ) {
-                Text(text = "Show top/trending anime/search history")
+                }
             }
+        },
+        trailingIcon = {
+            if (!active) {
+                IconButton(onClick = onNavigateToNotification) {
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = "notifications",
+//                    modifier = Modifier.padding(Dimens.PaddingNormal)
+                    )
+                }
+            } else if (text == "") {
+                Icon(
+                    painterResource(id = R.drawable.baseline_search_24),
+                    "Search",
+                    modifier = Modifier.padding(end = 16.dp),
+                )
+            } else {
+                IconButton(onClick = { text = "" }) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = stringResource(R.string.clear)
+                    )
+                }
+            }
+        },
+        modifier = Modifier
+            .animateContentSize()
+            .fillMaxWidth()
+            .padding(start = padding, end = padding, top = padding)
+            .focusRequester(focusRequester)
+    ) {
+        val filterList = SearchFilter.values()
+        FlowRow {
+            filterList.forEachIndexed { index, filterName ->
+                FilterChip(
+                    selected = index == selectedChip.ordinal,
+                    onClick = {
+                        setSelectedChipValue(filterList[index])
+                        if (text.isNotBlank()) {
+                            search(text)
+                        }
+                    },
+                    label = { Text(text = filterName.toString()) },
+                    modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                )
+            }
+        }
+        LazyColumn {
+            when (selectedChip) {
+                SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
+                    items(searchResultsMedia.orEmpty()) { media ->
+                        SearchCardMedia(
+                            media,
+                            onNavigateToMediaDetails,
+                            media.id,
+                            media.coverImage,
+                            media.title,
+                            media.type
+                        )
+                    }
+                }
+
+                SearchFilter.CHARACTERS -> {
+                    items(searchResultsCharacter.orEmpty()) {
+                        SearchCardCharacter(
+                            onNavigateToCharacterDetails,
+                            it.id,
+                            it.coverImage,
+                            it.userPreferredName,
+                            it.favorites
+                        )
+                    }
+                }
+
+                SearchFilter.STAFF -> {
+                    items(searchResultStaff.orEmpty()) {
+                        SearchCardCharacter(
+                            onNavigateToStaffDetails,
+                            it.id,
+                            it.coverImage,
+                            it.userPreferredName,
+                            it.favourites
+                        )
+                    }
+                }
+            }
+
+        }
+    }
+}
+
+@Composable
+fun SearchCardCharacter(
+    onNavigateToDetails: (Int) -> Unit,
+    id: Int,
+    coverImage: String,
+    userPreferredName: String,
+    favourites: Int
+) {
+    Column(modifier = Modifier.clickable { onNavigateToDetails(id) }) {
+        Text(text = userPreferredName)
+        Text(text = "Favourites: $favourites")
+    }
+}
+
+@Composable
+private fun SearchCardMedia(
+    media: Media,
+    onNavigateToDetails: (Int) -> Unit,
+    id: Int,
+    coverImage: String,
+    title: String,
+    mediaType: MediaType
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onNavigateToDetails(id) },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current).data(coverImage)
+                .crossfade(true).build(),
+            contentDescription = "Cover of $title",
+            placeholder = painterResource(id = R.drawable.no_image),
+            fallback = painterResource(id = R.drawable.no_image),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .height(175.dp)
+                .width(125.dp)
+                .padding(
+                    start = Dimens.PaddingNormal,
+                    top = Dimens.PaddingSmall,
+                    bottom = Dimens.PaddingSmall
+                )
+                .clip(RoundedCornerShape(12.dp))
+        )
+        Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(
+                    start = Dimens.PaddingNormal,
+                    end = Dimens.PaddingNormal,
+                    top = Dimens.PaddingNormal
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            QuickInfo(media = media, isAnime = mediaType == MediaType.ANIME)
         }
     }
 }

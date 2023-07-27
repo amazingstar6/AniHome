@@ -8,7 +8,7 @@ data class Media(
     val coverImage: String = "",
     val format: String = "?",
     val season: Season = Season.UNKNOWN,
-    val seasonYear: String = "?",
+    val seasonYear: Int = -1,
     val episodeAmount: Int = -1,
     val averageScore: Int = -1,
     val genres: List<String> = emptyList(),

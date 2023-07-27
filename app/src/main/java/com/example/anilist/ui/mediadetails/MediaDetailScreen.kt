@@ -27,13 +27,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
@@ -71,7 +69,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -99,7 +96,6 @@ import com.example.anilist.quantityStringResource
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.theme.AnilistTheme
 import kotlinx.coroutines.launch
-import org.jsoup.Jsoup
 
 private const val TAG = "AnimeDetails"
 
@@ -308,7 +304,7 @@ private fun Overview(
             .verticalScroll(rememberScrollState()),
 //            .padding(20.dp)
     ) {
-        val anime: Media = media ?: Media(note = "")
+        val anime: Media = media ?: Media()
         OverviewAnimeCoverDetails(anime, anime.genres)
         OverviewDescription(anime.description)
         OverviewRelations(anime.relations, onNavigateToDetails)
@@ -355,7 +351,9 @@ private fun OverviewRelations(
                         text = relation.title,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(bottom = 10.dp).width(80.dp),
+                        modifier = Modifier
+                            .padding(bottom = 10.dp)
+                            .width(80.dp),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -531,14 +529,14 @@ private fun ProfilePicture(coverImage: String, name: String) {
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
-    val isAnime = anime1.type == MediaType.ANIME
+private fun OverviewAnimeCoverDetails(media: Media, genres: List<String>) {
+    val isAnime = media.type == MediaType.ANIME
     Row(modifier = Modifier.padding(Dimens.PaddingNormal)) {
-        if (anime1.coverImage != "") {
+        if (media.coverImage != "") {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(anime1.coverImage)
+                model = ImageRequest.Builder(LocalContext.current).data(media.coverImage)
                     .crossfade(true).build(),
-                contentDescription = "Cover of ${anime1.title}",
+                contentDescription = "Cover of ${media.title}",
                 placeholder = painterResource(id = R.drawable.no_image),
                 fallback = painterResource(id = R.drawable.no_image),
                 contentScale = ContentScale.FillHeight,
@@ -550,61 +548,12 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
         }
         Column {
             Text(
-                text = anime1.title,
+                text = media.title,
                 modifier = Modifier.padding(start = 24.dp, bottom = 8.dp),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Column(modifier = Modifier.padding(start = 24.dp)) {
-                IconWithText(
-                    R.drawable.anime_details_movie,
-                    anime1.format,
-                    textColor = MaterialTheme.colorScheme.onSurface,
-                )
-                IconWithText(
-                    R.drawable.anime_details_calendar,
-                    text = if (isAnime) {
-                        "${anime1.season.getName()} ${anime1.seasonYear}"
-                    } else {
-                        if (anime1.volumes != -1) {
-                            quantityStringResource(
-                                id = R.plurals.volume,
-                                quantity = anime1.volumes,
-                                anime1.volumes,
-                            )
-                        } else {
-                            "?"
-                        }
-                    },
-                    textColor = MaterialTheme.colorScheme.onSurface,
-                )
-                IconWithText(
-                    R.drawable.anime_details_timer,
-                    if (isAnime) {
-                        quantityStringResource(
-                            id = R.plurals.episode,
-                            quantity = anime1.episodeAmount,
-                            anime1.episodeAmount,
-                        )
-                    } else {
-                        if (anime1.chapters != -1) {
-                            quantityStringResource(
-                                id = R.plurals.chapter,
-                                quantity = anime1.chapters,
-                                anime1.chapters,
-                            )
-                        } else {
-                            "?"
-                        }
-                    },
-                    textColor = MaterialTheme.colorScheme.onSurface,
-                )
-                IconWithText(
-                    R.drawable.anime_details_heart,
-                    "${anime1.averageScore}% Average score",
-                    textColor = MaterialTheme.colorScheme.onSurface,
-                )
-            }
+            QuickInfo(media, isAnime)
         }
     }
     FlowRow(
@@ -622,7 +571,7 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
             }
         }
     }
-    Rankings(stats = anime1.stats, modifier = Modifier.padding(horizontal = Dimens.PaddingNormal))
+    Rankings(stats = media.stats, modifier = Modifier.padding(horizontal = Dimens.PaddingNormal))
 //    if (anime1.highestRated != "") {
 //        IconWithText(
 //            icon = R.drawable.anime_details_rating_star,
@@ -644,6 +593,64 @@ private fun OverviewAnimeCoverDetails(anime1: Media, genres: List<String>) {
 }
 
 @Composable
+fun QuickInfo(media: Media, isAnime: Boolean) {
+    Column(modifier = Modifier.padding(start = 24.dp)) {
+        IconWithText(
+            R.drawable.anime_details_movie,
+            media.format,
+            textColor = MaterialTheme.colorScheme.onSurface,
+        )
+        IconWithText(
+            R.drawable.anime_details_calendar,
+            text = if (isAnime) {
+                "${media.season.getName()}${if (media.seasonYear != -1) " " + media.seasonYear else ""}"
+            } else {
+                if (media.volumes != -1) {
+                    quantityStringResource(
+                        id = R.plurals.volume,
+                        quantity = media.volumes,
+                        media.volumes,
+                    )
+                } else {
+                    "?"
+                }
+            },
+            textColor = MaterialTheme.colorScheme.onSurface,
+        )
+        IconWithText(
+            R.drawable.anime_details_timer,
+            if (isAnime) {
+                if (media.episodeAmount != -1) {
+                    quantityStringResource(
+                        id = R.plurals.episode,
+                        quantity = media.episodeAmount,
+                        media.episodeAmount,
+                    )
+                } else stringResource(id = R.string.question_mark)
+            } else {
+                if (media.chapters != -1) {
+                    quantityStringResource(
+                        id = R.plurals.chapter,
+                        quantity = media.chapters,
+                        media.chapters,
+                    )
+                } else {
+                    "?"
+                }
+            },
+            textColor = MaterialTheme.colorScheme.onSurface,
+        )
+        IconWithText(
+            R.drawable.anime_details_heart,
+            text = if (media.averageScore != -1) "${media.averageScore}% Average score" else stringResource(
+                id = R.string.question_mark
+            ),
+            textColor = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+@Composable
 private fun OverviewDescription(description: String) {
     HeadLine("Description")
 //    val color = MaterialTheme.colorScheme.onSurface.toArgb()
@@ -661,7 +668,6 @@ private fun OverviewDescription(description: String) {
 //        HtmlText(context, description, color)
 //    })
 }
-
 
 
 @Composable
@@ -986,7 +992,7 @@ fun OverviewPreview() {
                     coverImage = "",
                     format = "TV",
                     season = Season.SPRING,
-                    seasonYear = "2023",
+                    seasonYear = 2023,
                     episodeAmount = 11,
                     averageScore = 83,
                     genres = listOf("Action", "Adventure", "Drama", "Fantasy", "Supernatural"),

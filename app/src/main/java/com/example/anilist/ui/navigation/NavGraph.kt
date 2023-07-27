@@ -46,10 +46,12 @@ fun AniNavHost(
                 onNavigateToNotification = {
                     navController.navigate(route = AniListRoute.NOTIFICATION_ROUTE)
                 },
-                onNavigateToDetails = navigationActions::navigateToMediaDetails,
+                onNavigateToMediaDetails = navigationActions::navigateToMediaDetails,
                 onNavigateToSettings = {
                     navController.navigate(route = AniListRoute.SETTINGS)
                 },
+                onNavigateToCharacterDetails = navigationActions::navigateToCharacter,
+                onNavigateToStaffDetails = navigationActions::navigateToStaff
             )
         }
         composable(

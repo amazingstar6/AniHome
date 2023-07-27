@@ -10,7 +10,13 @@ import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
 import com.example.anilist.GetTrendsQuery
+import com.example.anilist.data.models.AniStudio
+import com.example.anilist.data.models.AniUser
+import com.example.anilist.data.models.CharacterDetail
+import com.example.anilist.data.models.Forum
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.Staff
+import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.HomeMedia
 import com.example.anilist.data.repository.HomeRepository
 import com.example.anilist.data.repository.NotificationRepository
@@ -98,6 +104,19 @@ class AniHomeViewModel @Inject constructor(
     private val _top100 = MutableLiveData<List<Media>>()
     val top100: LiveData<List<Media>> = _top100
 
+    private val _searchResultsMedia = MutableLiveData<List<Media>>()
+    val searchResultsMedia: LiveData<List<Media>> = _searchResultsMedia
+    private val _searchResultsCharacter = MutableLiveData<List<CharacterDetail>>()
+    val searchResultsCharacter: LiveData<List<CharacterDetail>> = _searchResultsCharacter
+    private val _searchResultsStaff = MutableLiveData<List<StaffDetail>>()
+    val searchResultsStaff: LiveData<List<StaffDetail>> = _searchResultsStaff
+    private val _searchResultsStudio = MutableLiveData<List<AniStudio>>()
+    val searchResultsStudio: LiveData<List<AniStudio>> = _searchResultsStudio
+    private val _searchResultsForum = MutableLiveData<List<Forum>>()
+    val searchResultsForum: LiveData<List<Forum>> = _searchResultsForum
+    private val _searchResultsUser = MutableLiveData<List<AniUser>>()
+    val searchResultsUser: LiveData<List<AniUser>> = _searchResultsUser
+
     init {
 //        loadTrendingAnime()
 //        loadPopularAnime()
@@ -136,9 +155,9 @@ class AniHomeViewModel @Inject constructor(
             ).getOrDefault(HomeMedia())
             if (!skipPopularThisSeason) _popularAnime.value = _media.value?.popularThisSeason.orEmpty() + newMedia.popularThisSeason
             if (!skipTrendingNow) _trendingAnime.value = _media.value?.trendingNow.orEmpty() + newMedia.trendingNow
-            _upcomingNextSeason.value = _media.value?.upcomingNextSeason.orEmpty() + newMedia.upcomingNextSeason
-            _allTimePopular.value = _media.value?.allTimePopular.orEmpty() + newMedia.allTimePopular
-            _top100.value = _media.value?.top100Anime.orEmpty() + newMedia.top100Anime
+            if (!skipUpcomingNextSeason) _upcomingNextSeason.value = _media.value?.upcomingNextSeason.orEmpty() + newMedia.upcomingNextSeason
+            if (!skipAllTimePopular) _allTimePopular.value = _media.value?.allTimePopular.orEmpty() + newMedia.allTimePopular
+            if (!skipTop100Anime) _top100.value = _media.value?.top100Anime.orEmpty() + newMedia.top100Anime
         }
     }
 
@@ -366,9 +385,19 @@ class AniHomeViewModel @Inject constructor(
         // todo
     }
 
-    fun search(text: String) {
+    fun search(text: String, searchFilter: SearchFilter) {
+        Log.d(TAG, "Search function got called in view model!")
         viewModelScope.launch {
-            homeRepository.search(text)
+            when (searchFilter) {
+                SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
+                    _searchResultsMedia.value = homeRepository.searchMedia(text, searchFilter)
+                }
+                SearchFilter.CHARACTERS -> _searchResultsCharacter.value = homeRepository.searchCharacters(text)
+                SearchFilter.STAFF -> _searchResultsStaff.value = homeRepository.searchStaff(text)
+//                SearchFilter.STUDIOS -> _searchResultsStudio.value = homeRepository.searchStudio(text)
+//                SearchFilter.FORUM -> _searchResultsForum.value = homeRepository.searchForum(text)
+//                SearchFilter.USER -> _searchResultsUser.value = homeRepository.searchUser(text)
+            }
         }
     }
 

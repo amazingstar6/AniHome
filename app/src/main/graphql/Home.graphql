@@ -12,15 +12,15 @@ query GetTrendingMedia(
     $skipTop100Anime: Boolean = false
 ){
 #       Default per page is 25, since the limit is 25
-        popularThisSeason:
-        Page(page: $page)@skip(if: $skipPopularThisSeason) {
-            media(sort:POPULARITY_DESC, type: $type, season: $currentSeason, seasonYear: $currentYear) {
+        trendingNow:
+        Page(page: $page)@skip(if: $skipTrendingNow) {
+            media(sort: TRENDING_DESC, type:$type) {
                 ...mediaTitleCover
             }
         }
-        trendingNow:
-        Page(page: $page)@skip(if: $skipTrendingNow) {
-            media(sort: TRENDING, type:$type) {
+        popularThisSeason:
+        Page(page: $page)@skip(if: $skipPopularThisSeason) {
+            media(sort:POPULARITY_DESC, type: $type, season: $currentSeason, seasonYear: $currentYear) {
                 ...mediaTitleCover
             }
         }
@@ -80,12 +80,79 @@ fragment mediaTitleCover on Media {
     coverImage {
         extraLarge
     }
+    type
 }
 
-query SearchAnime($search: String) {
-    Media(search: $search) {
-        title {
-            userPreferred
+# fixme paging
+query SearchMedia($search: String!, $type: MediaType, $sort: [MediaSort] = SEARCH_MATCH, $genres: [String], $year: Int, $season: MediaSeason, $airingStatus: MediaStatus) {
+    Page {
+        media(search: $search, type: $type, sort: $sort, genre_in: $genres, seasonYear: $year, season: $season, status: $airingStatus) {
+            id
+            title {
+                userPreferred
+            }
+            coverImage {
+                extraLarge
+            }
+            type
+            format
+            episodes
+            chapters
+            volumes
+            averageScore
+            season
+            seasonYear
+        }
+    }
+}
+
+query SearchCharacters($search: String!) {
+    Page {
+        characters(search: $search) {
+            id
+            name {
+                userPreferred
+            }
+            favourites
+        }
+    }
+}
+
+query SearchStaff($search: String!) {
+    Page {
+        staff(search: $search) {
+            id
+            name {
+                userPreferred
+            }
+            favourites
+        }
+    }
+}
+
+query SearchStudios($search: String!) {
+    Page {
+        studios(search: $search) {
+            id
+            name
+        }
+    }
+}
+
+query SearchForum($search: String!) {
+    Page {
+        threads(search: $search) {
+            id
+            title
+        }
+    }
+}
+
+query SearchUsers($search: String!) {
+    Page {
+        users(search: $search) {
+            id
+            name
         }
     }
 }

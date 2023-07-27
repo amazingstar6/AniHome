@@ -5,15 +5,24 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.Apollo
 import com.example.anilist.GetMorePopularThisSeasonQuery
 import com.example.anilist.GetTrendingMediaQuery
+import com.example.anilist.SearchCharactersQuery
+import com.example.anilist.SearchMediaQuery
+import com.example.anilist.SearchStaffQuery
+import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.Season
+import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.fragment.MediaTitleCover
+import com.example.anilist.type.MediaFormat
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaType
+import com.example.anilist.ui.home.SearchFilter
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -256,11 +265,138 @@ class HomeRepository @Inject constructor() {
             id = media.id,
             title = media.title?.userPreferred ?: "",
             coverImage = media.coverImage?.extraLarge ?: "",
+            type = media.type?.toAniHomeType() ?: com.example.anilist.data.models.MediaType.UNKNOWN
         )
     }
 
-    fun search(text: String) {
-        TODO("Not yet implemented")
+    private fun parseSearchMedia(media: SearchMediaQuery.Medium): Media {
+        return Media(
+            id = media.id,
+            title = media.title?.userPreferred ?: "",
+            coverImage = media.coverImage?.extraLarge ?: "",
+            type = media.type?.toAniHomeType() ?: com.example.anilist.data.models.MediaType.UNKNOWN,
+            format = media.format?.toCapitalizedString() ?: "",
+            episodeAmount = media.episodes ?: -1,
+            chapters = media.chapters ?: -1,
+            volumes = media.volumes ?: -1,
+            averageScore = media.averageScore ?: -1,
+            season = media.season?.toAniHomeSeason() ?: Season.UNKNOWN,
+            seasonYear = media.seasonYear ?: -1
+        )
+    }
+
+    suspend fun searchMedia(text: String, type: SearchFilter): List<Media> {
+        try {
+            when (type) {
+                SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
+                    val query: SearchMediaQuery = when (type) {
+                        SearchFilter.MEDIA -> SearchMediaQuery(text)
+                        SearchFilter.ANIME -> SearchMediaQuery(
+                            text,
+                            type = Optional.present(MediaType.ANIME)
+                        )
+
+                        SearchFilter.MANGA -> SearchMediaQuery(
+                            text,
+                            type = Optional.present(MediaType.MANGA)
+                        )
+
+                        else -> {
+                            SearchMediaQuery(text)
+                        }
+                    }
+                    val result =
+                        Apollo.apolloClient.query(
+                            query,
+                        )
+                            .execute()
+                    if (result.hasErrors()) {
+                        // these errors are related to GraphQL errors
+                        return emptyList()
+                    }
+
+                    val resultList = mutableListOf<Media>()
+                    result.data?.Page?.media?.forEach {
+                        if (it != null) {
+                            resultList.add(parseSearchMedia(it))
+                        }
+                    }
+                    return resultList
+                }
+
+                else -> return emptyList()
+            }
+
+        } catch (exception: ApolloException) {
+            // handle exception here, these are mainly for network errors
+        }
+        return emptyList()
+    }
+
+    private fun parseSearchCharacters(character: SearchCharactersQuery.Character): CharacterDetail {
+        return CharacterDetail(
+            id = character.id,
+            userPreferredName = character.name?.userPreferred ?: "",
+            favorites = character.favourites ?: -1
+        )
+    }
+
+    suspend fun searchCharacters(text: String): List<CharacterDetail> {
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    SearchCharactersQuery(text),
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+                return emptyList()
+            }
+
+            val resultList = mutableListOf<CharacterDetail>()
+            result.data?.Page?.characters?.forEach {
+                if (it != null) {
+                    resultList.add(parseSearchCharacters(it))
+                }
+            }
+            return resultList
+        } catch (exception: ApolloException) {
+            // handle exception here, these are mainly for network errors
+        }
+        return emptyList()
+    }
+
+    suspend fun searchStaff(text: String): List<StaffDetail> {
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    SearchStaffQuery(text),
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+                return emptyList()
+            }
+
+            val resultList = mutableListOf<StaffDetail>()
+            result.data?.Page?.staff?.forEach {
+                if (it != null) {
+                    resultList.add(parseSearchStaff(it))
+                }
+            }
+            return resultList
+        } catch (exception: ApolloException) {
+            // handle exception here, these are mainly for network errors
+        }
+        return emptyList()
+    }
+
+    private fun parseSearchStaff(staff: SearchStaffQuery.Staff): StaffDetail {
+       return StaffDetail(
+           id = staff.id,
+           userPreferredName = staff.name?.userPreferred ?: "",
+           favourites = staff.favourites ?: -1
+       )
     }
 
 //    fun getTrendingAnime() = flow {
@@ -297,4 +433,14 @@ class HomeRepository @Inject constructor() {
 //        }
 //        return mediaList
 //    }
+}
+
+fun MediaFormat?.toCapitalizedString(): String {
+    return if (this?.rawValue != "TV") {
+        this?.rawValue?.lowercase()
+            ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+            ?: "Unknown"
+    } else {
+        this.rawValue
+    }
 }
