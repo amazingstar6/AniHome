@@ -1,47 +1,88 @@
 query GetTrendingMedia(
     $page: Int!,
+    $pageSize: Int!,
     $type: MediaType!,
     $currentSeason: MediaSeason!,
     $nextSeason: MediaSeason!,
     $currentYear: Int!,
     $nextYear: Int!,
-    $skipTrendingNow: Boolean = false,
-    $skipPopularThisSeason: Boolean = false,
-    $skipUpcomingNextSeason: Boolean = false,
-    $skipAllTimePopular: Boolean = false,
-    $skipTop100Anime: Boolean = false
+    $skipTrendingNow: Boolean = true,
+    $skipPopularThisSeason: Boolean = true,
+    $skipUpcomingNextSeason: Boolean = true,
+    $skipAllTimePopular: Boolean = true,
+    $skipTop100Anime: Boolean = true
 ){
-#       Default per page is 25, since the limit is 25
-        trendingNow:
-        Page(page: $page)@skip(if: $skipTrendingNow) {
-            media(sort: TRENDING_DESC, type:$type) {
-                ...mediaTitleCover
-            }
-        }
-        popularThisSeason:
-        Page(page: $page)@skip(if: $skipPopularThisSeason) {
-            media(sort:POPULARITY_DESC, type: $type, season: $currentSeason, seasonYear: $currentYear) {
-                ...mediaTitleCover
-            }
-        }
-        upcomingNextSeason:
-        Page(page: $page)@skip(if: $skipUpcomingNextSeason) {
-            media(sort: POPULARITY_DESC, type: $type, season: $nextSeason, seasonYear: $nextYear) {
-                ...mediaTitleCover
-            }
-        }
-        allTimePopular:
-        Page(page: $page)@skip(if: $skipAllTimePopular) {
-            media(sort: POPULARITY_DESC, type:$type) {
-                ...mediaTitleCover
-            }
-        }
-        top100Anime:
-        Page(page: $page)@skip(if: $skipTop100Anime) {
-            media(sort: SCORE_DESC, type: $type) {
+    #       Default per page is 25, since the limit is 25
+    trendingNow:
+    Page(page: $page, perPage: $pageSize)@include(if: $skipTrendingNow) {
+        media(sort: TRENDING_DESC, type:$type) {
             ...mediaTitleCover
-            }
         }
+    }
+    popularThisSeason:
+    Page(page: $page, perPage: $pageSize)@include(if: $skipPopularThisSeason) {
+        media(sort:POPULARITY_DESC, type: $type, season: $currentSeason, seasonYear: $currentYear) {
+            ...mediaTitleCover
+        }
+    }
+    upcomingNextSeason:
+    Page(page: $page, perPage: $pageSize)@include(if: $skipUpcomingNextSeason) {
+        media(sort: POPULARITY_DESC, type: $type, season: $nextSeason, seasonYear: $nextYear) {
+            ...mediaTitleCover
+        }
+    }
+    allTimePopular:
+    Page(page: $page, perPage: $pageSize)@include(if: $skipAllTimePopular) {
+        media(sort: POPULARITY_DESC, type:$type) {
+            ...mediaTitleCover
+        }
+    }
+    top100Anime:
+    Page(page: $page, perPage: $pageSize)@include(if: $skipTop100Anime) {
+        media(sort: SCORE_DESC, type: $type) {
+            ...mediaTitleCover
+        }
+    }
+}
+
+query GetTrendingNow($page: Int!, $pageSize: Int!) {
+    Page(page: $page, perPage: $pageSize) {
+        media(sort: TRENDING_DESC, type: ANIME) {
+            ...mediaTitleCover
+        }
+    }
+}
+
+query GetPopularThisSeason($page: Int!, $pageSize: Int!, $currentSeason: MediaSeason!, $currentYear: Int!) {
+    Page(page: $page, perPage: $pageSize, ) {
+        media(sort:POPULARITY_DESC, type: ANIME, season: $currentSeason, seasonYear: $currentYear) {
+            ...mediaTitleCover
+        }
+    }
+}
+
+query GetUpComingNextSeason($page: Int!, $pageSize: Int!, $nextSeason: MediaSeason!, $nextYear: Int!) {
+    Page(page: $page, perPage: $pageSize) {
+        media(sort: POPULARITY_DESC, type: ANIME, season: $nextSeason, seasonYear: $nextYear) {
+            ...mediaTitleCover
+        }
+    }
+}
+
+query GetAllTimePopular($page: Int!, $pageSize: Int!) {
+    Page(page: $page, perPage: $pageSize) {
+        media(sort: POPULARITY_DESC, type: ANIME) {
+            ...mediaTitleCover
+        }
+    }
+}
+
+query GetTop100Anime($page: Int!, $pageSize: Int!) {
+    Page(page: $page, perPage: $pageSize) {
+        media(sort: SCORE_DESC, type: ANIME) {
+            ...mediaTitleCover
+        }
+    }
 }
 
 query GetMorePopularThisSeason(

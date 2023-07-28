@@ -68,6 +68,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
@@ -82,12 +84,12 @@ import com.example.anilist.data.repository.HomeMedia
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.mediadetails.LoadingCircle
 import com.example.anilist.ui.mediadetails.QuickInfo
-import com.example.anilist.ui.my_media.MediaStatus
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.util.Locale
 
 private const val TAG = "AniHome"
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     aniHomeViewModel: AniHomeViewModel,
@@ -100,6 +102,13 @@ fun HomeScreen(
     navigateToThreadDetails: (Int) -> Unit,
     navigateToStudioDetails: (Int) -> Unit
 ) {
+    val pagerTrendingNow = aniHomeViewModel.trendingNowPager.collectAsLazyPagingItems()
+    val pagerPopularThisSeason = aniHomeViewModel.popularThisSeasonPager.collectAsLazyPagingItems()
+    val pagerUpcomingNextSeason =
+        aniHomeViewModel.upComingNextSeasonPager.collectAsLazyPagingItems()
+    val pagerAllTimePopular = aniHomeViewModel.allTimePopularPager.collectAsLazyPagingItems()
+    val pagerTop100Anime = aniHomeViewModel.top100AnimePager.collectAsLazyPagingItems()
+
     val media by aniHomeViewModel.media.observeAsState(HomeMedia())
     val popularAnime by aniHomeViewModel.popularAnime.observeAsState(emptyList())
     val trendingAnime by aniHomeViewModel.trendingAnime.observeAsState(emptyList())
@@ -186,47 +195,59 @@ fun HomeScreen(
             )
         }
     }) {
-        if (popularAnime.isNotEmpty() || trendingAnime.isNotEmpty() || upcomingNextSeason.isNotEmpty()) {
+        //fixme
+        if (true || popularAnime.isNotEmpty() || trendingAnime.isNotEmpty() || upcomingNextSeason.isNotEmpty()) {
             Column(
                 modifier = Modifier
                     .padding(top = it.calculateTopPadding())
                     .verticalScroll(rememberScrollState()),
             ) {
                 HeadlineText("Trending now")
-                AnimeRow(
-                    onNavigateToMediaDetails,
-                    trendingAnime,
-                ) {
-                    trendingPage += 1
-                    aniHomeViewModel.fetchMedia(
-                        isAnime = true,
-                        page = trendingPage,
-                        skipTrendingNow = false,
-                    )
-                }
+                LazyRowLazyPagingItems(pagerTrendingNow, onNavigateToMediaDetails)
                 HeadlineText("Popular this season")
-                AnimeRow(
-                    onNavigateToMediaDetails,
-                    popularAnime,
-                ) {
-                    popularPage += 1
-                    aniHomeViewModel.fetchMedia(
-                        isAnime = true,
-                        page = popularPage,
-                        skipPopularThisSeason = false,
-                    )
-                }
+                LazyRowLazyPagingItems(pagerPopularThisSeason, onNavigateToMediaDetails)
                 HeadlineText("Upcoming next season")
-                AnimeRow(
-                    onNavigateToMediaDetails,
-                    upcomingNextSeason,
-                ) {
-                    aniHomeViewModel.fetchMedia(
-                        isAnime = true,
-                        page = 1,
-                        skipUpcomingNextSeason = false,
-                    )
-                }
+                LazyRowLazyPagingItems(pagerUpcomingNextSeason, onNavigateToMediaDetails)
+                HeadlineText("All time popular")
+                LazyRowLazyPagingItems(pagerAllTimePopular, onNavigateToMediaDetails)
+                HeadlineText("Top 100 anime")
+                LazyRowLazyPagingItems(pagerTop100Anime, onNavigateToMediaDetails)
+
+//                HeadlineText("Trending now")
+//                AnimeRow(
+//                    onNavigateToMediaDetails,
+//                    trendingAnime,
+//                ) {
+//                    trendingPage += 1
+//                    aniHomeViewModel.fetchMedia(
+//                        isAnime = true,
+//                        page = trendingPage,
+//                        skipTrendingNow = false,
+//                    )
+//                }
+//                HeadlineText("Popular this season")
+//                AnimeRow(
+//                    onNavigateToMediaDetails,
+//                    popularAnime,
+//                ) {
+//                    popularPage += 1
+//                    aniHomeViewModel.fetchMedia(
+//                        isAnime = true,
+//                        page = popularPage,
+//                        skipPopularThisSeason = false,
+//                    )
+//                }
+//                HeadlineText("Upcoming next season")
+//                AnimeRow(
+//                    onNavigateToMediaDetails,
+//                    upcomingNextSeason,
+//                ) {
+//                    aniHomeViewModel.fetchMedia(
+//                        isAnime = true,
+//                        page = 1,
+//                        skipUpcomingNextSeason = false,
+//                    )
+//                }
                 //            HeadlineText("All time popular")
                 //            AnimeRow(
                 //                onNavigateToDetails,
@@ -242,6 +263,32 @@ fun HomeScreen(
             }
         } else {
             LoadingCircle()
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun LazyRowLazyPagingItems(
+    pager: LazyPagingItems<Media>,
+    onNavigateToMediaDetails: (Int) -> Unit
+) {
+    LazyRow() {
+        items(count = pager.itemCount) { index ->
+            val item = pager[index]
+            Log.d(TAG, "Number of items loaded is ${pager.itemCount}")
+            Text("Index=$index")
+            if (item != null) {
+                AnimeCard(
+                    title = item.title,
+                    coverImage = item.coverImage,
+                    onNavigateToDetails = (
+                            {
+                                onNavigateToMediaDetails(item.id)
+                            }
+                            ),
+                )
+            }
         }
     }
 }
@@ -668,7 +715,6 @@ fun AnimeRow(
         }
     }
     LaunchedEffect(needNextPage) {
-        Log.i(TAG, "Next page is needed")
         snapshotFlow {
             needNextPage
         }.distinctUntilChanged().collect {

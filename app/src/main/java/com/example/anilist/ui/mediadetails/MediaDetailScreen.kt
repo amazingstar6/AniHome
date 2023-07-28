@@ -123,7 +123,8 @@ fun MediaDetail(
     navigateToStaff: (Int) -> Unit,
     navigateToCharacter: (Int) -> Unit,
     onNavigateToStaff: (Int) -> Unit,
-    onNavigateToLargeCover: (String) -> Unit
+    onNavigateToLargeCover: (String) -> Unit,
+    onNavigateToStatusEditor: (Int) -> Unit
 ) {
 //    val pagerState = rememberPagerState(
 //        initialPage = 0,
@@ -231,7 +232,7 @@ fun MediaDetail(
         })
     }, floatingActionButton = {
         FloatingActionButton(
-            onClick = { /*TODO*/ },
+            onClick = { onNavigateToStatusEditor(mediaId) },
         ) {
             Icon(imageVector = Icons.Outlined.Edit, contentDescription = "edit")
         }

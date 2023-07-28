@@ -1,10 +1,16 @@
 package com.example.anilist.data.repository
 
+import android.util.Log
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.Apollo
+import com.example.anilist.GetAllTimePopularQuery
 import com.example.anilist.GetMorePopularThisSeasonQuery
+import com.example.anilist.GetPopularThisSeasonQuery
+import com.example.anilist.GetTop100AnimeQuery
 import com.example.anilist.GetTrendingMediaQuery
+import com.example.anilist.GetTrendingNowQuery
+import com.example.anilist.GetUpComingNextSeasonQuery
 import com.example.anilist.SearchCharactersQuery
 import com.example.anilist.SearchForumQuery
 import com.example.anilist.SearchMediaQuery
@@ -24,6 +30,7 @@ import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaSort
 import com.example.anilist.type.MediaType
 import com.example.anilist.ui.home.AniMediaSort
+import com.example.anilist.ui.home.MediaPagingSource
 import com.example.anilist.ui.home.SearchFilter
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Month
@@ -35,8 +42,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 enum class HomeTrendingTypes {
-    POPULAR_THIS_SEASON,
     TRENDING_NOW,
+    POPULAR_THIS_SEASON,
     UPCOMING_NEXT_SEASON,
     ALL_TIME_POPULAR,
     TOP_100_ANIME,
@@ -50,18 +57,182 @@ data class HomeMedia(
     val top100Anime: List<Media> = emptyList(),
 )
 
+private const val TAG = "HomeRepository"
+
 @Singleton
 class HomeRepository @Inject constructor() {
     private var popularThisSeasonPage: Int = 1
 
+    fun trendingNowPagingSource() =
+        MediaPagingSource(this, HomeTrendingTypes.TRENDING_NOW)
+
+    fun popularThisSeasonPagingSource() =
+        MediaPagingSource(this, HomeTrendingTypes.POPULAR_THIS_SEASON)
+
+    fun upcomingNextSeasonPagingSource() =
+        MediaPagingSource(this, HomeTrendingTypes.UPCOMING_NEXT_SEASON)
+
+    fun allTimePopularPagingSource() =
+        MediaPagingSource(this, HomeTrendingTypes.ALL_TIME_POPULAR)
+
+    fun top100AnimePagingSource() =
+        MediaPagingSource(this, HomeTrendingTypes.TOP_100_ANIME)
+
+    suspend fun getTrendingNow(page: Int, pageSize: Int): List<Media> {
+        Log.d(TAG, "Page being loaded is $page with page size: $pageSize")
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    GetTrendingNowQuery(
+                        page = page,
+                        pageSize = pageSize
+                    ),
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+            }
+            val data = result.data
+            if (data != null) {
+                return data.Page?.media?.filterNotNull()
+                    ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here, these are mainly for network errors
+            return emptyList()
+        }
+        return emptyList()
+    }
+
+    suspend fun getPopularThisSeason(page: Int, pageSize: Int): List<Media> {
+        Log.d(TAG, "Page being loaded is $page with page size: $pageSize")
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    GetPopularThisSeasonQuery(
+                        page = page,
+                        pageSize = pageSize,
+                        currentSeason = getCurrentSeason(),
+                        currentYear = getCurrentYear()
+                    ),
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+            }
+            val data = result.data
+            if (data != null) {
+                return data.Page?.media?.filterNotNull()
+                    ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here, these are mainly for network errors
+            return emptyList()
+        }
+        return emptyList()
+    }
+
+    suspend fun getUpcomingNextSeason(page: Int, pageSize: Int): List<Media> {
+        Log.d(TAG, "Page being loaded is $page with page size: $pageSize")
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    GetUpComingNextSeasonQuery(
+                        page = page,
+                        pageSize = pageSize,
+                        nextSeason = getNextSeason(),
+                        nextYear = getNextYear()
+                    ),
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+            }
+            val data = result.data
+            if (data != null) {
+                return data.Page?.media?.filterNotNull()
+                    ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here, these are mainly for network errors
+            return emptyList()
+        }
+        return emptyList()
+    }
+
+    private fun getNextYear(): Int {
+        val month = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).month
+        val nextSeason = getMediaSeasonFromMonth((month.number + 4) % 12)
+        val year = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year
+        return if (nextSeason == MediaSeason.SPRING) year + 1 else year
+    }
+
+    private fun getNextSeason(): MediaSeason {
+        // plus four months equals the next season
+        return getMediaSeasonFromMonth((Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).monthNumber + 4) % 12)
+    }
+
+    suspend fun getAllTimePopularMedia(page: Int, pageSize: Int): List<Media> {
+        Log.d(TAG, "Page being loaded is $page with page size: $pageSize")
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    GetAllTimePopularQuery(
+                        page = page,
+                        pageSize = pageSize
+                    ),
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+            }
+            val data = result.data
+            if (data != null) {
+                return data.Page?.media?.filterNotNull()
+                    ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here, these are mainly for network errors
+            return emptyList()
+        }
+        return emptyList()
+    }
+
+    suspend fun getTop100Anime(page: Int, pageSize: Int): List<Media> {
+        Log.d(TAG, "Page being loaded is $page with page size: $pageSize")
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    GetTop100AnimeQuery(
+                        page = page,
+                        pageSize = pageSize,
+                    ),
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+            }
+            val data = result.data
+            if (data != null) {
+                return data.Page?.media?.filterNotNull()
+                    ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here, these are mainly for network errors
+            return emptyList()
+        }
+        return emptyList()
+    }
+
     suspend fun getHomeMedia(
         isAnime: Boolean,
         page: Int,
-        skipTrendingNow: Boolean = true,
-        skipPopularThisSeason: Boolean = true,
-        skipUpcomingNextSeason: Boolean = true,
-        skipAllTimePopular: Boolean = true,
-        skipTop100Anime: Boolean = true,
+        pageSize: Int,
+        includeTrendingNow: Boolean = false,
+        includePopularThisSeason: Boolean = true,
+        includeUpcomingNextSeason: Boolean = true,
+        includeAllTimePopular: Boolean = true,
+        includeTop100Anime: Boolean = true,
     ): Result<HomeMedia> {
         try {
             val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
@@ -80,16 +251,17 @@ class HomeRepository @Inject constructor() {
                 Apollo.apolloClient.query(
                     GetTrendingMediaQuery(
                         page = page,
+                        pageSize = pageSize,
                         type = param,
                         currentSeason = season,
                         nextSeason = nextSeason,
                         currentYear = year,
                         nextYear = nextYear,
-                        skipPopularThisSeason = Optional.present(skipPopularThisSeason),
-                        skipTrendingNow = Optional.present(skipTrendingNow),
-                        skipUpcomingNextSeason = Optional.present(skipUpcomingNextSeason),
-                        skipAllTimePopular = Optional.present(skipAllTimePopular),
-                        skipTop100Anime = Optional.present(skipTop100Anime),
+                        skipPopularThisSeason = Optional.present(includePopularThisSeason),
+                        skipTrendingNow = Optional.present(includeTrendingNow),
+                        skipUpcomingNextSeason = Optional.present(includeUpcomingNextSeason),
+                        skipAllTimePopular = Optional.present(includeAllTimePopular),
+                        skipTop100Anime = Optional.present(includeTop100Anime),
                     ),
                 )
                     .execute()
@@ -509,6 +681,16 @@ class HomeRepository @Inject constructor() {
         )
     }
 
+    private fun getCurrentSeason(): MediaSeason {
+        return getMediaSeasonFromMonth(
+            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).monthNumber
+        )
+    }
+
+    private fun getCurrentYear(): Int {
+        return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year
+    }
+
 
 //    fun getTrendingAnime() = flow {
 //        try {
@@ -571,3 +753,5 @@ fun MediaSort.Companion.fromAniMediaSort(it: AniMediaSort): MediaSort {
         AniMediaSort.FAVOURITES -> MediaSort.FAVOURITES_DESC
     }
 }
+
+

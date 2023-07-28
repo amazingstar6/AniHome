@@ -7,6 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
 import com.example.anilist.GetTrendsQuery
@@ -33,6 +36,8 @@ import java.util.Calendar
 import javax.inject.Inject
 
 private const val TAG = "AniHomeViewModel"
+private const val PAGE_SIZE = 25
+private const val PREFETCH_DISTANCE = 10
 
 @HiltViewModel
 class AniHomeViewModel @Inject constructor(
@@ -41,6 +46,51 @@ class AniHomeViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
 ) :
     ViewModel() {
+
+    val trendingNowPager = Pager(
+        config = PagingConfig(
+            pageSize = PAGE_SIZE,
+            prefetchDistance = PREFETCH_DISTANCE,
+            enablePlaceholders = false
+        ),
+        pagingSourceFactory = { homeRepository.trendingNowPagingSource() }
+    ).flow.cachedIn(viewModelScope)
+
+    val popularThisSeasonPager = Pager(
+        config = PagingConfig(
+            pageSize = PAGE_SIZE,
+            prefetchDistance = PREFETCH_DISTANCE,
+            enablePlaceholders = false
+        ),
+        pagingSourceFactory = { homeRepository.popularThisSeasonPagingSource() }
+    ).flow.cachedIn(viewModelScope)
+
+    val upComingNextSeasonPager = Pager(
+        config = PagingConfig(
+            pageSize = PAGE_SIZE,
+            prefetchDistance = PREFETCH_DISTANCE,
+            enablePlaceholders = false
+        ),
+        pagingSourceFactory = { homeRepository.upcomingNextSeasonPagingSource() }
+    ).flow.cachedIn(viewModelScope)
+
+    val allTimePopularPager = Pager(
+        config = PagingConfig(
+            pageSize = 25,
+            prefetchDistance = PREFETCH_DISTANCE,
+            enablePlaceholders = false
+        ),
+        pagingSourceFactory = { homeRepository.allTimePopularPagingSource() }
+    ).flow.cachedIn(viewModelScope)
+
+    val top100AnimePager = Pager(
+        config = PagingConfig(
+            pageSize = PAGE_SIZE,
+            prefetchDistance = PREFETCH_DISTANCE,
+            enablePlaceholders = false
+        ),
+        pagingSourceFactory = { homeRepository.top100AnimePagingSource() }
+    ).flow.cachedIn(viewModelScope)
 
     val initialSetupEvent = liveData {
         emit(userPreferencesRepository.fetchInitialPreferences())
@@ -133,9 +183,11 @@ class AniHomeViewModel @Inject constructor(
         )
     }
 
+    // fixme remove 25 default
     fun fetchMedia(
         isAnime: Boolean,
         page: Int,
+        pageSize: Int = 25,
         skipPopularThisSeason: Boolean = true,
         skipTrendingNow: Boolean = true,
         skipUpcomingNextSeason: Boolean = true,
@@ -146,17 +198,23 @@ class AniHomeViewModel @Inject constructor(
             val newMedia = homeRepository.getHomeMedia(
                 isAnime,
                 page,
+                pageSize,
                 skipTrendingNow,
                 skipPopularThisSeason,
                 skipUpcomingNextSeason,
                 skipAllTimePopular,
                 skipTop100Anime,
             ).getOrDefault(HomeMedia())
-            if (!skipPopularThisSeason) _popularAnime.value = _media.value?.popularThisSeason.orEmpty() + newMedia.popularThisSeason
-            if (!skipTrendingNow) _trendingAnime.value = _media.value?.trendingNow.orEmpty() + newMedia.trendingNow
-            if (!skipUpcomingNextSeason) _upcomingNextSeason.value = _media.value?.upcomingNextSeason.orEmpty() + newMedia.upcomingNextSeason
-            if (!skipAllTimePopular) _allTimePopular.value = _media.value?.allTimePopular.orEmpty() + newMedia.allTimePopular
-            if (!skipTop100Anime) _top100.value = _media.value?.top100Anime.orEmpty() + newMedia.top100Anime
+            if (!skipPopularThisSeason) _popularAnime.value =
+                _media.value?.popularThisSeason.orEmpty() + newMedia.popularThisSeason
+            if (!skipTrendingNow) _trendingAnime.value =
+                _media.value?.trendingNow.orEmpty() + newMedia.trendingNow
+            if (!skipUpcomingNextSeason) _upcomingNextSeason.value =
+                _media.value?.upcomingNextSeason.orEmpty() + newMedia.upcomingNextSeason
+            if (!skipAllTimePopular) _allTimePopular.value =
+                _media.value?.allTimePopular.orEmpty() + newMedia.allTimePopular
+            if (!skipTop100Anime) _top100.value =
+                _media.value?.top100Anime.orEmpty() + newMedia.top100Anime
         }
     }
 
@@ -384,16 +442,25 @@ class AniHomeViewModel @Inject constructor(
         // todo
     }
 
-    fun search(text: String, searchFilter: SearchFilter, sort: com.example.anilist.ui.home.AniMediaSort) {
+    fun search(
+        text: String,
+        searchFilter: SearchFilter,
+        sort: com.example.anilist.ui.home.AniMediaSort
+    ) {
         Log.d(TAG, "Search function got called in view model!")
         viewModelScope.launch {
             when (searchFilter) {
                 SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
                     _searchResultsMedia.value = homeRepository.searchMedia(text, searchFilter, sort)
                 }
-                SearchFilter.CHARACTERS -> _searchResultsCharacter.value = homeRepository.searchCharacters(text)
+
+                SearchFilter.CHARACTERS -> _searchResultsCharacter.value =
+                    homeRepository.searchCharacters(text)
+
                 SearchFilter.STAFF -> _searchResultsStaff.value = homeRepository.searchStaff(text)
-                SearchFilter.STUDIOS -> _searchResultsStudio.value = homeRepository.searchStudio(text)
+                SearchFilter.STUDIOS -> _searchResultsStudio.value =
+                    homeRepository.searchStudio(text)
+
                 SearchFilter.FORUM -> _searchResultsForum.value = homeRepository.searchForum(text)
                 SearchFilter.USER -> _searchResultsUser.value = homeRepository.searchUser(text)
             }
