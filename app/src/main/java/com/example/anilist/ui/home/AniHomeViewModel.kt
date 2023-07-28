@@ -15,7 +15,6 @@ import com.example.anilist.data.models.AniUser
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Forum
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.Staff
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.HomeMedia
 import com.example.anilist.data.repository.HomeRepository
@@ -385,18 +384,18 @@ class AniHomeViewModel @Inject constructor(
         // todo
     }
 
-    fun search(text: String, searchFilter: SearchFilter) {
+    fun search(text: String, searchFilter: SearchFilter, sort: com.example.anilist.ui.home.AniMediaSort) {
         Log.d(TAG, "Search function got called in view model!")
         viewModelScope.launch {
             when (searchFilter) {
                 SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
-                    _searchResultsMedia.value = homeRepository.searchMedia(text, searchFilter)
+                    _searchResultsMedia.value = homeRepository.searchMedia(text, searchFilter, sort)
                 }
                 SearchFilter.CHARACTERS -> _searchResultsCharacter.value = homeRepository.searchCharacters(text)
                 SearchFilter.STAFF -> _searchResultsStaff.value = homeRepository.searchStaff(text)
-//                SearchFilter.STUDIOS -> _searchResultsStudio.value = homeRepository.searchStudio(text)
-//                SearchFilter.FORUM -> _searchResultsForum.value = homeRepository.searchForum(text)
-//                SearchFilter.USER -> _searchResultsUser.value = homeRepository.searchUser(text)
+                SearchFilter.STUDIOS -> _searchResultsStudio.value = homeRepository.searchStudio(text)
+                SearchFilter.FORUM -> _searchResultsForum.value = homeRepository.searchForum(text)
+                SearchFilter.USER -> _searchResultsUser.value = homeRepository.searchUser(text)
             }
         }
     }

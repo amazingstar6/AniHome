@@ -8,6 +8,10 @@ object AniListRoute {
     const val CHARACTER_DETAIL_ROUTE: String = "CharacterDetail"
     const val STAFF_DETAIL_ROUTE: String = "StaffDetail"
     const val REVIEW_DETAIL_ROUTE: String = "ReviewDetail"
+    const val STUDIO_DETAIL_ROUTE: String = "StudioDetail"
+    const val THREAD_DETAIL_ROUTE: String = "ThreadDetail"
+    const val USER_DETAIL_ROUTE: String = "UserDetail"
+    const val COVER_LARGE: String = "CoverLarge"
     const val SETTINGS: String = "Settings"
     const val NOTIFICATION_ROUTE: String = "Notification"
     const val HOME_ROUTE = "Home"
@@ -64,6 +68,30 @@ class AniListNavigationActions(private val navController: NavController) {
 
     fun navigateBack() {
         navController.popBackStack()
+    }
+
+    fun navigateToStudio(id: Int) {
+        navController.navigate(
+            route = AniListRoute.STUDIO_DETAIL_ROUTE + "/$id"
+        )
+    }
+
+    fun navigateToThread(id: Int) {
+        navController.navigate(
+            route = AniListRoute.THREAD_DETAIL_ROUTE + "/$id"
+        )
+    }
+
+    fun navigateToUser(id: Int) {
+        navController.navigate(
+            route = AniListRoute.USER_DETAIL_ROUTE + "/$id"
+        )
+    }
+
+    fun navigateToLargeCover(imageString: String) {
+        navController.navigate(
+            route = AniListRoute.COVER_LARGE + "/$imageString"
+        )
     }
 }
 

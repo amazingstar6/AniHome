@@ -39,6 +39,7 @@
     <string name="clear">Clear</string>
     <string name="back">Back</string>
     <string name="search">Search</string>
+    <string name="sort">Sort</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>

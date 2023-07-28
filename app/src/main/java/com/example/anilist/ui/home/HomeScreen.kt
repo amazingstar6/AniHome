@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,16 +29,20 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.NonRestartableComposable
@@ -55,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -65,7 +71,10 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
+import com.example.anilist.data.models.AniStudio
+import com.example.anilist.data.models.AniUser
 import com.example.anilist.data.models.CharacterDetail
+import com.example.anilist.data.models.Forum
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
 import com.example.anilist.data.models.StaffDetail
@@ -73,6 +82,7 @@ import com.example.anilist.data.repository.HomeMedia
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.mediadetails.LoadingCircle
 import com.example.anilist.ui.mediadetails.QuickInfo
+import com.example.anilist.ui.my_media.MediaStatus
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.util.Locale
 
@@ -85,7 +95,10 @@ fun HomeScreen(
     onNavigateToNotification: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToCharacterDetails: (Int) -> Unit,
-    onNavigateToStaffDetails: (Int) -> Unit
+    onNavigateToStaffDetails: (Int) -> Unit,
+    navigateToUserDetails: (Int) -> Unit,
+    navigateToThreadDetails: (Int) -> Unit,
+    navigateToStudioDetails: (Int) -> Unit
 ) {
     val media by aniHomeViewModel.media.observeAsState(HomeMedia())
     val popularAnime by aniHomeViewModel.popularAnime.observeAsState(emptyList())
@@ -94,6 +107,9 @@ fun HomeScreen(
     val searchResultsMedia by aniHomeViewModel.searchResultsMedia.observeAsState()
     val searchResultsCharacter by aniHomeViewModel.searchResultsCharacter.observeAsState()
     val searchResultsStaff by aniHomeViewModel.searchResultsStaff.observeAsState()
+    val searchResultsStudio by aniHomeViewModel.searchResultsStudio.observeAsState()
+    val searchResultsForum by aniHomeViewModel.searchResultsForum.observeAsState()
+    val searchResultsUser by aniHomeViewModel.searchResultsUser.observeAsState()
 
     var popularPage by remember { mutableIntStateOf(1) }
     var trendingPage by remember { mutableIntStateOf(1) }
@@ -103,13 +119,16 @@ fun HomeScreen(
     }
     val focusRequester by remember { mutableStateOf(FocusRequester()) }
     var selectedChip by rememberSaveable { mutableStateOf(SearchFilter.MEDIA) }
+    var currentMediaSort by rememberSaveable {
+        mutableStateOf(AniMediaSort.DEFAULT)
+    }
 
     Scaffold(topBar = {
         AniSearchBar(
             active = active,
             setActive = { active = it },
-            search = { aniHomeViewModel.search(it, selectedChip) },
-            searchResultsMedia = searchResultsMedia,
+            search = { aniHomeViewModel.search(it, selectedChip, currentMediaSort) },
+            searchResultsMedia = searchResultsMedia.orEmpty(),
             searchResultsCharacter = searchResultsCharacter.orEmpty(),
             searchResultStaff = searchResultsStaff.orEmpty(),
             onNavigateToMediaDetails = onNavigateToMediaDetails,
@@ -117,9 +136,17 @@ fun HomeScreen(
             onNavigateToSettings = onNavigateToSettings,
             focusRequester = focusRequester,
             selectedChip = selectedChip,
+            currentMediaSort = currentMediaSort,
+            setCurrentMediaSort = { currentMediaSort = it },
             setSelectedChipValue = { selectedChip = it },
             onNavigateToCharacterDetails = onNavigateToCharacterDetails,
-            onNavigateToStaffDetails = onNavigateToStaffDetails
+            onNavigateToStaffDetails = onNavigateToStaffDetails,
+            searchResultsStudio = searchResultsStudio.orEmpty(),
+            searchResultsForum = searchResultsForum.orEmpty(),
+            searchResultsUser = searchResultsUser.orEmpty(),
+            navigateToUserDetails = navigateToUserDetails,
+            navigateToThreadDetails = navigateToThreadDetails,
+            navigateToStudioDetails = navigateToStudioDetails
         )
 //        CenterAlignedTopAppBar(title = {
 //            Text("Home")
@@ -224,14 +251,32 @@ enum class SearchFilter {
     ANIME,
     MANGA,
     CHARACTERS,
-    STAFF;
-//    STUDIOS,
-//    FORUM,
-//    USER;
+    STAFF,
+    STUDIOS,
+    FORUM,
+    USER;
 
     override fun toString(): String {
         return this.name.lowercase()
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    }
+}
+
+enum class AniMediaSort {
+    DEFAULT,
+    START_DATE,
+    END_DATE,
+    SCORE,
+    POPULARITY,
+    TRENDING,
+    EPISODES,
+    DURATION,
+    CHAPTERS,
+    VOLUMES,
+    FAVOURITES;
+
+    override fun toString(): String {
+        return super.toString()
     }
 }
 
@@ -241,7 +286,7 @@ private fun AniSearchBar(
     active: Boolean,
     setActive: (Boolean) -> Unit,
     search: (String) -> Unit,
-    searchResultsMedia: List<Media>?,
+    searchResultsMedia: List<Media>,
     searchResultsCharacter: List<CharacterDetail>,
     searchResultStaff: List<StaffDetail>,
     onNavigateToMediaDetails: (Int) -> Unit,
@@ -251,7 +296,15 @@ private fun AniSearchBar(
     selectedChip: SearchFilter,
     setSelectedChipValue: (SearchFilter) -> Unit,
     onNavigateToCharacterDetails: (Int) -> Unit,
-    onNavigateToStaffDetails: (Int) -> Unit
+    onNavigateToStaffDetails: (Int) -> Unit,
+    searchResultsStudio: List<AniStudio>,
+    searchResultsForum: List<Forum>,
+    searchResultsUser: List<AniUser>,
+    navigateToUserDetails: (Int) -> Unit,
+    navigateToThreadDetails: (Int) -> Unit,
+    navigateToStudioDetails: (Int) -> Unit,
+    currentMediaSort: AniMediaSort,
+    setCurrentMediaSort: (AniMediaSort) -> Unit
 ) {
     var text by rememberSaveable {
         mutableStateOf("")
@@ -332,63 +385,188 @@ private fun AniSearchBar(
             .padding(start = padding, end = padding, top = padding)
             .focusRequester(focusRequester)
     ) {
-        val filterList = SearchFilter.values()
-        FlowRow {
-            filterList.forEachIndexed { index, filterName ->
-                FilterChip(
-                    selected = index == selectedChip.ordinal,
-                    onClick = {
-                        setSelectedChipValue(filterList[index])
-                        if (text.isNotBlank()) {
-                            search(text)
+        Box {
+            Column {
+                val filterList = SearchFilter.values()
+                LazyRow {
+                    itemsIndexed(filterList) { index, filterName ->
+                        FilterChip(
+                            selected = index == selectedChip.ordinal,
+                            onClick = {
+                                setSelectedChipValue(filterList[index])
+                                if (text.isNotBlank()) {
+                                    search(text)
+                                }
+                            },
+                            label = { Text(text = filterName.toString()) },
+                            modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                        )
+                    }
+                }
+                Divider()
+                var showSortingBottomSheet by remember { mutableStateOf(false) }
+                FlowRow(modifier = Modifier.padding(start = Dimens.PaddingNormal)) {
+                    AssistChip(
+                        onClick = { showSortingBottomSheet = true },
+                        label = { Text(text = currentMediaSort.toString()) },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.sort),
+                                contentDescription = stringResource(
+                                    id = R.string.sort
+                                )
+                            )
+                        },
+                    )
+                }
+                if (showSortingBottomSheet) {
+                    ModalBottomSheet(onDismissRequest = { showSortingBottomSheet = false }) {
+                        AniMediaSort.values().forEachIndexed { index, mediaSort ->
+                            TextButton(
+                                onClick = {
+                                    setCurrentMediaSort(mediaSort)
+                                    showSortingBottomSheet = false
+                                    search(text)
+                                }, modifier = Modifier
+                                    .fillMaxWidth(), shape = RectangleShape
+                            ) {
+                                Text(
+                                    mediaSort.toString(),
+                                    color = if (currentMediaSort == mediaSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
-                    },
-                    label = { Text(text = filterName.toString()) },
-                    modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                    }
+                }
+                SearchResults(
+                    selectedChip = selectedChip,
+                    searchResultsMedia = searchResultsMedia,
+                    onNavigateToMediaDetails = onNavigateToMediaDetails,
+                    searchResultsCharacter = searchResultsCharacter,
+                    onNavigateToCharacterDetails = onNavigateToCharacterDetails,
+                    searchResultStaff = searchResultStaff,
+                    onNavigateToStaffDetails = onNavigateToStaffDetails,
+                    searchResultsStudio = searchResultsStudio,
+                    navigateToStudioDetails = navigateToStudioDetails,
+                    searchResultsForum = searchResultsForum,
+                    navigateToThreadDetails = navigateToThreadDetails,
+                    searchResultsUser = searchResultsUser,
+                    navigateToUserDetails = navigateToUserDetails
                 )
             }
         }
-        LazyColumn {
-            when (selectedChip) {
-                SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
-                    items(searchResultsMedia.orEmpty()) { media ->
-                        SearchCardMedia(
-                            media,
-                            onNavigateToMediaDetails,
-                            media.id,
-                            media.coverImage,
-                            media.title,
-                            media.type
-                        )
-                    }
-                }
+    }
+}
 
-                SearchFilter.CHARACTERS -> {
-                    items(searchResultsCharacter.orEmpty()) {
-                        SearchCardCharacter(
-                            onNavigateToCharacterDetails,
-                            it.id,
-                            it.coverImage,
-                            it.userPreferredName,
-                            it.favorites
-                        )
-                    }
-                }
-
-                SearchFilter.STAFF -> {
-                    items(searchResultStaff.orEmpty()) {
-                        SearchCardCharacter(
-                            onNavigateToStaffDetails,
-                            it.id,
-                            it.coverImage,
-                            it.userPreferredName,
-                            it.favourites
-                        )
-                    }
+@Composable
+private fun SearchResults(
+    selectedChip: SearchFilter,
+    searchResultsMedia: List<Media>,
+    searchResultsCharacter: List<CharacterDetail>,
+    searchResultStaff: List<StaffDetail>,
+    searchResultsStudio: List<AniStudio>,
+    searchResultsForum: List<Forum>,
+    searchResultsUser: List<AniUser>,
+    onNavigateToMediaDetails: (Int) -> Unit,
+    onNavigateToCharacterDetails: (Int) -> Unit,
+    onNavigateToStaffDetails: (Int) -> Unit,
+    navigateToStudioDetails: (Int) -> Unit,
+    navigateToThreadDetails: (Int) -> Unit,
+    navigateToUserDetails: (Int) -> Unit
+) {
+    LazyColumn {
+        when (selectedChip) {
+            SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
+                items(searchResultsMedia) { media ->
+                    SearchCardMedia(
+                        media,
+                        onNavigateToMediaDetails,
+                        media.id,
+                        media.coverImage,
+                        media.title,
+                        media.type
+                    )
                 }
             }
 
+            SearchFilter.CHARACTERS -> {
+                items(searchResultsCharacter) {
+                    SearchCardCharacter(
+                        onNavigateToCharacterDetails,
+                        it.id,
+                        it.coverImage,
+                        it.userPreferredName,
+                        it.favorites
+                    )
+                }
+            }
+
+            SearchFilter.STAFF -> {
+                items(searchResultStaff) {
+                    SearchCardCharacter(
+                        onNavigateToStaffDetails,
+                        it.id,
+                        it.coverImage,
+                        it.userPreferredName,
+                        it.favourites
+                    )
+                }
+            }
+
+            SearchFilter.STUDIOS -> {
+                items(searchResultsStudio) {
+                    SearchCardStudio(
+                        it.id,
+                        it.name,
+                        navigateToStudioDetails
+                    )
+                }
+            }
+
+            SearchFilter.FORUM -> {
+                items(searchResultsForum) {
+                    SearchCardForum(
+                        it.id,
+                        it.title,
+                        navigateToThreadDetails
+                    )
+                }
+            }
+
+            SearchFilter.USER -> {
+                items(searchResultsUser) {
+                    SearchCardUser(
+                        it.id,
+                        it.name,
+                        navigateToUserDetails
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun SearchCardUser(id: Int, name: String, navigateToUserDetails: (Int) -> Unit) {
+    Column(modifier = Modifier.clickable { navigateToUserDetails(id) }) {
+        Text(text = id.toString())
+        Text(text = name)
+    }
+}
+
+@Composable
+fun SearchCardForum(id: Int, title: String, navigateToThreadDetails: (Int) -> Unit) {
+    Column(modifier = Modifier.clickable { navigateToThreadDetails(id) }) {
+        Text(text = id.toString())
+        Text(text = title)
+    }
+}
+
+@Composable
+fun SearchCardStudio(id: Int, name: String, navigateToStudioDetails: (Int) -> Unit) {
+    Column(modifier = Modifier.clickable { navigateToStudioDetails(id) }) {
+        Text(text = id.toString())
+        Text(text = name)
     }
 }
 
@@ -538,7 +716,7 @@ fun AnimeCard(
             model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
                 .build(),
             contentDescription = "Cover of $title",
-            contentScale = ContentScale.FillWidth,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
 //                .fillMaxWidth()
                 .height(160.dp)

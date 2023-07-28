@@ -5,7 +5,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,13 +31,10 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -74,7 +70,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
@@ -142,16 +137,14 @@ fun MyMediaScreen(
             isAnime = isAnime,
             myMedia = if (isAnime) myAnime else myManga,
             navigateToDetails = navigateToDetails,
-            increaseEpisodeProgress = myMediaViewModel::increaseEpisodeProgress,
             saveStatus = {
                 Log.d(TAG, "Clicked on save button!")
                 myMediaViewModel.updateProgress(it)
             },
             reloadMyMedia = {
                 myMediaViewModel.fetchMyMedia(isAnime)
-            },
-            deleteListEntry = { myMediaViewModel.deleteEntry(it) }
-        )
+            }
+        ) { myMediaViewModel.deleteEntry(it) }
     } else {
         LoadingCircle()
     }
@@ -163,7 +156,6 @@ private fun MyMedia(
     isAnime: Boolean,
     myMedia: Map<MediaStatus, List<Media>>?,
     navigateToDetails: (Int) -> Unit,
-    increaseEpisodeProgress: (mediaId: Int, newProgress: Int) -> Unit,
     saveStatus: (StatusUpdate) -> Unit,
     reloadMyMedia: () -> Unit,
     deleteListEntry: (id: Int) -> Unit,
@@ -525,8 +517,6 @@ private fun MyMedia(
                     onDismissRequest = hideFilterSheet,
                 ) {
                     val filterFunction = { it: MediaStatus -> filter = it }
-                    val modifier = Modifier
-                        .fillMaxWidth()
                     CenterAlignedTopAppBar(title = {
                         Text(
                             text = stringResource(R.string.filter),
@@ -542,55 +532,64 @@ private fun MyMedia(
                             )
                         }
                     })
-                    TextButton(onClick = {
-                        filterFunction(MediaStatus.UNKNOWN)
-                        hideFilterSheet()
-                    }, modifier = modifier, shape = RectangleShape) {
-                        Text(
-                            stringResource(R.string.all),
-                            color = if (filter == MediaStatus.UNKNOWN) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    TextButton(onClick = {
-                        filterFunction(MediaStatus.CURRENT)
-                        hideFilterSheet()
-                    }, modifier = modifier, shape = RectangleShape) {
+                    ModalSheetTextButton(
+                        filterFunction, hideFilterSheet, filter
+                    )
+                    TextButton(
+                        onClick = {
+                            filterFunction(MediaStatus.CURRENT)
+                            hideFilterSheet()
+                        }, modifier = Modifier
+                            .fillMaxWidth(), shape = RectangleShape
+                    ) {
                         Text(
                             if (isAnime) stringResource(R.string.watching) else stringResource(R.string.reading),
                             color = if (filter == MediaStatus.CURRENT) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    TextButton(onClick = {
-                        filterFunction(MediaStatus.REPEATING)
-                        hideFilterSheet()
-                    }, modifier = modifier, shape = RectangleShape) {
+                    TextButton(
+                        onClick = {
+                            filterFunction(MediaStatus.REPEATING)
+                            hideFilterSheet()
+                        }, modifier = Modifier
+                            .fillMaxWidth(), shape = RectangleShape
+                    ) {
                         Text(
                             if (isAnime) stringResource(R.string.rewatching) else stringResource(R.string.rereading),
                             color = if (filter == MediaStatus.REPEATING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    TextButton(onClick = {
-                        filterFunction(MediaStatus.DROPPED)
-                        hideFilterSheet()
-                    }, modifier = modifier, shape = RectangleShape) {
+                    TextButton(
+                        onClick = {
+                            filterFunction(MediaStatus.DROPPED)
+                            hideFilterSheet()
+                        }, modifier = Modifier
+                            .fillMaxWidth(), shape = RectangleShape
+                    ) {
                         Text(
                             "Dropped",
                             color = if (filter == MediaStatus.DROPPED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    TextButton(onClick = {
-                        filterFunction(MediaStatus.COMPLETED)
-                        hideFilterSheet()
-                    }, modifier = modifier, shape = RectangleShape) {
+                    TextButton(
+                        onClick = {
+                            filterFunction(MediaStatus.COMPLETED)
+                            hideFilterSheet()
+                        }, modifier = Modifier
+                            .fillMaxWidth(), shape = RectangleShape
+                    ) {
                         Text(
                             "Completed",
                             color = if (filter == MediaStatus.COMPLETED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    TextButton(onClick = {
-                        filterFunction(MediaStatus.PLANNING)
-                        hideFilterSheet()
-                    }, modifier = modifier, shape = RectangleShape) {
+                    TextButton(
+                        onClick = {
+                            filterFunction(MediaStatus.PLANNING)
+                            hideFilterSheet()
+                        }, modifier = Modifier
+                            .fillMaxWidth(), shape = RectangleShape
+                    ) {
                         Text(
                             "Planning",
                             color = if (filter == MediaStatus.PLANNING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
@@ -599,6 +598,26 @@ private fun MyMedia(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ModalSheetTextButton(
+    filterFunction: (MediaStatus) -> Unit,
+    hideFilterSheet: () -> Unit,
+    filter: MediaStatus
+) {
+    TextButton(
+        onClick = {
+            filterFunction(MediaStatus.UNKNOWN)
+            hideFilterSheet()
+        }, modifier = Modifier
+            .fillMaxWidth(), shape = RectangleShape
+    ) {
+        Text(
+            stringResource(R.string.all),
+            color = if (filter == MediaStatus.UNKNOWN) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+        )
     }
 }
 
@@ -1210,10 +1229,9 @@ fun MyAnimePreview() {
             ),
         ),
         navigateToDetails = {},
-        increaseEpisodeProgress = { _, _ -> },
         saveStatus = { },
-        reloadMyMedia = { }, deleteListEntry = {}
-    )
+        reloadMyMedia = { }
+    ) {}
 }
 
 @Preview(showBackground = true, group = "Date picker")

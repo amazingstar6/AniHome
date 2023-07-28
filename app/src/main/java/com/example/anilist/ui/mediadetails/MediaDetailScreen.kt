@@ -2,7 +2,9 @@ package com.example.anilist.ui.mediadetails
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -96,6 +98,8 @@ import com.example.anilist.quantityStringResource
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.theme.AnilistTheme
 import kotlinx.coroutines.launch
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 private const val TAG = "AnimeDetails"
 
@@ -119,6 +123,7 @@ fun MediaDetail(
     navigateToStaff: (Int) -> Unit,
     navigateToCharacter: (Int) -> Unit,
     onNavigateToStaff: (Int) -> Unit,
+    onNavigateToLargeCover: (String) -> Unit
 ) {
 //    val pagerState = rememberPagerState(
 //        initialPage = 0,
@@ -249,6 +254,7 @@ fun MediaDetail(
                         Overview(
                             media,
                             onNavigateToDetails,
+                            onNavigateToLargeCover
                         )
                     }
                 }
@@ -298,14 +304,16 @@ fun LoadingCircle() {
 private fun Overview(
     media: Media?,
     onNavigateToDetails: (Int) -> Unit,
+    onNavigateToLargeCover: (String) -> Unit
 ) {
+    var showImageLarge by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState()),
-//            .padding(20.dp)
+        //            .padding(20.dp)
     ) {
         val anime: Media = media ?: Media()
-        OverviewAnimeCoverDetails(anime, anime.genres)
+        OverviewAnimeCoverDetails(anime, anime.genres, onNavigateToLargeCover)
         OverviewDescription(anime.description)
         OverviewRelations(anime.relations, onNavigateToDetails)
         OverViewInfo(anime)
@@ -318,6 +326,7 @@ private fun Overview(
         OverviewTrailer(anime.trailerImage) { uriHandler.openUri(anime.trailerLink) }
         OverviewExternalLinks(anime) { uriHandler.openUri(it) }
     }
+
 }
 
 @Composable
@@ -527,9 +536,14 @@ private fun ProfilePicture(coverImage: String, name: String) {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun OverviewAnimeCoverDetails(media: Media, genres: List<String>) {
+private fun OverviewAnimeCoverDetails(
+    media: Media,
+    genres: List<String>,
+    showImageLarge: (String) -> Unit
+) {
     val isAnime = media.type == MediaType.ANIME
     Row(modifier = Modifier.padding(Dimens.PaddingNormal)) {
         if (media.coverImage != "") {
@@ -542,8 +556,16 @@ private fun OverviewAnimeCoverDetails(media: Media, genres: List<String>) {
                 contentScale = ContentScale.FillHeight,
                 modifier = Modifier
                     .height(250.dp)
+                    .width(175.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { },
+                    .clickable {
+                        showImageLarge(
+                            URLEncoder.encode(
+                                media.coverImage,
+                                StandardCharsets.UTF_8
+                            )
+                        )
+                    },
             )
         }
         Column {
@@ -985,6 +1007,7 @@ fun OverviewPreview() {
     AnilistTheme {
         Surface {
             Overview(
+                onNavigateToLargeCover = {},
                 onNavigateToDetails = {},
                 media = Media(
                     title = "鬼滅の刃 刀鍛冶の里編",

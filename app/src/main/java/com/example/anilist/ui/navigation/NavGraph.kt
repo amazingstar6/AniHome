@@ -18,9 +18,13 @@ import com.example.anilist.ui.home.HomeScreen
 import com.example.anilist.ui.home.NotificationScreen
 import com.example.anilist.ui.home.SettingsScreen
 import com.example.anilist.ui.mediadetails.CharacterDetailScreen
+import com.example.anilist.ui.mediadetails.CoverLarge
+import com.example.anilist.ui.mediadetails.ForumDetailScreen
 import com.example.anilist.ui.mediadetails.MediaDetail
 import com.example.anilist.ui.mediadetails.ReviewDetailScreen
 import com.example.anilist.ui.mediadetails.StaffDetailScreen
+import com.example.anilist.ui.mediadetails.StudioDetailScreen
+import com.example.anilist.ui.mediadetails.UserDetailScreen
 import com.example.anilist.ui.my_media.MyMediaScreen
 
 private const val TAG = "AniNavGraph"
@@ -51,7 +55,10 @@ fun AniNavHost(
                     navController.navigate(route = AniListRoute.SETTINGS)
                 },
                 onNavigateToCharacterDetails = navigationActions::navigateToCharacter,
-                onNavigateToStaffDetails = navigationActions::navigateToStaff
+                onNavigateToStaffDetails = navigationActions::navigateToStaff,
+                navigateToStudioDetails = navigationActions::navigateToStudio,
+                navigateToThreadDetails = navigationActions::navigateToThread,
+                navigateToUserDetails = navigationActions::navigateToUser
             )
         }
         composable(
@@ -71,6 +78,7 @@ fun AniNavHost(
                 navigateToStaff = navigationActions::navigateToStaff,
                 navigateToCharacter = navigationActions::navigateToCharacter,
                 onNavigateToStaff = navigationActions::navigateToStaff,
+                onNavigateToLargeCover = navigationActions::navigateToLargeCover
             )
         }
         composable(
@@ -105,6 +113,43 @@ fun AniNavHost(
                     reviewId = backStackEntry.arguments?.getInt("reviewId") ?: -1,
                 )
             },
+        )
+        composable(
+            route = AniListRoute.STUDIO_DETAIL_ROUTE + "/{studioId}",
+            arguments = listOf(navArgument("studioId") { type = NavType.IntType }),
+            content = { backStackEntry ->
+                StudioDetailScreen(
+                    id = backStackEntry.arguments?.getInt("studioId") ?: -1,
+                )
+            },
+        )
+        composable(
+            route = AniListRoute.THREAD_DETAIL_ROUTE + "/{forumId}",
+            arguments = listOf(navArgument("forumId") { type = NavType.IntType }),
+            content = { backStackEntry ->
+                ForumDetailScreen(
+                    id = backStackEntry.arguments?.getInt("forumId") ?: -1,
+                )
+            },
+        )
+        composable(
+            route = AniListRoute.USER_DETAIL_ROUTE + "/{userId}",
+            arguments = listOf(navArgument("userId") { type = NavType.IntType }),
+            content = { backStackEntry ->
+                UserDetailScreen(
+                    id = backStackEntry.arguments?.getInt("userId") ?: -1,
+                )
+            },
+        )
+        composable(
+            route = AniListRoute.COVER_LARGE + "/{imageString}",
+            arguments = listOf(navArgument("imageString") { type = NavType.StringType }),
+            content = { navBackStackEntry ->
+                CoverLarge(
+                    coverImage = navBackStackEntry.arguments?.getString("imageString") ?: "",
+                    navigateBack = navigationActions::navigateBack
+                )
+            }
         )
         composable(
             AniListRoute.NOTIFICATION_ROUTE,
