@@ -25,6 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
@@ -34,78 +35,60 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun StaffScreen(
-    staffList: List<Staff>,
-    getMoreStaff: (Int) -> Unit,
+    staffList: LazyPagingItems<Staff>,
     onNavigateToStaff: (Int) -> Unit,
 ) {
     val state = rememberLazyGridState()
-    var page by remember {
-        mutableStateOf(1)
-    }
     LazyVerticalGrid(state = state, columns = GridCells.Fixed(2), content = {
         items(
-            staffList,
-        ) { staff ->
-            Row(
-                modifier = Modifier.padding(Dimens.PaddingNormal).clickable {
-                    onNavigateToStaff(staff.id)
-                },
-            ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current).data(staff.coverImage)
-                        .crossfade(true).build(),
-                    contentDescription = "",
-                    placeholder = painterResource(id = R.drawable.no_image),
-                    fallback = painterResource(id = R.drawable.no_image),
-                    contentScale = ContentScale.FillHeight,
+            staffList.itemCount,
+        ) { index ->
+            val staff = staffList[index]
+            if (staff != null) {
+                Row(
                     modifier = Modifier
-                        .fillMaxHeight()
+                        .padding(Dimens.PaddingNormal)
+                        .clickable {
+                            onNavigateToStaff(staff.id)
+                        },
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current).data(staff.coverImage)
+                            .crossfade(true).build(),
+                        contentDescription = "",
+                        placeholder = painterResource(id = R.drawable.no_image),
+                        fallback = painterResource(id = R.drawable.no_image),
+                        contentScale = ContentScale.FillHeight,
+                        modifier = Modifier
+                            .fillMaxHeight()
 //                        .width(100.dp)
-                        .padding(end = Dimens.PaddingNormal)
-                        .clip(MaterialTheme.shapes.medium),
+                            .padding(end = Dimens.PaddingNormal)
+                            .clip(MaterialTheme.shapes.medium),
 
-                )
-                Column() {
-                    Text(
-                        text = staff.name,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = staff.role,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(text = staff.hasNextPage.toString())
-                }
-            }
-
-            val needNextPage by remember {
-                derivedStateOf {
-                    val layoutInfo = state.layoutInfo
-                    val totalItems = layoutInfo.totalItemsCount
-                    val lastItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) + 1
-                    val buffer = 5
-                    lastItemIndex > (totalItems - buffer)
-                }
-            }
-            LaunchedEffect(needNextPage) {
-                snapshotFlow {
-                    needNextPage
-                }.distinctUntilChanged().collect {
-                    if (needNextPage) getMoreStaff(++page)
+                        )
+                    Column() {
+                        Text(
+                            text = staff.name,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = staff.role,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }
     })
 }
 
-@Preview(showBackground = true)
-@Composable
-fun StaffPreview() {
-    StaffScreen(
-        listOf(Staff(123, "吾峠呼世晴", "Original Creator"), Staff(1234, "外崎春雄", "Director")),
-        {},
-    ) {
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun StaffPreview() {
+//    StaffScreen(
+//        listOf(Staff(123, "吾峠呼世晴", "Original Creator"), Staff(1234, "外崎春雄", "Director")),
+//        {},
+//    )
+//}

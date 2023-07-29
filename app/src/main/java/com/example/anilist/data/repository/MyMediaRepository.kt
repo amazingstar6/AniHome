@@ -43,7 +43,6 @@ class MyMediaRepository @Inject constructor() {
                     }
                     resultMap[statusList?.status?.toAniStatus() ?: MediaStatus.UNKNOWN] = list
                 }
-                Log.d(TAG, resultMap.toString())
                 return resultMap
             }
         } catch (exception: ApolloException) {
@@ -67,62 +66,7 @@ class MyMediaRepository @Inject constructor() {
                 MediaStatus.UNKNOWN -> Optional.present(MediaListStatus.UNKNOWN__)
                 null -> Optional.Absent
             }
-            Log.d(
-                TAG,
-                "Progress before mutation in repository is ${
-                    if (statusUpdate.progress == null) {
-                        Optional.Absent
-                    } else {
-                        Optional.present(
-                            statusUpdate.progress,
-                        )
-                    }
-                }",
-            )
-            Log.d(
-                TAG,
-                "Rewatches before mutation is ${
-                    if (statusUpdate.repeat == null) {
-                        Optional.Absent
-                    } else {
-                        Optional.present(
-                            statusUpdate.repeat,
-                        )
-                    }
-                }",
-            )
-            Log.d(
-                TAG,
-                "Start date before mutation is ${
-                    if (statusUpdate.startedAt == null) {
-                        Optional.Absent
-                    } else {
-                        Optional.present(
-                            FuzzyDateInput(
-                                Optional.present(statusUpdate.startedAt.year),
-                                Optional.present(statusUpdate.startedAt.month),
-                                Optional.present(statusUpdate.startedAt.day),
-                            ),
-                        )
-                    }
-                }",
-            )
-            Log.d(
-                TAG,
-                "End date before mutation is ${
-                    if (statusUpdate.completedAt == null) {
-                        Optional.Absent
-                    } else {
-                        Optional.present(
-                            FuzzyDateInput(
-                                Optional.present(statusUpdate.completedAt.year),
-                                Optional.present(statusUpdate.completedAt.month),
-                                Optional.present(statusUpdate.completedAt.day),
-                            ),
-                        )
-                    }
-                }",
-            )
+
             val result =
                 Apollo.apolloClient.mutation(
                     UpdateStatusMutation(

@@ -26,7 +26,6 @@ class MyMediaViewModel @Inject constructor(
     fun fetchMyMedia(isAnime: Boolean) {
         viewModelScope.launch {
             val data = myMediaRepository.getMyMedia(isAnime)
-            Log.d(TAG, "Media is being fetched, isAnime is: $isAnime")
             if (isAnime) {
                 _myAnime.value = data
             } else {
@@ -45,7 +44,6 @@ class MyMediaViewModel @Inject constructor(
     fun updateProgress(
         statusUpdate: StatusUpdate,
     ) {
-        Log.d(TAG, "Progress is being updated in view model!")
         viewModelScope.launch {
             myMediaRepository.updateProgress(
                 statusUpdate,

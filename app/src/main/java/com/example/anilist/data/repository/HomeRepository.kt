@@ -79,7 +79,6 @@ class HomeRepository @Inject constructor() {
         MediaPagingSource(this, HomeTrendingTypes.TOP_100_ANIME)
 
     suspend fun getTrendingNow(page: Int, pageSize: Int): List<Media> {
-        Log.d(TAG, "Page being loaded is $page with page size: $pageSize")
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -105,7 +104,6 @@ class HomeRepository @Inject constructor() {
     }
 
     suspend fun getPopularThisSeason(page: Int, pageSize: Int): List<Media> {
-        Log.d(TAG, "Page being loaded is $page with page size: $pageSize")
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -133,7 +131,6 @@ class HomeRepository @Inject constructor() {
     }
 
     suspend fun getUpcomingNextSeason(page: Int, pageSize: Int): List<Media> {
-        Log.d(TAG, "Page being loaded is $page with page size: $pageSize")
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -169,11 +166,13 @@ class HomeRepository @Inject constructor() {
 
     private fun getNextSeason(): MediaSeason {
         // plus four months equals the next season
-        return getMediaSeasonFromMonth((Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).monthNumber + 4) % 12)
+        return getMediaSeasonFromMonth(
+            (Clock.System.now()
+                .toLocalDateTime(TimeZone.currentSystemDefault()).monthNumber + 4) % 12
+        )
     }
 
     suspend fun getAllTimePopularMedia(page: Int, pageSize: Int): List<Media> {
-        Log.d(TAG, "Page being loaded is $page with page size: $pageSize")
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -199,7 +198,6 @@ class HomeRepository @Inject constructor() {
     }
 
     suspend fun getTop100Anime(page: Int, pageSize: Int): List<Media> {
-        Log.d(TAG, "Page being loaded is $page with page size: $pageSize")
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -465,30 +463,42 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun searchMedia(text: String, type: SearchFilter, sort: AniMediaSort): List<Media> {
+    suspend fun searchMedia(
+        page: Int,
+        pageSize: Int,
+        text: String,
+        type: SearchFilter,
+        sort: AniMediaSort
+    ): List<Media> {
         try {
             when (type) {
                 SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
                     val query: SearchMediaQuery = when (type) {
                         SearchFilter.MEDIA -> SearchMediaQuery(
+                            page = page,
+                            pageSize = pageSize,
                             text,
                             sort = Optional.present(listOf(MediaSort.fromAniMediaSort(sort)))
                         )
 
                         SearchFilter.ANIME -> SearchMediaQuery(
+                            page,
+                            pageSize,
                             text,
                             type = Optional.present(MediaType.ANIME),
                             sort = Optional.present(listOf(MediaSort.fromAniMediaSort(sort)))
                         )
 
                         SearchFilter.MANGA -> SearchMediaQuery(
+                            page,
+                            pageSize,
                             text,
                             type = Optional.present(MediaType.MANGA),
                             sort = Optional.present(listOf(MediaSort.fromAniMediaSort(sort)))
                         )
 
                         else -> {
-                            SearchMediaQuery(text)
+                            SearchMediaQuery(page, pageSize, text)
                         }
                     }
                     val result =
@@ -527,11 +537,11 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun searchCharacters(text: String): List<CharacterDetail> {
+    suspend fun searchCharacters(page: Int, pageSize: Int, text: String): List<CharacterDetail> {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    SearchCharactersQuery(text),
+                    SearchCharactersQuery(page, pageSize, text),
                 )
                     .execute()
             if (result.hasErrors()) {

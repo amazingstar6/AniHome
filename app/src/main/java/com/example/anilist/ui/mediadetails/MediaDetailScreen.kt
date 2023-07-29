@@ -82,6 +82,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
@@ -111,6 +112,7 @@ enum class DetailTabs {
     Stats,
 }
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaDetail(
@@ -135,8 +137,6 @@ fun MediaDetail(
     rememberCoroutineScope()
 
     val media by mediaDetailsViewModel.media.observeAsState()
-    val staff by mediaDetailsViewModel.staffList.observeAsState(initial = emptyList())
-    val reviews by mediaDetailsViewModel.reviews.observeAsState()
 
     val isAnime = media?.type == MediaType.ANIME
     var showDropDownMenu by remember {
@@ -144,6 +144,8 @@ fun MediaDetail(
     }
 
     mediaDetailsViewModel.fetchMedia(mediaId)
+    val reviews = mediaDetailsViewModel.reviews.collectAsLazyPagingItems()
+    val staff = mediaDetailsViewModel.staffList.collectAsLazyPagingItems()
 
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(title = {
@@ -270,18 +272,22 @@ fun MediaDetail(
                 }
 
                 2 -> {
-                    mediaDetailsViewModel.fetchStaffList(mediaId, 1)
-                    StaffScreen(staff, getMoreStaff = {
-                        mediaDetailsViewModel.fetchStaffList(mediaId, it)
-                    }, onNavigateToStaff)
+                    StaffScreen(staff, onNavigateToStaff)
                 }
 
                 3 -> {
-                    mediaDetailsViewModel.fetchReviews(mediaId)
-                    if (reviews == null) {
+                    //fixme
+                    if (false) {
                         LoadingCircle()
                     } else {
-                        Reviews(reviews.orEmpty(), onNavigateToReviewDetails)
+                        Reviews(
+                            reviews,
+                            vote = { rating, reviewId ->
+                                mediaDetailsViewModel.rateReview(reviewId, rating)
+                                mediaDetailsViewModel.fetchMedia(mediaId)
+                            },
+                            onNavigateToReviewDetails
+                        )
                     }
                 }
 
@@ -301,6 +307,7 @@ fun LoadingCircle() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 private fun Overview(
     media: Media?,
@@ -991,6 +998,7 @@ fun CharactersPreview() {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Preview(
     name = "Light mode",
     showBackground = true,

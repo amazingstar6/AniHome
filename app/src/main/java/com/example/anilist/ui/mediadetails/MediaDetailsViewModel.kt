@@ -5,13 +5,23 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Review
-import com.example.anilist.data.models.Staff
+import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.MediaDetailsRepository
+import com.example.anilist.ui.home.PREFETCH_DISTANCE
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,19 +39,45 @@ class MediaDetailsViewModel @Inject constructor(
     private val _media = MutableLiveData<Media>()
     val media: LiveData<Media> = _media
 
-//    private val _staff = Pager(
+    private val _mediaId = MutableStateFlow(-1)
+    val mediaId = _mediaId.asStateFlow().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(),
+        initialValue = -1
+    )
+
+    //    private val _staff = Pager(
 //        config = PagingConfig(pageSize = 25, enablePlaceholders = false),
 //        pagingSourceFactory = { mediaDetailsRepository.pagingRepository()}
 //    )
 
-    private val _staffList = MutableLiveData<List<Staff>>()
-    val staffList: LiveData<List<Staff>> = _staffList
+    //    private val _staffList = MutableLiveData<List<Staff>>()
+//    val staffList: LiveData<List<Staff>> = _staffList
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val staffList = _mediaId.flatMapLatest {mediaId ->
+        Pager(
+            config = PagingConfig(
+                pageSize = 25,
+                prefetchDistance = PREFETCH_DISTANCE,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { StaffPagingSource(mediaId, mediaDetailsRepository) }
+        ).flow.cachedIn(viewModelScope)
+    }
 
     private val _staff = MutableLiveData<StaffDetail>()
     val staff: LiveData<StaffDetail> = _staff
 
-    private val _reviews = MutableLiveData<List<Review>>()
-    val reviews: LiveData<List<Review>> = _reviews
+    //    private val _reviews = MutableLiveData<List<Review>>()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val reviews = _mediaId.flatMapLatest { mediaId ->
+        Pager(
+            config = PagingConfig(pageSize = 25, prefetchDistance = 5, enablePlaceholders = false),
+            pagingSourceFactory = {
+                ReviewPagingSource(mediaDetailsRepository, mediaId)
+            }
+        ).flow.cachedIn(viewModelScope)
+    }
 
     private val _review = MutableLiveData<Review>()
     val review: LiveData<Review> = _review
@@ -50,35 +86,37 @@ class MediaDetailsViewModel @Inject constructor(
     val character: LiveData<CharacterDetail> = _character
 
     private val _isFavouriteCharacter =
-        MutableLiveData<Boolean>(_character.value?.isFavourite ?: false)
+        MutableLiveData(_character.value?.isFavourite ?: false)
     val isFavouriteCharacter: LiveData<Boolean> = _isFavouriteCharacter
 
     fun fetchMedia(mediaId: Int) {
         viewModelScope.launch {
             val data = mediaDetailsRepository.fetchMedia(mediaId)
             _media.value = data
+//            Log.d(TAG, "Media id received is ${mediaId}")
+            _mediaId.emit(mediaId)
         }
     }
 
-    fun fetchStaffList(mediaId: Int, page: Int) {
-        viewModelScope.launch {
-            val data = mediaDetailsRepository.fetchStaffList(mediaId, page)
-            _staffList.value = (_staffList.value?.plus(data)) ?: data
-        }
-    }
+//    fun fetchStaffList(mediaId: Int, page: Int) {
+//        viewModelScope.launch {
+//            val data = mediaDetailsRepository.fetchStaffList(mediaId, page)
+//            _staffList.value = (_staffList.value?.plus(data)) ?: data
+//        }
+//    }
 
     fun fetchStaff(id: Int) {
         viewModelScope.launch {
-            _staff.value = mediaDetailsRepository.fetchStaff(id)
+            _staff.value = mediaDetailsRepository.fetchStaffDetail(id)
         }
     }
 
-    fun fetchReviews(mediaId: Int) {
-        viewModelScope.launch {
-            val data = mediaDetailsRepository.fetchReviews(mediaId)
-            _reviews.value = data
-        }
-    }
+//    fun fetchReviews(mediaId: Int) {
+//        viewModelScope.launch {
+//            val data = mediaDetailsRepository.fetchReviews(mediaId)
+//            _reviews.value = data
+//        }
+//    }
 
     fun fetchCharacter(characterId: Int) {
         viewModelScope.launch {
@@ -128,6 +166,12 @@ class MediaDetailsViewModel @Inject constructor(
         }
     }
 
+    fun rateReview(id: Int, rating: ReviewRatingStatus) {
+        viewModelScope.launch {
+            mediaDetailsRepository.rateReview(id, rating)
+        }
+    }
+
 //    private val _media: MutableLiveData<Media> by lazy {
 //        MutableLiveData<Media>().apply {
 // //            if (cacheList.any { it.id == _mediaId.value }) {
@@ -159,8 +203,8 @@ class MediaDetailsViewModel @Inject constructor(
 //
 //    }
 
-    private val _dataLoading = MutableLiveData<Boolean>()
-    val dataLoading: LiveData<Boolean> = _dataLoading
+//    private val _dataLoading = MutableLiveData<Boolean>()
+//    val dataLoading: LiveData<Boolean> = _dataLoading
 
 //    fun start(mediaId: Int) {
 //        // If we're already loading or already loaded, return (might be a config change)

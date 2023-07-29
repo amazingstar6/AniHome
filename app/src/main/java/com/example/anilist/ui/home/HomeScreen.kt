@@ -1,6 +1,5 @@
 package com.example.anilist.ui.home
 
-import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
@@ -49,7 +48,6 @@ import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -68,6 +66,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
@@ -80,7 +79,6 @@ import com.example.anilist.data.models.Forum
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
 import com.example.anilist.data.models.StaffDetail
-import com.example.anilist.data.repository.HomeMedia
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.mediadetails.LoadingCircle
 import com.example.anilist.ui.mediadetails.QuickInfo
@@ -89,7 +87,6 @@ import java.util.Locale
 
 private const val TAG = "AniHome"
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     aniHomeViewModel: AniHomeViewModel,
@@ -109,45 +106,40 @@ fun HomeScreen(
     val pagerAllTimePopular = aniHomeViewModel.allTimePopularPager.collectAsLazyPagingItems()
     val pagerTop100Anime = aniHomeViewModel.top100AnimePager.collectAsLazyPagingItems()
 
-    val media by aniHomeViewModel.media.observeAsState(HomeMedia())
-    val popularAnime by aniHomeViewModel.popularAnime.observeAsState(emptyList())
-    val trendingAnime by aniHomeViewModel.trendingAnime.observeAsState(emptyList())
-    val upcomingNextSeason by aniHomeViewModel.upcomingNextSeason.observeAsState(emptyList())
-    val searchResultsMedia by aniHomeViewModel.searchResultsMedia.observeAsState()
-    val searchResultsCharacter by aniHomeViewModel.searchResultsCharacter.observeAsState()
+    val search by aniHomeViewModel.search.collectAsStateWithLifecycle()
+    val searchType by aniHomeViewModel.searchType.collectAsStateWithLifecycle()
+    val sortType by aniHomeViewModel.sortType.collectAsStateWithLifecycle()
+    val searchResultsMedia = aniHomeViewModel.searchResultsMedia.collectAsLazyPagingItems()
+    val searchResultsCharacter = aniHomeViewModel.searchResultsCharacter.collectAsLazyPagingItems()
+
     val searchResultsStaff by aniHomeViewModel.searchResultsStaff.observeAsState()
     val searchResultsStudio by aniHomeViewModel.searchResultsStudio.observeAsState()
     val searchResultsForum by aniHomeViewModel.searchResultsForum.observeAsState()
     val searchResultsUser by aniHomeViewModel.searchResultsUser.observeAsState()
 
-    var popularPage by remember { mutableIntStateOf(1) }
-    var trendingPage by remember { mutableIntStateOf(1) }
-
     var active by rememberSaveable {
         mutableStateOf(false)
     }
     val focusRequester by remember { mutableStateOf(FocusRequester()) }
-    var selectedChip by rememberSaveable { mutableStateOf(SearchFilter.MEDIA) }
-    var currentMediaSort by rememberSaveable {
-        mutableStateOf(AniMediaSort.DEFAULT)
-    }
 
     Scaffold(topBar = {
         AniSearchBar(
+            query = search,
+            updateSearch = aniHomeViewModel::setSearch,
+            pagerSearch = searchResultsMedia,
             active = active,
             setActive = { active = it },
-            search = { aniHomeViewModel.search(it, selectedChip, currentMediaSort) },
-            searchResultsMedia = searchResultsMedia.orEmpty(),
-            searchResultsCharacter = searchResultsCharacter.orEmpty(),
+            search = aniHomeViewModel::triggerSearch,
+            searchResultsCharacter = searchResultsCharacter,
             searchResultStaff = searchResultsStaff.orEmpty(),
             onNavigateToMediaDetails = onNavigateToMediaDetails,
             onNavigateToNotification = onNavigateToNotification,
             onNavigateToSettings = onNavigateToSettings,
             focusRequester = focusRequester,
-            selectedChip = selectedChip,
-            currentMediaSort = currentMediaSort,
-            setCurrentMediaSort = { currentMediaSort = it },
-            setSelectedChipValue = { selectedChip = it },
+            selectedChip = searchType,
+            currentMediaSort = sortType,
+            setCurrentMediaSort = aniHomeViewModel::setSortType,
+            setSelectedChipValue = aniHomeViewModel::setMediaSearchType,
             onNavigateToCharacterDetails = onNavigateToCharacterDetails,
             onNavigateToStaffDetails = onNavigateToStaffDetails,
             searchResultsStudio = searchResultsStudio.orEmpty(),
@@ -196,7 +188,7 @@ fun HomeScreen(
         }
     }) {
         //fixme
-        if (true || popularAnime.isNotEmpty() || trendingAnime.isNotEmpty() || upcomingNextSeason.isNotEmpty()) {
+        if (true) {
             Column(
                 modifier = Modifier
                     .padding(top = it.calculateTopPadding())
@@ -273,20 +265,16 @@ private fun LazyRowLazyPagingItems(
     pager: LazyPagingItems<Media>,
     onNavigateToMediaDetails: (Int) -> Unit
 ) {
-    LazyRow() {
+    LazyRow {
         items(count = pager.itemCount) { index ->
             val item = pager[index]
-            Log.d(TAG, "Number of items loaded is ${pager.itemCount}")
-            Text("Index=$index")
+//            Log.d(TAG, "Number of items loaded is ${pager.itemCount}")
+//            Text("Index=$index")
             if (item != null) {
                 AnimeCard(
                     title = item.title,
                     coverImage = item.coverImage,
-                    onNavigateToDetails = (
-                            {
-                                onNavigateToMediaDetails(item.id)
-                            }
-                            ),
+                    onNavigateToDetails = { onNavigateToMediaDetails(item.id) },
                 )
             }
         }
@@ -330,11 +318,13 @@ enum class AniMediaSort {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 private fun AniSearchBar(
+    query: String,
+    updateSearch: (String) -> Unit,
+    pagerSearch: LazyPagingItems<Media>,
     active: Boolean,
     setActive: (Boolean) -> Unit,
-    search: (String) -> Unit,
-    searchResultsMedia: List<Media>,
-    searchResultsCharacter: List<CharacterDetail>,
+    search: () -> Unit,
+    searchResultsCharacter: LazyPagingItems<CharacterDetail>,
     searchResultStaff: List<StaffDetail>,
     onNavigateToMediaDetails: (Int) -> Unit,
     onNavigateToNotification: () -> Unit,
@@ -353,18 +343,18 @@ private fun AniSearchBar(
     currentMediaSort: AniMediaSort,
     setCurrentMediaSort: (AniMediaSort) -> Unit
 ) {
-    var text by rememberSaveable {
-        mutableStateOf("")
-    }
     val padding by animateDpAsState(
         targetValue = if (!active) Dimens.PaddingNormal else 0.dp,
         label = "increase padding" +
                 ""
     )
     SearchBar(
-        query = text,
-        onQueryChange = { text = it },
-        onSearch = { search(text) },
+        query = query,
+        onQueryChange = { updateSearch(it) },
+        onSearch = {
+//            search(text)
+//            updateSearch(text)
+        },
         active = active,
         onActiveChange = {
 //            if (!it) {
@@ -411,14 +401,14 @@ private fun AniSearchBar(
 //                    modifier = Modifier.padding(Dimens.PaddingNormal)
                     )
                 }
-            } else if (text == "") {
+            } else if (query == "") {
                 Icon(
                     painterResource(id = R.drawable.baseline_search_24),
                     "Search",
                     modifier = Modifier.padding(end = 16.dp),
                 )
             } else {
-                IconButton(onClick = { text = "" }) {
+                IconButton(onClick = { updateSearch("") }) {
                     Icon(
                         imageVector = Icons.Default.Clear,
                         contentDescription = stringResource(R.string.clear)
@@ -441,8 +431,8 @@ private fun AniSearchBar(
                             selected = index == selectedChip.ordinal,
                             onClick = {
                                 setSelectedChipValue(filterList[index])
-                                if (text.isNotBlank()) {
-                                    search(text)
+                                if (query.isNotBlank()) {
+                                    search()
                                 }
                             },
                             label = { Text(text = filterName.toString()) },
@@ -473,7 +463,7 @@ private fun AniSearchBar(
                                 onClick = {
                                     setCurrentMediaSort(mediaSort)
                                     showSortingBottomSheet = false
-                                    search(text)
+                                    search()
                                 }, modifier = Modifier
                                     .fillMaxWidth(), shape = RectangleShape
                             ) {
@@ -486,18 +476,18 @@ private fun AniSearchBar(
                     }
                 }
                 SearchResults(
+                    pagerSearch,
                     selectedChip = selectedChip,
-                    searchResultsMedia = searchResultsMedia,
-                    onNavigateToMediaDetails = onNavigateToMediaDetails,
                     searchResultsCharacter = searchResultsCharacter,
-                    onNavigateToCharacterDetails = onNavigateToCharacterDetails,
                     searchResultStaff = searchResultStaff,
-                    onNavigateToStaffDetails = onNavigateToStaffDetails,
                     searchResultsStudio = searchResultsStudio,
-                    navigateToStudioDetails = navigateToStudioDetails,
                     searchResultsForum = searchResultsForum,
-                    navigateToThreadDetails = navigateToThreadDetails,
                     searchResultsUser = searchResultsUser,
+                    onNavigateToMediaDetails = onNavigateToMediaDetails,
+                    onNavigateToCharacterDetails = onNavigateToCharacterDetails,
+                    onNavigateToStaffDetails = onNavigateToStaffDetails,
+                    navigateToStudioDetails = navigateToStudioDetails,
+                    navigateToThreadDetails = navigateToThreadDetails,
                     navigateToUserDetails = navigateToUserDetails
                 )
             }
@@ -507,9 +497,9 @@ private fun AniSearchBar(
 
 @Composable
 private fun SearchResults(
+    pagerSearch: LazyPagingItems<Media>,
     selectedChip: SearchFilter,
-    searchResultsMedia: List<Media>,
-    searchResultsCharacter: List<CharacterDetail>,
+    searchResultsCharacter: LazyPagingItems<CharacterDetail>,
     searchResultStaff: List<StaffDetail>,
     searchResultsStudio: List<AniStudio>,
     searchResultsForum: List<Forum>,
@@ -524,27 +514,33 @@ private fun SearchResults(
     LazyColumn {
         when (selectedChip) {
             SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
-                items(searchResultsMedia) { media ->
-                    SearchCardMedia(
-                        media,
-                        onNavigateToMediaDetails,
-                        media.id,
-                        media.coverImage,
-                        media.title,
-                        media.type
-                    )
+                items(pagerSearch.itemCount) { index ->
+                    val media = pagerSearch[index]
+                    if (media != null) {
+                        SearchCardMedia(
+                            media,
+                            onNavigateToMediaDetails,
+                            media.id,
+                            media.coverImage,
+                            media.title,
+                            media.type
+                        )
+                    }
                 }
             }
 
             SearchFilter.CHARACTERS -> {
-                items(searchResultsCharacter) {
-                    SearchCardCharacter(
-                        onNavigateToCharacterDetails,
-                        it.id,
-                        it.coverImage,
-                        it.userPreferredName,
-                        it.favorites
-                    )
+                items(searchResultsCharacter.itemCount) { index ->
+                    val character = searchResultsCharacter[index]
+                    if (character != null) {
+                        SearchCardCharacter(
+                            onNavigateToCharacterDetails,
+                            character.id,
+                            character.coverImage,
+                            character.userPreferredName,
+                            character.favorites
+                        )
+                    }
                 }
             }
 

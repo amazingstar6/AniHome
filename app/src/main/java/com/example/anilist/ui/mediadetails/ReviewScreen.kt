@@ -1,5 +1,6 @@
 package com.example.anilist.ui.mediadetails
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,74 +25,92 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.Utils
 import com.example.anilist.data.models.Review
+import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.ui.Dimens
+
+
+private const val TAG = "ReviewScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Reviews(reviews: List<Review>, onNavigateToReviewDetails: (Int) -> Unit) {
-    if (reviews.isNotEmpty()) {
+fun Reviews(
+    reviews: LazyPagingItems<Review>,
+    vote: (rating: ReviewRatingStatus, reviewId: Int) -> Unit,
+    onNavigateToReviewDetails: (Int) -> Unit
+) {
+    if (true) {
         LazyColumn {
-            items(reviews) { review ->
-                Card(
-                    onClick = { onNavigateToReviewDetails(review.id) },
-                    modifier = Modifier.padding(
-                        top = Dimens.PaddingNormal,
-                        bottom = Dimens.PaddingSmall,
-                        start = Dimens.PaddingNormal,
-                        end = Dimens.PaddingNormal,
-                    ),
-                ) {
-                    AvatarNameDate(
-                        avatar = review.userAvatar,
-                        userName = review.userName,
-                        date = Utils.getRelativeTime(review.createdAt.toLong()),
-                        modifier = Modifier.padding(Dimens.PaddingSmall),
-                    )
-                    Text(
-                        text = review.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
-                    )
-                    de.charlex.compose.HtmlText(
-                        text = review.body,
-                        maxLines = 7,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+            items(reviews.itemCount) { index ->
+                val review = reviews[index]
+                if (review != null) {
+                    Card(
+                        onClick = { onNavigateToReviewDetails(review.id) },
+                        modifier = Modifier.padding(
+                            top = Dimens.PaddingNormal,
+                            bottom = Dimens.PaddingSmall,
+                            start = Dimens.PaddingNormal,
+                            end = Dimens.PaddingNormal,
+                        ),
+                    ) {
+                        AvatarNameDate(
+                            avatar = review.userAvatar,
+                            userName = review.userName,
+                            date = Utils.getRelativeTime(review.createdAt.toLong()),
+                            modifier = Modifier.padding(Dimens.PaddingSmall),
+                        )
+                        Text(
+                            text = review.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
+                        )
+                        de.charlex.compose.HtmlText(
+                            text = review.body,
+                            maxLines = 7,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
 //                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
-                        modifier = Modifier.padding(Dimens.PaddingNormal),
-                    )
-                }
-                Row(
-                    modifier = Modifier.padding(horizontal = Dimens.PaddingNormal).fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    UpDownVote(
-                        review.upvotes,
-                        R.drawable.media_detail_thumbs_up,
-                        "upvote",
-                    )
-                    UpDownVote(
-                        review.totalVotes - review.upvotes,
-                        iconId = R.drawable.media_detail_thumb_down,
-                        contentDescription = "downvote",
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        text = "${review.score}/100",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(end = Dimens.PaddingSmall),
-                    )
+                            modifier = Modifier.padding(Dimens.PaddingNormal),
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = Dimens.PaddingNormal)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Log.d(TAG, "This review has user rating ${review.userRating}")
+                        UpDownVote(
+                            review.upvotes,
+                            if (review.userRating == ReviewRatingStatus.UP_VOTE) R.drawable.media_detail_thumbs_up_filled else R.drawable.media_detail_thumbs_up_outlined,
+                            "upvote",
+                            vote = { vote(if (review.userRating == ReviewRatingStatus.UP_VOTE) ReviewRatingStatus.NO_VOTE else ReviewRatingStatus.UP_VOTE, review.id
+                                ?: -1) }
+                        )
+                        UpDownVote(
+                            review.totalVotes - review.upvotes,
+                            iconId = if (review.userRating == ReviewRatingStatus.DOWN_VOTE) R.drawable.media_detail_thumbs_down_filled else R.drawable.media_detail_thumb_down_outlined,
+                            contentDescription = "downvote",
+                            modifier = Modifier.weight(1f),
+                            vote = { vote(if (review.userRating == ReviewRatingStatus.DOWN_VOTE) ReviewRatingStatus.NO_VOTE else ReviewRatingStatus.DOWN_VOTE, review.id
+                                ?: -1) }
+                        )
+                        Text(
+                            text = "${review.score}/100",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(end = Dimens.PaddingSmall),
+                        )
+                    }
                 }
             }
         }
@@ -126,10 +144,11 @@ fun UpDownVote(
     totalVotes: Int,
     iconId: Int,
     contentDescription: String,
+    vote: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
-        IconButton(onClick = { /*TODO*/ }) {
+        IconButton(onClick = { vote() }) {
             Icon(
                 painter = painterResource(id = iconId),
                 contentDescription = contentDescription,
@@ -139,28 +158,28 @@ fun UpDownVote(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ReviewListPreview() {
-    Reviews(
-        listOf(
-            Review(
-                title = "An unbalanced, yet entertaining and explosive season of KnY",
-                userName = "SlayerArt",
-                body = "I can't fucking believe it. They've done it again (sort of).It's no secret that ufotable have been killing it with their new projects over the last few years. The Heaven's Feel trilogy is stunning, and the two previous seasons of Demon Slayer were superb in the animation",
-                upvotes = 43,
-                totalVotes = 64,
-                score = 80,
-                createdAt = 1533109209,
-            ),
-        ),
-    ) { }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun ReviewListPreview() {
+//    Reviews(
+//        listOf(
+//            Review(
+//                title = "An unbalanced, yet entertaining and explosive season of KnY",
+//                userName = "SlayerArt",
+//                body = "I can't fucking believe it. They've done it again (sort of).It's no secret that ufotable have been killing it with their new projects over the last few years. The Heaven's Feel trilogy is stunning, and the two previous seasons of Demon Slayer were superb in the animation",
+//                upvotes = 43,
+//                totalVotes = 64,
+//                score = 80,
+//                createdAt = 1533109209,
+//            ),
+//        ),
+//    ) { }
+//}
 
-@Preview(showBackground = true)
-@Composable
-fun NoReviewsPreview() {
-    Reviews(
-        emptyList(),
-    ) { }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun NoReviewsPreview() {
+//    Reviews(
+//        emptyList(),
+//    ) { }
+//}

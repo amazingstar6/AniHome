@@ -124,9 +124,8 @@ fragment mediaTitleCover on Media {
     type
 }
 
-# fixme paging
-query SearchMedia($search: String!, $type: MediaType, $sort: [MediaSort] = SEARCH_MATCH, $genres: [String], $year: Int, $season: MediaSeason, $airingStatus: MediaStatus) {
-    Page {
+query SearchMedia($page: Int!, $pageSize: Int!, $search: String!, $type: MediaType, $sort: [MediaSort] = SEARCH_MATCH, $genres: [String], $year: Int, $season: MediaSeason, $airingStatus: MediaStatus) {
+    Page(page: $page, perPage: $pageSize) {
         media(search: $search, type: $type, sort: $sort, genre_in: $genres, seasonYear: $year, season: $season, status: $airingStatus) {
             id
             title {
@@ -147,8 +146,8 @@ query SearchMedia($search: String!, $type: MediaType, $sort: [MediaSort] = SEARC
     }
 }
 
-query SearchCharacters($search: String!) {
-    Page {
+query SearchCharacters($page: Int!, $pageSize: Int!, $search: String!) {
+    Page(page: $page, perPage: $pageSize) {
         characters(search: $search) {
             id
             name {

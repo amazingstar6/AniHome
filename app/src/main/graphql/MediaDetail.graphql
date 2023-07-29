@@ -192,8 +192,7 @@ query getMediaDetail($id: Int!) {
     }
 }
 
-# FIXME PAGING
-query GetReviewsOfMedia($id: Int!, $page:Int = 1, $perPage:Int = 25) {
+query GetReviewsOfMedia($id: Int!, $page:Int! $perPage:Int!) {
     Media(id: $id) {
         reviews(page: $page, perPage: $perPage) {
             nodes {
@@ -371,9 +370,9 @@ query GetReviewDetail($id: Int!) {
     }
 }
 
-query GetStaffInfo($id:Int!, $page:Int = 1, $perPage:Int = 25) {
+query GetStaffInfo($id:Int!, $page:Int!, $perPage:Int!) {
     Media(id:$id) {
-        staff(page: $page, perPage: $perPage) {
+        staff(page: $page, perPage: $perPage, sort: [RELEVANCE]) {
             edges {
                 node {
                     id

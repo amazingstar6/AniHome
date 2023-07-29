@@ -107,6 +107,8 @@ dependencies {
     kapt "com.google.dagger:hilt-compiler:2.46"
     // LiveData
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
+    // Lifecycle for compose
+    implementation "androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version"
     // For observeAsState; compose live data
     implementation "androidx.compose.runtime:runtime-livedata:1.4.3"
     // For apollo caching

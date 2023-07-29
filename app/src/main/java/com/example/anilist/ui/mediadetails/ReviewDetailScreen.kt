@@ -21,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.anilist.R
 import com.example.anilist.Utils
 import com.example.anilist.data.models.Review
+import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.ui.Dimens
 import de.charlex.compose.HtmlText
 
@@ -32,7 +33,9 @@ fun ReviewDetailScreen(
     val review by mediaDetailsViewModel.review.observeAsState()
     mediaDetailsViewModel.fetchReview(reviewId)
     if (review != null) {
-        ReviewDetail(review ?: Review())
+        ReviewDetail(
+            review ?: Review(),
+            vote = { mediaDetailsViewModel.rateReview(review?.id ?: -1, it) })
     } else {
         LoadingCircle()
     }
@@ -41,6 +44,7 @@ fun ReviewDetailScreen(
 @Composable
 private fun ReviewDetail(
     review: Review,
+    vote: (ReviewRatingStatus) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -78,13 +82,15 @@ private fun ReviewDetail(
         Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
             UpDownVote(
                 review.upvotes,
-                R.drawable.media_detail_thumbs_up,
+                if (review.userRating == ReviewRatingStatus.UP_VOTE) R.drawable.media_detail_thumbs_up_filled else R.drawable.media_detail_thumbs_up_outlined,
                 "upvote",
+                vote = { vote(if (review.userRating == ReviewRatingStatus.UP_VOTE) ReviewRatingStatus.NO_VOTE else ReviewRatingStatus.UP_VOTE) }
             )
             UpDownVote(
                 review.totalVotes - review.upvotes,
-                iconId = R.drawable.media_detail_thumb_down,
+                iconId = if (review.userRating == ReviewRatingStatus.DOWN_VOTE) R.drawable.media_detail_thumbs_down_filled else R.drawable.media_detail_thumb_down_outlined,
                 contentDescription = "downvote",
+                vote = { vote(if (review.userRating == ReviewRatingStatus.DOWN_VOTE) ReviewRatingStatus.NO_VOTE else ReviewRatingStatus.DOWN_VOTE) }
             )
         }
     }
@@ -135,5 +141,6 @@ fun ReviewDetailScreenPreview() {
             score = 80,
             createdAt = 1533109209,
         ),
+        vote = { }
     )
 }

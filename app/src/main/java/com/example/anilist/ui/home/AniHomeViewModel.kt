@@ -15,7 +15,6 @@ import com.apollographql.apollo3.api.Optional
 import com.example.anilist.GetTrendsQuery
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniUser
-import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Forum
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StaffDetail
@@ -27,9 +26,16 @@ import com.example.anilist.data.repository.UserSettings
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaSort
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -37,7 +43,8 @@ import javax.inject.Inject
 
 private const val TAG = "AniHomeViewModel"
 private const val PAGE_SIZE = 25
-private const val PREFETCH_DISTANCE = 10
+const val PREFETCH_DISTANCE = 10
+private const val STARTING_KEY = 1
 
 @HiltViewModel
 class AniHomeViewModel @Inject constructor(
@@ -91,6 +98,95 @@ class AniHomeViewModel @Inject constructor(
         ),
         pagingSourceFactory = { homeRepository.top100AnimePagingSource() }
     ).flow.cachedIn(viewModelScope)
+
+    private val _search = MutableStateFlow("")
+    val search = _search.asStateFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = ""
+        )
+    private val _mediaSearchType = MutableStateFlow(SearchFilter.MEDIA)
+    val searchType = _mediaSearchType.asStateFlow().stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(),
+        initialValue = SearchFilter.MEDIA
+    )
+    private val _sortType = MutableStateFlow(AniMediaSort.DEFAULT)
+    val sortType = _sortType.asStateFlow().stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(),
+        initialValue = AniMediaSort.DEFAULT
+    )
+
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    val searchResultsMedia =
+        if (true /*searchType.value == SearchFilter.MEDIA || searchType.value == SearchFilter.ANIME || searchType.value == SearchFilter.MANGA*/) {
+            Log.d(TAG, "Current value of search filter is ${searchType.value}")
+            search.debounce(300).flatMapLatest { query ->
+                Pager(
+                    config = PagingConfig(
+                        pageSize = PAGE_SIZE,
+                        prefetchDistance = 5,
+                        enablePlaceholders = true
+                    ),
+                    pagingSourceFactory = {
+                        SearchPagingSource(
+                            homeRepository = homeRepository,
+                            search = query,
+                            mediaSearchType = searchType.value,
+                            sortType = sortType.value
+                        )
+                    }
+                ).flow.cachedIn(viewModelScope)
+            }
+        } else {
+            emptyFlow()
+        }
+
+    //    private val _searchResultsCharacter = MutableLiveData<List<CharacterDetail>>()
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    val searchResultsCharacter = if (true /*searchType.value == SearchFilter.CHARACTERS*/) {
+        search.debounce(300).flatMapLatest { query ->
+            Pager(
+                config = PagingConfig(
+                    pageSize = PAGE_SIZE,
+                    prefetchDistance = PREFETCH_DISTANCE,
+                    enablePlaceholders = false
+                ),
+                pagingSourceFactory = { SearchCharactersPagingSource(homeRepository, query) }
+            ).flow.cachedIn(viewModelScope)
+        }
+    } else {
+        emptyFlow()
+    }
+    private val _searchResultsStaff = MutableLiveData<List<StaffDetail>>()
+    val searchResultsStaff: LiveData<List<StaffDetail>> = _searchResultsStaff
+    private val _searchResultsStudio = MutableLiveData<List<AniStudio>>()
+    val searchResultsStudio: LiveData<List<AniStudio>> = _searchResultsStudio
+    private val _searchResultsForum = MutableLiveData<List<Forum>>()
+    val searchResultsForum: LiveData<List<Forum>> = _searchResultsForum
+    private val _searchResultsUser = MutableLiveData<List<AniUser>>()
+    val searchResultsUser: LiveData<List<AniUser>> = _searchResultsUser
+
+    fun setSearch(query: String) {
+        _search.value = query
+    }
+
+    fun setMediaSearchType(type: SearchFilter) {
+        _mediaSearchType.value = type
+    }
+
+    fun setSortType(type: AniMediaSort) {
+        _sortType.value = type
+    }
+
+    fun triggerSearch() {
+        viewModelScope.launch {
+            _search.emit(_search.value)
+        }
+    }
+
 
     val initialSetupEvent = liveData {
         emit(userPreferencesRepository.fetchInitialPreferences())
@@ -152,19 +248,6 @@ class AniHomeViewModel @Inject constructor(
     val allTimePopular: LiveData<List<Media>> = _allTimePopular
     private val _top100 = MutableLiveData<List<Media>>()
     val top100: LiveData<List<Media>> = _top100
-
-    private val _searchResultsMedia = MutableLiveData<List<Media>>()
-    val searchResultsMedia: LiveData<List<Media>> = _searchResultsMedia
-    private val _searchResultsCharacter = MutableLiveData<List<CharacterDetail>>()
-    val searchResultsCharacter: LiveData<List<CharacterDetail>> = _searchResultsCharacter
-    private val _searchResultsStaff = MutableLiveData<List<StaffDetail>>()
-    val searchResultsStaff: LiveData<List<StaffDetail>> = _searchResultsStaff
-    private val _searchResultsStudio = MutableLiveData<List<AniStudio>>()
-    val searchResultsStudio: LiveData<List<AniStudio>> = _searchResultsStudio
-    private val _searchResultsForum = MutableLiveData<List<Forum>>()
-    val searchResultsForum: LiveData<List<Forum>> = _searchResultsForum
-    private val _searchResultsUser = MutableLiveData<List<AniUser>>()
-    val searchResultsUser: LiveData<List<AniUser>> = _searchResultsUser
 
     init {
 //        loadTrendingAnime()
@@ -442,30 +525,30 @@ class AniHomeViewModel @Inject constructor(
         // todo
     }
 
-    fun search(
-        text: String,
-        searchFilter: SearchFilter,
-        sort: com.example.anilist.ui.home.AniMediaSort
-    ) {
-        Log.d(TAG, "Search function got called in view model!")
-        viewModelScope.launch {
-            when (searchFilter) {
-                SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
-                    _searchResultsMedia.value = homeRepository.searchMedia(text, searchFilter, sort)
-                }
-
-                SearchFilter.CHARACTERS -> _searchResultsCharacter.value =
-                    homeRepository.searchCharacters(text)
-
-                SearchFilter.STAFF -> _searchResultsStaff.value = homeRepository.searchStaff(text)
-                SearchFilter.STUDIOS -> _searchResultsStudio.value =
-                    homeRepository.searchStudio(text)
-
-                SearchFilter.FORUM -> _searchResultsForum.value = homeRepository.searchForum(text)
-                SearchFilter.USER -> _searchResultsUser.value = homeRepository.searchUser(text)
-            }
-        }
-    }
+//    fun search(
+//        text: String,
+//        searchFilter: SearchFilter,
+//        sort: com.example.anilist.ui.home.AniMediaSort
+//    ) {
+//        Log.d(TAG, "Search function got called in view model!")
+//        viewModelScope.launch {
+//            when (searchFilter) {
+//                SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
+//                    _searchResultsMedia.value = homeRepository.searchMedia(text, searchFilter, sort)
+//                }
+//
+//                SearchFilter.CHARACTERS -> _searchResultsCharacter.value =
+//                    homeRepository.searchCharacters(text)
+//
+//                SearchFilter.STAFF -> _searchResultsStaff.value = homeRepository.searchStaff(text)
+//                SearchFilter.STUDIOS -> _searchResultsStudio.value =
+//                    homeRepository.searchStudio(text)
+//
+//                SearchFilter.FORUM -> _searchResultsForum.value = homeRepository.searchForum(text)
+//                SearchFilter.USER -> _searchResultsUser.value = homeRepository.searchUser(text)
+//            }
+//        }
+//    }
 
 //    fun saveLoginDetails(userSettings: UserSettings) {
 //        viewModelScope.launch {

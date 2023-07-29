@@ -9,7 +9,7 @@ import com.example.anilist.data.models.Notification
 class Apollo {
     companion object Client {
         // Creates a 10MB MemoryCacheFactory
-        // todo store cache in sql database
+        // todo enable cache
         private const val ONE_HOUR_IN_MILLI_SECONDS: Long = 3600000L
         private val cacheFactory = MemoryCacheFactory(
             maxSizeBytes = 10 * 1024 * 1024,

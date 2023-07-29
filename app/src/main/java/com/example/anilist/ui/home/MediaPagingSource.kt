@@ -24,39 +24,40 @@ class MediaPagingSource @Inject constructor(
 //        val range = start.until(start + params.loadSize)
         Log.d(TAG, "Current key in media paging source is ${params.key}")
         val pageSize = min(PAGE_SIZE, params.loadSize)
+        val data = when (type) {
+            HomeTrendingTypes.TRENDING_NOW -> homeRepository.getTrendingNow(
+                start,
+                pageSize
+            )
+
+            HomeTrendingTypes.POPULAR_THIS_SEASON -> homeRepository.getPopularThisSeason(
+                start,
+                pageSize
+            )
+
+            HomeTrendingTypes.UPCOMING_NEXT_SEASON -> homeRepository.getUpcomingNextSeason(
+                start,
+                pageSize
+            )
+
+            HomeTrendingTypes.ALL_TIME_POPULAR -> homeRepository.getAllTimePopularMedia(
+                start,
+                pageSize
+            )
+
+            HomeTrendingTypes.TOP_100_ANIME -> homeRepository.getTop100Anime(
+                start,
+                pageSize
+            )
+        }
         return LoadResult.Page(
-            data = when (type) {
-                HomeTrendingTypes.TRENDING_NOW -> homeRepository.getTrendingNow(
-                    start,
-                    pageSize
-                )
-
-                HomeTrendingTypes.POPULAR_THIS_SEASON -> homeRepository.getPopularThisSeason(
-                    start,
-                    pageSize
-                )
-
-                HomeTrendingTypes.UPCOMING_NEXT_SEASON -> homeRepository.getUpcomingNextSeason(
-                    start,
-                    pageSize
-                )
-
-                HomeTrendingTypes.ALL_TIME_POPULAR -> homeRepository.getAllTimePopularMedia(
-                    start,
-                    pageSize
-                )
-
-                HomeTrendingTypes.TOP_100_ANIME -> homeRepository.getTop100Anime(
-                    start,
-                    pageSize
-                )
-            },
+            data = data,
             prevKey = when (start) {
                 STARTING_KEY -> null
 //                else -> ensureValidKey(key = range.first - params.loadSize)
                 else -> start - 1
             },
-            nextKey = start + 1
+            nextKey = if (data.isNotEmpty()) start + 1 else null
         )
     }
 
@@ -68,7 +69,5 @@ class MediaPagingSource @Inject constructor(
             anchorPage?.prevKey ?: anchorPage?.nextKey
         }
     }
-
-    private fun ensureValidKey(key: Int) = max(STARTING_KEY, key)
 
 }

@@ -1,5 +1,7 @@
 package com.example.anilist
 
+import androidx.paging.PagingState
+import com.example.anilist.data.models.Media
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -39,6 +41,14 @@ class Utils {
                 hours > 0 -> "$hours ${if (hours == (1).toLong()) "hour" else "hours"} ago"
                 minutes > 0 -> "$minutes ${if (minutes == (1).toLong()) "minute" else "minutes"} ago"
                 else -> "Just now"
+            }
+        }
+
+        fun getRefreshKey(state: PagingState<Int, Any>): Int? {
+            return state.anchorPosition?.let { anchorPosition ->
+                // anchor position is the last index that successfully fetched data
+                val anchorPage = state.closestPageToPosition(anchorPosition)
+                anchorPage?.prevKey ?: anchorPage?.nextKey
             }
         }
     }

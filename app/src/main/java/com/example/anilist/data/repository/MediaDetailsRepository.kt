@@ -11,6 +11,7 @@ import com.example.anilist.GetReviewDetailQuery
 import com.example.anilist.GetReviewsOfMediaQuery
 import com.example.anilist.GetStaffDetailQuery
 import com.example.anilist.GetStaffInfoQuery
+import com.example.anilist.RateReviewMutation
 import com.example.anilist.ToggleFavoriteCharacterMutation
 import com.example.anilist.data.models.Character
 import com.example.anilist.data.models.CharacterDetail
@@ -83,11 +84,11 @@ class MediaDetailsRepository @Inject constructor() {
         return emptyList()
     }
 
-    suspend fun fetchStaffList(mediaId: Int, page: Int): List<Staff> {
+    suspend fun fetchStaffList(mediaId: Int, page: Int, pageSize: Int): List<Staff> {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    GetStaffInfoQuery(mediaId, Optional.present(page)),
+                    GetStaffInfoQuery(id = mediaId, page = page, perPage = pageSize),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -103,7 +104,7 @@ class MediaDetailsRepository @Inject constructor() {
         return emptyList()
     }
 
-    suspend fun fetchStaff(id: Int): StaffDetail {
+    suspend fun fetchStaffDetail(id: Int): StaffDetail {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -178,11 +179,11 @@ class MediaDetailsRepository @Inject constructor() {
         return result
     }
 
-    suspend fun fetchReviews(mediaId: Int): List<Review> {
+    suspend fun fetchReviews(mediaId: Int, page: Int, pageSize: Int): List<Review> {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    GetReviewsOfMediaQuery(mediaId),
+                    GetReviewsOfMediaQuery(mediaId, page, pageSize),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -463,28 +464,32 @@ class MediaDetailsRepository @Inject constructor() {
             }
             val review = result.data?.Review
             if (review != null) {
-                return Review(
-                    id = review?.id ?: -1,
-                    title = review?.summary ?: "",
-                    userName = review?.user?.name ?: "",
-                    createdAt = review?.createdAt ?: -1,
-                    body = review?.body ?: "",
-                    score = review?.score ?: -1,
-                    upvotes = review?.rating ?: -1,
-                    totalVotes = review?.ratingAmount ?: -1,
-                    userRating = when (review?.userRating) {
-                        ReviewRating.NO_VOTE -> ReviewRatingStatus.NO_VOTE
-                        ReviewRating.UP_VOTE -> ReviewRatingStatus.UP_VOTE
-                        ReviewRating.DOWN_VOTE -> ReviewRatingStatus.DOWN_VOTE
-                        else -> ReviewRatingStatus.NO_VOTE
-                    },
-                    userAvatar = review?.user?.avatar?.large ?: "",
-                )
+                return parseReview(review)
             }
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
         }
         return Review()
+    }
+
+    private fun parseReview(review: GetReviewDetailQuery.Review?): Review {
+        return Review(
+            id = review?.id ?: -1,
+            title = review?.summary ?: "",
+            userName = review?.user?.name ?: "",
+            createdAt = review?.createdAt ?: -1,
+            body = review?.body ?: "",
+            score = review?.score ?: -1,
+            upvotes = review?.rating ?: -1,
+            totalVotes = review?.ratingAmount ?: -1,
+            userRating = when (review?.userRating) {
+                ReviewRating.NO_VOTE -> ReviewRatingStatus.NO_VOTE
+                ReviewRating.UP_VOTE -> ReviewRatingStatus.UP_VOTE
+                ReviewRating.DOWN_VOTE -> ReviewRatingStatus.DOWN_VOTE
+                else -> ReviewRatingStatus.NO_VOTE
+            },
+            userAvatar = review?.user?.avatar?.large ?: "",
+        )
     }
 
     enum class LikeAbleType {
@@ -530,6 +535,32 @@ class MediaDetailsRepository @Inject constructor() {
                 LikeAbleType.STUDIO -> result.data?.ToggleFavourite?.studios?.nodes?.any { it?.id == id }
             }
             return isFavourite ?: false
+        } catch (exception: ApolloException) {
+            // handle exception here,, these are mainly for network errors
+        }
+        return false
+    }
+
+    suspend fun rateReview(id: Int, rating: ReviewRatingStatus): Boolean {
+        try {
+            val apiRating = when (rating) {
+                ReviewRatingStatus.NO_VOTE -> ReviewRating.NO_VOTE
+                ReviewRatingStatus.UP_VOTE -> ReviewRating.UP_VOTE
+                ReviewRatingStatus.DOWN_VOTE -> ReviewRating.DOWN_VOTE
+            }
+            val result =
+                Apollo.apolloClient.mutation(
+                    RateReviewMutation(
+                        rating = apiRating,
+                        id = id
+                    ),
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+            }
+            // the result is a list of all the things you've already liked of the same type
+            return result.data?.RateReview?.userRating == apiRating
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
         }
@@ -609,6 +640,7 @@ class MediaDetailsRepository @Inject constructor() {
             )
         }
         val media = Media(
+            id = media?.id ?: -1,
             title = media?.title?.native ?: "Unknown",
             type = media?.type?.toAniHomeType()
                 ?: com.example.anilist.data.models.MediaType.UNKNOWN,
