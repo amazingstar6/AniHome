@@ -1,15 +1,17 @@
-package com.example.anilist.ui.home
+package com.example.anilist.ui.home.searchpagingsource
 
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.repository.HomeRepository
+import com.example.anilist.ui.home.AniMediaSort
+import com.example.anilist.ui.home.SearchFilter
 
 private const val STARTING_KEY = 1
 private const val TAG = "SearchPagingSource"
 
-class SearchPagingSource(
+class SearchMediaPagingSource(
     private val homeRepository: HomeRepository,
     private val search: String,
     private val mediaSearchType: SearchFilter,

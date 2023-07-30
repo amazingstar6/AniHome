@@ -128,6 +128,16 @@ query SearchMedia($page: Int!, $pageSize: Int!, $search: String!, $type: MediaTy
     Page(page: $page, perPage: $pageSize) {
         media(search: $search, type: $type, sort: $sort, genre_in: $genres, seasonYear: $year, season: $season, status: $airingStatus) {
             id
+            startDate {
+                year
+                month
+                day
+            }
+            endDate {
+                year
+                month
+                day
+            }
             title {
                 userPreferred
             }
@@ -146,9 +156,9 @@ query SearchMedia($page: Int!, $pageSize: Int!, $search: String!, $type: MediaTy
     }
 }
 
-query SearchCharacters($page: Int!, $pageSize: Int!, $search: String!) {
+query SearchCharacters($page: Int!, $pageSize: Int!, $search: String!, $sort: CharacterSort!) {
     Page(page: $page, perPage: $pageSize) {
-        characters(search: $search) {
+        characters(search: $search, sort: [$sort]) {
             id
             name {
                 userPreferred
@@ -158,8 +168,8 @@ query SearchCharacters($page: Int!, $pageSize: Int!, $search: String!) {
     }
 }
 
-query SearchStaff($search: String!) {
-    Page {
+query SearchStaff($search: String!, $page: Int!, $pageSize: Int!) {
+    Page(page: $page, perPage: $pageSize) {
         staff(search: $search) {
             id
             name {
@@ -170,8 +180,8 @@ query SearchStaff($search: String!) {
     }
 }
 
-query SearchStudios($search: String!) {
-    Page {
+query SearchStudios($search: String!, $page: Int!, $pageSize: Int!) {
+    Page(page: $page, perPage: $pageSize) {
         studios(search: $search) {
             id
             name
@@ -179,8 +189,8 @@ query SearchStudios($search: String!) {
     }
 }
 
-query SearchForum($search: String!) {
-    Page {
+query SearchThreads($search: String!, $page: Int!, $pageSize: Int!) {
+    Page(page: $page, perPage: $pageSize) {
         threads(search: $search) {
             id
             title
@@ -188,8 +198,8 @@ query SearchForum($search: String!) {
     }
 }
 
-query SearchUsers($search: String!) {
-    Page {
+query SearchUsers($search: String!, $page: Int!, $pageSize: Int!) {
+    Page(page: $page, perPage: $pageSize) {
         users(search: $search) {
             id
             name

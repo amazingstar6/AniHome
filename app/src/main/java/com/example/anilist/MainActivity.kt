@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.anilist.ui.home.AniHomeViewModel
+import com.example.anilist.ui.home.HomeViewModel
 import com.example.anilist.ui.navigation.AniListBottomNavigationBar
 import com.example.anilist.ui.navigation.AniListNavigationActions
 import com.example.anilist.ui.navigation.AniListRoute
@@ -77,15 +77,15 @@ class MainActivity : ComponentActivity() {
                     val selectedDestination =
                         navBackStackEntry?.destination?.route ?: AniListRoute.HOME_ROUTE
 
-                    val aniHomeViewModel: AniHomeViewModel = hiltViewModel()
+                    val homeViewModel: HomeViewModel = hiltViewModel()
 //                    val mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel()
 
-                    aniHomeViewModel.initialSetupEvent.observe(this) { initialSetupEvent ->
+                    homeViewModel.initialSetupEvent.observe(this) { initialSetupEvent ->
                         observePreferenceChanges()
                     }
 
-                    val userSettings by aniHomeViewModel.userSettings.observeAsState()
-                    aniHomeViewModel.setAccessCode(
+                    val userSettings by homeViewModel.userSettings.observeAsState()
+                    homeViewModel.setAccessCode(
                         accessCode,
                     )
 
@@ -103,7 +103,7 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             navigationActions = navigationAction,
                             modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
-                            aniHomeViewModel = aniHomeViewModel,
+                            homeViewModel = homeViewModel,
                             userSettings = userSettings,
                             setBottomBarState = { newValue -> showBottomBar = newValue },
                         )

@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.anilist.R
-import com.example.anilist.data.models.Character
+import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.CharacterMediaConnection
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.MediaDetailsRepository
@@ -147,9 +147,9 @@ fun AnimeStaffRole(media: List<CharacterMediaConnection>, onNavigateToMedia: (In
 }
 
 @Composable
-fun VoiceCharacters(characters: List<Character>, onNavigateToCharacter: (Int) -> Unit) {
+fun VoiceCharacters(characterWithVoiceActors: List<CharacterWithVoiceActor>, onNavigateToCharacter: (Int) -> Unit) {
     LazyRow {
-        items(characters) { character ->
+        items(characterWithVoiceActors) { character ->
             ImageWithTitleAndSubTitle(
                 character.coverImage,
                 character.name,

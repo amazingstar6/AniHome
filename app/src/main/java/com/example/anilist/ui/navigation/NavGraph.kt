@@ -13,7 +13,7 @@ import com.example.anilist.data.repository.UserSettings
 import com.example.anilist.ui.PleaseLogin
 import com.example.anilist.ui.feed.FeedScreen
 import com.example.anilist.ui.forum.ForumScreen
-import com.example.anilist.ui.home.AniHomeViewModel
+import com.example.anilist.ui.home.HomeViewModel
 import com.example.anilist.ui.home.HomeScreen
 import com.example.anilist.ui.home.NotificationScreen
 import com.example.anilist.ui.home.SettingsScreen
@@ -35,7 +35,7 @@ fun AniNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     navigationActions: AniListNavigationActions,
-    aniHomeViewModel: AniHomeViewModel,
+    homeViewModel: HomeViewModel,
     userSettings: UserSettings?,
     setBottomBarState: (Boolean) -> Unit,
 ) {
@@ -47,7 +47,7 @@ fun AniNavHost(
         composable(AniListRoute.HOME_ROUTE) {
             setBottomBarState(true)
             HomeScreen(
-                aniHomeViewModel = aniHomeViewModel,
+                homeViewModel = homeViewModel,
                 onNavigateToNotification = {
                     navController.navigate(route = AniListRoute.NOTIFICATION_ROUTE)
                 },
@@ -167,7 +167,7 @@ fun AniNavHost(
         ) {
             setBottomBarState(false)
             NotificationScreen(
-                aniHomeViewModel = aniHomeViewModel,
+                homeViewModel = homeViewModel,
                 { navController.popBackStack() },
             )
         }

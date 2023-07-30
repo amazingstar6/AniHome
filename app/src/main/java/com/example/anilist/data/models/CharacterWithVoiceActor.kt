@@ -1,6 +1,6 @@
 package com.example.anilist.data.models
 
-data class Character(
+data class CharacterWithVoiceActor(
     val id: Int = -1,
     val voiceActorId: Int = -1,
     val name: String = "",

@@ -86,7 +86,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
-import com.example.anilist.data.models.Character
+import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
@@ -264,8 +264,8 @@ fun MediaDetail(
 
                 1 -> {
                     Characters(
-                        media?.characters.orEmpty().map { it.voiceActorLanguage }.distinct(),
-                        media?.characters.orEmpty(),
+                        media?.characterWithVoiceActors.orEmpty().map { it.voiceActorLanguage }.distinct(),
+                        media?.characterWithVoiceActors.orEmpty(),
                         navigateToCharacter = navigateToCharacter,
                         navigateToStaff = navigateToStaff,
                     )
@@ -441,11 +441,11 @@ private fun AniDetailTabs(
 @Composable
 fun Characters(
     languages: List<String>,
-    characters: List<Character>,
+    characterWithVoiceActors: List<CharacterWithVoiceActor>,
     navigateToCharacter: (Int) -> Unit,
     navigateToStaff: (Int) -> Unit,
 ) {
-    if (characters.isNotEmpty()) {
+    if (characterWithVoiceActors.isNotEmpty()) {
         var selected by remember { mutableIntStateOf(0) }
         Column() {
             val lazyGridState = rememberLazyGridState()
@@ -475,7 +475,7 @@ fun Characters(
                 columns = GridCells.Adaptive(120.dp),
                 modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
             ) {
-                items(characters.filter { it.voiceActorLanguage == languages[selected] }) { character ->
+                items(characterWithVoiceActors.filter { it.voiceActorLanguage == languages[selected] }) { character ->
                     Column(modifier = Modifier.padding(bottom = Dimens.PaddingLarge)) {
                         Column(
                             modifier = Modifier
@@ -635,14 +635,10 @@ fun QuickInfo(media: Media, isAnime: Boolean) {
             text = if (isAnime) {
                 "${media.season.getName()}${if (media.seasonYear != -1) " " + media.seasonYear else ""}"
             } else {
-                if (media.volumes != -1) {
-                    quantityStringResource(
-                        id = R.plurals.volume,
-                        quantity = media.volumes,
-                        media.volumes,
-                    )
+                if (media.startedAt != null) {
+                    "${media.startedAt.year}-${media.startedAt.month}-${media.startedAt.day}"
                 } else {
-                    "?"
+                    stringResource(id = R.string.question_mark)
                 }
             },
             textColor = MaterialTheme.colorScheme.onSurface,
@@ -982,8 +978,8 @@ fun IconWithText(
 fun CharactersPreview() {
     Characters(
         listOf("Japanese", "Portuguese", "English", "French"),
-        characters = listOf(
-            Character(
+        characterWithVoiceActors = listOf(
+            CharacterWithVoiceActor(
                 id = 1212321,
                 voiceActorId = 21312,
                 name = "tanjirou",

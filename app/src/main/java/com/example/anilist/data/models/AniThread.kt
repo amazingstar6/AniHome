@@ -1,6 +1,6 @@
 package com.example.anilist.data.models
 
-data class Forum(
+data class AniThread(
     val id: Int = -1,
     val title: String = ""
 )

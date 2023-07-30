@@ -29,8 +29,10 @@ data class Media(
     val volumes: Int = -1,
     val personalVolumeProgress: Int = -1,
     val chapters: Int = -1,
-    val characters: List<Character> = emptyList(),
+    val characterWithVoiceActors: List<CharacterWithVoiceActor> = emptyList(),
     val stats: Stats = Stats(),
+    val startDate: FuzzyDate? = null,
+    val endDate: FuzzyDate? = null,
 
     val favourites: Int = -1,
     val isFavourite: Boolean = false,

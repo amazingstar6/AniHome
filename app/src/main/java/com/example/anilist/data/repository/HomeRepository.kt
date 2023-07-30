@@ -1,6 +1,5 @@
 package com.example.anilist.data.repository
 
-import android.util.Log
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.Apollo
@@ -12,23 +11,26 @@ import com.example.anilist.GetTrendingMediaQuery
 import com.example.anilist.GetTrendingNowQuery
 import com.example.anilist.GetUpComingNextSeasonQuery
 import com.example.anilist.SearchCharactersQuery
-import com.example.anilist.SearchForumQuery
 import com.example.anilist.SearchMediaQuery
 import com.example.anilist.SearchStaffQuery
 import com.example.anilist.SearchStudiosQuery
+import com.example.anilist.SearchThreadsQuery
 import com.example.anilist.SearchUsersQuery
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniUser
 import com.example.anilist.data.models.CharacterDetail
-import com.example.anilist.data.models.Forum
+import com.example.anilist.data.models.AniThread
+import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.fragment.MediaTitleCover
+import com.example.anilist.type.CharacterSort
 import com.example.anilist.type.MediaFormat
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaSort
 import com.example.anilist.type.MediaType
+import com.example.anilist.ui.home.AniCharacterSort
 import com.example.anilist.ui.home.AniMediaSort
 import com.example.anilist.ui.home.MediaPagingSource
 import com.example.anilist.ui.home.SearchFilter
@@ -459,7 +461,17 @@ class HomeRepository @Inject constructor() {
             volumes = media.volumes ?: -1,
             averageScore = media.averageScore ?: -1,
             season = media.season?.toAniHomeSeason() ?: Season.UNKNOWN,
-            seasonYear = media.seasonYear ?: -1
+            seasonYear = media.seasonYear ?: -1,
+            startDate = if (media.startDate?.year != null && media.startDate.month != null && media.startDate.day != null) FuzzyDate(
+                media.startDate.year,
+                media.startDate.month,
+                media.startDate.day
+            ) else null,
+            endDate = if (media.endDate?.year != null && media.endDate.month != null && media.endDate.day != null) FuzzyDate(
+                media.endDate.year,
+                media.endDate.month,
+                media.endDate.day
+            ) else null
         )
     }
 
@@ -478,7 +490,7 @@ class HomeRepository @Inject constructor() {
                             page = page,
                             pageSize = pageSize,
                             text,
-                            sort = Optional.present(listOf(MediaSort.fromAniMediaSort(sort)))
+                            sort = Optional.present(listOf(MediaSort.fromAniCharacterSort(sort)))
                         )
 
                         SearchFilter.ANIME -> SearchMediaQuery(
@@ -486,7 +498,7 @@ class HomeRepository @Inject constructor() {
                             pageSize,
                             text,
                             type = Optional.present(MediaType.ANIME),
-                            sort = Optional.present(listOf(MediaSort.fromAniMediaSort(sort)))
+                            sort = Optional.present(listOf(MediaSort.fromAniCharacterSort(sort)))
                         )
 
                         SearchFilter.MANGA -> SearchMediaQuery(
@@ -494,7 +506,7 @@ class HomeRepository @Inject constructor() {
                             pageSize,
                             text,
                             type = Optional.present(MediaType.MANGA),
-                            sort = Optional.present(listOf(MediaSort.fromAniMediaSort(sort)))
+                            sort = Optional.present(listOf(MediaSort.fromAniCharacterSort(sort)))
                         )
 
                         else -> {
@@ -537,11 +549,21 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun searchCharacters(page: Int, pageSize: Int, text: String): List<CharacterDetail> {
+    suspend fun searchCharacters(
+        page: Int,
+        pageSize: Int,
+        text: String,
+        sort: AniCharacterSort
+    ): List<CharacterDetail> {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    SearchCharactersQuery(page, pageSize, text),
+                    SearchCharactersQuery(
+                        page,
+                        pageSize,
+                        text,
+                        CharacterSort.fromAniCharacterSort(sort)
+                    ),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -562,11 +584,11 @@ class HomeRepository @Inject constructor() {
         return emptyList()
     }
 
-    suspend fun searchStaff(text: String): List<StaffDetail> {
+    suspend fun searchStaff(text: String, page: Int, pageSize: Int): List<StaffDetail> {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    SearchStaffQuery(text),
+                    SearchStaffQuery(text, page, pageSize),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -587,11 +609,11 @@ class HomeRepository @Inject constructor() {
         return emptyList()
     }
 
-    suspend fun searchStudio(text: String): List<AniStudio> {
+    suspend fun searchStudio(text: String, page: Int, pageSize: Int): List<AniStudio> {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    SearchStudiosQuery(text),
+                    SearchStudiosQuery(text, page, pageSize),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -627,11 +649,11 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun searchForum(text: String): List<Forum> {
+    suspend fun searchForum(text: String, page: Int, pageSize: Int): List<AniThread> {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    SearchForumQuery(text),
+                    SearchThreadsQuery(text, page, pageSize),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -639,7 +661,7 @@ class HomeRepository @Inject constructor() {
                 return emptyList()
             }
 
-            val resultList = mutableListOf<Forum>()
+            val resultList = mutableListOf<AniThread>()
             result.data?.Page?.threads?.forEach {
                 if (it != null) {
                     resultList.add(parseForumSearch(it))
@@ -652,18 +674,18 @@ class HomeRepository @Inject constructor() {
         return emptyList()
     }
 
-    private fun parseForumSearch(thread: SearchForumQuery.Thread): Forum {
-        return Forum(
+    private fun parseForumSearch(thread: SearchThreadsQuery.Thread): AniThread {
+        return AniThread(
             id = thread.id,
             title = thread.title ?: ""
         )
     }
 
-    suspend fun searchUser(text: String): List<AniUser> {
+    suspend fun searchUser(text: String, page: Int, pageSize: Int): List<AniUser> {
         try {
             val result =
                 Apollo.apolloClient.query(
-                    SearchUsersQuery(text),
+                    SearchUsersQuery(text, page, pageSize),
                 )
                     .execute()
             if (result.hasErrors()) {
@@ -738,6 +760,17 @@ class HomeRepository @Inject constructor() {
 //    }
 }
 
+private fun CharacterSort.Companion.fromAniCharacterSort(sort: AniCharacterSort): CharacterSort {
+    return when (sort) {
+        AniCharacterSort.DEFAULT -> CharacterSort.SEARCH_MATCH
+//        AniCharacterSort.RELEVANCE -> CharacterSort.RELEVANCE
+//        AniCharacterSort.ROLE -> CharacterSort.ROLE
+//        AniCharacterSort.ROLE_DESC -> CharacterSort.ROLE_DESC
+        AniCharacterSort.FAVOURITES -> CharacterSort.FAVOURITES
+        AniCharacterSort.FAVOURITES_DESC -> CharacterSort.FAVOURITES_DESC
+    }
+}
+
 fun MediaFormat?.toCapitalizedString(): String {
     return if (this?.rawValue != "TV") {
         this?.rawValue?.lowercase()
@@ -748,7 +781,7 @@ fun MediaFormat?.toCapitalizedString(): String {
     }
 }
 
-fun MediaSort.Companion.fromAniMediaSort(it: AniMediaSort): MediaSort {
+fun MediaSort.Companion.fromAniCharacterSort(it: AniMediaSort): MediaSort {
     return when (it) {
         AniMediaSort.DEFAULT -> MediaSort.SEARCH_MATCH
         AniMediaSort.START_DATE -> MediaSort.START_DATE_DESC

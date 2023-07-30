@@ -13,7 +13,7 @@ import com.example.anilist.GetStaffDetailQuery
 import com.example.anilist.GetStaffInfoQuery
 import com.example.anilist.RateReviewMutation
 import com.example.anilist.ToggleFavoriteCharacterMutation
-import com.example.anilist.data.models.Character
+import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.CharacterMediaConnection
 import com.example.anilist.data.models.Link
@@ -64,7 +64,7 @@ class MediaDetailsRepository @Inject constructor() {
         return Media()
     }
 
-    suspend fun fetchCharacters(mediaId: Int): List<Character> {
+    suspend fun fetchCharacters(mediaId: Int): List<CharacterWithVoiceActor> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -164,11 +164,11 @@ class MediaDetailsRepository @Inject constructor() {
     /**
      * We need coverImage, name, role and id in Character object
      */
-    private fun parseVoicedCharactersForStaff(characters: GetStaffDetailQuery.Characters?): List<Character> {
-        val result = mutableListOf<Character>()
+    private fun parseVoicedCharactersForStaff(characters: GetStaffDetailQuery.Characters?): List<CharacterWithVoiceActor> {
+        val result = mutableListOf<CharacterWithVoiceActor>()
         for (character in characters?.edges.orEmpty()) {
             result.add(
-                Character(
+                CharacterWithVoiceActor(
                     id = character?.node?.id ?: -1,
                     name = character?.node?.name?.userPreferred ?: "",
                     role = character?.role?.name ?: "",
@@ -680,7 +680,7 @@ class MediaDetailsRepository @Inject constructor() {
             externalLinks = externalLinks,
             note = "",
             stats = parseStats(media),
-            characters = parseCharacters(media),
+            characterWithVoiceActors = parseCharacters(media),
             favourites = media?.favourites ?: -1,
             isFavourite = media?.isFavourite ?: false,
             isFavouriteBlocked = media?.isFavouriteBlocked ?: false,
@@ -688,9 +688,9 @@ class MediaDetailsRepository @Inject constructor() {
         return media
     }
 
-    private fun parseCharacters(anime: GetMediaDetailQuery.Media?): List<Character> {
+    private fun parseCharacters(anime: GetMediaDetailQuery.Media?): List<CharacterWithVoiceActor> {
         val languages: MutableList<String> = mutableListOf()
-        val characters: MutableList<Character> = mutableListOf()
+        val characterWithVoiceActors: MutableList<CharacterWithVoiceActor> = mutableListOf()
         for (character in anime?.characters?.edges.orEmpty()) {
             for (voiceActor in character?.voiceActorRoles.orEmpty()) {
                 if (languages.contains(voiceActor?.voiceActor?.languageV2) &&
@@ -699,8 +699,8 @@ class MediaDetailsRepository @Inject constructor() {
                     languages.add(voiceActor.voiceActor.languageV2)
                 }
                 if (character != null && voiceActor != null) {
-                    characters.add(
-                        Character(
+                    characterWithVoiceActors.add(
+                        CharacterWithVoiceActor(
                             id = character.node?.id ?: 0,
                             voiceActorId = voiceActor.voiceActor?.id ?: -1,
                             name = character.node?.name?.native ?: "",
@@ -713,7 +713,7 @@ class MediaDetailsRepository @Inject constructor() {
                 }
             }
         }
-        return characters
+        return characterWithVoiceActors
     }
 
     private fun parseStaffList(media: GetStaffInfoQuery.Media?): List<Staff> {

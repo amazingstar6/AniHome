@@ -1,5 +1,6 @@
 package com.example.anilist.ui.home
 
+import android.content.Context
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
@@ -64,7 +65,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
@@ -74,11 +74,9 @@ import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniUser
-import com.example.anilist.data.models.CharacterDetail
-import com.example.anilist.data.models.Forum
+import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
-import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.mediadetails.LoadingCircle
 import com.example.anilist.ui.mediadetails.QuickInfo
@@ -89,7 +87,7 @@ private const val TAG = "AniHome"
 
 @Composable
 fun HomeScreen(
-    aniHomeViewModel: AniHomeViewModel,
+    homeViewModel: HomeViewModel,
     onNavigateToMediaDetails: (Int) -> Unit,
     onNavigateToNotification: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -99,23 +97,27 @@ fun HomeScreen(
     navigateToThreadDetails: (Int) -> Unit,
     navigateToStudioDetails: (Int) -> Unit
 ) {
-    val pagerTrendingNow = aniHomeViewModel.trendingNowPager.collectAsLazyPagingItems()
-    val pagerPopularThisSeason = aniHomeViewModel.popularThisSeasonPager.collectAsLazyPagingItems()
-    val pagerUpcomingNextSeason =
-        aniHomeViewModel.upComingNextSeasonPager.collectAsLazyPagingItems()
-    val pagerAllTimePopular = aniHomeViewModel.allTimePopularPager.collectAsLazyPagingItems()
-    val pagerTop100Anime = aniHomeViewModel.top100AnimePager.collectAsLazyPagingItems()
+    val uiState: HomeUiState =
+        HomeUiState(
+            pagerTrendingNow = homeViewModel.trendingNowPager.collectAsLazyPagingItems(),
+            pagerPopularThisSeason = homeViewModel.popularThisSeasonPager.collectAsLazyPagingItems(),
+            pagerUpcomingNextSeason = homeViewModel.upComingNextSeasonPager.collectAsLazyPagingItems(),
+            pagerAllTimePopular = homeViewModel.allTimePopularPager.collectAsLazyPagingItems(),
+            pagerTop100Anime = homeViewModel.top100AnimePager.collectAsLazyPagingItems(),
+            searchResultsMedia = homeViewModel.searchResultsMedia.collectAsLazyPagingItems(),
+            searchResultsCharacter = homeViewModel.searchResultsCharacter.collectAsLazyPagingItems(),
+            searchResultsStaff = homeViewModel.searchResultsStaff.collectAsLazyPagingItems(),
+            searchResultsStudio = homeViewModel.searchResultsStudio.collectAsLazyPagingItems(),
+            searchResultsThread = homeViewModel.searchResultsThread.collectAsLazyPagingItems(),
+            searchResultsUser = homeViewModel.searchResultsUser.collectAsLazyPagingItems(),
+            searchIsActive = false,
+        )
 
-    val search by aniHomeViewModel.search.collectAsStateWithLifecycle()
-    val searchType by aniHomeViewModel.searchType.collectAsStateWithLifecycle()
-    val sortType by aniHomeViewModel.sortType.collectAsStateWithLifecycle()
-    val searchResultsMedia = aniHomeViewModel.searchResultsMedia.collectAsLazyPagingItems()
-    val searchResultsCharacter = aniHomeViewModel.searchResultsCharacter.collectAsLazyPagingItems()
+    val search by homeViewModel.search.collectAsStateWithLifecycle()
+    val searchType by homeViewModel.searchType.collectAsStateWithLifecycle()
+    val mediaSortType by homeViewModel.mediaSortType.collectAsStateWithLifecycle()
+    val characterSortType by homeViewModel.characterSortType.collectAsStateWithLifecycle()
 
-    val searchResultsStaff by aniHomeViewModel.searchResultsStaff.observeAsState()
-    val searchResultsStudio by aniHomeViewModel.searchResultsStudio.observeAsState()
-    val searchResultsForum by aniHomeViewModel.searchResultsForum.observeAsState()
-    val searchResultsUser by aniHomeViewModel.searchResultsUser.observeAsState()
 
     var active by rememberSaveable {
         mutableStateOf(false)
@@ -124,59 +126,28 @@ fun HomeScreen(
 
     Scaffold(topBar = {
         AniSearchBar(
+            uiState = uiState,
             query = search,
-            updateSearch = aniHomeViewModel::setSearch,
-            pagerSearch = searchResultsMedia,
+            updateSearch = homeViewModel::setSearch,
             active = active,
             setActive = { active = it },
-            search = aniHomeViewModel::triggerSearch,
-            searchResultsCharacter = searchResultsCharacter,
-            searchResultStaff = searchResultsStaff.orEmpty(),
+            search = homeViewModel::triggerSearch,
             onNavigateToMediaDetails = onNavigateToMediaDetails,
             onNavigateToNotification = onNavigateToNotification,
             onNavigateToSettings = onNavigateToSettings,
             focusRequester = focusRequester,
             selectedChip = searchType,
-            currentMediaSort = sortType,
-            setCurrentMediaSort = aniHomeViewModel::setSortType,
-            setSelectedChipValue = aniHomeViewModel::setMediaSearchType,
+            currentMediaSort = mediaSortType,
+            setCurrentMediaSort = homeViewModel::setMediaSortType,
+            characterSort = characterSortType,
+            setCharacterSort = homeViewModel::setCharacterSortType,
+            setSelectedChipValue = homeViewModel::setMediaSearchType,
             onNavigateToCharacterDetails = onNavigateToCharacterDetails,
             onNavigateToStaffDetails = onNavigateToStaffDetails,
-            searchResultsStudio = searchResultsStudio.orEmpty(),
-            searchResultsForum = searchResultsForum.orEmpty(),
-            searchResultsUser = searchResultsUser.orEmpty(),
             navigateToUserDetails = navigateToUserDetails,
             navigateToThreadDetails = navigateToThreadDetails,
             navigateToStudioDetails = navigateToStudioDetails
         )
-//        CenterAlignedTopAppBar(title = {
-//            Text("Home")
-//        }, navigationIcon = {
-//            Box {
-//                PlainTooltipBox(
-//                    tooltip = { Text(text = "Settings   ") },
-//                    modifier = Modifier.align(Alignment.BottomCenter),
-//                ) {
-//                    IconButton(
-//                        onClick = onNavigateToSettings,
-//                        modifier = Modifier.tooltipTrigger(),
-//                    ) {
-//                        Icon(
-//                            imageVector = Icons.Outlined.Settings,
-//                            contentDescription = "settings",
-//                        )
-//                    }
-//                }
-//            }
-//        }, actions = {
-//            IconButton(onClick = onNavigateToNotification) {
-//                Icon(
-//                    imageVector = Icons.Outlined.Notifications,
-//                    contentDescription = "notifications",
-////                    modifier = Modifier.padding(Dimens.PaddingNormal)
-//                )
-//            }
-//        })
     }, floatingActionButton = {
         FloatingActionButton(
             onClick = { active = true; focusRequester.requestFocus() },
@@ -187,71 +158,23 @@ fun HomeScreen(
             )
         }
     }) {
-        //fixme
-        if (true) {
+        // checks if there are any values loaded yet
+        if (uiState.pagerTrendingNow.itemCount != 0 || uiState.pagerPopularThisSeason.itemCount != 0 || uiState.pagerUpcomingNextSeason.itemCount != 0 || uiState.pagerAllTimePopular.itemCount != 0 || uiState.pagerTop100Anime.itemCount != 0) {
             Column(
                 modifier = Modifier
                     .padding(top = it.calculateTopPadding())
                     .verticalScroll(rememberScrollState()),
             ) {
-                HeadlineText("Trending now")
-                LazyRowLazyPagingItems(pagerTrendingNow, onNavigateToMediaDetails)
-                HeadlineText("Popular this season")
-                LazyRowLazyPagingItems(pagerPopularThisSeason, onNavigateToMediaDetails)
-                HeadlineText("Upcoming next season")
-                LazyRowLazyPagingItems(pagerUpcomingNextSeason, onNavigateToMediaDetails)
-                HeadlineText("All time popular")
-                LazyRowLazyPagingItems(pagerAllTimePopular, onNavigateToMediaDetails)
-                HeadlineText("Top 100 anime")
-                LazyRowLazyPagingItems(pagerTop100Anime, onNavigateToMediaDetails)
-
-//                HeadlineText("Trending now")
-//                AnimeRow(
-//                    onNavigateToMediaDetails,
-//                    trendingAnime,
-//                ) {
-//                    trendingPage += 1
-//                    aniHomeViewModel.fetchMedia(
-//                        isAnime = true,
-//                        page = trendingPage,
-//                        skipTrendingNow = false,
-//                    )
-//                }
-//                HeadlineText("Popular this season")
-//                AnimeRow(
-//                    onNavigateToMediaDetails,
-//                    popularAnime,
-//                ) {
-//                    popularPage += 1
-//                    aniHomeViewModel.fetchMedia(
-//                        isAnime = true,
-//                        page = popularPage,
-//                        skipPopularThisSeason = false,
-//                    )
-//                }
-//                HeadlineText("Upcoming next season")
-//                AnimeRow(
-//                    onNavigateToMediaDetails,
-//                    upcomingNextSeason,
-//                ) {
-//                    aniHomeViewModel.fetchMedia(
-//                        isAnime = true,
-//                        page = 1,
-//                        skipUpcomingNextSeason = false,
-//                    )
-//                }
-                //            HeadlineText("All time popular")
-                //            AnimeRow(
-                //                onNavigateToDetails,
-                //                media.allTimePopular,
-                //                { aniHomeViewModel.loadAllTimePopular(true) }
-                //            )
-                //            HeadlineText("Top 100 anime")
-                //            AnimeRow(
-                //                onNavigateToDetails,
-                //                media.top100Anime,
-                //                { aniHomeViewModel.loadTop100Anime(true) }
-                //            )
+                HeadlineText(stringResource(R.string.trending_now))
+                LazyRowLazyPagingItems(uiState.pagerTrendingNow, onNavigateToMediaDetails)
+                HeadlineText(stringResource(R.string.popular_this_season))
+                LazyRowLazyPagingItems(uiState.pagerPopularThisSeason, onNavigateToMediaDetails)
+                HeadlineText(stringResource(R.string.upcoming_next_season))
+                LazyRowLazyPagingItems(uiState.pagerUpcomingNextSeason, onNavigateToMediaDetails)
+                HeadlineText(stringResource(R.string.all_time_popular))
+                LazyRowLazyPagingItems(uiState.pagerAllTimePopular, onNavigateToMediaDetails)
+                HeadlineText(stringResource(R.string.top_100_anime))
+                LazyRowLazyPagingItems(uiState.pagerTop100Anime, onNavigateToMediaDetails)
             }
         } else {
             LoadingCircle()
@@ -268,8 +191,6 @@ private fun LazyRowLazyPagingItems(
     LazyRow {
         items(count = pager.itemCount) { index ->
             val item = pager[index]
-//            Log.d(TAG, "Number of items loaded is ${pager.itemCount}")
-//            Text("Index=$index")
             if (item != null) {
                 AnimeCard(
                     title = item.title,
@@ -288,7 +209,7 @@ enum class SearchFilter {
     CHARACTERS,
     STAFF,
     STUDIOS,
-    FORUM,
+    THREADS,
     USER;
 
     override fun toString(): String {
@@ -310,22 +231,52 @@ enum class AniMediaSort {
     VOLUMES,
     FAVOURITES;
 
-    override fun toString(): String {
-        return super.toString()
+    fun toString(context: Context): String {
+        return when (this) {
+            DEFAULT -> context.getString(R.string.default_sort)
+            START_DATE -> context.getString(R.string.start_date)
+            END_DATE -> context.getString(R.string.end_date)
+            SCORE -> context.getString(R.string.score)
+            POPULARITY -> context.getString(R.string.popularity)
+            TRENDING -> context.getString(R.string.trending)
+            EPISODES -> context.getString(R.string.episode_amount)
+            DURATION -> context.getString(R.string.duration)
+            CHAPTERS -> context.getString(R.string.chapter_amount)
+            VOLUMES -> context.getString(R.string.volume_amount)
+            FAVOURITES -> context.getString(R.string.favourites)
+        }
+    }
+}
+
+enum class AniCharacterSort {
+    DEFAULT,
+
+    //    RELEVANCE,
+//    ROLE,
+//    ROLE_DESC,
+    FAVOURITES,
+    FAVOURITES_DESC;
+
+    fun toString(context: Context): String {
+        return when (this) {
+            DEFAULT -> context.getString(R.string.default_sort)
+            FAVOURITES -> context.getString(R.string.favourites)
+            FAVOURITES_DESC -> context.getString(R.string.favourites_DESC)
+        }
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 private fun AniSearchBar(
+    characterSort: AniCharacterSort,
+    setCharacterSort: (AniCharacterSort) -> Unit,
+    uiState: HomeUiState,
     query: String,
     updateSearch: (String) -> Unit,
-    pagerSearch: LazyPagingItems<Media>,
     active: Boolean,
     setActive: (Boolean) -> Unit,
     search: () -> Unit,
-    searchResultsCharacter: LazyPagingItems<CharacterDetail>,
-    searchResultStaff: List<StaffDetail>,
     onNavigateToMediaDetails: (Int) -> Unit,
     onNavigateToNotification: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -334,9 +285,6 @@ private fun AniSearchBar(
     setSelectedChipValue: (SearchFilter) -> Unit,
     onNavigateToCharacterDetails: (Int) -> Unit,
     onNavigateToStaffDetails: (Int) -> Unit,
-    searchResultsStudio: List<AniStudio>,
-    searchResultsForum: List<Forum>,
-    searchResultsUser: List<AniUser>,
     navigateToUserDetails: (Int) -> Unit,
     navigateToThreadDetails: (Int) -> Unit,
     navigateToStudioDetails: (Int) -> Unit,
@@ -352,14 +300,9 @@ private fun AniSearchBar(
         query = query,
         onQueryChange = { updateSearch(it) },
         onSearch = {
-//            search(text)
-//            updateSearch(text)
         },
         active = active,
         onActiveChange = {
-//            if (!it) {
-//                text = ""
-//            }
             setActive(it)
         },
         placeholder = {
@@ -376,7 +319,7 @@ private fun AniSearchBar(
             } else {
                 Box {
                     PlainTooltipBox(
-                        tooltip = { Text(text = "Settings") },
+                        tooltip = { Text(text = stringResource(R.string.settings)) },
                         modifier = Modifier.align(Alignment.BottomCenter),
                     ) {
                         IconButton(
@@ -385,7 +328,7 @@ private fun AniSearchBar(
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Settings,
-                                contentDescription = "settings",
+                                contentDescription = stringResource(R.string.settings),
                             )
                         }
                     }
@@ -397,8 +340,7 @@ private fun AniSearchBar(
                 IconButton(onClick = onNavigateToNotification) {
                     Icon(
                         imageVector = Icons.Outlined.Notifications,
-                        contentDescription = "notifications",
-//                    modifier = Modifier.padding(Dimens.PaddingNormal)
+                        contentDescription = "notifications"
                     )
                 }
             } else if (query == "") {
@@ -419,7 +361,7 @@ private fun AniSearchBar(
         modifier = Modifier
             .animateContentSize()
             .fillMaxWidth()
-            .padding(start = padding, end = padding, top = padding)
+            .padding(start = padding, end = padding, top = padding, bottom = padding)
             .focusRequester(focusRequester)
     ) {
         Box {
@@ -440,49 +382,78 @@ private fun AniSearchBar(
                         )
                     }
                 }
-                Divider()
                 var showSortingBottomSheet by remember { mutableStateOf(false) }
                 FlowRow(modifier = Modifier.padding(start = Dimens.PaddingNormal)) {
-                    AssistChip(
-                        onClick = { showSortingBottomSheet = true },
-                        label = { Text(text = currentMediaSort.toString()) },
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.sort),
-                                contentDescription = stringResource(
-                                    id = R.string.sort
+                    if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME || selectedChip == SearchFilter.MANGA) {
+                        Divider()
+                        AssistChip(
+                            onClick = { showSortingBottomSheet = true },
+                            label = { Text(text = currentMediaSort.toString(LocalContext.current)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.sort),
+                                    contentDescription = stringResource(
+                                        id = R.string.sort
+                                    )
                                 )
-                            )
-                        },
-                    )
+                            },
+                        )
+                    } else if (selectedChip == SearchFilter.CHARACTERS) {
+                        Divider()
+                        AssistChip(
+                            onClick = { showSortingBottomSheet = true },
+                            label = { Text(text = characterSort.toString(LocalContext.current)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.sort),
+                                    contentDescription = stringResource(
+                                        id = R.string.sort
+                                    )
+                                )
+                            },
+                        )
+                    }
                 }
                 if (showSortingBottomSheet) {
                     ModalBottomSheet(onDismissRequest = { showSortingBottomSheet = false }) {
-                        AniMediaSort.values().forEachIndexed { index, mediaSort ->
-                            TextButton(
-                                onClick = {
-                                    setCurrentMediaSort(mediaSort)
-                                    showSortingBottomSheet = false
-                                    search()
-                                }, modifier = Modifier
-                                    .fillMaxWidth(), shape = RectangleShape
-                            ) {
-                                Text(
-                                    mediaSort.toString(),
-                                    color = if (currentMediaSort == mediaSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                )
+                        if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME || selectedChip == SearchFilter.MANGA) {
+                            AniMediaSort.values().forEachIndexed { _, mediaSort ->
+                                TextButton(
+                                    onClick = {
+                                        setCurrentMediaSort(mediaSort)
+                                        showSortingBottomSheet = false
+                                        search()
+                                    }, modifier = Modifier
+                                        .fillMaxWidth(), shape = RectangleShape
+                                ) {
+                                    Text(
+                                        mediaSort.toString(LocalContext.current),
+                                        color = if (currentMediaSort == mediaSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        } else if (selectedChip == SearchFilter.CHARACTERS) {
+                            AniCharacterSort.values().forEach { aniCharacterSort ->
+                                TextButton(
+                                    onClick = {
+                                        setCharacterSort(aniCharacterSort)
+                                        showSortingBottomSheet = false
+                                        search()
+                                    }, modifier = Modifier
+                                        .fillMaxWidth(), shape = RectangleShape
+                                ) {
+                                    Text(
+                                        aniCharacterSort.toString(LocalContext.current),
+                                        color = if (characterSort == aniCharacterSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
                             }
                         }
                     }
                 }
                 SearchResults(
-                    pagerSearch,
+                    uiState = uiState,
                     selectedChip = selectedChip,
-                    searchResultsCharacter = searchResultsCharacter,
-                    searchResultStaff = searchResultStaff,
-                    searchResultsStudio = searchResultsStudio,
-                    searchResultsForum = searchResultsForum,
-                    searchResultsUser = searchResultsUser,
                     onNavigateToMediaDetails = onNavigateToMediaDetails,
                     onNavigateToCharacterDetails = onNavigateToCharacterDetails,
                     onNavigateToStaffDetails = onNavigateToStaffDetails,
@@ -497,13 +468,8 @@ private fun AniSearchBar(
 
 @Composable
 private fun SearchResults(
-    pagerSearch: LazyPagingItems<Media>,
+    uiState: HomeUiState,
     selectedChip: SearchFilter,
-    searchResultsCharacter: LazyPagingItems<CharacterDetail>,
-    searchResultStaff: List<StaffDetail>,
-    searchResultsStudio: List<AniStudio>,
-    searchResultsForum: List<Forum>,
-    searchResultsUser: List<AniUser>,
     onNavigateToMediaDetails: (Int) -> Unit,
     onNavigateToCharacterDetails: (Int) -> Unit,
     onNavigateToStaffDetails: (Int) -> Unit,
@@ -514,8 +480,8 @@ private fun SearchResults(
     LazyColumn {
         when (selectedChip) {
             SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
-                items(pagerSearch.itemCount) { index ->
-                    val media = pagerSearch[index]
+                items(uiState.searchResultsMedia.itemCount) { index ->
+                    val media = uiState.searchResultsMedia[index]
                     if (media != null) {
                         SearchCardMedia(
                             media,
@@ -530,8 +496,8 @@ private fun SearchResults(
             }
 
             SearchFilter.CHARACTERS -> {
-                items(searchResultsCharacter.itemCount) { index ->
-                    val character = searchResultsCharacter[index]
+                items(uiState.searchResultsCharacter.itemCount) { index ->
+                    val character = uiState.searchResultsCharacter[index]
                     if (character != null) {
                         SearchCardCharacter(
                             onNavigateToCharacterDetails,
@@ -545,44 +511,58 @@ private fun SearchResults(
             }
 
             SearchFilter.STAFF -> {
-                items(searchResultStaff) {
-                    SearchCardCharacter(
-                        onNavigateToStaffDetails,
-                        it.id,
-                        it.coverImage,
-                        it.userPreferredName,
-                        it.favourites
-                    )
+                items(uiState.searchResultsStaff.itemCount) { index ->
+                    val staff = uiState.searchResultsStaff[index]
+                    if (staff != null) {
+                        SearchCardCharacter(
+                            onNavigateToStaffDetails,
+                            staff.id,
+                            staff.coverImage,
+                            staff.userPreferredName,
+                            staff.favourites
+                        )
+                    }
                 }
             }
 
             SearchFilter.STUDIOS -> {
-                items(searchResultsStudio) {
-                    SearchCardStudio(
-                        it.id,
-                        it.name,
-                        navigateToStudioDetails
-                    )
+                items(uiState.searchResultsStudio.itemCount) {
+                    index ->
+                    val studio = uiState.searchResultsStudio[index]
+                    if (studio != null) {
+                        SearchCardStudio(
+                            studio.id,
+                            studio.name,
+                            navigateToStudioDetails
+                        )
+                    }
                 }
             }
 
-            SearchFilter.FORUM -> {
-                items(searchResultsForum) {
-                    SearchCardForum(
-                        it.id,
-                        it.title,
-                        navigateToThreadDetails
-                    )
+            SearchFilter.THREADS -> {
+                items(uiState.searchResultsThread.itemCount) {
+                    index ->
+                    val thread = uiState.searchResultsThread[index]
+                    if (thread != null) {
+                        SearchCardForum(
+                            thread.id,
+                            thread.title,
+                            navigateToThreadDetails
+                        )
+                    }
                 }
             }
 
             SearchFilter.USER -> {
-                items(searchResultsUser) {
-                    SearchCardUser(
-                        it.id,
-                        it.name,
-                        navigateToUserDetails
-                    )
+                items(uiState.searchResultsUser.itemCount) { index ->
+                    val user = uiState.searchResultsUser[index]
+                    if (user != null) {
+                        SearchCardUser(
+                            user.id,
+                            user.name,
+                            navigateToUserDetails
+                        )
+                    }
                 }
             }
         }
@@ -773,10 +753,4 @@ fun AnimeCard(
             overflow = TextOverflow.Ellipsis,
         )
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MyAppPreview() {
-//    AniHome(onNavigateToDetails = {}, aniHomeViewModel = AniHomeViewModel(), onNavigateToNotification = {})
 }

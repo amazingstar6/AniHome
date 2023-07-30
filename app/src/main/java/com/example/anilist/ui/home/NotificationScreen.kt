@@ -41,11 +41,11 @@ import com.example.anilist.data.models.Notification
 import com.example.anilist.ui.Dimens
 
 @Composable
-fun NotificationScreen(aniHomeViewModel: AniHomeViewModel, onNavigateBack: () -> Unit) {
-    val notifications = aniHomeViewModel.notifications.observeAsState()
+fun NotificationScreen(homeViewModel: HomeViewModel, onNavigateBack: () -> Unit) {
+    val notifications = homeViewModel.notifications.observeAsState()
     Notifications(
         notifications.value?.data ?: emptyList(),
-        aniHomeViewModel::markAllNotificationsAsRead,
+        homeViewModel::markAllNotificationsAsRead,
         onNavigateBack = onNavigateBack,
     )
 }

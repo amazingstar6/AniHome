@@ -10,7 +10,7 @@ data class StaffDetail(
     val favourites: Int = -1,
     val language: String = "",
     val description: String = "",
-    val voicedCharacters: List<Character> = emptyList(),
+    val voicedCharacters: List<CharacterWithVoiceActor> = emptyList(),
     val animeStaffRole: List<CharacterMediaConnection> = emptyList(),
     val mangaStaffRole: List<CharacterMediaConnection> = emptyList(),
 )
