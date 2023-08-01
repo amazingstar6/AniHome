@@ -33,15 +33,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
-import com.example.anilist.Utils
+import com.example.anilist.utils.Utils
 import com.example.anilist.data.models.Notification
 import com.example.anilist.ui.Dimens
 
 @Composable
-fun NotificationScreen(homeViewModel: HomeViewModel, onNavigateBack: () -> Unit) {
+fun NotificationScreen(homeViewModel: HomeViewModel = hiltViewModel(), onNavigateBack: () -> Unit) {
     val notifications = homeViewModel.notifications.observeAsState()
     Notifications(
         notifications.value?.data ?: emptyList(),

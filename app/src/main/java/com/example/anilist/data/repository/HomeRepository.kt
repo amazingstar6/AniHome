@@ -2,7 +2,7 @@ package com.example.anilist.data.repository
 
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
-import com.example.anilist.Apollo
+import com.example.anilist.utils.Apollo
 import com.example.anilist.GetAllTimePopularQuery
 import com.example.anilist.GetMorePopularThisSeasonQuery
 import com.example.anilist.GetPopularThisSeasonQuery

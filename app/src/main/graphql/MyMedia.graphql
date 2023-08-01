@@ -1,4 +1,10 @@
-query getMyMedia($type: MediaType, $userId: Int = 808626) {
+query GetCurrentUser {
+    Viewer {
+        id
+    }
+}
+
+query getMyMedia($type: MediaType!, $userId: Int!) {
     MediaListCollection(userId: $userId, type:$type, sort:UPDATED_TIME_DESC) {
         lists {
             entries {

@@ -1,10 +1,11 @@
-package com.example.anilist
+package com.example.anilist.utils
 
 import androidx.paging.PagingState
-import com.example.anilist.data.models.Media
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 class Utils {
     companion object {
@@ -50,6 +51,12 @@ class Utils {
                 val anchorPage = state.closestPageToPosition(anchorPosition)
                 anchorPage?.prevKey ?: anchorPage?.nextKey
             }
+        }
+
+        fun convertToRFC3339(secondsToAdd: Long): String {
+            val currentTime = ZonedDateTime.now().plusSeconds(secondsToAdd)
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
+            return currentTime.format(formatter)
         }
     }
 }

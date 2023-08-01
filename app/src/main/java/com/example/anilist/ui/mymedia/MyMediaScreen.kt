@@ -1,9 +1,7 @@
-package com.example.anilist.ui.my_media
+package com.example.anilist.ui.mymedia
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +48,8 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -165,11 +165,36 @@ private fun MyMedia(
         mutableStateOf(Media())
     }
 
-    val filterSheetState = rememberModalBottomSheetState()
-    val editSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var filterSheetIsVisible by remember {
+        mutableStateOf(false)
+    }
+    var editSheetIsVisible by remember {
+        mutableStateOf(false)
+    }
 
-    val showFilterSheet: () -> Unit = { modalSheetScope.launch { filterSheetState.show() } }
-    val hideFilterSheet: () -> Unit = { modalSheetScope.launch { filterSheetState.hide() } }
+    val filterSheetState = rememberModalBottomSheetState()
+    val editSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false, confirmValueChange = {
+        it != SheetValue.Hidden
+    })
+
+    val showFilterSheet: () -> Unit = {
+        filterSheetIsVisible = true
+        modalSheetScope.launch { filterSheetState.show() }
+    }
+    val hideFilterSheet: () -> Unit = {
+        filterSheetIsVisible = false
+        modalSheetScope.launch { filterSheetState.hide() }
+    }
+
+    val showEditSheet: (Media) -> Unit = {
+        editSheetIsVisible = true
+        currentMedia = it
+        modalSheetScope.launch { editSheetState.show() }
+    }
+    val hideEditSheet: () -> Unit = {
+        editSheetIsVisible = false
+        modalSheetScope.launch { editSheetState.hide() }
+    }
 
     var personalProgress: Int = currentMedia.personalProgress
     var progressVolumes: Int = currentMedia.personalVolumeProgress
@@ -179,12 +204,6 @@ private fun MyMedia(
     var completedAt: FuzzyDate? = currentMedia.completedAt
     var rawScore: Double = currentMedia.rawScore
     var notes: String = currentMedia.note
-
-    val showEditSheet: (Media) -> Unit = {
-        currentMedia = it
-        modalSheetScope.launch { editSheetState.show() }
-    }
-    val hideEditSheet: () -> Unit = { modalSheetScope.launch { editSheetState.hide() } }
 
     var filter by rememberSaveable { mutableStateOf(MediaStatus.UNKNOWN) }
     Scaffold(
@@ -207,7 +226,9 @@ private fun MyMedia(
                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
                 },
-                onClick = showFilterSheet,
+                onClick = {
+                    showFilterSheet()
+                },
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier
@@ -267,251 +288,27 @@ private fun MyMedia(
                 showEditSheet,
                 isAnime,
             )
-            if (editSheetState.isVisible) {
-                ModalBottomSheet(sheetState = editSheetState, onDismissRequest = hideEditSheet) {
-                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                        val currentStatus =
-                            myMedia?.entries?.find { it.value.any { media -> media.id == currentMedia.id } }?.key
-                                ?: MediaStatus.UNKNOWN
-                        var selectedOptionText by remember { mutableStateOf(currentStatus) }
-                        CenterAlignedTopAppBar(
-                            title = {
-                                Text(
-                                    text = currentMedia.title,
-                                )
-                            },
-                            navigationIcon = {
-                                IconButton(
-                                    onClick = hideEditSheet,
-                                    modifier = Modifier.padding(Dimens.PaddingNormal),
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "close",
-                                    )
-                                }
-                            },
-                            actions = {
-                                TextButton(onClick = {
-                                    Log.d(TAG, "progress in my media screen is $personalProgress")
-                                    saveStatus(
-                                        // todo fill these
-                                        StatusUpdate(
-                                            id = currentMedia.listEntryId,
-                                            status = selectedOptionText,
-                                            scoreRaw = rawScore.toInt(),
-                                            progress = personalProgress,
-                                            progressVolumes = if (!isAnime) progressVolumes else null,
-                                            repeat = rewatches,
-                                            priority = null,
-                                            privateToUser = privateToUser,
-                                            notes = notes,
-                                            hiddenFromStatusList = null,
-                                            customLists = null,
-                                            advancedScores = null,
-                                            startedAt = startedAt,
-                                            completedAt = completedAt,
-                                        ),
-                                    )
-                                    hideEditSheet()
-                                    reloadMyMedia()
-                                }) {
-                                    Text("Save")
-                                }
-                            },
-                        )
-                        DropDownMenuStatus(
-                            selectedOptionText,
-                            isAnime = isAnime
-                        ) { selectedOptionText = it }
-
-                        NumberTextField(
-                            suffix = if (isAnime) currentMedia.episodeAmount.toString() else currentMedia.chapters.toString(),
-                            label = if (isAnime) "Episodes" else "Chapters",
-                            initialValue = personalProgress,
-                            setValue = {
-                                personalProgress = it
-                            },
-                            maxCount = if (isAnime) {
-                                if (currentMedia.episodeAmount != -1) {
-                                    currentMedia.episodeAmount
-                                } else {
-                                    Int.MAX_VALUE
-                                }
-                            } else {
-                                if (currentMedia.chapters != -1) {
-                                    currentMedia.chapters
-                                } else {
-                                    Int.MAX_VALUE
-                                }
-                            },
-                        )
-                        if (!isAnime) {
-                            NumberTextField(
-                                suffix = currentMedia.volumes.toString(),
-                                label = "Volumes",
-                                initialValue = progressVolumes,
-                                setValue = {
-                                    progressVolumes = it
-                                },
-                                maxCount = currentMedia.volumes,
-                            )
-                        }
-                        NumberTextField(
-                            suffix = "",
-                            label = if (isAnime) "Total rewatches" else "Total rereads",
-                            initialValue = rewatches,
-                            setValue = { rewatches = it },
-                            maxCount = Int.MAX_VALUE,
-                        )
-                        var sliderPosition by remember {
-                            mutableFloatStateOf(
-                                rawScore.roundToInt().toFloat(),
-                            )
-                        }
-                        var text by remember {
-                            mutableStateOf("${sliderPosition.toInt()}")
-                        }
-                        OutlinedTextField(
-                            value = text,
-                            onValueChange = { newInput ->
-                                text = newInput
-                                sliderPosition = try {
-                                    newInput.toFloat()
-                                } catch (e: NumberFormatException) {
-                                    0f
-                                }
-                            },
-                            label = { Text("Score") },
-                            suffix = { Text(text = "/100") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier
-                                .padding(Dimens.PaddingNormal),
-                        )
-                        Slider(
-                            modifier = Modifier
-                                .semantics {
-                                    contentDescription = "Localized Description"
-                                }
-                                .padding(Dimens.PaddingNormal),
-                            valueRange = 1f..100f,
-                            value = sliderPosition,
-                            onValueChange = {
-                                sliderPosition = it
-                                rawScore = it.roundToInt().toDouble()
-                                text = it.roundToInt().toString()
-                            },
-                            steps = 100,
-                        )
-
-                        DatePickerDialogue(
-                            "Start date",
-                            initialValue = currentMedia.startedAt,
-                            setValue = { startedAt = it },
-                        )
-                        DatePickerDialogue(
-                            "Finish date",
-                            initialValue = currentMedia.completedAt,
-                            setValue = { completedAt = it },
-                        )
-
-                        var check by remember {
-                            mutableStateOf(privateToUser)
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start,
-                            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
-                        ) {
-                            Checkbox(checked = check, onCheckedChange = {
-                                privateToUser = it
-                                check = it
-                            })
-                            Text(
-                                "Private",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-
-                        var note by remember { mutableStateOf(notes) }
-                        OutlinedTextField(
-                            value = note,
-                            label = { Text("Notes") },
-                            onValueChange = { note = it; notes = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(
-                                    start = Dimens.PaddingNormal,
-                                    end = Dimens.PaddingNormal,
-                                    bottom = Dimens.PaddingLarge
-                                ),
-                            minLines = 5,
-                            trailingIcon = {
-                                if (text.isNotBlank()) {
-                                    IconButton(onClick = { note = ""; notes = "" }) {
-                                        Box {
-                                            Icon(
-                                                imageVector = Icons.Default.Clear,
-                                                contentDescription = "clear",
-                                                modifier = Modifier.align(Alignment.TopEnd)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        )
-
-                        var showDeleteConfirmation by remember { mutableStateOf(false) }
-                        AnimatedVisibility(visible = showDeleteConfirmation) {
-                            AlertDialog(
-                                title = { Text(text = "Delete entry?") },
-                                dismissButton = {
-                                    TextButton(onClick = { showDeleteConfirmation = false }) {
-                                        Text(text = stringResource(R.string.cancel))
-                                    }
-                                },
-                                confirmButton = {
-                                    TextButton(onClick = {
-                                        deleteListEntry(currentMedia.listEntryId); showDeleteConfirmation =
-                                        false; hideEditSheet()
-                                    }) {
-                                        Text(stringResource(R.string.delete))
-                                    }
-                                },
-                                onDismissRequest = { showDeleteConfirmation = false })
-                        }
-
-                        Button(
-                            onClick = {
-                                showDeleteConfirmation = true
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(
-                                    start = Dimens.PaddingNormal,
-                                    end = Dimens.PaddingNormal,
-                                    bottom = Dimens.PaddingNormal
-                                )
-                        ) {
-                            Text(
-                                text = "Delete entry",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
+            if (editSheetIsVisible) {
+                EditStatusSheet(
+                    editSheetState = editSheetState,
+                    hideEditSheet = hideEditSheet,
+                    myMedia = myMedia,
+                    currentMedia = currentMedia,
+                    personalProgress = personalProgress,
+                    saveStatus = saveStatus,
+                    rawScore = rawScore,
+                    isAnime = isAnime,
+                    progressVolumes = progressVolumes,
+                    rewatches = rewatches,
+                    privateToUser = privateToUser,
+                    notes = notes,
+                    startedAt = startedAt,
+                    completedAt = completedAt,
+                    reloadMyMedia = reloadMyMedia,
+                    deleteListEntry = deleteListEntry
+                )
             }
-            // fixme animation not working
-            AnimatedVisibility(
-                visible = filterSheetState.isVisible,
-                enter = fadeIn(),
-                exit = ExitTransition.None,
-            ) {
+            if (filterSheetIsVisible) {
                 ModalBottomSheet(
                     sheetState = filterSheetState,
                     onDismissRequest = hideFilterSheet,
@@ -596,6 +393,273 @@ private fun MyMedia(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun EditStatusSheet(
+    editSheetState: SheetState,
+    hideEditSheet: () -> Unit,
+    deleteListEntry: (id: Int) -> Unit,
+    reloadMyMedia: () -> Unit,
+    myMedia: Map<MediaStatus, List<Media>>?,
+    currentMedia: Media,
+    personalProgress: Int,
+    saveStatus: (StatusUpdate) -> Unit,
+    rawScore: Double,
+    isAnime: Boolean,
+    progressVolumes: Int,
+    rewatches: Int,
+    privateToUser: Boolean,
+    notes: String,
+    startedAt: FuzzyDate?,
+    completedAt: FuzzyDate?
+) {
+    var personalProgress1 = personalProgress
+    var rawScore1 = rawScore
+    var progressVolumes1 = progressVolumes
+    var rewatches1 = rewatches
+    var privateToUser1 = privateToUser
+    var notes1 = notes
+    var startedAt1 = startedAt
+    var completedAt1 = completedAt
+    ModalBottomSheet(sheetState = editSheetState, onDismissRequest = { hideEditSheet() }) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            val currentStatus =
+                myMedia?.entries?.find { it.value.any { media -> media.id == currentMedia.id } }?.key
+                    ?: MediaStatus.UNKNOWN
+            var selectedOptionText by remember { mutableStateOf(currentStatus) }
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = currentMedia.title,
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = hideEditSheet,
+                        modifier = Modifier.padding(Dimens.PaddingNormal),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "close",
+                        )
+                    }
+                },
+                actions = {
+                    TextButton(onClick = {
+                        Log.d(TAG, "progress in my media screen is $personalProgress1")
+                        saveStatus(
+                            // todo fill these
+                            StatusUpdate(
+                                id = currentMedia.listEntryId,
+                                status = selectedOptionText,
+                                scoreRaw = rawScore1.toInt(),
+                                progress = personalProgress1,
+                                progressVolumes = if (!isAnime) progressVolumes1 else null,
+                                repeat = rewatches1,
+                                priority = null,
+                                privateToUser = privateToUser1,
+                                notes = notes1,
+                                hiddenFromStatusList = null,
+                                customLists = null,
+                                advancedScores = null,
+                                startedAt = startedAt1,
+                                completedAt = completedAt1,
+                            ),
+                        )
+                        hideEditSheet()
+                        reloadMyMedia()
+                    }) {
+                        Text("Save")
+                    }
+                },
+            )
+            DropDownMenuStatus(
+                selectedOptionText,
+                isAnime = isAnime
+            ) { selectedOptionText = it }
+
+            NumberTextField(
+                suffix = if (isAnime) currentMedia.episodeAmount.toString() else currentMedia.chapters.toString(),
+                label = if (isAnime) "Episodes" else "Chapters",
+                initialValue = personalProgress1,
+                setValue = {
+                    personalProgress1 = it
+                },
+                maxCount = if (isAnime) {
+                    if (currentMedia.episodeAmount != -1) {
+                        currentMedia.episodeAmount
+                    } else {
+                        Int.MAX_VALUE
+                    }
+                } else {
+                    if (currentMedia.chapters != -1) {
+                        currentMedia.chapters
+                    } else {
+                        Int.MAX_VALUE
+                    }
+                },
+            )
+            if (!isAnime) {
+                NumberTextField(
+                    suffix = currentMedia.volumes.toString(),
+                    label = "Volumes",
+                    initialValue = progressVolumes1,
+                    setValue = {
+                        progressVolumes1 = it
+                    },
+                    maxCount = currentMedia.volumes,
+                )
+            }
+            NumberTextField(
+                suffix = "",
+                label = if (isAnime) "Total rewatches" else "Total rereads",
+                initialValue = rewatches1,
+                setValue = { rewatches1 = it },
+                maxCount = Int.MAX_VALUE,
+            )
+            var sliderPosition by remember {
+                mutableFloatStateOf(
+                    rawScore1.roundToInt().toFloat(),
+                )
+            }
+            var text by remember {
+                mutableStateOf("${sliderPosition.toInt()}")
+            }
+            OutlinedTextField(
+                value = text,
+                onValueChange = { newInput ->
+                    text = newInput
+                    sliderPosition = try {
+                        newInput.toFloat()
+                    } catch (e: NumberFormatException) {
+                        0f
+                    }
+                },
+                label = { Text("Score") },
+                suffix = { Text(text = "/100") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier
+                    .padding(Dimens.PaddingNormal),
+            )
+            Slider(
+                modifier = Modifier
+                    .semantics {
+                        contentDescription = "Localized Description"
+                    }
+                    .padding(Dimens.PaddingNormal),
+                valueRange = 1f..100f,
+                value = sliderPosition,
+                onValueChange = {
+                    sliderPosition = it
+                    rawScore1 = it.roundToInt().toDouble()
+                    text = it.roundToInt().toString()
+                },
+                steps = 100,
+            )
+
+            DatePickerDialogue(
+                "Start date",
+                initialValue = currentMedia.startedAt,
+                setValue = { startedAt1 = it },
+            )
+            DatePickerDialogue(
+                "Finish date",
+                initialValue = currentMedia.completedAt,
+                setValue = { completedAt1 = it },
+            )
+
+            var check by remember {
+                mutableStateOf(privateToUser1)
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start,
+                modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+            ) {
+                Checkbox(checked = check, onCheckedChange = {
+                    privateToUser1 = it
+                    check = it
+                })
+                Text(
+                    "Private",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+
+            var note by remember { mutableStateOf(notes1) }
+            OutlinedTextField(
+                value = note,
+                label = { Text("Notes") },
+                onValueChange = { note = it; notes1 = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = Dimens.PaddingNormal,
+                        end = Dimens.PaddingNormal,
+                        bottom = Dimens.PaddingLarge
+                    ),
+                minLines = 5,
+                trailingIcon = {
+                    if (text.isNotBlank()) {
+                        IconButton(onClick = { note = ""; notes1 = "" }) {
+                            Box {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "clear",
+                                    modifier = Modifier.align(Alignment.TopEnd)
+                                )
+                            }
+                        }
+                    }
+                }
+            )
+
+            var showDeleteConfirmation by remember { mutableStateOf(false) }
+            AnimatedVisibility(visible = showDeleteConfirmation) {
+                AlertDialog(
+                    title = { Text(text = "Delete entry?") },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteConfirmation = false }) {
+                            Text(text = stringResource(R.string.cancel))
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            deleteListEntry(currentMedia.listEntryId); showDeleteConfirmation =
+                            false; hideEditSheet()
+                        }) {
+                            Text(stringResource(R.string.delete))
+                        }
+                    },
+                    onDismissRequest = { showDeleteConfirmation = false })
+            }
+
+            Button(
+                onClick = {
+                    showDeleteConfirmation = true
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = Dimens.PaddingNormal,
+                        end = Dimens.PaddingNormal,
+                        bottom = Dimens.PaddingNormal
+                    )
+            ) {
+                Text(
+                    text = "Delete entry",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }

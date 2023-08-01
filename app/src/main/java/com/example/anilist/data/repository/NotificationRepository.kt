@@ -1,10 +1,10 @@
 package com.example.anilist.data.repository
 
 import com.apollographql.apollo3.exception.ApolloException
-import com.example.anilist.Apollo
+import com.example.anilist.utils.Apollo
 import com.example.anilist.GetNotificationsQuery
-import com.example.anilist.ResultData
-import com.example.anilist.ResultStatus
+import com.example.anilist.utils.ResultData
+import com.example.anilist.utils.ResultStatus
 import com.example.anilist.data.models.Notification
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject

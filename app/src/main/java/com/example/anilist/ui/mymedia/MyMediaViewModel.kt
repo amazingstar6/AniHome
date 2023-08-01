@@ -1,4 +1,4 @@
-package com.example.anilist.ui.my_media
+package com.example.anilist.ui.mymedia
 
 import android.util.Log
 import androidx.lifecycle.LiveData

@@ -1,10 +1,13 @@
 package com.example.anilist.data.repository
 
 import android.util.Log
+import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo3.api.http.HttpHeader
 import com.apollographql.apollo3.exception.ApolloException
-import com.example.anilist.Apollo
+import com.example.anilist.utils.Apollo
 import com.example.anilist.DeleteEntryMutation
+import com.example.anilist.GetCurrentUserQuery
 import com.example.anilist.GetMyMediaQuery
 import com.example.anilist.IncreaseEpisodeProgressMutation
 import com.example.anilist.UpdateStatusMutation
@@ -15,7 +18,7 @@ import com.example.anilist.fragment.MyMedia
 import com.example.anilist.type.FuzzyDateInput
 import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaType
-import com.example.anilist.ui.my_media.MediaStatus
+import com.example.anilist.ui.mymedia.MediaStatus
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,13 +28,25 @@ private const val TAG = "MyMediaRepository"
 class MyMediaRepository @Inject constructor() {
     suspend fun getMyMedia(isAnime: Boolean): Map<MediaStatus, List<Media>> {
         try {
+//            val currentUser = ApolloClient.Builder().httpHeaders(
+//                listOf(
+//                    HttpHeader(
+//                        "Authorization",
+//                        "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjI0MzFmYjM2MjMwNWFiM2Y2NzI5MmNlMGY4M2RmOGM0MmM1NGI0NmEyYmI5NjNlN2ZiODA1YzI1YTU0ZGU4ZjJmZTk5NWUxMDEwNGRiNWUxIn0.eyJhdWQiOiIxMzYxNiIsImp0aSI6IjI0MzFmYjM2MjMwNWFiM2Y2NzI5MmNlMGY4M2RmOGM0MmM1NGI0NmEyYmI5NjNlN2ZiODA1YzI1YTU0ZGU4ZjJmZTk5NWUxMDEwNGRiNWUxIiwiaWF0IjoxNjg5NzYwNTQ3LCJuYmYiOjE2ODk3NjA1NDcsImV4cCI6MTcyMTM4Mjk0Nywic3ViIjoiODA4NjI2Iiwic2NvcGVzIjpbXX0.RD0LdCD8AmzNlJM_OIWbrPz-Ec9RBKZrtGE0vWhvM7G9cs5vWf4WF3QGrd0P5k5-YZJB_Cr7YJCe8mV_n2B0yHm3Ia0kde7gdRx1V9aaXDRNH-MNidYjVq-RuVLfkI-bgw82vGXQ42Y_dhFZypJiYdh2SYIY09OWgNqwvxLu-D-EYVJMBEdsWbd6RRJdKzyCQ0EMsUxgmBCgHuMt2KghA5FMhTj_eWzT30rEs1ziREGTpIz_aJS-pHed8husWF-WhwC0YY0r0NXbuge--tpGvGd8ShJb2AQ0lDvQ7JomvFlkqEUXZf7jC_rQqeLApKqnx-iwCTy-0JMDLuRGHkvXtn6pGCgdFwySTLfoMYInXX3vuYMxlfuheINkkx2qL5n51PlMRXRaADfH_C2jmFFU5fNLHFSmTE_tvVMMdflEmQWwt1htz1g-EZp9wGMC88j56fXpoNeI4htppkOWn5mLioyZFoX5hqD7zPu3yQd6A9cistkQWvz0VBIOGQH0d-5eKlVkHIQpP289cx3ho2abxBmilDQsF0RhOueLaSPHtsuyuvOie-gcvmQUPYuMEkwUpEvyxrXqg976YwTGCcN1Rl6BG4RhCgj5ngF3HhPTj4HSO1X5-gynKLcL3S61yjD6je3WecFrYqj8xStZekffuYcD0TKyAOYE0BQndC7xQTg"
+//                    )
+//                )
+//            ).serverUrl("https://graphql.anilist.co").build().query(GetCurrentUserQuery()).execute()
+            val currentUser = Apollo.apolloClient.query(GetCurrentUserQuery()).execute()
+            val userId = currentUser.data?.Viewer?.id ?: -1
+            Log.d(TAG, "Found user id $userId")
+
             val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
             val result =
-                Apollo.apolloClient.query(GetMyMediaQuery(Optional.present(param)))
+                Apollo.apolloClient.query(GetMyMediaQuery(param, userId))
                     .execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
-                //                emit(ResultData(ResultStatus.ERROR, result.errors.toString()))
+                Log.d(TAG, result.errors.toString())
             }
             val data = result.data
             if (data != null) {
@@ -47,7 +62,7 @@ class MyMediaRepository @Inject constructor() {
             }
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
-//            emit(ResultData(ResultStatus.ERROR, exception.message ?: "No error message"))
+            Log.d(TAG, exception.message ?: "No error message given")
         }
         return emptyMap()
     }

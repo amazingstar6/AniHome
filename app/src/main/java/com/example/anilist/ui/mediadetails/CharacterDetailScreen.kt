@@ -62,7 +62,7 @@ import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.CharacterMediaConnection
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.MediaDetailsRepository
-import com.example.anilist.quantityStringResource
+import com.example.anilist.utils.quantityStringResource
 import com.example.anilist.ui.Dimens
 import com.google.accompanist.web.WebView
 import com.google.accompanist.web.rememberWebViewStateWithHTMLData

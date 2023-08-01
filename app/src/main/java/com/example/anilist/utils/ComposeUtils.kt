@@ -1,4 +1,4 @@
-package com.example.anilist
+package com.example.anilist.utils
 
 import androidx.annotation.PluralsRes
 import androidx.compose.runtime.Composable

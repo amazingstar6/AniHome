@@ -5,22 +5,20 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.example.anilist.data.models.AniStudio
-import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.AniUser
+import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.HomeMedia
 import com.example.anilist.data.repository.HomeRepository
 import com.example.anilist.data.repository.NotificationRepository
-import com.example.anilist.data.repository.UserPreferencesRepository
 import com.example.anilist.data.repository.UserSettings
 import com.example.anilist.ui.home.searchpagingsource.SearchCharactersPagingSource
 import com.example.anilist.ui.home.searchpagingsource.SearchMediaPagingSource
@@ -63,7 +61,6 @@ data class CharacterSearchState(
 class HomeViewModel @Inject constructor(
     notificationRepository: NotificationRepository,
     private val homeRepository: HomeRepository,
-    private val userPreferencesRepository: UserPreferencesRepository,
 ) :
     ViewModel() {
 
@@ -232,39 +229,42 @@ class HomeViewModel @Inject constructor(
             }
         ).flow.cachedIn(viewModelScope)
     }
+
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-    val searchResultsThread: Flow<PagingData<AniThread>> = _threadSearch.debounce(TIME_OUT).flatMapLatest {
-        query ->
-        Pager(
-            config = PagingConfig(
-                pageSize = PAGE_SIZE,
-                prefetchDistance = 5,
-                enablePlaceholders = true
-            ),
-            pagingSourceFactory = {
-                SearchThreadPagingSource(
-                    homeRepository = homeRepository,
-                    search = query,
-                )
-            }
-        ).flow.cachedIn(viewModelScope)
-    }
+    val searchResultsThread: Flow<PagingData<AniThread>> =
+        _threadSearch.debounce(TIME_OUT).flatMapLatest { query ->
+            Pager(
+                config = PagingConfig(
+                    pageSize = PAGE_SIZE,
+                    prefetchDistance = 5,
+                    enablePlaceholders = true
+                ),
+                pagingSourceFactory = {
+                    SearchThreadPagingSource(
+                        homeRepository = homeRepository,
+                        search = query,
+                    )
+                }
+            ).flow.cachedIn(viewModelScope)
+        }
+
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-    val searchResultsUser: Flow<PagingData<AniUser>> = _userSearch.debounce(TIME_OUT).flatMapLatest { query ->
-        Pager(
-            config = PagingConfig(
-                pageSize = PAGE_SIZE,
-                prefetchDistance = 5,
-                enablePlaceholders = true
-            ),
-            pagingSourceFactory = {
-                SearchUserPagingSource(
-                    homeRepository = homeRepository,
-                    search = query,
-                )
-            }
-        ).flow.cachedIn(viewModelScope)
-    }
+    val searchResultsUser: Flow<PagingData<AniUser>> =
+        _userSearch.debounce(TIME_OUT).flatMapLatest { query ->
+            Pager(
+                config = PagingConfig(
+                    pageSize = PAGE_SIZE,
+                    prefetchDistance = 5,
+                    enablePlaceholders = true
+                ),
+                pagingSourceFactory = {
+                    SearchUserPagingSource(
+                        homeRepository = homeRepository,
+                        search = query,
+                    )
+                }
+            ).flow.cachedIn(viewModelScope)
+        }
 
     fun setSearch(query: String) {
         _search.value = query
@@ -314,13 +314,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-
-    val initialSetupEvent = liveData {
-        emit(userPreferencesRepository.fetchInitialPreferences())
-    }
-
-    // Keep the user preferences as a stream of changes
-    private val userPreferencesFlow = userPreferencesRepository.userPreferencesFlow
     private val _userSettings: MutableLiveData<UserSettings> = MutableLiveData()
 
     //    fun getNotifications:
@@ -328,7 +321,7 @@ class HomeViewModel @Inject constructor(
         get() = _userSettings
 
     init {
-        _userSettings.value = userPreferencesFlow.asLiveData().value
+//        _userSettings.value = userPreferencesFlow.asLiveData().value
         viewModelScope.launch {
             search.collectLatest { query ->
                 Log.i(TAG, "Current search filter in init block viewmodel is ${searchType.value}")
@@ -372,11 +365,11 @@ class HomeViewModel @Inject constructor(
 //        }
 //    }
 
-    fun setAccessCode(accessCode: String) {
-        viewModelScope.launch {
-            userPreferencesRepository.setAccessCode(accessCode)
-        }
-    }
+//    fun setAccessCode(accessCode: String) {
+//        viewModelScope.launch {
+//            userPreferencesRepository.setAccessCode(accessCode)
+//        }
+//    }
 
     private val _media = MutableLiveData<HomeMedia>()
     val media: LiveData<HomeMedia> = _media

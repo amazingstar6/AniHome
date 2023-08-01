@@ -1,6 +1,6 @@
 package com.example.anilist.data.models
 
-import com.example.anilist.ui.my_media.MediaStatus
+import com.example.anilist.ui.mymedia.MediaStatus
 
 data class StatusUpdate(
     val id: Int,

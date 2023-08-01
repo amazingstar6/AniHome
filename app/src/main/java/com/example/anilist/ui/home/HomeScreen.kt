@@ -48,7 +48,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -72,9 +71,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
-import com.example.anilist.data.models.AniStudio
-import com.example.anilist.data.models.AniUser
-import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
 import com.example.anilist.ui.Dimens
@@ -97,7 +93,7 @@ fun HomeScreen(
     navigateToThreadDetails: (Int) -> Unit,
     navigateToStudioDetails: (Int) -> Unit
 ) {
-    val uiState: HomeUiState =
+    val uiState =
         HomeUiState(
             pagerTrendingNow = homeViewModel.trendingNowPager.collectAsLazyPagingItems(),
             pagerPopularThisSeason = homeViewModel.popularThisSeasonPager.collectAsLazyPagingItems(),

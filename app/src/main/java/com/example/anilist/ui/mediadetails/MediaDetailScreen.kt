@@ -95,7 +95,7 @@ import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.Stats
 import com.example.anilist.data.models.Tag
 import com.example.anilist.data.repository.MediaDetailsRepository
-import com.example.anilist.quantityStringResource
+import com.example.anilist.utils.quantityStringResource
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.theme.AnilistTheme
 import kotlinx.coroutines.launch

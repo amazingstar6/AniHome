@@ -4,7 +4,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
-import com.example.anilist.Apollo
+import com.example.anilist.utils.Apollo
 import com.example.anilist.GetCharacterDetailQuery
 import com.example.anilist.GetMediaDetailQuery
 import com.example.anilist.GetReviewDetailQuery

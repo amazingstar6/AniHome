@@ -1,19 +1,20 @@
 package com.example.anilist.ui.navigation
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.anilist.data.repository.UserSettings
 import com.example.anilist.ui.PleaseLogin
 import com.example.anilist.ui.feed.FeedScreen
 import com.example.anilist.ui.forum.ForumScreen
-import com.example.anilist.ui.home.HomeViewModel
 import com.example.anilist.ui.home.HomeScreen
 import com.example.anilist.ui.home.NotificationScreen
 import com.example.anilist.ui.home.SettingsScreen
@@ -25,18 +26,18 @@ import com.example.anilist.ui.mediadetails.ReviewDetailScreen
 import com.example.anilist.ui.mediadetails.StaffDetailScreen
 import com.example.anilist.ui.mediadetails.StudioDetailScreen
 import com.example.anilist.ui.mediadetails.UserDetailScreen
-import com.example.anilist.ui.my_media.MyMediaScreen
-import com.example.anilist.ui.my_media.StatusEditor
+import com.example.anilist.ui.mymedia.MyMediaScreen
+import com.example.anilist.ui.mymedia.StatusEditor
 
 private const val TAG = "AniNavGraph"
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun AniNavHost(
+    accessCode: String,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     navigationActions: AniListNavigationActions,
-    homeViewModel: HomeViewModel,
-    userSettings: UserSettings?,
     setBottomBarState: (Boolean) -> Unit,
 ) {
     NavHost(
@@ -47,7 +48,7 @@ fun AniNavHost(
         composable(AniListRoute.HOME_ROUTE) {
             setBottomBarState(true)
             HomeScreen(
-                homeViewModel = homeViewModel,
+                homeViewModel = hiltViewModel(),
                 onNavigateToNotification = {
                     navController.navigate(route = AniListRoute.NOTIFICATION_ROUTE)
                 },
@@ -167,22 +168,19 @@ fun AniNavHost(
         ) {
             setBottomBarState(false)
             NotificationScreen(
-                homeViewModel = homeViewModel,
-                { navController.popBackStack() },
+                onNavigateBack = { navController.popBackStack() },
             )
         }
         composable(
             AniListRoute.SETTINGS,
         ) {
             setBottomBarState(false)
-            SettingsScreen(navigationActions::navigateBack)
+            SettingsScreen(navigateBack = navigationActions::navigateBack)
         }
         composable(AniListRoute.ANIME_ROUTE) {
             setBottomBarState(true)
-//            val trendingAnimeUiState by aniHomeViewModel.uiState.collectAsState()
-            Log.i(TAG, "Access code in #3 is ${userSettings?.accessCode}")
-            if (userSettings?.accessCode != "" && userSettings == null) {
-                Log.i(TAG, "ACCESS CODE STORED IS ${userSettings?.accessCode}")
+            Log.d(TAG, "Access code is $accessCode")
+            if (accessCode != "") {
                 MyMediaScreen(
                     navigateToDetails = { id ->
                         navController.navigate(route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id")
@@ -195,12 +193,16 @@ fun AniNavHost(
         }
         composable(AniListRoute.MANGA_ROUTE) {
             setBottomBarState(true)
-            MyMediaScreen(
-                navigateToDetails = { id ->
-                    navController.navigate(route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id")
-                },
-                isAnime = false,
-            )
+            if (accessCode != "") {
+                MyMediaScreen(
+                    navigateToDetails = { id ->
+                        navController.navigate(route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id")
+                    },
+                    isAnime = false,
+                )
+            } else {
+                PleaseLogin()
+            }
         }
         composable(AniListRoute.FEED_ROUTE) {
             setBottomBarState(true)

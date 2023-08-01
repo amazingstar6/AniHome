@@ -5,42 +5,49 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.anilist.ui.home.HomeViewModel
+import com.example.anilist.data.repository.Theme
+import com.example.anilist.ui.mediadetails.LoadingCircle
 import com.example.anilist.ui.navigation.AniListBottomNavigationBar
 import com.example.anilist.ui.navigation.AniListNavigationActions
 import com.example.anilist.ui.navigation.AniListRoute
 import com.example.anilist.ui.navigation.AniNavHost
 import com.example.anilist.ui.theme.AnilistTheme
+import com.example.anilist.utils.Apollo
 import dagger.hilt.android.AndroidEntryPoint
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 private const val TAG = "MainActivity"
 
-// for data store
-// At the top level of your kotlin file:
-// private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "USER_SETTINGS")
-
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private var accessCode = "Not initialized"
 
-    // requires api is cause by convert to RFC3339 function
-    @RequiresApi(Build.VERSION_CODES.O)
+    companion object {
+        var accessCode = ""
+    }
+
+
+    private val viewModel: MainActivityViewModel by viewModels()
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // processing the uri received for logging in
@@ -55,16 +62,40 @@ class MainActivity : ComponentActivity() {
                 key to value
             }
             accessCode = parameterMap["access_token"] ?: ""
-            val tokenType = parameterMap["token_type"]
-            val expiresIn = parameterMap["expires_in"]
+            val tokenType = parameterMap["token_type"] ?: ""
+            val expiresIn = parameterMap["expires_in"] ?: ""
             Log.i(
                 TAG,
                 "Access code is $accessCode, token type is $tokenType, expires in $expiresIn seconds",
             )
+            viewModel.saveAccessCode(accessCode, tokenType, expiresIn)
+        }
+
+        var uiState: MainActivityUiState by mutableStateOf(MainActivityUiState.Loading)
+        // Update the uiState
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState
+                    .onEach {
+                        uiState = it
+                    }
+                    .collect()
+            }
         }
 
         setContent {
-            AnilistTheme {
+            AnilistTheme(
+                darkTheme = when (uiState) {
+                    is MainActivityUiState.Loading ->  isSystemInDarkTheme()
+                    is MainActivityUiState.Success -> {
+                        when ((uiState as MainActivityUiState.Success).userData.theme) {
+                            Theme.SYSTEM_DEFAULT -> isSystemInDarkTheme()
+                            Theme.LIGHT -> false
+                            Theme.DARK -> true
+                        }
+                    }
+                }
+            ) {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     color = MaterialTheme.colorScheme.background,
@@ -77,18 +108,6 @@ class MainActivity : ComponentActivity() {
                     val selectedDestination =
                         navBackStackEntry?.destination?.route ?: AniListRoute.HOME_ROUTE
 
-                    val homeViewModel: HomeViewModel = hiltViewModel()
-//                    val mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel()
-
-                    homeViewModel.initialSetupEvent.observe(this) { initialSetupEvent ->
-                        observePreferenceChanges()
-                    }
-
-                    val userSettings by homeViewModel.userSettings.observeAsState()
-                    homeViewModel.setAccessCode(
-                        accessCode,
-                    )
-
                     var showBottomBar by remember {
                         mutableStateOf(true)
                     }
@@ -98,32 +117,27 @@ class MainActivity : ComponentActivity() {
                             navigateToTopLevelDestination = navigationAction::navigateTo,
                             showBottomBar,
                         )
-                    }) { it ->
-                        AniNavHost(
-                            navController = navController,
-                            navigationActions = navigationAction,
-                            modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
-                            homeViewModel = homeViewModel,
-                            userSettings = userSettings,
-                            setBottomBarState = { newValue -> showBottomBar = newValue },
-                        )
+                    }) {
+                        when (uiState) {
+                            is MainActivityUiState.Loading -> {
+                                LoadingCircle()
+                            }
+                            is MainActivityUiState.Success -> {
+                                Log.d(TAG, "Access code when starting up is ${(uiState as MainActivityUiState.Success).userData.accessCode}")
+                                accessCode = (uiState as MainActivityUiState.Success).userData.accessCode
+                                Apollo.setAccessCode(accessCode)
+                                AniNavHost(
+                                    accessCode = accessCode,
+                                    navController = navController,
+                                    navigationActions = navigationAction,
+                                    modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
+                                    setBottomBarState = { newValue -> showBottomBar = newValue },
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
-    }
-
-    private fun observePreferenceChanges() {
-//        aniHomeViewModel.userSettings.observe(this) { userSettings ->
-// //            updateTaskFilters(userSettings.sortOrder, tasksUiModel.showCompleted)
-//            accessCode = userSettings.accessCode
-//        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun convertToRFC3339(secondsToAdd: Long): String {
-        val currentTime = ZonedDateTime.now().plusSeconds(secondsToAdd)
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
-        return currentTime.format(formatter)
     }
 }

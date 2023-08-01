@@ -19,7 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.anilist.R
-import com.example.anilist.Utils
+import com.example.anilist.utils.Utils
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.ui.Dimens

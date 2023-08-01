@@ -30,7 +30,7 @@ import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
-import com.example.anilist.Utils
+import com.example.anilist.utils.Utils
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.ui.Dimens
