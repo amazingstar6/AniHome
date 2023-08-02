@@ -207,8 +207,7 @@ class HomeRepository @Inject constructor() {
                         page = page,
                         pageSize = pageSize,
                     ),
-                )
-                    .execute()
+                ).execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
             }

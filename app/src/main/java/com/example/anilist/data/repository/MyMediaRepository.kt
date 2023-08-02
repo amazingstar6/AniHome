@@ -1,9 +1,7 @@
 package com.example.anilist.data.repository
 
 import android.util.Log
-import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.api.http.HttpHeader
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.utils.Apollo
 import com.example.anilist.DeleteEntryMutation
@@ -70,6 +68,7 @@ class MyMediaRepository @Inject constructor() {
     suspend fun updateProgress(
         statusUpdate: StatusUpdate,
     ): Media {
+        Log.d(TAG, "changing status of entry list id ${statusUpdate.entryListId}")
         try {
             val status = when (statusUpdate.status) {
                 MediaStatus.CURRENT -> Optional.present(MediaListStatus.CURRENT)
@@ -85,7 +84,7 @@ class MyMediaRepository @Inject constructor() {
             val result =
                 Apollo.apolloClient.mutation(
                     UpdateStatusMutation(
-                        id = statusUpdate.id,
+                        id = statusUpdate.entryListId,
                         status = status,
                         scoreRaw = if (statusUpdate.scoreRaw == null) {
                             Optional.Absent

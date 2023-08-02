@@ -3,7 +3,9 @@ package com.example.anilist.utils
 import android.util.Log
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.http.HttpHeader
+import com.apollographql.apollo3.cache.normalized.api.CacheResolver
 import com.apollographql.apollo3.cache.normalized.api.MemoryCacheFactory
+import com.apollographql.apollo3.cache.normalized.normalizedCache
 import com.apollographql.apollo3.network.okHttpClient
 import com.example.anilist.MainActivity
 import com.example.anilist.data.models.Notification
@@ -38,6 +40,7 @@ class Apollo {
 //                .okHttpClient(
 //                    OkHttpClient.Builder().addInterceptor(AuthorizationInterceptor()).build()
 //                )
+                //fixme i don't think cache works (in general) //for deleting
 //                .normalizedCache(cacheFactory)
                 .serverUrl("https://graphql.anilist.co").build()
 

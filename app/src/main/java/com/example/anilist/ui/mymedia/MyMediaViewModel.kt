@@ -1,6 +1,5 @@
 package com.example.anilist.ui.mymedia
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -19,7 +18,7 @@ class MyMediaViewModel @Inject constructor(
     private val myMediaRepository: MyMediaRepository,
 ) : ViewModel() {
     private val _myAnime = MutableLiveData<Map<MediaStatus, List<Media>>>()
-    val myAnime: LiveData<Map<MediaStatus, List<Media>>> = _myAnime
+    val myAnime: MutableLiveData<Map<MediaStatus, List<Media>>> = _myAnime
     private val _myManga = MutableLiveData<Map<MediaStatus, List<Media>>>()
     val myManga: LiveData<Map<MediaStatus, List<Media>>> = _myManga
 
@@ -34,26 +33,52 @@ class MyMediaViewModel @Inject constructor(
         }
     }
 
-    fun increaseEpisodeProgress(mediaId: Int, newProgress: Int) {
-        Log.i(TAG, "Episode progress is being increased in view model")
-        viewModelScope.launch {
-            myMediaRepository.increaseEpisodeProgress(mediaId, newProgress)
-        }
-    }
-
     fun updateProgress(
         statusUpdate: StatusUpdate,
+        isAnime: Boolean
     ) {
         viewModelScope.launch {
-            myMediaRepository.updateProgress(
+            val newMedia: Media = myMediaRepository.updateProgress(
                 statusUpdate,
             )
+            val data = myMediaRepository.getMyMedia(isAnime)
+            if (isAnime) {
+//                _myAnime.value = data
+
+                val mapCopy = _myAnime.value?.mapValues { it.value.toMutableList() }
+                mapCopy?.forEach {
+                    val indexToReplace =
+                        it.value.indexOfFirst { it.listEntryId == statusUpdate.entryListId }
+                    if (indexToReplace != -1) {
+                        it.value[indexToReplace] = newMedia
+                    }
+
+                }
+                mapCopy.let {
+                    _myAnime.value = it
+                }
+            } else {
+                _myManga.value = data
+            }
         }
     }
 
-    fun deleteEntry(id: Int) {
+    fun deleteEntry(id: Int, isAnime: Boolean) {
         viewModelScope.launch {
             myMediaRepository.deleteEntry(id)
+            val data = myMediaRepository.getMyMedia(isAnime)
+            if (isAnime) {
+                _myAnime.value = data
+            } else {
+                _myManga.value = data
+            }
         }
     }
+
+//    fun increaseEpisodeProgress(mediaId: Int, newProgress: Int) {
+//        Log.i(TAG, "Episode progress is being increased in view model")
+//        viewModelScope.launch {
+//            myMediaRepository.increaseEpisodeProgress(mediaId, newProgress)
+//        }
+//    }
 }

@@ -3,7 +3,7 @@ package com.example.anilist.data.models
 import com.example.anilist.ui.mymedia.MediaStatus
 
 data class StatusUpdate(
-    val id: Int,
+    val entryListId: Int,
     val status: MediaStatus?,
     val scoreRaw: Int?,
     val progress: Int?,

@@ -6,8 +6,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,16 +57,13 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -79,8 +74,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -146,12 +143,12 @@ fun MyMediaScreen(
             navigateToDetails = navigateToDetails,
             saveStatus = {
                 Log.d(TAG, "Clicked on save button!")
-                myMediaViewModel.updateProgress(it)
+                myMediaViewModel.updateProgress(isAnime = isAnime, statusUpdate = it)
             },
             reloadMyMedia = {
                 myMediaViewModel.fetchMyMedia(isAnime)
             }
-        ) { myMediaViewModel.deleteEntry(it) }
+        ) { myMediaViewModel.deleteEntry(it, isAnime) }
     } else {
         LoadingCircle()
     }
@@ -247,7 +244,7 @@ private fun MyMedia(
                 increaseEpisodeProgress = { entryId, newProgress ->
                     saveStatus(
                         StatusUpdate(
-                            id = entryId,
+                            entryListId = entryId,
                             progressVolumes = null,
                             status = null,
                             scoreRaw = null,
@@ -267,7 +264,7 @@ private fun MyMedia(
                 increaseVolumeProgress = { entryId, newProgress ->
                     saveStatus(
                         StatusUpdate(
-                            id = entryId,
+                            entryListId = entryId,
                             progressVolumes = newProgress,
                             status = null,
                             scoreRaw = null,
@@ -434,7 +431,7 @@ fun EditStatusModalSheet(
                         saveStatus(
                             // todo fill these
                             StatusUpdate(
-                                id = currentMedia1.listEntryId,
+                                entryListId = currentMedia1.listEntryId,
                                 status = selectedOptionText,
                                 scoreRaw = currentMedia1.rawScore.toInt(),
                                 progress = currentMedia1.personalProgress,
@@ -451,7 +448,7 @@ fun EditStatusModalSheet(
                             ),
                         )
                         hideEditSheet()
-                        reloadMyMedia()
+//                        reloadMyMedia()
                     }) {
                         Text("Save")
                     }
@@ -1031,17 +1028,17 @@ private fun NumberTextField(
                 .weight(1f),
         )
         TextButton(onClick = {
-            try {
+            text = try {
                 if (text.toInt() < 1) {
                     setValue(0)
-                    text = (0).toString()
+                    (0).toString()
                 } else {
                     setValue(text.toInt().dec())
-                    text = text.toInt().dec().toString()
+                    text.toInt().dec().toString()
                 }
             } catch (e: NumberFormatException) {
                 setValue(0)
-                text = (0).toString()
+                (0).toString()
             }
         }) {
             Text(text = stringResource(R.string.minus_one))
@@ -1072,8 +1069,8 @@ private fun MediaCard(
     openEditStatusSheet: () -> Unit,
     isAnime: Boolean,
 ) {
-    val personalEpisodeProgress by remember { mutableIntStateOf(media.personalProgress) }
-
+//    val personalEpisodeProgress by remember { mutableIntStateOf(media.personalProgress) }
+    val haptic = LocalHapticFeedback.current
     Box(modifier = Modifier.padding(vertical = Dimens.PaddingSmall)) {
         ElevatedCard(
             shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
@@ -1083,7 +1080,10 @@ private fun MediaCard(
                 .fillMaxWidth()
                 .combinedClickable(
                     onClick = { navigateToDetails(media.id) },
-                    onLongClick = openEditStatusSheet
+                    onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        openEditStatusSheet()
+                    }
                 ),
         ) {
             Row {
@@ -1144,7 +1144,7 @@ private fun MediaCard(
                         }
                         if (isAnime) {
                             Text(
-                                text = "$personalEpisodeProgress/${
+                                text = "${media.personalProgress}/${
                                     if (media.episodeAmount != -1) media.episodeAmount else stringResource(
                                         id = R.string.question_mark
                                     )
@@ -1188,7 +1188,7 @@ private fun MediaCard(
                                 IncreaseProgress(
                                     increaseEpisodeProgress,
                                     media.listEntryId,
-                                    personalEpisodeProgress,
+                                    media.personalProgress,
                                     stringResource(id = R.string.plus_one),
                                 )
                             }
@@ -1197,7 +1197,7 @@ private fun MediaCard(
                                 IncreaseProgress(
                                     increaseEpisodeProgress,
                                     media.listEntryId,
-                                    personalEpisodeProgress,
+                                    media.personalProgress,
                                     stringResource(id = R.string.plus_one_chapter),
                                 )
                             }
