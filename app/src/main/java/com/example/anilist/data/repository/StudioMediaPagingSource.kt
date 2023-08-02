@@ -12,7 +12,7 @@ class StudioMediaPagingSource (
 ) : PagingSource<Int, Media>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Media> {
         val start = params.key ?: STARTING_KEY
-        val data = studioDetailRepository.fetchMedia(studioId, start, params.loadSize)
+        val data = studioDetailRepository.fetchMedia(studioId = studioId, page =  start, pageSize = params.loadSize)
         return LoadResult.Page(
             data = data,
             prevKey = if (start == STARTING_KEY) null else start - 1,

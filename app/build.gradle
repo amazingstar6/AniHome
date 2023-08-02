@@ -62,6 +62,9 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.16.1'
     implementation 'com.google.accompanist:accompanist-webview:0.31.5-beta'
 
+    // For window size classes
+    implementation 'androidx.compose.material3:material3-window-size-class:1.1.1'
+
     def lifecycle_version = "2.6.1"
     def apollo_version = "4.0.0-alpha.1"
 

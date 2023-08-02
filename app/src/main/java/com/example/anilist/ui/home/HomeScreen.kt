@@ -54,6 +54,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -61,21 +62,28 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
+import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
+import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.mediadetails.LoadingCircle
+import com.example.anilist.ui.mediadetails.MediaDetailsViewModel
 import com.example.anilist.ui.mediadetails.QuickInfo
+import com.example.anilist.utils.AsyncImageRoundedCorners
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.util.Locale
 
@@ -83,7 +91,8 @@ private const val TAG = "AniHome"
 
 @Composable
 fun HomeScreen(
-    homeViewModel: HomeViewModel,
+    homeViewModel: HomeViewModel = hiltViewModel(),
+    mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
     onNavigateToMediaDetails: (Int) -> Unit,
     onNavigateToNotification: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -142,7 +151,14 @@ fun HomeScreen(
             onNavigateToStaffDetails = onNavigateToStaffDetails,
             navigateToUserDetails = navigateToUserDetails,
             navigateToThreadDetails = navigateToThreadDetails,
-            navigateToStudioDetails = navigateToStudioDetails
+            navigateToStudioDetails = navigateToStudioDetails,
+            toggleFavourite = {
+                mediaDetailsViewModel.toggleFavourite(
+                    MediaDetailsRepository.LikeAbleType.STUDIO,
+                    it
+                )
+                uiState.searchResultsStudio.refresh()
+            }
         )
     }, floatingActionButton = {
         FloatingActionButton(
@@ -215,7 +231,7 @@ enum class SearchFilter {
 }
 
 enum class AniMediaSort {
-    DEFAULT,
+    SEARCH_MATCH,
     START_DATE,
     END_DATE,
     SCORE,
@@ -229,7 +245,7 @@ enum class AniMediaSort {
 
     fun toString(context: Context): String {
         return when (this) {
-            DEFAULT -> context.getString(R.string.default_sort)
+            SEARCH_MATCH -> context.getString(R.string.search_match)
             START_DATE -> context.getString(R.string.start_date)
             END_DATE -> context.getString(R.string.end_date)
             SCORE -> context.getString(R.string.score)
@@ -263,7 +279,10 @@ enum class AniCharacterSort {
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class,
+    ExperimentalComposeUiApi::class
+)
 private fun AniSearchBar(
     characterSort: AniCharacterSort,
     setCharacterSort: (AniCharacterSort) -> Unit,
@@ -285,17 +304,20 @@ private fun AniSearchBar(
     navigateToThreadDetails: (Int) -> Unit,
     navigateToStudioDetails: (Int) -> Unit,
     currentMediaSort: AniMediaSort,
-    setCurrentMediaSort: (AniMediaSort) -> Unit
+    setCurrentMediaSort: (AniMediaSort) -> Unit,
+    toggleFavourite: (Int) -> Unit
 ) {
     val padding by animateDpAsState(
         targetValue = if (!active) Dimens.PaddingNormal else 0.dp,
         label = "increase padding" +
                 ""
     )
+    val keyboardController = LocalSoftwareKeyboardController.current
     SearchBar(
         query = query,
         onQueryChange = { updateSearch(it) },
         onSearch = {
+            keyboardController?.hide()
         },
         active = active,
         onActiveChange = {
@@ -455,7 +477,8 @@ private fun AniSearchBar(
                     onNavigateToStaffDetails = onNavigateToStaffDetails,
                     navigateToStudioDetails = navigateToStudioDetails,
                     navigateToThreadDetails = navigateToThreadDetails,
-                    navigateToUserDetails = navigateToUserDetails
+                    navigateToUserDetails = navigateToUserDetails,
+                    toggleFavourite = toggleFavourite
                 )
             }
         }
@@ -471,7 +494,8 @@ private fun SearchResults(
     onNavigateToStaffDetails: (Int) -> Unit,
     navigateToStudioDetails: (Int) -> Unit,
     navigateToThreadDetails: (Int) -> Unit,
-    navigateToUserDetails: (Int) -> Unit
+    navigateToUserDetails: (Int) -> Unit,
+    toggleFavourite: (Int) -> Unit
 ) {
     LazyColumn {
         when (selectedChip) {
@@ -500,7 +524,8 @@ private fun SearchResults(
                             character.id,
                             character.coverImage,
                             character.userPreferredName,
-                            character.favorites
+                            character.favorites,
+                            character.isFavourite
                         )
                     }
                 }
@@ -515,29 +540,28 @@ private fun SearchResults(
                             staff.id,
                             staff.coverImage,
                             staff.userPreferredName,
-                            staff.favourites
+                            staff.favourites,
+                            staff.isFavourite
                         )
                     }
                 }
             }
 
             SearchFilter.STUDIOS -> {
-                items(uiState.searchResultsStudio.itemCount) {
-                    index ->
+                items(uiState.searchResultsStudio.itemCount) { index ->
                     val studio = uiState.searchResultsStudio[index]
                     if (studio != null) {
                         SearchCardStudio(
-                            studio.id,
-                            studio.name,
-                            navigateToStudioDetails
+                            studio,
+                            navigateToStudioDetails,
+                            toggleFavourite
                         )
                     }
                 }
             }
 
             SearchFilter.THREADS -> {
-                items(uiState.searchResultsThread.itemCount) {
-                    index ->
+                items(uiState.searchResultsThread.itemCount) { index ->
                     val thread = uiState.searchResultsThread[index]
                     if (thread != null) {
                         SearchCardForum(
@@ -582,10 +606,39 @@ fun SearchCardForum(id: Int, title: String, navigateToThreadDetails: (Int) -> Un
 }
 
 @Composable
-fun SearchCardStudio(id: Int, name: String, navigateToStudioDetails: (Int) -> Unit) {
-    Column(modifier = Modifier.clickable { navigateToStudioDetails(id) }) {
-        Text(text = id.toString())
-        Text(text = name)
+fun SearchCardStudio(
+    studio: AniStudio,
+    navigateToStudioDetails: (Int) -> Unit,
+    toggleFavourite: (Int) -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { navigateToStudioDetails(studio.id) }
+            .padding(Dimens.PaddingNormal)
+
+    ) {
+        Text(
+            text = studio.name,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = if (studio.favourites == -1) "?" else studio.favourites.toString(),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = Dimens.PaddingSmall)
+        )
+        Icon(
+            painter = painterResource(id = if (!studio.isFavourite) R.drawable.anime_details_heart else R.drawable.baseline_favorite_24),
+            contentDescription = "Favourites",
+            modifier = Modifier.clickable {
+                toggleFavourite(studio.id)
+            }
+        )
     }
 }
 
@@ -595,11 +648,32 @@ fun SearchCardCharacter(
     id: Int,
     coverImage: String,
     userPreferredName: String,
-    favourites: Int
+    favourites: Int,
+    isFavourite: Boolean
 ) {
-    Column(modifier = Modifier.clickable { onNavigateToDetails(id) }) {
-        Text(text = userPreferredName)
-        Text(text = "Favourites: $favourites")
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .clickable { onNavigateToDetails(id) }) {
+        AsyncImageRoundedCorners(coverImage = coverImage, contentDescription = userPreferredName)
+        Column(modifier = Modifier.padding(Dimens.PaddingNormal)) {
+            Text(
+                text = userPreferredName,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Row(horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Dimens.PaddingSmall)) {
+                Text(
+                    text = favourites.toString(),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(end = Dimens.PaddingSmall)
+                )
+                Icon(
+                    painter = painterResource(id = if (!isFavourite) R.drawable.anime_details_heart else R.drawable.baseline_favorite_24),
+                    contentDescription = "Favourite"
+                )
+            }
+        }
     }
 }
 
@@ -749,4 +823,26 @@ fun AnimeCard(
             overflow = TextOverflow.Ellipsis,
         )
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SearchCardStudioPreview() {
+    SearchCardStudio(
+        AniStudio(id = 12, name = "Tokyo TV", favourites = 2123),
+        navigateToStudioDetails = { },
+        toggleFavourite = { })
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SearchCardCharacterPreview() {
+    SearchCardCharacter(
+        onNavigateToDetails = {},
+        id = 12,
+        coverImage = "",
+        userPreferredName = "Jabami Yumeko",
+        favourites = 1223,
+        isFavourite = true
+    )
 }

@@ -45,6 +45,7 @@ data class Media(
     val personalStatus: MediaStatus = MediaStatus.UNKNOWN,
 
     val rawScore: Double = -1.0,
+    val studios: List<AniStudio> = emptyList()
 )
 
 enum class MediaType {

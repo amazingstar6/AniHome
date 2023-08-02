@@ -163,7 +163,12 @@ query SearchCharacters($page: Int!, $pageSize: Int!, $search: String!, $sort: Ch
             name {
                 userPreferred
             }
+            image {
+                large
+            }
             favourites
+            isFavourite
+            isFavouriteBlocked
         }
     }
 }
@@ -176,6 +181,11 @@ query SearchStaff($search: String!, $page: Int!, $pageSize: Int!) {
                 userPreferred
             }
             favourites
+            image {
+                large
+            }
+            isFavourite
+            isFavouriteBlocked
         }
     }
 }
@@ -185,6 +195,8 @@ query SearchStudios($search: String!, $page: Int!, $pageSize: Int!) {
         studios(search: $search) {
             id
             name
+            favourites
+            isFavourite
         }
     }
 }

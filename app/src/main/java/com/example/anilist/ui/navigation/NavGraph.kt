@@ -48,7 +48,6 @@ fun AniNavHost(
         composable(AniListRoute.HOME_ROUTE) {
             setBottomBarState(true)
             HomeScreen(
-                homeViewModel = hiltViewModel(),
                 onNavigateToNotification = {
                     navController.navigate(route = AniListRoute.NOTIFICATION_ROUTE)
                 },
@@ -81,7 +80,8 @@ fun AniNavHost(
                 navigateToCharacter = navigationActions::navigateToCharacter,
                 onNavigateToStaff = navigationActions::navigateToStaff,
                 onNavigateToLargeCover = navigationActions::navigateToLargeCover,
-                onNavigateToStatusEditor = navigationActions::navigateToStatusEditor
+                onNavigateToStatusEditor = navigationActions::navigateToStatusEditor,
+                navigateToStudioDetails = navigationActions::navigateToStudio
             )
         }
         composable(
@@ -123,6 +123,8 @@ fun AniNavHost(
             content = { backStackEntry ->
                 StudioDetailScreen(
                     id = backStackEntry.arguments?.getInt("studioId") ?: -1,
+                    navigateToMedia = navigationActions::navigateToMediaDetails,
+                    navigateBack = navigationActions::navigateBack
                 )
             },
         )

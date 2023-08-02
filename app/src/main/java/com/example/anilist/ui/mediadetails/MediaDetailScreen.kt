@@ -52,6 +52,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -106,7 +107,7 @@ import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-private const val TAG = "AnimeDetails"
+private const val TAG = "MediaDetailScreen"
 
 enum class DetailTabs {
     Overview,
@@ -130,12 +131,14 @@ fun MediaDetail(
     navigateToCharacter: (Int) -> Unit,
     onNavigateToStaff: (Int) -> Unit,
     onNavigateToLargeCover: (String) -> Unit,
-    onNavigateToStatusEditor: (Int) -> Unit
+    onNavigateToStatusEditor: (Int) -> Unit,
+    navigateToStudioDetails: (Int) -> Unit
 ) {
 //    val pagerState = rememberPagerState(
 //        initialPage = 0,
 //        pageCount = { DetailTabs.values().size }
 //    )
+    Log.d(TAG, "Media detail screen just received id $mediaId")
     var index by rememberSaveable { mutableStateOf(DetailTabs.Overview) }
 
     rememberCoroutineScope()
@@ -254,7 +257,7 @@ fun MediaDetail(
         FloatingActionButton(
             onClick = {
 //                onNavigateToStatusEditor(mediaId)
-                      showEditSheet()
+                showEditSheet()
             },
         ) {
             Icon(imageVector = Icons.Outlined.Edit, contentDescription = "edit")
@@ -280,7 +283,8 @@ fun MediaDetail(
                             Overview(
                                 media,
                                 onNavigateToDetails,
-                                onNavigateToLargeCover
+                                onNavigateToLargeCover,
+                                navigateToStudioDetails
                             )
                         }
                     }
@@ -315,8 +319,13 @@ fun MediaDetail(
                         }
                     }
 
-                    4 ->
-                        Stats(media?.stats ?: Stats())
+                        4 -> {
+                            if (media == null) {
+                                LoadingCircle()
+                            } else {
+                                Stats(media?.stats ?: Stats())
+                            }
+                    }
                 }
             }
             if (editStatusBottomSheetIsVisible) {
@@ -344,14 +353,15 @@ fun LoadingCircle() {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 private fun Overview(
     media: Media?,
     onNavigateToDetails: (Int) -> Unit,
-    onNavigateToLargeCover: (String) -> Unit
+    onNavigateToLargeCover: (String) -> Unit,
+    navigateToStudioDetails: (Int) -> Unit
 ) {
-    var showImageLarge by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState()),
@@ -361,8 +371,22 @@ private fun Overview(
         OverviewAnimeCoverDetails(anime, anime.genres, onNavigateToLargeCover)
         OverviewDescription(anime.description)
         OverviewRelations(anime.relations, onNavigateToDetails)
-        OverViewInfo(anime)
-        Log.i(TAG, anime.hashCode().toString())
+        OverViewInfo(anime, navigateToStudioDetails)
+
+        if (anime.studios.isNotEmpty()) {
+            HeadLine("Studios")
+            FlowRow(modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)) {
+                anime.studios.forEach {
+                    TextButton(onClick = { navigateToStudioDetails(it.id) }) {
+                        Text(
+                            text = it.name,
+//                            style = MaterialTheme.typography.bodyMedium,
+//                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
         var showSpoilers by remember {
             mutableStateOf(false)
         }
@@ -857,7 +881,7 @@ fun ShowHideSpoiler(showSpoilers: Boolean, toggleSpoilers: () -> Unit) {
 }
 
 @Composable
-private fun OverViewInfo(anime1: Media) {
+private fun OverViewInfo(anime1: Media, navigateToStudioDetails: (Int) -> Unit) {
     HeadLine("Info")
     Row {
         Column(
@@ -1106,8 +1130,7 @@ fun OverviewPreview() {
                             "",
                         ),
                     ),
-                ),
-            )
+                ), navigateToStudioDetails = {})
         }
     }
 }

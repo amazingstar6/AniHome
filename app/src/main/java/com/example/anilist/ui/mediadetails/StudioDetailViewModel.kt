@@ -1,11 +1,13 @@
 package com.example.anilist.ui.mediadetails
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.example.anilist.data.models.AniStudio
+import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.data.repository.StudioDetailRepository
 import com.example.anilist.data.repository.StudioMediaPagingSource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,7 +37,7 @@ class StudioDetailViewModel @Inject constructor(
 
     fun getStudioDetails(id: Int) {
         viewModelScope.launch {
-            studioDetailRepository.getStudioDetails(id)
+            _studio.value = studioDetailRepository.getStudioDetails(id)
         }
     }
 }

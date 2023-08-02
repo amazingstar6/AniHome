@@ -545,7 +545,10 @@ class HomeRepository @Inject constructor() {
         return CharacterDetail(
             id = character.id,
             userPreferredName = character.name?.userPreferred ?: "",
-            favorites = character.favourites ?: -1
+            coverImage = character.image?.large ?: "",
+            favorites = character.favourites ?: -1,
+            isFavourite = character.isFavourite,
+            isFavoriteBlocked = character.isFavouriteBlocked
         )
     }
 
@@ -637,7 +640,9 @@ class HomeRepository @Inject constructor() {
     private fun parseSearchStudio(studio: SearchStudiosQuery.Studio): AniStudio {
         return AniStudio(
             id = studio.id,
-            name = studio.name ?: ""
+            name = studio.name,
+            favourites = studio.favourites ?: -1,
+            isFavourite = studio.isFavourite
         )
     }
 
@@ -645,7 +650,10 @@ class HomeRepository @Inject constructor() {
         return StaffDetail(
             id = staff.id,
             userPreferredName = staff.name?.userPreferred ?: "",
-            favourites = staff.favourites ?: -1
+            coverImage = staff.image?.large ?: "",
+            favourites = staff.favourites ?: -1,
+            isFavourite = staff.isFavourite,
+            isFavouriteBlocked = staff.isFavouriteBlocked
         )
     }
 
@@ -783,7 +791,7 @@ fun MediaFormat?.toCapitalizedString(): String {
 
 fun MediaSort.Companion.fromAniCharacterSort(it: AniMediaSort): MediaSort {
     return when (it) {
-        AniMediaSort.DEFAULT -> MediaSort.SEARCH_MATCH
+        AniMediaSort.SEARCH_MATCH -> MediaSort.SEARCH_MATCH
         AniMediaSort.START_DATE -> MediaSort.START_DATE_DESC
         AniMediaSort.END_DATE -> MediaSort.END_DATE_DESC
         AniMediaSort.SCORE -> MediaSort.SCORE_DESC

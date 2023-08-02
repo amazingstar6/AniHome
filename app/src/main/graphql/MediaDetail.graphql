@@ -61,11 +61,12 @@ query getMediaDetail($id: Int!, $userId: Int!) {
         isFavourite
         isFavouriteBlocked
         favourites
-#        studios {
-#            nodes {
-#                id
-#            }
-#        }
+        studios {
+            nodes {
+                id
+                name
+            }
+        }
         tags {
             id
             name

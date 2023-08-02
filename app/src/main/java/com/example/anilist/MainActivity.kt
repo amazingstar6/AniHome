@@ -8,10 +8,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +30,7 @@ import com.example.anilist.data.repository.Theme
 import com.example.anilist.ui.mediadetails.LoadingCircle
 import com.example.anilist.ui.navigation.AniListBottomNavigationBar
 import com.example.anilist.ui.navigation.AniListNavigationActions
+import com.example.anilist.ui.navigation.AniListNavigationRail
 import com.example.anilist.ui.navigation.AniListRoute
 import com.example.anilist.ui.navigation.AniNavHost
 import com.example.anilist.ui.theme.AnilistTheme
@@ -47,6 +52,7 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainActivityViewModel by viewModels()
 
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,7 +92,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AnilistTheme(
                 darkTheme = when (uiState) {
-                    is MainActivityUiState.Loading ->  isSystemInDarkTheme()
+                    is MainActivityUiState.Loading -> isSystemInDarkTheme()
                     is MainActivityUiState.Success -> {
                         when ((uiState as MainActivityUiState.Success).userData.theme) {
                             Theme.SYSTEM_DEFAULT -> isSystemInDarkTheme()
@@ -100,6 +106,7 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     color = MaterialTheme.colorScheme.background,
                 ) {
+                    val windowSize = calculateWindowSizeClass(this)
                     val navController = rememberNavController()
                     val navigationAction = remember(navController) {
                         AniListNavigationActions(navController)
@@ -112,27 +119,48 @@ class MainActivity : ComponentActivity() {
                         mutableStateOf(true)
                     }
                     Scaffold(bottomBar = {
-                        AniListBottomNavigationBar(
-                            selectedDestination = selectedDestination,
-                            navigateToTopLevelDestination = navigationAction::navigateTo,
-                            showBottomBar,
-                        )
+                        if (windowSize.widthSizeClass == WindowWidthSizeClass.Compact) {
+                            AniListBottomNavigationBar(
+                                selectedDestination = selectedDestination,
+                                navigateToTopLevelDestination = navigationAction::navigateTo,
+                                showBottomBar,
+                            )
+                        }
+
                     }) {
                         when (uiState) {
                             is MainActivityUiState.Loading -> {
                                 LoadingCircle()
                             }
+
                             is MainActivityUiState.Success -> {
-                                Log.d(TAG, "Access code when starting up is ${(uiState as MainActivityUiState.Success).userData.accessCode}")
-                                accessCode = (uiState as MainActivityUiState.Success).userData.accessCode
-                                Apollo.setAccessCode(accessCode)
-                                AniNavHost(
-                                    accessCode = accessCode,
-                                    navController = navController,
-                                    navigationActions = navigationAction,
-                                    modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
-                                    setBottomBarState = { newValue -> showBottomBar = newValue },
+                                Log.d(
+                                    TAG,
+                                    "Access code when starting up is ${(uiState as MainActivityUiState.Success).userData.accessCode}"
                                 )
+                                accessCode =
+                                    (uiState as MainActivityUiState.Success).userData.accessCode
+                                Apollo.setAccessCode(accessCode)
+                                Row {
+                                    if (windowSize.widthSizeClass == WindowWidthSizeClass.Medium
+                                        || windowSize.widthSizeClass == WindowWidthSizeClass.Expanded
+                                    ) {
+                                        AniListNavigationRail(
+                                            selectedDestination = selectedDestination,
+                                            navigateToTopLevelDestination = navigationAction::navigateTo,
+                                            showBottomBar,
+                                        )
+                                    }
+                                    AniNavHost(
+                                        accessCode = accessCode,
+                                        navController = navController,
+                                        navigationActions = navigationAction,
+                                        modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
+                                        setBottomBarState = { newValue ->
+                                            showBottomBar = newValue
+                                        },
+                                    )
+                                }
                             }
                         }
                     }

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Review
@@ -16,11 +17,14 @@ import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.data.repository.MyMediaRepository
+import com.example.anilist.data.repository.StudioDetailRepository
+import com.example.anilist.data.repository.StudioMediaPagingSource
 import com.example.anilist.ui.home.PREFETCH_DISTANCE
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -36,7 +40,8 @@ private const val TAG = "MediaDetailsViewModel"
 @HiltViewModel
 class MediaDetailsViewModel @Inject constructor(
     private val mediaDetailsRepository: MediaDetailsRepository,
-    private val myMediaRepository: MyMediaRepository
+    private val myMediaRepository: MyMediaRepository,
+    private val studioDetailRepository: StudioDetailRepository
 ) : ViewModel() {
 
     private val _media = MutableLiveData<Media>()
@@ -57,7 +62,7 @@ class MediaDetailsViewModel @Inject constructor(
     //    private val _staffList = MutableLiveData<List<Staff>>()
 //    val staffList: LiveData<List<Staff>> = _staffList
     @OptIn(ExperimentalCoroutinesApi::class)
-    val staffList = _mediaId.flatMapLatest {mediaId ->
+    val staffList = _mediaId.flatMapLatest { mediaId ->
         Pager(
             config = PagingConfig(
                 pageSize = 25,
@@ -70,6 +75,9 @@ class MediaDetailsViewModel @Inject constructor(
 
     private val _staff = MutableLiveData<StaffDetail>()
     val staff: LiveData<StaffDetail> = _staff
+
+//    private val _studio = MutableLiveData<StaffDetail>()
+//    val studio: LiveData<StaffDetail> = _studio
 
     //    private val _reviews = MutableLiveData<List<Review>>()
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -92,11 +100,30 @@ class MediaDetailsViewModel @Inject constructor(
         MutableLiveData(_character.value?.isFavourite ?: false)
     val isFavouriteCharacter: LiveData<Boolean> = _isFavouriteCharacter
 
+    private val _studio: MutableStateFlow<AniStudio> = MutableStateFlow(AniStudio())
+    val studio: StateFlow<AniStudio> = _studio
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val mediaOfStudio = _studio.flatMapLatest {studio ->
+        Pager(
+            config = PagingConfig(pageSize = 25, prefetchDistance = 5, enablePlaceholders = false),
+            pagingSourceFactory = {
+                StudioMediaPagingSource(studioDetailRepository, studio.id)
+            }
+        ).flow.cachedIn(viewModelScope)
+    }
+
+    fun getStudioDetails(id: Int) {
+        viewModelScope.launch {
+            _studio.value = studioDetailRepository.getStudioDetails(id)
+        }
+    }
+
+
     fun fetchMedia(mediaId: Int) {
         viewModelScope.launch {
             val data = mediaDetailsRepository.fetchMedia(mediaId)
-            _media.value = data
-//            Log.d(TAG, "Media id received is ${mediaId}")
+            _media.value = data.getOrNull()
             _mediaId.emit(mediaId)
         }
     }
@@ -161,11 +188,9 @@ class MediaDetailsViewModel @Inject constructor(
                     _media.value =
                         _media.value!!.copy(isFavourite = isFavourite)
 
-                MediaDetailsRepository.LikeAbleType.STUDIO -> Unit /* todo _studio.value = _character.value!!.copy(isFavourite = isFavourite)*/
+                MediaDetailsRepository.LikeAbleType.STUDIO ->
+                    _studio.value = _studio.value!!.copy(isFavourite = isFavourite)
             }
-
-//            _character.value?.isFavorite = isFavourite
-//            _isFavouriteCharacter.value = isFavourite
         }
     }
 

@@ -14,6 +14,7 @@ import com.example.anilist.GetStaffDetailQuery
 import com.example.anilist.GetStaffInfoQuery
 import com.example.anilist.RateReviewMutation
 import com.example.anilist.ToggleFavoriteCharacterMutation
+import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.CharacterMediaConnection
@@ -36,6 +37,8 @@ import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaType
 import com.example.anilist.type.ReviewRating
 import com.example.anilist.ui.mymedia.MediaStatus
+import kotlinx.coroutines.newFixedThreadPoolContext
+import java.lang.NullPointerException
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -46,10 +49,10 @@ private const val TAG = "MediaDetailRepository"
 @Singleton
 class MediaDetailsRepository @Inject constructor() {
 
-    suspend fun fetchMedia(mediaId: Int): Media {
+    suspend fun fetchMedia(mediaId: Int): Result<Media> {
         try {
-            val currentUser = Apollo.apolloClient.query(GetCurrentUserQuery()).execute()
-            val userId = currentUser.data?.Viewer?.id ?: -1
+            val currentUser = Apollo.apolloClient.query(GetCurrentUserQuery()).execute().dataOrThrow()
+            val userId = currentUser.Viewer?.id ?: -1
             val result =
                 Apollo.apolloClient.query(
                     GetMediaDetailQuery(mediaId, userId),
@@ -58,15 +61,13 @@ class MediaDetailsRepository @Inject constructor() {
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
             }
-            val data = result.data
+            val data = result.dataOrThrow()
 //            val status = result.data?.MediaList?.status ?: MediaListStatus.UNKNOWN__
-            if (data != null) {
-                return parseMedia(data)
-            }
+            return Result.success(parseMedia(data))
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
+            return Result.failure(exception)
         }
-        return Media()
     }
 
 //    suspend fun fetchCharacters(mediaId: Int): List<CharacterWithVoiceActor> {
@@ -690,7 +691,9 @@ class MediaDetailsRepository @Inject constructor() {
             favourites = media?.favourites ?: -1,
             isFavourite = media?.isFavourite ?: false,
             isFavouriteBlocked = media?.isFavouriteBlocked ?: false,
-            personalStatus = data?.MediaList?.status?.toAniStatus() ?: MediaStatus.UNKNOWN
+            personalStatus = data?.MediaList?.status?.toAniStatus() ?: MediaStatus.UNKNOWN,
+            studios = data?.Media?.studios?.nodes?.filterNotNull()
+                ?.map { AniStudio(id = it.id, name = it.name) }.orEmpty()
         )
         return media2
     }

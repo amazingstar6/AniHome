@@ -129,11 +129,11 @@ class HomeViewModel @Inject constructor(
         SharingStarted.WhileSubscribed(),
         initialValue = SearchFilter.MEDIA
     )
-    private val _mediaSortType = MutableStateFlow(AniMediaSort.DEFAULT)
+    private val _mediaSortType = MutableStateFlow(AniMediaSort.POPULARITY)
     val mediaSortType = _mediaSortType.asStateFlow().stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(),
-        initialValue = AniMediaSort.DEFAULT
+        initialValue = AniMediaSort.SEARCH_MATCH
     )
     private val _characterSortType = MutableStateFlow(AniCharacterSort.DEFAULT)
     val characterSortType = _characterSortType.asStateFlow().stateIn(
@@ -329,6 +329,14 @@ class HomeViewModel @Inject constructor(
                     _mediaSearch.emit(query)
                 } else if (searchType.value == SearchFilter.CHARACTERS) {
                     _characterSearch.emit(query)
+                } else if (searchType.value == SearchFilter.STAFF) {
+                    _staffSearch.emit(query)
+                } else if (searchType.value == SearchFilter.STUDIOS) {
+                    _studioSearch.emit(query)
+                } else if (searchType.value == SearchFilter.THREADS) {
+                    _threadSearch.emit(query)
+                } else if (searchType.value == SearchFilter.USER) {
+                    _userSearch.emit(query)
                 }
             }
         }

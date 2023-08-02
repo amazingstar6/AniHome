@@ -121,16 +121,16 @@ val TOP_LEVEL_DESTINATIONS = listOf(
         unselectedIcon = R.drawable.navigation_manga_outlined,
         iconTextId = R.string.manga,
     ),
-    AnilistTopLevelDestination(
-        route = AniListRoute.FEED_ROUTE,
-        selectedIcon = R.drawable.navigation_feed_filled,
-        unselectedIcon = R.drawable.navigation_feed_outlined,
-        iconTextId = R.string.feed,
-    ),
-    AnilistTopLevelDestination(
-        route = AniListRoute.FORUM_ROUTE,
-        selectedIcon = R.drawable.navigation_forum_filled,
-        unselectedIcon = R.drawable.navigation_forum_outlined,
-        iconTextId = R.string.forum,
-    ),
+//    AnilistTopLevelDestination(
+//        route = AniListRoute.FEED_ROUTE,
+//        selectedIcon = R.drawable.navigation_feed_filled,
+//        unselectedIcon = R.drawable.navigation_feed_outlined,
+//        iconTextId = R.string.feed,
+//    ),
+//    AnilistTopLevelDestination(
+//        route = AniListRoute.FORUM_ROUTE,
+//        selectedIcon = R.drawable.navigation_forum_filled,
+//        unselectedIcon = R.drawable.navigation_forum_outlined,
+//        iconTextId = R.string.forum,
+//    ),
 )
