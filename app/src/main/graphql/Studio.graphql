@@ -1,0 +1,39 @@
+query GetStudioDetails($id: Int!) {
+    Studio(id: $id) {
+        id
+        media {
+            edges {
+                isMainStudio
+                node {
+                    id
+                    title {
+                        userPreferred
+                    }
+                }
+            }
+        }
+        favourites
+        isAnimationStudio
+        isFavourite
+        name
+        siteUrl
+    }
+}
+
+query GetMediaOfStudio($studioId: Int!, $page: Int!, $pageSize: Int!) {
+    Studio(id: $studioId) {
+        media(page: $page, perPage: $pageSize, sort: [POPULARITY_DESC]) {
+            edges {
+                node {
+                    id
+                    title {
+                        userPreferred
+                    }
+                    coverImage {
+                        extraLarge
+                    }
+                }
+            }
+        }
+    }
+}

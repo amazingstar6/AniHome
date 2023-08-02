@@ -1,4 +1,7 @@
-query getMediaDetail($id: Int!) {
+query getMediaDetail($id: Int!, $userId: Int!) {
+    MediaList(mediaId: $id, userId: $userId) {
+        status
+    }
     Media(id: $id) {
         id
         idMal
@@ -58,6 +61,11 @@ query getMediaDetail($id: Int!) {
         isFavourite
         isFavouriteBlocked
         favourites
+#        studios {
+#            nodes {
+#                id
+#            }
+#        }
         tags {
             id
             name

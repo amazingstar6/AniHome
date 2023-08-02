@@ -6,6 +6,7 @@ import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.utils.Apollo
 import com.example.anilist.GetCharacterDetailQuery
+import com.example.anilist.GetCurrentUserQuery
 import com.example.anilist.GetMediaDetailQuery
 import com.example.anilist.GetReviewDetailQuery
 import com.example.anilist.GetReviewsOfMediaQuery
@@ -34,6 +35,7 @@ import com.example.anilist.type.MediaRankType
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaType
 import com.example.anilist.type.ReviewRating
+import com.example.anilist.ui.mymedia.MediaStatus
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -46,15 +48,18 @@ class MediaDetailsRepository @Inject constructor() {
 
     suspend fun fetchMedia(mediaId: Int): Media {
         try {
+            val currentUser = Apollo.apolloClient.query(GetCurrentUserQuery()).execute()
+            val userId = currentUser.data?.Viewer?.id ?: -1
             val result =
                 Apollo.apolloClient.query(
-                    GetMediaDetailQuery(mediaId),
+                    GetMediaDetailQuery(mediaId, userId),
                 )
                     .execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
             }
-            val data = result.data?.Media
+            val data = result.data
+//            val status = result.data?.MediaList?.status ?: MediaListStatus.UNKNOWN__
             if (data != null) {
                 return parseMedia(data)
             }
@@ -64,25 +69,25 @@ class MediaDetailsRepository @Inject constructor() {
         return Media()
     }
 
-    suspend fun fetchCharacters(mediaId: Int): List<CharacterWithVoiceActor> {
-        try {
-            val result =
-                Apollo.apolloClient.query(
-                    GetMediaDetailQuery(mediaId),
-                )
-                    .execute()
-            if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
-            }
-            val data = result.data?.Media
-            if (data != null) {
-                return parseCharacters(data)
-            }
-        } catch (exception: ApolloException) {
-            // handle exception here,, these are mainly for network errors
-        }
-        return emptyList()
-    }
+//    suspend fun fetchCharacters(mediaId: Int): List<CharacterWithVoiceActor> {
+//        try {
+//            val result =
+//                Apollo.apolloClient.query(
+//                    GetMediaDetailQuery(mediaId),
+//                )
+//                    .execute()
+//            if (result.hasErrors()) {
+//                // these errors are related to GraphQL errors
+//            }
+//            val data = result.data?.Media
+//            if (data != null) {
+//                return parseCharacters(data)
+//            }
+//        } catch (exception: ApolloException) {
+//            // handle exception here,, these are mainly for network errors
+//        }
+//        return emptyList()
+//    }
 
     suspend fun fetchStaffList(mediaId: Int, page: Int, pageSize: Int): List<Staff> {
         try {
@@ -593,7 +598,8 @@ class MediaDetailsRepository @Inject constructor() {
         return list
     }
 
-    private fun parseMedia(media: GetMediaDetailQuery.Media?): Media {
+    private fun parseMedia(data: GetMediaDetailQuery.Data?): Media {
+        val media = data?.Media
         val tags: MutableList<Tag> = mutableListOf()
         for (tag in media?.tags.orEmpty()) {
             if (tag != null) {
@@ -639,7 +645,7 @@ class MediaDetailsRepository @Inject constructor() {
                 ),
             )
         }
-        val media = Media(
+        val media2 = Media(
             id = media?.id ?: -1,
             title = media?.title?.native ?: "Unknown",
             type = media?.type?.toAniHomeType()
@@ -684,8 +690,9 @@ class MediaDetailsRepository @Inject constructor() {
             favourites = media?.favourites ?: -1,
             isFavourite = media?.isFavourite ?: false,
             isFavouriteBlocked = media?.isFavouriteBlocked ?: false,
+            personalStatus = data?.MediaList?.status?.toAniStatus() ?: MediaStatus.UNKNOWN
         )
-        return media
+        return media2
     }
 
     private fun parseCharacters(anime: GetMediaDetailQuery.Media?): List<CharacterWithVoiceActor> {

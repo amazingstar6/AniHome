@@ -13,7 +13,9 @@ import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.data.repository.MediaDetailsRepository
+import com.example.anilist.data.repository.MyMediaRepository
 import com.example.anilist.ui.home.PREFETCH_DISTANCE
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,6 +36,7 @@ private const val TAG = "MediaDetailsViewModel"
 @HiltViewModel
 class MediaDetailsViewModel @Inject constructor(
     private val mediaDetailsRepository: MediaDetailsRepository,
+    private val myMediaRepository: MyMediaRepository
 ) : ViewModel() {
 
     private val _media = MutableLiveData<Media>()
@@ -169,6 +172,20 @@ class MediaDetailsViewModel @Inject constructor(
     fun rateReview(id: Int, rating: ReviewRatingStatus) {
         viewModelScope.launch {
             mediaDetailsRepository.rateReview(id, rating)
+        }
+    }
+
+    fun updateProgress(statusUpdate: StatusUpdate) {
+        viewModelScope.launch {
+            myMediaRepository.updateProgress(
+                statusUpdate,
+            )
+        }
+    }
+
+    fun deleteEntry(id: Int) {
+        viewModelScope.launch {
+            myMediaRepository.deleteEntry(id)
         }
     }
 

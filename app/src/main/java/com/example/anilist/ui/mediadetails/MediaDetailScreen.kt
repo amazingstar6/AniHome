@@ -48,10 +48,12 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -97,6 +99,8 @@ import com.example.anilist.data.models.Tag
 import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.utils.quantityStringResource
 import com.example.anilist.ui.Dimens
+import com.example.anilist.ui.mymedia.EditStatusModalSheet
+import com.example.anilist.ui.mymedia.MediaStatus
 import com.example.anilist.ui.theme.AnilistTheme
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
@@ -141,6 +145,20 @@ fun MediaDetail(
     val isAnime = media?.type == MediaType.ANIME
     var showDropDownMenu by remember {
         mutableStateOf(false)
+    }
+    var editStatusBottomSheetIsVisible by remember { mutableStateOf(false) }
+    val editSheetState =
+        rememberModalBottomSheetState(skipPartiallyExpanded = false, confirmValueChange = {
+            it != SheetValue.Hidden
+        })
+    val modalSheetScope = rememberCoroutineScope()
+    val showEditSheet: () -> Unit = {
+        editStatusBottomSheetIsVisible = true
+        modalSheetScope.launch { editSheetState.show() }
+    }
+    val hideEditSheet: () -> Unit = {
+        editStatusBottomSheetIsVisible = false
+        modalSheetScope.launch { editSheetState.hide() }
     }
 
     mediaDetailsViewModel.fetchMedia(mediaId)
@@ -234,65 +252,84 @@ fun MediaDetail(
         })
     }, floatingActionButton = {
         FloatingActionButton(
-            onClick = { onNavigateToStatusEditor(mediaId) },
+            onClick = {
+//                onNavigateToStatusEditor(mediaId)
+                      showEditSheet()
+            },
         ) {
             Icon(imageVector = Icons.Outlined.Edit, contentDescription = "edit")
         }
     }) {
-        Column {
-            AniDetailTabs(
-                modifier = Modifier.padding(top = it.calculateTopPadding()),
-                titles = DetailTabs.values().map { it.name },
-                tabSelected = index,
-            ) { index = it }
 
-//            HorizontalPager(
-//                state = pagerState
-//            ) { page ->
-            when (index.ordinal) {
-                0 -> {
-                    if (media == null) {
-                        LoadingCircle()
-                    } else {
-                        Overview(
-                            media,
-                            onNavigateToDetails,
-                            onNavigateToLargeCover
+        Box {
+            Column {
+                AniDetailTabs(
+                    modifier = Modifier.padding(top = it.calculateTopPadding()),
+                    titles = DetailTabs.values().map { it.name },
+                    tabSelected = index,
+                ) { index = it }
+
+                //            HorizontalPager(
+                //                state = pagerState
+                //            ) { page ->
+                when (index.ordinal) {
+                    0 -> {
+                        if (media == null) {
+                            LoadingCircle()
+                        } else {
+                            Overview(
+                                media,
+                                onNavigateToDetails,
+                                onNavigateToLargeCover
+                            )
+                        }
+                    }
+
+                    1 -> {
+                        Characters(
+                            media?.characterWithVoiceActors.orEmpty().map { it.voiceActorLanguage }
+                                .distinct(),
+                            media?.characterWithVoiceActors.orEmpty(),
+                            navigateToCharacter = navigateToCharacter,
+                            navigateToStaff = navigateToStaff,
                         )
                     }
-                }
 
-                1 -> {
-                    Characters(
-                        media?.characterWithVoiceActors.orEmpty().map { it.voiceActorLanguage }.distinct(),
-                        media?.characterWithVoiceActors.orEmpty(),
-                        navigateToCharacter = navigateToCharacter,
-                        navigateToStaff = navigateToStaff,
-                    )
-                }
-
-                2 -> {
-                    StaffScreen(staff, onNavigateToStaff)
-                }
-
-                3 -> {
-                    //fixme
-                    if (false) {
-                        LoadingCircle()
-                    } else {
-                        Reviews(
-                            reviews,
-                            vote = { rating, reviewId ->
-                                mediaDetailsViewModel.rateReview(reviewId, rating)
-                                mediaDetailsViewModel.fetchMedia(mediaId)
-                            },
-                            onNavigateToReviewDetails
-                        )
+                    2 -> {
+                        StaffScreen(staff, onNavigateToStaff)
                     }
-                }
 
-                4 ->
-                    Stats(media?.stats ?: Stats())
+                    3 -> {
+                        //fixme
+                        if (false) {
+                            LoadingCircle()
+                        } else {
+                            Reviews(
+                                reviews,
+                                vote = { rating, reviewId ->
+                                    mediaDetailsViewModel.rateReview(reviewId, rating)
+                                    mediaDetailsViewModel.fetchMedia(mediaId)
+                                },
+                                onNavigateToReviewDetails
+                            )
+                        }
+                    }
+
+                    4 ->
+                        Stats(media?.stats ?: Stats())
+                }
+            }
+            if (editStatusBottomSheetIsVisible) {
+                EditStatusModalSheet(
+                    editSheetState = editSheetState,
+                    hideEditSheet = hideEditSheet,
+                    currentStatus = media?.personalStatus ?: MediaStatus.UNKNOWN,
+                    currentMedia = media ?: Media(),
+                    saveStatus = { mediaDetailsViewModel.updateProgress(it) },
+                    isAnime = isAnime,
+                    reloadMyMedia = { /*TODO*/ },
+                    deleteListEntry = { mediaDetailsViewModel.deleteEntry(it) }
+                )
             }
         }
     }

@@ -1,5 +1,7 @@
 package com.example.anilist.data.models
 
+import com.example.anilist.ui.mymedia.MediaStatus
+
 data class Media(
     val id: Int = -1,
     val listEntryId: Int = -1,
@@ -40,6 +42,7 @@ data class Media(
 
     val startedAt: FuzzyDate? = null,
     val completedAt: FuzzyDate? = null,
+    val personalStatus: MediaStatus = MediaStatus.UNKNOWN,
 
     val rawScore: Double = -1.0,
 )

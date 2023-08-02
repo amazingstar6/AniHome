@@ -157,8 +157,9 @@ class MyMediaRepository @Inject constructor() {
                                 statusUpdate.advancedScores,
                             )
                         },
+                        // dates are null when they're empty, they can be null unlike other fields
                         startedAt = if (statusUpdate.startedAt == null) {
-                            Optional.Absent
+                            Optional.present(null)
                         } else {
                             Optional.present(
                                 FuzzyDateInput(
@@ -169,7 +170,7 @@ class MyMediaRepository @Inject constructor() {
                             )
                         },
                         completedAt = if (statusUpdate.completedAt == null) {
-                            Optional.Absent
+                            Optional.present(null)
                         } else {
                             Optional.present(
                                 FuzzyDateInput(

@@ -1,9 +1,13 @@
 package com.example.anilist.ui.mymedia
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +51,7 @@ import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
@@ -54,10 +59,12 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
@@ -173,9 +180,10 @@ private fun MyMedia(
     }
 
     val filterSheetState = rememberModalBottomSheetState()
-    val editSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false, confirmValueChange = {
-        it != SheetValue.Hidden
-    })
+    val editSheetState =
+        rememberModalBottomSheetState(skipPartiallyExpanded = false, confirmValueChange = {
+            it != SheetValue.Hidden
+        })
 
     val showFilterSheet: () -> Unit = {
         filterSheetIsVisible = true
@@ -195,15 +203,6 @@ private fun MyMedia(
         editSheetIsVisible = false
         modalSheetScope.launch { editSheetState.hide() }
     }
-
-    var personalProgress: Int = currentMedia.personalProgress
-    var progressVolumes: Int = currentMedia.personalVolumeProgress
-    var rewatches: Int = currentMedia.rewatches
-    var privateToUser: Boolean = currentMedia.isPrivate
-    var startedAt: FuzzyDate? = currentMedia.startedAt
-    var completedAt: FuzzyDate? = currentMedia.completedAt
-    var rawScore: Double = currentMedia.rawScore
-    var notes: String = currentMedia.note
 
     var filter by rememberSaveable { mutableStateOf(MediaStatus.UNKNOWN) }
     Scaffold(
@@ -289,23 +288,17 @@ private fun MyMedia(
                 isAnime,
             )
             if (editSheetIsVisible) {
-                EditStatusSheet(
-                    editSheetState = editSheetState,
-                    hideEditSheet = hideEditSheet,
-                    myMedia = myMedia,
-                    currentMedia = currentMedia,
-                    personalProgress = personalProgress,
-                    saveStatus = saveStatus,
-                    rawScore = rawScore,
-                    isAnime = isAnime,
-                    progressVolumes = progressVolumes,
-                    rewatches = rewatches,
-                    privateToUser = privateToUser,
-                    notes = notes,
-                    startedAt = startedAt,
-                    completedAt = completedAt,
-                    reloadMyMedia = reloadMyMedia,
-                    deleteListEntry = deleteListEntry
+                EditStatusModalSheet(
+                    editSheetState,
+                    hideEditSheet,
+                    currentStatus = myMedia?.entries?.find {
+                        it.value.any { media -> media.id == currentMedia.id }
+                    }?.key ?: MediaStatus.UNKNOWN,
+                    currentMedia,
+                    saveStatus,
+                    isAnime,
+                    reloadMyMedia,
+                    deleteListEntry
                 )
             }
             if (filterSheetIsVisible) {
@@ -400,42 +393,25 @@ private fun MyMedia(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun EditStatusSheet(
+fun EditStatusModalSheet(
     editSheetState: SheetState,
     hideEditSheet: () -> Unit,
-    deleteListEntry: (id: Int) -> Unit,
-    reloadMyMedia: () -> Unit,
-    myMedia: Map<MediaStatus, List<Media>>?,
+    currentStatus: MediaStatus,
     currentMedia: Media,
-    personalProgress: Int,
     saveStatus: (StatusUpdate) -> Unit,
-    rawScore: Double,
     isAnime: Boolean,
-    progressVolumes: Int,
-    rewatches: Int,
-    privateToUser: Boolean,
-    notes: String,
-    startedAt: FuzzyDate?,
-    completedAt: FuzzyDate?
+    reloadMyMedia: () -> Unit,
+    deleteListEntry: (id: Int) -> Unit
 ) {
-    var personalProgress1 = personalProgress
-    var rawScore1 = rawScore
-    var progressVolumes1 = progressVolumes
-    var rewatches1 = rewatches
-    var privateToUser1 = privateToUser
-    var notes1 = notes
-    var startedAt1 = startedAt
-    var completedAt1 = completedAt
-    ModalBottomSheet(sheetState = editSheetState, onDismissRequest = { hideEditSheet() }) {
+    var currentMedia1 by remember { mutableStateOf(currentMedia) }
+    ModalBottomSheet(sheetState = editSheetState,
+        onDismissRequest = { hideEditSheet() }) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            val currentStatus =
-                myMedia?.entries?.find { it.value.any { media -> media.id == currentMedia.id } }?.key
-                    ?: MediaStatus.UNKNOWN
             var selectedOptionText by remember { mutableStateOf(currentStatus) }
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = currentMedia.title,
+                        text = currentMedia1.title,
                     )
                 },
                 navigationIcon = {
@@ -451,24 +427,27 @@ private fun EditStatusSheet(
                 },
                 actions = {
                     TextButton(onClick = {
-                        Log.d(TAG, "progress in my media screen is $personalProgress1")
+                        Log.d(
+                            TAG,
+                            "progress in my media screen is ${currentMedia1.personalProgress}"
+                        )
                         saveStatus(
                             // todo fill these
                             StatusUpdate(
-                                id = currentMedia.listEntryId,
+                                id = currentMedia1.listEntryId,
                                 status = selectedOptionText,
-                                scoreRaw = rawScore1.toInt(),
-                                progress = personalProgress1,
-                                progressVolumes = if (!isAnime) progressVolumes1 else null,
-                                repeat = rewatches1,
+                                scoreRaw = currentMedia1.rawScore.toInt(),
+                                progress = currentMedia1.personalProgress,
+                                progressVolumes = if (!isAnime) currentMedia1.personalVolumeProgress else null,
+                                repeat = currentMedia1.rewatches,
                                 priority = null,
-                                privateToUser = privateToUser1,
-                                notes = notes1,
+                                privateToUser = currentMedia1.isPrivate,
+                                notes = currentMedia1.note,
                                 hiddenFromStatusList = null,
                                 customLists = null,
                                 advancedScores = null,
-                                startedAt = startedAt1,
-                                completedAt = completedAt1,
+                                startedAt = currentMedia1.startedAt,
+                                completedAt = currentMedia1.completedAt,
                             ),
                         )
                         hideEditSheet()
@@ -484,21 +463,21 @@ private fun EditStatusSheet(
             ) { selectedOptionText = it }
 
             NumberTextField(
-                suffix = if (isAnime) currentMedia.episodeAmount.toString() else currentMedia.chapters.toString(),
+                suffix = if (isAnime) currentMedia1.episodeAmount.toString() else currentMedia1.chapters.toString(),
                 label = if (isAnime) "Episodes" else "Chapters",
-                initialValue = personalProgress1,
+                initialValue = currentMedia1.personalProgress,
                 setValue = {
-                    personalProgress1 = it
+                    currentMedia1 = currentMedia1.copy(personalProgress = it)
                 },
                 maxCount = if (isAnime) {
-                    if (currentMedia.episodeAmount != -1) {
-                        currentMedia.episodeAmount
+                    if (currentMedia1.episodeAmount != -1) {
+                        currentMedia1.episodeAmount
                     } else {
                         Int.MAX_VALUE
                     }
                 } else {
-                    if (currentMedia.chapters != -1) {
-                        currentMedia.chapters
+                    if (currentMedia1.chapters != -1) {
+                        currentMedia1.chapters
                     } else {
                         Int.MAX_VALUE
                     }
@@ -506,42 +485,63 @@ private fun EditStatusSheet(
             )
             if (!isAnime) {
                 NumberTextField(
-                    suffix = currentMedia.volumes.toString(),
+                    suffix = currentMedia1.volumes.toString(),
                     label = "Volumes",
-                    initialValue = progressVolumes1,
+                    initialValue = currentMedia1.personalVolumeProgress,
                     setValue = {
-                        progressVolumes1 = it
+                        currentMedia1 = currentMedia1.copy(personalProgress = it)
                     },
-                    maxCount = currentMedia.volumes,
+                    maxCount = currentMedia1.volumes,
                 )
             }
             NumberTextField(
                 suffix = "",
                 label = if (isAnime) "Total rewatches" else "Total rereads",
-                initialValue = rewatches1,
-                setValue = { rewatches1 = it },
+                initialValue = currentMedia1.rewatches,
+                setValue = { currentMedia1 = currentMedia1.copy(rewatches = it) },
                 maxCount = Int.MAX_VALUE,
             )
             var sliderPosition by remember {
                 mutableFloatStateOf(
-                    rawScore1.roundToInt().toFloat(),
+                    currentMedia1.rawScore.roundToInt().toFloat(),
                 )
             }
+            val valueRange = 0f..100f
             var text by remember {
                 mutableStateOf("${sliderPosition.toInt()}")
             }
+            val context = LocalContext.current
             OutlinedTextField(
                 value = text,
                 onValueChange = { newInput ->
-                    text = newInput
+                    text = try {
+                        if (newInput.toFloat() in valueRange) {
+                            newInput
+                        } else {
+                            //fixme should we make a toast?
+                            Toast.makeText(
+                                context,
+                                R.string.input_a_valid_value,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            ""
+                        }
+                    } catch (e: NumberFormatException) {
+                        ""
+                    }
                     sliderPosition = try {
-                        newInput.toFloat()
+                        if (newInput.toFloat() in valueRange) {
+                            newInput.toFloat()
+                        } else {
+                            0f
+                        }
                     } catch (e: NumberFormatException) {
                         0f
                     }
                 },
                 label = { Text("Score") },
                 suffix = { Text(text = "/100") },
+                singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier
                     .padding(Dimens.PaddingNormal),
@@ -552,11 +552,12 @@ private fun EditStatusSheet(
                         contentDescription = "Localized Description"
                     }
                     .padding(Dimens.PaddingNormal),
-                valueRange = 1f..100f,
+                valueRange = valueRange,
                 value = sliderPosition,
                 onValueChange = {
                     sliderPosition = it
-                    rawScore1 = it.roundToInt().toDouble()
+                    currentMedia1 =
+                        currentMedia1.copy(rawScore = it.roundToInt().toDouble())
                     text = it.roundToInt().toString()
                 },
                 steps = 100,
@@ -564,26 +565,27 @@ private fun EditStatusSheet(
 
             DatePickerDialogue(
                 "Start date",
-                initialValue = currentMedia.startedAt,
-                setValue = { startedAt1 = it },
+                initialValue = currentMedia1.startedAt,
+                setValue = { currentMedia1 = currentMedia1.copy(startedAt = it) },
             )
             DatePickerDialogue(
                 "Finish date",
-                initialValue = currentMedia.completedAt,
-                setValue = { completedAt1 = it },
+                initialValue = currentMedia1.completedAt,
+                setValue = { currentMedia1 = currentMedia1.copy(completedAt = it) },
             )
 
-            var check by remember {
-                mutableStateOf(privateToUser1)
-            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Dimens.PaddingNormal)
+                    .clickable {
+                        currentMedia1 = currentMedia1.copy(isPrivate = !currentMedia1.isPrivate)
+                    }
             ) {
-                Checkbox(checked = check, onCheckedChange = {
-                    privateToUser1 = it
-                    check = it
+                Checkbox(checked = currentMedia1.isPrivate, onCheckedChange = {
+                    currentMedia1 = currentMedia1.copy(isPrivate = it)
                 })
                 Text(
                     "Private",
@@ -592,22 +594,24 @@ private fun EditStatusSheet(
                 )
             }
 
-            var note by remember { mutableStateOf(notes1) }
             OutlinedTextField(
-                value = note,
+                value = currentMedia1.note,
                 label = { Text("Notes") },
-                onValueChange = { note = it; notes1 = it },
+                onValueChange = {
+                    currentMedia1 = currentMedia1.copy(note = it)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = Dimens.PaddingNormal,
-                        end = Dimens.PaddingNormal,
-                        bottom = Dimens.PaddingLarge
+                        horizontal = Dimens.PaddingNormal,
+                        vertical = Dimens.PaddingLarge
                     ),
                 minLines = 5,
                 trailingIcon = {
-                    if (text.isNotBlank()) {
-                        IconButton(onClick = { note = ""; notes1 = "" }) {
+                    if (currentMedia1.note.isNotBlank()) {
+                        IconButton(onClick = {
+                            currentMedia1 = currentMedia1.copy(note = "")
+                        }) {
                             Box {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
@@ -631,8 +635,9 @@ private fun EditStatusSheet(
                     },
                     confirmButton = {
                         TextButton(onClick = {
-                            deleteListEntry(currentMedia.listEntryId); showDeleteConfirmation =
-                            false; hideEditSheet()
+                            deleteListEntry(currentMedia1.listEntryId)
+                            showDeleteConfirmation = false
+                            hideEditSheet()
                         }) {
                             Text(stringResource(R.string.delete))
                         }
@@ -838,54 +843,74 @@ private fun DatePickerDialogue(
             ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
         },
     )
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.padding(Dimens.PaddingNormal),
-    ) {
-        val time =
-            datePickerState.selectedDateMillis?.let {
-                Instant.fromEpochMilliseconds(
-                    it,
-                ).toLocalDateTime(TimeZone.UTC)
+//    ExposedDropdownMenuBox(
+//        expanded = expanded,
+//        onExpandedChange = { expanded = !expanded },
+//        modifier = Modifier.padding(Dimens.PaddingNormal),
+//    ) {
+    val time =
+        datePickerState.selectedDateMillis?.let {
+            Instant.fromEpochMilliseconds(
+                it,
+            ).toLocalDateTime(TimeZone.UTC)
+        }
+    setValue(
+        if (time != null) {
+            FuzzyDate(
+                time.year,
+                time.monthNumber,
+                time.dayOfMonth,
+            )
+        } else {
+            null
+        },
+    )
+    val timeString =
+        if (time != null) {
+            String.format(
+                "%04d-%02d-%02d",
+                time.year,
+                time.monthNumber,
+                time.dayOfMonth,
+            )
+        } else {
+            ""
+        }
+    OutlinedTextField(
+        // The `menuAnchor` modifier must be passed to the text field for correctness.
+        modifier = Modifier
+//                .menuAnchor()
+            .clickable {
+                expanded = !expanded
             }
-        setValue(
-            if (time != null) {
-                FuzzyDate(
-                    time.year,
-                    time.monthNumber,
-                    time.dayOfMonth,
+            .padding(Dimens.PaddingNormal)
+            .fillMaxWidth(),
+        readOnly = true,
+        enabled = false,
+        value = timeString,
+        onValueChange = { },
+        label = { Text(label) },
+        trailingIcon = {
+            if (datePickerState.selectedDateMillis != null) IconButton(onClick = {
+                datePickerState.selectedDateMillis = null
+            }) {
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = stringResource(id = R.string.clear)
                 )
-            } else {
-                null
-            },
-        )
-        val timeString =
-            if (time != null) {
-                String.format(
-                    "%04d-%02d-%02d",
-                    time.year,
-                    time.monthNumber,
-                    time.dayOfMonth,
-                )
-            } else {
-                ""
             }
-        OutlinedTextField(
-            // The `menuAnchor` modifier must be passed to the text field for correctness.
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth(),
-            readOnly = true,
-            value = timeString,
-            onValueChange = { },
-            label = { Text(label) },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+        },
+        colors = OutlinedTextFieldDefaults.colors(
+            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+            disabledBorderColor = MaterialTheme.colorScheme.outline,
+            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    }
+//            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+    )
+//    }
     if (expanded) {
         DatePickerDialog(
             onDismissRequest = {
@@ -981,19 +1006,26 @@ private fun NumberTextField(
         OutlinedTextField(
             value = text,
             onValueChange = { newInput ->
-                text = newInput
-                setValue(
-                    try {
-                        newInput.toInt()
-                    } catch (e: NumberFormatException) {
-                        0
-                    },
-                )
+                try {
+                    if (newInput.toInt() in 0..maxCount) {
+                        text = newInput
+                        setValue(
+                            newInput.toInt()
+                        )
+                    } else {
+                        text = ""
+                        setValue(0)
+                    }
+                } catch (e: NumberFormatException) {
+                    text = ""
+                    setValue(0)
+                }
             },
+            singleLine = true,
             label = { Text(label) },
             suffix = { if (suffix.isNotEmpty()) Text(text = "/$suffix") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            placeholder = { Text(text = "?") },
+            placeholder = { Text(text = (0).toString()) },
             modifier = Modifier
                 .padding(Dimens.PaddingNormal)
                 .weight(1f),

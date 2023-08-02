@@ -58,6 +58,7 @@
     <string name="duration">Duration</string>
     <string name="chapter_amount">Chapter amount</string>
     <string name="volume_amount">Volume amount</string>
+    <string name="input_a_valid_value">Input a valid value!</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>
