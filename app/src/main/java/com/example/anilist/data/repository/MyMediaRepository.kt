@@ -3,11 +3,10 @@ package com.example.anilist.data.repository
 import android.util.Log
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
-import com.example.anilist.utils.Apollo
 import com.example.anilist.DeleteEntryMutation
-import com.example.anilist.GetCurrentUserQuery
 import com.example.anilist.GetMyMediaQuery
 import com.example.anilist.IncreaseEpisodeProgressMutation
+import com.example.anilist.MainActivity
 import com.example.anilist.UpdateStatusMutation
 import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
@@ -17,6 +16,7 @@ import com.example.anilist.type.FuzzyDateInput
 import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaType
 import com.example.anilist.ui.mymedia.MediaStatus
+import com.example.anilist.utils.Apollo
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,13 +34,13 @@ class MyMediaRepository @Inject constructor() {
 //                    )
 //                )
 //            ).serverUrl("https://graphql.anilist.co").build().query(GetCurrentUserQuery()).execute()
-            val currentUser = Apollo.apolloClient.query(GetCurrentUserQuery()).execute()
-            val userId = currentUser.data?.Viewer?.id ?: -1
-            Log.d(TAG, "Found user id $userId")
+//            val currentUser = Apollo.apolloClient.query(GetCurrentUserQuery()).execute()
+//            val userId = currentUser.data?.Viewer?.id ?: -1
+            Log.d(TAG, "Found user id ${MainActivity.userId}")
 
             val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
             val result =
-                Apollo.apolloClient.query(GetMyMediaQuery(param, userId))
+                Apollo.apolloClient.query(GetMyMediaQuery(param, MainActivity.userId))
                     .execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
@@ -52,7 +52,7 @@ class MyMediaRepository @Inject constructor() {
                 for (statusList in data.MediaListCollection?.lists.orEmpty()) {
                     val list = mutableListOf<Media>()
                     for (entries in statusList?.entries.orEmpty()) {
-                        list.add(parseMedia(entries?.myMedia))
+                        list.add(parseMedia(entries?.myMedia, statusList?.status?.toAniStatus()))
                     }
                     resultMap[statusList?.status?.toAniStatus() ?: MediaStatus.UNKNOWN] = list
                 }
@@ -185,7 +185,10 @@ class MyMediaRepository @Inject constructor() {
                 // these errors are related to GraphQL errors
                 Log.d(TAG, result.errors.toString())
             }
-            return parseMedia(result.data?.SaveMediaListEntry?.myMedia)
+            return parseMedia(
+                result.data?.SaveMediaListEntry?.myMedia,
+                statusUpdate.status //fixme
+            )
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
             Log.d(TAG, exception.message ?: "No exception message")
@@ -193,7 +196,7 @@ class MyMediaRepository @Inject constructor() {
         }
     }
 
-    private fun parseMedia(data: MyMedia?): Media {
+    private fun parseMedia(data: MyMedia?, status: MediaStatus?): Media {
         return Media(
             id = data?.media?.id ?: -1,
             listEntryId = data?.id ?: -1,
@@ -228,6 +231,7 @@ class MyMediaRepository @Inject constructor() {
                 null
             },
             rawScore = data?.score ?: -1.0,
+            personalStatus = status ?: MediaStatus.UNKNOWN
         )
     }
 

@@ -1,8 +1,6 @@
 package com.example.anilist.ui.mymedia
 
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -19,20 +17,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -51,9 +43,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -63,7 +53,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -80,8 +69,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -94,6 +81,7 @@ import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.ui.Dimens
+import com.example.anilist.ui.EditStatusModalSheet
 import com.example.anilist.ui.mediadetails.LoadingCircle
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -101,7 +89,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import kotlin.math.roundToInt
 
 enum class MediaStatus {
     CURRENT,
@@ -286,16 +273,12 @@ private fun MyMedia(
             )
             if (editSheetIsVisible) {
                 EditStatusModalSheet(
-                    editSheetState,
-                    hideEditSheet,
-                    currentStatus = myMedia?.entries?.find {
-                        it.value.any { media -> media.id == currentMedia.id }
-                    }?.key ?: MediaStatus.UNKNOWN,
-                    currentMedia,
-                    saveStatus,
-                    isAnime,
-                    reloadMyMedia,
-                    deleteListEntry
+                    editSheetState = editSheetState,
+                    hideEditSheet = hideEditSheet,
+                    currentMedia = currentMedia,
+                    saveStatus = saveStatus,
+                    isAnime = isAnime,
+                    deleteListEntry = deleteListEntry
                 )
             }
             if (filterSheetIsVisible) {
@@ -383,285 +366,6 @@ private fun MyMedia(
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-fun EditStatusModalSheet(
-    editSheetState: SheetState,
-    hideEditSheet: () -> Unit,
-    currentStatus: MediaStatus,
-    currentMedia: Media,
-    saveStatus: (StatusUpdate) -> Unit,
-    isAnime: Boolean,
-    reloadMyMedia: () -> Unit,
-    deleteListEntry: (id: Int) -> Unit
-) {
-    var currentMedia1 by remember { mutableStateOf(currentMedia) }
-    ModalBottomSheet(sheetState = editSheetState,
-        onDismissRequest = { hideEditSheet() }) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            var selectedOptionText by remember { mutableStateOf(currentStatus) }
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = currentMedia1.title,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = hideEditSheet,
-                        modifier = Modifier.padding(Dimens.PaddingNormal),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "close",
-                        )
-                    }
-                },
-                actions = {
-                    TextButton(onClick = {
-                        Log.d(
-                            TAG,
-                            "progress in my media screen is ${currentMedia1.personalProgress}"
-                        )
-                        saveStatus(
-                            // todo fill these
-                            StatusUpdate(
-                                entryListId = currentMedia1.listEntryId,
-                                status = selectedOptionText,
-                                scoreRaw = currentMedia1.rawScore.toInt(),
-                                progress = currentMedia1.personalProgress,
-                                progressVolumes = if (!isAnime) currentMedia1.personalVolumeProgress else null,
-                                repeat = currentMedia1.rewatches,
-                                priority = null,
-                                privateToUser = currentMedia1.isPrivate,
-                                notes = currentMedia1.note,
-                                hiddenFromStatusList = null,
-                                customLists = null,
-                                advancedScores = null,
-                                startedAt = currentMedia1.startedAt,
-                                completedAt = currentMedia1.completedAt,
-                            ),
-                        )
-                        hideEditSheet()
-//                        reloadMyMedia()
-                    }) {
-                        Text("Save")
-                    }
-                },
-            )
-            DropDownMenuStatus(
-                selectedOptionText,
-                isAnime = isAnime
-            ) { selectedOptionText = it }
-
-            NumberTextField(
-                suffix = if (isAnime) currentMedia1.episodeAmount.toString() else currentMedia1.chapters.toString(),
-                label = if (isAnime) "Episodes" else "Chapters",
-                initialValue = currentMedia1.personalProgress,
-                setValue = {
-                    currentMedia1 = currentMedia1.copy(personalProgress = it)
-                },
-                maxCount = if (isAnime) {
-                    if (currentMedia1.episodeAmount != -1) {
-                        currentMedia1.episodeAmount
-                    } else {
-                        Int.MAX_VALUE
-                    }
-                } else {
-                    if (currentMedia1.chapters != -1) {
-                        currentMedia1.chapters
-                    } else {
-                        Int.MAX_VALUE
-                    }
-                },
-            )
-            if (!isAnime) {
-                NumberTextField(
-                    suffix = currentMedia1.volumes.toString(),
-                    label = "Volumes",
-                    initialValue = currentMedia1.personalVolumeProgress,
-                    setValue = {
-                        currentMedia1 = currentMedia1.copy(personalProgress = it)
-                    },
-                    maxCount = currentMedia1.volumes,
-                )
-            }
-            NumberTextField(
-                suffix = "",
-                label = if (isAnime) "Total rewatches" else "Total rereads",
-                initialValue = currentMedia1.rewatches,
-                setValue = { currentMedia1 = currentMedia1.copy(rewatches = it) },
-                maxCount = Int.MAX_VALUE,
-            )
-            var sliderPosition by remember {
-                mutableFloatStateOf(
-                    currentMedia1.rawScore.roundToInt().toFloat(),
-                )
-            }
-            val valueRange = 0f..100f
-            var text by remember {
-                mutableStateOf("${sliderPosition.toInt()}")
-            }
-            val context = LocalContext.current
-            OutlinedTextField(
-                value = text,
-                onValueChange = { newInput ->
-                    text = try {
-                        if (newInput.toFloat() in valueRange) {
-                            newInput
-                        } else {
-                            //fixme should we make a toast?
-                            Toast.makeText(
-                                context,
-                                R.string.input_a_valid_value,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            ""
-                        }
-                    } catch (e: NumberFormatException) {
-                        ""
-                    }
-                    sliderPosition = try {
-                        if (newInput.toFloat() in valueRange) {
-                            newInput.toFloat()
-                        } else {
-                            0f
-                        }
-                    } catch (e: NumberFormatException) {
-                        0f
-                    }
-                },
-                label = { Text("Score") },
-                suffix = { Text(text = "/100") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier
-                    .padding(Dimens.PaddingNormal),
-            )
-            Slider(
-                modifier = Modifier
-                    .semantics {
-                        contentDescription = "Localized Description"
-                    }
-                    .padding(Dimens.PaddingNormal),
-                valueRange = valueRange,
-                value = sliderPosition,
-                onValueChange = {
-                    sliderPosition = it
-                    currentMedia1 =
-                        currentMedia1.copy(rawScore = it.roundToInt().toDouble())
-                    text = it.roundToInt().toString()
-                },
-                steps = 100,
-            )
-
-            DatePickerDialogue(
-                "Start date",
-                initialValue = currentMedia1.startedAt,
-                setValue = { currentMedia1 = currentMedia1.copy(startedAt = it) },
-            )
-            DatePickerDialogue(
-                "Finish date",
-                initialValue = currentMedia1.completedAt,
-                setValue = { currentMedia1 = currentMedia1.copy(completedAt = it) },
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.PaddingNormal)
-                    .clickable {
-                        currentMedia1 = currentMedia1.copy(isPrivate = !currentMedia1.isPrivate)
-                    }
-            ) {
-                Checkbox(checked = currentMedia1.isPrivate, onCheckedChange = {
-                    currentMedia1 = currentMedia1.copy(isPrivate = it)
-                })
-                Text(
-                    "Private",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-
-            OutlinedTextField(
-                value = currentMedia1.note,
-                label = { Text("Notes") },
-                onValueChange = {
-                    currentMedia1 = currentMedia1.copy(note = it)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = Dimens.PaddingNormal,
-                        vertical = Dimens.PaddingLarge
-                    ),
-                minLines = 5,
-                trailingIcon = {
-                    if (currentMedia1.note.isNotBlank()) {
-                        IconButton(onClick = {
-                            currentMedia1 = currentMedia1.copy(note = "")
-                        }) {
-                            Box {
-                                Icon(
-                                    imageVector = Icons.Default.Clear,
-                                    contentDescription = "clear",
-                                    modifier = Modifier.align(Alignment.TopEnd)
-                                )
-                            }
-                        }
-                    }
-                }
-            )
-
-            var showDeleteConfirmation by remember { mutableStateOf(false) }
-            AnimatedVisibility(visible = showDeleteConfirmation) {
-                AlertDialog(
-                    title = { Text(text = "Delete entry?") },
-                    dismissButton = {
-                        TextButton(onClick = { showDeleteConfirmation = false }) {
-                            Text(text = stringResource(R.string.cancel))
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            deleteListEntry(currentMedia1.listEntryId)
-                            showDeleteConfirmation = false
-                            hideEditSheet()
-                        }) {
-                            Text(stringResource(R.string.delete))
-                        }
-                    },
-                    onDismissRequest = { showDeleteConfirmation = false })
-            }
-
-            Button(
-                onClick = {
-                    showDeleteConfirmation = true
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = Dimens.PaddingNormal,
-                        end = Dimens.PaddingNormal,
-                        bottom = Dimens.PaddingNormal
-                    )
-            ) {
-                Text(
-                    text = "Delete entry",
-                    style = MaterialTheme.typography.bodyMedium
-                )
             }
         }
     }
@@ -823,7 +527,7 @@ private fun MyMediaHeadline(text: String) {
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun DatePickerDialogue(
+fun DatePickerDialogue(
     label: String,
     initialValue: FuzzyDate?,
     setValue: (FuzzyDate?) -> Unit,
@@ -986,7 +690,7 @@ fun DropDownMenuStatus(
 }
 
 @Composable
-private fun NumberTextField(
+fun NumberTextField(
     suffix: String,
     label: String,
     initialValue: Int,

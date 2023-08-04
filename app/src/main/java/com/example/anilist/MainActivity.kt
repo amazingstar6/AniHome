@@ -47,6 +47,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         var accessCode = ""
+        var userId = -1
     }
 
 
@@ -74,7 +75,7 @@ class MainActivity : ComponentActivity() {
                 TAG,
                 "Access code is $accessCode, token type is $tokenType, expires in $expiresIn seconds",
             )
-            viewModel.saveAccessCode(accessCode, tokenType, expiresIn)
+            viewModel.saveAccessCodeAndUserId(accessCode, tokenType, expiresIn)
         }
 
         var uiState: MainActivityUiState by mutableStateOf(MainActivityUiState.Loading)
@@ -84,6 +85,9 @@ class MainActivity : ComponentActivity() {
                 viewModel.uiState
                     .onEach {
                         uiState = it
+                        if (it is MainActivityUiState.Success) {
+                            userId = it.userData.userId
+                        }
                     }
                     .collect()
             }

@@ -160,6 +160,7 @@ fun SettingsScreen(
                     Text(text = "Token: ${(settingsUiState as SettingsUiState.Success).settings.accessCode}")
                     Text(text = "Token type: ${(settingsUiState as SettingsUiState.Success).settings.tokenType}")
                     Text(text = "Expires in: ${(settingsUiState as SettingsUiState.Success).settings.expiresIn}")
+                    Text(text = "User id: ${(settingsUiState as SettingsUiState.Success).settings.userId}")
                     TextButton(
                         onClick = { settingsViewModel.logOut() },
                         modifier = Modifier.fillMaxWidth()

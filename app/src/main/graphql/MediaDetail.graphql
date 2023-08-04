@@ -1,6 +1,19 @@
-query getMediaDetail($id: Int!, $userId: Int!) {
-    MediaList(mediaId: $id, userId: $userId) {
+query getMediaDetail($id: Int!, $userId: Int!, $skipMediaList: Boolean = false) {
+    MediaList(mediaId: $id, userId: $userId)@skip(if: $skipMediaList) {
+        id
         status
+        progress
+        progressVolumes
+        repeat
+        score
+        startedAt {
+            ...FuzzyDate
+        }
+        completedAt {
+            ...FuzzyDate
+        }
+        private
+        notes
     }
     Media(id: $id) {
         id
@@ -13,7 +26,7 @@ query getMediaDetail($id: Int!, $userId: Int!) {
         }
         format
         status
-        description
+        description(asHtml: true)
         startDate {
             year
             month

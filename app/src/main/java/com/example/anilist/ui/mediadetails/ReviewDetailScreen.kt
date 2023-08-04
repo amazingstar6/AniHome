@@ -23,7 +23,7 @@ import com.example.anilist.utils.Utils
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.ui.Dimens
-import de.charlex.compose.HtmlText
+import com.example.anilist.utils.FormattedHtmlWebView
 
 @Composable
 fun ReviewDetailScreen(
@@ -63,13 +63,14 @@ private fun ReviewDetail(
             review.userName,
             Utils.convertEpochToString(review.createdAt.toLong()),
         )
-        HtmlText(
-            text = review.body,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-//                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
-            modifier = Modifier.padding(top = Dimens.PaddingNormal),
-        )
+//        HtmlText(
+//            text = review.body,
+//            style = MaterialTheme.typography.bodyMedium,
+//            color = MaterialTheme.colorScheme.onSurfaceVariant,
+////                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
+//            modifier = Modifier.padding(top = Dimens.PaddingNormal),
+//        )
+        FormattedHtmlWebView(html = review.body)
         Divider(
             modifier = Modifier.padding(horizontal = 34.dp),
         )

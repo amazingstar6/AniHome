@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -34,6 +35,7 @@ enum class Theme {
 }
 
 data class UserSettings(
+    val userId: Int,
     val accessCode: String,
     val tokenType: String,
     val expiresIn: String,
@@ -52,6 +54,7 @@ class UserDataRepository @Inject constructor(
 //    }
 
     private object PreferencesKeys {
+        val USER_ID = intPreferencesKey("USER_ID")
         val ACCESS_CODE = stringPreferencesKey("ACCESS_CODE")
         val TOKEN_TYPE = stringPreferencesKey("TOKEN_TYPE")
         val EXPIRES_IN = stringPreferencesKey("EXPIRES_IN")
@@ -78,12 +81,14 @@ class UserDataRepository @Inject constructor(
                 )
             val theme =
                 Theme.valueOf(preferences[PreferencesKeys.THEME] ?: Theme.SYSTEM_DEFAULT.name)
+            val userId = preferences[PreferencesKeys.USER_ID] ?: -1
             UserSettings(
                 accessCode = accessCode,
                 tokenType = tokenType,
                 expiresIn = expiresIn,
                 titleFormat = titleFormat,
-                theme = theme
+                theme = theme,
+                userId = userId
             )
         }
 
@@ -105,6 +110,12 @@ class UserDataRepository @Inject constructor(
         }
     }
 
+    suspend fun saveUserId(userId: Int) {
+        dataStore.edit {preferences ->
+            preferences[PreferencesKeys.USER_ID] = userId
+        }
+    }
+
     suspend fun saveTitle(titleFormat: TitleFormat) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.TITLE_FORMAT] = titleFormat.name
@@ -116,6 +127,7 @@ class UserDataRepository @Inject constructor(
             preferences[PreferencesKeys.ACCESS_CODE] = ""
             preferences[PreferencesKeys.TOKEN_TYPE] = ""
             preferences[PreferencesKeys.EXPIRES_IN] = ""
+            preferences[PreferencesKeys.USER_ID] = -1
         }
     }
 }

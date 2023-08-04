@@ -34,6 +34,8 @@ import com.example.anilist.utils.Utils
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.ui.Dimens
+import com.example.anilist.utils.FormattedHtmlWebView
+import de.charlex.compose.HtmlText
 
 
 private const val TAG = "ReviewScreen"
@@ -45,7 +47,7 @@ fun Reviews(
     vote: (rating: ReviewRatingStatus, reviewId: Int) -> Unit,
     onNavigateToReviewDetails: (Int) -> Unit
 ) {
-    if (true) {
+    if (reviews.itemCount != 0) {
         LazyColumn {
             items(reviews.itemCount) { index ->
                 val review = reviews[index]
@@ -71,7 +73,7 @@ fun Reviews(
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
                         )
-                        de.charlex.compose.HtmlText(
+                        HtmlText(
                             text = review.body,
                             maxLines = 7,
                             overflow = TextOverflow.Ellipsis,
@@ -93,16 +95,26 @@ fun Reviews(
                             review.upvotes,
                             if (review.userRating == ReviewRatingStatus.UP_VOTE) R.drawable.media_detail_thumbs_up_filled else R.drawable.media_detail_thumbs_up_outlined,
                             "upvote",
-                            vote = { vote(if (review.userRating == ReviewRatingStatus.UP_VOTE) ReviewRatingStatus.NO_VOTE else ReviewRatingStatus.UP_VOTE, review.id
-                                ?: -1) }
+                            vote = {
+                                vote(
+                                    if (review.userRating == ReviewRatingStatus.UP_VOTE) ReviewRatingStatus.NO_VOTE else ReviewRatingStatus.UP_VOTE,
+                                    review.id
+                                        ?: -1
+                                )
+                            }
                         )
                         UpDownVote(
                             review.totalVotes - review.upvotes,
                             iconId = if (review.userRating == ReviewRatingStatus.DOWN_VOTE) R.drawable.media_detail_thumbs_down_filled else R.drawable.media_detail_thumb_down_outlined,
                             contentDescription = "downvote",
                             modifier = Modifier.weight(1f),
-                            vote = { vote(if (review.userRating == ReviewRatingStatus.DOWN_VOTE) ReviewRatingStatus.NO_VOTE else ReviewRatingStatus.DOWN_VOTE, review.id
-                                ?: -1) }
+                            vote = {
+                                vote(
+                                    if (review.userRating == ReviewRatingStatus.DOWN_VOTE) ReviewRatingStatus.NO_VOTE else ReviewRatingStatus.DOWN_VOTE,
+                                    review.id
+                                        ?: -1
+                                )
+                            }
                         )
                         Text(
                             text = "${review.score}/100",

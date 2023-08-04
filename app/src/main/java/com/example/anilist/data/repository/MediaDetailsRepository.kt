@@ -1,26 +1,27 @@
 package com.example.anilist.data.repository
 
-import androidx.paging.PagingSource
-import androidx.paging.PagingState
+import android.util.Log
+import androidx.compose.ui.graphics.Color
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
-import com.example.anilist.utils.Apollo
 import com.example.anilist.GetCharacterDetailQuery
-import com.example.anilist.GetCurrentUserQuery
 import com.example.anilist.GetMediaDetailQuery
 import com.example.anilist.GetReviewDetailQuery
 import com.example.anilist.GetReviewsOfMediaQuery
 import com.example.anilist.GetStaffDetailQuery
 import com.example.anilist.GetStaffInfoQuery
+import com.example.anilist.MainActivity
 import com.example.anilist.RateReviewMutation
 import com.example.anilist.ToggleFavoriteCharacterMutation
 import com.example.anilist.data.models.AniStudio
-import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.CharacterMediaConnection
+import com.example.anilist.data.models.CharacterWithVoiceActor
+import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Relation
+import com.example.anilist.data.models.RelationTypes
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.data.models.ScoreDistribution
@@ -33,40 +34,63 @@ import com.example.anilist.data.models.Tag
 import com.example.anilist.fragment.StaffMedia
 import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaRankType
+import com.example.anilist.type.MediaRelation
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaType
 import com.example.anilist.type.ReviewRating
 import com.example.anilist.ui.mymedia.MediaStatus
-import kotlinx.coroutines.newFixedThreadPoolContext
-import java.lang.NullPointerException
+import com.example.anilist.utils.Apollo
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.max
 
 private const val TAG = "MediaDetailRepository"
 
 @Singleton
 class MediaDetailsRepository @Inject constructor() {
 
-    suspend fun fetchMedia(mediaId: Int): Result<Media> {
+    suspend fun fetchMedia(
+        mediaId: Int,
+        surfaceColor: Color,
+        onSurfaceColor: Color
+    ): Result<Media> {
         try {
-            val currentUser = Apollo.apolloClient.query(GetCurrentUserQuery()).execute().dataOrThrow()
-            val userId = currentUser.Viewer?.id ?: -1
+            Log.d(TAG, "user id found in main activity is ${MainActivity.userId}")
+            Log.d(TAG, "media id being used is $mediaId")
             val result =
                 Apollo.apolloClient.query(
-                    GetMediaDetailQuery(mediaId, userId),
+                    GetMediaDetailQuery(mediaId, MainActivity.userId),
                 )
                     .execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
             }
             val data = result.dataOrThrow()
-//            val status = result.data?.MediaList?.status ?: MediaListStatus.UNKNOWN__
             return Result.success(parseMedia(data))
         } catch (exception: ApolloException) {
-            // handle exception here,, these are mainly for network errors
-            return Result.failure(exception)
+            // an 404 not found gets thrown when a media does not have a media list entry
+            // for the user, so we try the query again skipping the media list entry info
+            // we could also convert them into two separate queries, but this one we'll have the chance
+            // of doing only one query instead of always doing two
+            try {
+                val result =
+                    Apollo.apolloClient.query(
+                        GetMediaDetailQuery(
+                            id = mediaId,
+                            userId = MainActivity.userId,
+                            skipMediaList = Optional.present(true)
+                        ),
+                    )
+                        .execute()
+                if (result.hasErrors()) {
+                    // these errors are related to GraphQL errors
+                }
+                val data = result.dataOrThrow()
+                return Result.success(parseMedia(data))
+            } catch (e: ApolloException) {
+                Log.d(TAG, "Exception: ${exception.message}\n$exception.")
+                return Result.failure(exception)
+            }
         }
     }
 
@@ -335,16 +359,16 @@ class MediaDetailsRepository @Inject constructor() {
         var mostPopularSeasonSeason: Season = Season.UNKNOWN
         var mostPopularSeasonYear: Int = -1
 
-        var ten: Int = 0
-        var twenty: Int = 0
-        var thirty: Int = 0
-        var forty: Int = 0
-        var fifty: Int = 0
-        var sixty: Int = 0
-        var seventy: Int = 0
-        var eighty: Int = 0
-        var ninety: Int = 0
-        var hundred: Int = 0
+        var ten = 0
+        var twenty = 0
+        var thirty = 0
+        var forty = 0
+        var fifty = 0
+        var sixty = 0
+        var seventy = 0
+        var eighty = 0
+        var ninety = 0
+        var hundred = 0
 
         val statusDistribution: MutableMap<Status, Int> = mutableMapOf(
             Status.CURRENT to 0,
@@ -354,7 +378,7 @@ class MediaDetailsRepository @Inject constructor() {
             Status.PAUSED to 0,
         )
         for (rank in media?.rankings.orEmpty()) {
-            if (rank?.type == MediaRankType.RATED && rank?.allTime == true) {
+            if (rank?.type == MediaRankType.RATED && rank.allTime == true) {
                 highestRatedAllTime = rank.rank
             }
             if (rank?.type == MediaRankType.RATED && rank.year != null) {
@@ -367,7 +391,7 @@ class MediaDetailsRepository @Inject constructor() {
                 highestRatedSeasonYear = rank.year
             }
 
-            if (rank?.type == MediaRankType.POPULAR && rank?.allTime == true) {
+            if (rank?.type == MediaRankType.POPULAR && rank.allTime == true) {
                 mostPopularAllTime = rank.rank
             }
             if (rank?.type == MediaRankType.POPULAR && rank.year != null) {
@@ -382,34 +406,34 @@ class MediaDetailsRepository @Inject constructor() {
         }
         for (stat in media?.stats?.scoreDistribution.orEmpty()) {
             if (stat?.score == 10) {
-                ten = stat?.amount ?: 0
+                ten = stat.amount ?: 0
             }
             if (stat?.score == 20) {
-                twenty = stat?.amount ?: 0
+                twenty = stat.amount ?: 0
             }
             if (stat?.score == 30) {
-                thirty = stat?.amount ?: 0
+                thirty = stat.amount ?: 0
             }
             if (stat?.score == 40) {
-                forty = stat?.amount ?: 0
+                forty = stat.amount ?: 0
             }
             if (stat?.score == 50) {
-                fifty = stat?.amount ?: 0
+                fifty = stat.amount ?: 0
             }
             if (stat?.score == 60) {
-                sixty = stat?.amount ?: 0
+                sixty = stat.amount ?: 0
             }
             if (stat?.score == 70) {
-                seventy = stat?.amount ?: 0
+                seventy = stat.amount ?: 0
             }
             if (stat?.score == 80) {
-                eighty = stat?.amount ?: 0
+                eighty = stat.amount ?: 0
             }
             if (stat?.score == 90) {
-                ninety = stat?.amount ?: 0
+                ninety = stat.amount ?: 0
             }
             if (stat?.score == 100) {
-                hundred = stat?.amount ?: 0
+                hundred = stat.amount ?: 0
             }
         }
 
@@ -642,10 +666,28 @@ class MediaDetailsRepository @Inject constructor() {
                     id = relation?.node?.id ?: 0,
                     coverImage = relation?.node?.coverImage?.extraLarge ?: "",
                     title = relation?.node?.title?.native ?: "",
-                    relation = relation?.relationType?.rawValue ?: "",
+                    relation = relation?.relationType?.toAniRelation() ?: RelationTypes.UNKNOWN,
                 ),
             )
         }
+//        val rawDescription = media?.description
+//        val surface =  surfaceColor.toHexString()
+//        Log.d(TAG, "surface color is $surface")
+//        val onSurface = onSurfaceColor.toHexString()
+//        Log.d(TAG, "on surface color is $onSurface")
+//        val description = """
+//            <html>
+//
+//            <style>
+//                body {color: $onSurface; background-color: $surface}
+//            </style>
+//
+//            <body>
+//            $rawDescription
+//            </body>
+//            </html>
+//        """.trimIndent()
+
         val media2 = Media(
             id = media?.id ?: -1,
             title = media?.title?.native ?: "Unknown",
@@ -660,7 +702,7 @@ class MediaDetailsRepository @Inject constructor() {
             chapters = media?.chapters ?: -1,
             averageScore = media?.averageScore ?: 0,
             genres = genres,
-            description = media?.description ?: "No description found",
+            description = media?.description ?: "No description",
             relations = relations,
             infoList = mapOf(
                 "format" to media?.format?.name.orEmpty(),
@@ -685,7 +727,6 @@ class MediaDetailsRepository @Inject constructor() {
             // todo add dailymotion
             trailerLink = if (media?.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${media.trailer.id}" else if (media?.trailer?.site == "dailymotion") "" else "",
             externalLinks = externalLinks,
-            note = "",
             stats = parseStats(media),
             characterWithVoiceActors = parseCharacters(media),
             favourites = media?.favourites ?: -1,
@@ -693,10 +734,32 @@ class MediaDetailsRepository @Inject constructor() {
             isFavouriteBlocked = media?.isFavouriteBlocked ?: false,
             personalStatus = data?.MediaList?.status?.toAniStatus() ?: MediaStatus.UNKNOWN,
             studios = data?.Media?.studios?.nodes?.filterNotNull()
-                ?.map { AniStudio(id = it.id, name = it.name) }.orEmpty()
+                ?.map { AniStudio(id = it.id, name = it.name) }.orEmpty(),
+            personalProgress = data?.MediaList?.progress ?: -1,
+            personalVolumeProgress = data?.MediaList?.progressVolumes ?: -1,
+            rewatches = data?.MediaList?.repeat ?: -1,
+            rawScore = data?.MediaList?.score ?: -1.0,
+            startedAt = getFuzzyDate(data?.MediaList?.startedAt?.fuzzyDate),
+            completedAt = getFuzzyDate(data?.MediaList?.completedAt?.fuzzyDate),
+            isPrivate = data?.MediaList?.private ?: false,
+            note = data?.MediaList?.notes ?: "",
+            listEntryId = data?.MediaList?.id ?: -1
         )
         return media2
     }
+
+    private fun getFuzzyDate(
+        fuzzyDate: com.example.anilist.fragment.FuzzyDate?
+    ) =
+        if (fuzzyDate?.year != null && fuzzyDate.month != null && fuzzyDate.day != null) {
+            FuzzyDate(
+                fuzzyDate.year,
+                fuzzyDate.month,
+                fuzzyDate.day,
+            )
+        } else {
+            null
+        }
 
     private fun parseCharacters(anime: GetMediaDetailQuery.Media?): List<CharacterWithVoiceActor> {
         val languages: MutableList<String> = mutableListOf()
@@ -742,8 +805,25 @@ class MediaDetailsRepository @Inject constructor() {
         return list
     }
 
-    fun pagingRepository(): StaffPagingSource {
-        return StaffPagingSource()
+}
+
+private fun MediaRelation?.toAniRelation(): RelationTypes {
+    return when (this) {
+        MediaRelation.ADAPTATION -> RelationTypes.ADAPTION
+        MediaRelation.PREQUEL -> RelationTypes.PREQUEL
+        MediaRelation.SEQUEL -> RelationTypes.SEQUEL
+        MediaRelation.PARENT -> RelationTypes.PARENT
+        MediaRelation.SIDE_STORY -> RelationTypes.SIDE_STORY
+        MediaRelation.CHARACTER -> RelationTypes.CHARACTER
+        MediaRelation.SUMMARY -> RelationTypes.SUMMARY
+        MediaRelation.ALTERNATIVE -> RelationTypes.ALTERNATIVE
+        MediaRelation.SPIN_OFF -> RelationTypes.SPIN_OFF
+        MediaRelation.OTHER -> RelationTypes.OTHER
+        MediaRelation.SOURCE -> RelationTypes.SOURCE
+        MediaRelation.COMPILATION -> RelationTypes.COMPILATION
+        MediaRelation.CONTAINS -> RelationTypes.CONTAINS
+        MediaRelation.UNKNOWN__ -> RelationTypes.UNKNOWN
+        null -> RelationTypes.UNKNOWN
     }
 }
 
@@ -763,41 +843,4 @@ fun MediaType.toAniHomeType(): com.example.anilist.data.models.MediaType {
         MediaType.ANIME -> com.example.anilist.data.models.MediaType.ANIME
         MediaType.UNKNOWN__ -> com.example.anilist.data.models.MediaType.UNKNOWN
     }
-}
-
-class StaffPagingSource : PagingSource<Int, Staff>() {
-    private val STARTING_KEY = 0
-
-    // The refresh key is used for the initial load of the next PagingSource, after invalidation
-    override fun getRefreshKey(state: PagingState<Int, Staff>): Int? {
-        // In our case we grab the item closest to the anchor position
-        // then return its id - (state.config.pageSize / 2) as a buffer
-        val anchorPosition = state.anchorPosition ?: return null
-        val article = state.closestItemToPosition(anchorPosition) ?: return null
-        return ensureValidKey(key = (state.config.pageSize / 2))
-    }
-
-    /**
-     * Loading API for [PagingSource].
-     *
-     * Implement this method to trigger your async load (e.g. from database or network).
-     */
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Staff> {
-        val start = params.key ?: STARTING_KEY
-        val range = start.until(start + params.loadSize)
-        return LoadResult.Page(
-            data = emptyList(),
-            // Make sure we don't try to load items behind the STARTING_KEY
-            prevKey = when (start) {
-                STARTING_KEY -> null
-                else -> ensureValidKey(key = range.first - params.loadSize)
-            },
-            nextKey = range.last + 1,
-        )
-    }
-
-    /**
-     * Makes sure the paging key is never less than [STARTING_KEY]
-     */
-    private fun ensureValidKey(key: Int) = max(STARTING_KEY, key)
 }

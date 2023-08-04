@@ -1,5 +1,7 @@
 package com.example.anilist.utils
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.paging.PagingState
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -57,6 +59,13 @@ class Utils {
             val currentTime = ZonedDateTime.now().plusSeconds(secondsToAdd)
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
             return currentTime.format(formatter)
+        }
+
+        fun Color.toHexString(): String {
+            val red = (this.red * 255).toInt()
+            val green = (this.green * 255).toInt()
+            val blue = (this.blue * 255).toInt()
+            return String.format("#%02X%02X%02X", red, green, blue)
         }
     }
 }

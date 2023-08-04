@@ -4,8 +4,17 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.util.Log
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.gestures.snapping.SnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +36,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -62,7 +74,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -85,6 +96,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -98,11 +110,13 @@ import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.Stats
 import com.example.anilist.data.models.Tag
 import com.example.anilist.data.repository.MediaDetailsRepository
-import com.example.anilist.utils.quantityStringResource
 import com.example.anilist.ui.Dimens
-import com.example.anilist.ui.mymedia.EditStatusModalSheet
-import com.example.anilist.ui.mymedia.MediaStatus
+import com.example.anilist.ui.EditStatusModalSheet
 import com.example.anilist.ui.theme.AnilistTheme
+import com.example.anilist.utils.FormattedHtmlWebView
+import com.example.anilist.utils.quantityStringResource
+import com.google.accompanist.web.WebView
+import com.google.accompanist.web.rememberWebViewStateWithHTMLData
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -118,7 +132,7 @@ enum class DetailTabs {
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MediaDetail(
     mediaId: Int,
@@ -134,21 +148,9 @@ fun MediaDetail(
     onNavigateToStatusEditor: (Int) -> Unit,
     navigateToStudioDetails: (Int) -> Unit
 ) {
-//    val pagerState = rememberPagerState(
-//        initialPage = 0,
-//        pageCount = { DetailTabs.values().size }
-//    )
-    Log.d(TAG, "Media detail screen just received id $mediaId")
-    var index by rememberSaveable { mutableStateOf(DetailTabs.Overview) }
-
-    rememberCoroutineScope()
-
     val media by mediaDetailsViewModel.media.observeAsState()
 
     val isAnime = media?.type == MediaType.ANIME
-    var showDropDownMenu by remember {
-        mutableStateOf(false)
-    }
     var editStatusBottomSheetIsVisible by remember { mutableStateOf(false) }
     val editSheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = false, confirmValueChange = {
@@ -164,7 +166,17 @@ fun MediaDetail(
         modalSheetScope.launch { editSheetState.hide() }
     }
 
-    mediaDetailsViewModel.fetchMedia(mediaId)
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
+    val fetchMedia = {
+        mediaDetailsViewModel.fetchMedia(
+            mediaId = mediaId,
+            surfaceColor = surfaceColor,
+            onSurfaceColor = onSurfaceColor
+        )
+    }
+    fetchMedia()
+
     val reviews = mediaDetailsViewModel.reviews.collectAsLazyPagingItems()
     val staff = mediaDetailsViewModel.staffList.collectAsLazyPagingItems()
 
@@ -243,81 +255,88 @@ fun MediaDetail(
                     )
                 }
             }
-//            IconButton(onClick = { showDropDownMenu = !showDropDownMenu }) {
-//                Icon(Icons.Default.MoreVert, "More")
-//            }
-//                    DropdownMenu(
-//                        expanded = showDropDownMenu,
-//                        onDismissRequest = { showDropDownMenu = false }
-//                    ) {
-//                        DropdownMenuItem(text = { Text(text = "Copy URL") }, onClick = { /*TODO*/ })
-//                    }
         })
     }, floatingActionButton = {
         FloatingActionButton(
             onClick = {
-//                onNavigateToStatusEditor(mediaId)
                 showEditSheet()
             },
         ) {
             Icon(imageVector = Icons.Outlined.Edit, contentDescription = "edit")
         }
     }) {
-
         Box {
             Column {
+                val pagerState =
+                    rememberPagerState(initialPage = 0, pageCount = { DetailTabs.values().size })
+                val pagerScope = rememberCoroutineScope()
+//                val nestedScrollConnection = PagerDefaults.pageNestedScrollConnection(Orientation.Horizontal)
+                
                 AniDetailTabs(
                     modifier = Modifier.padding(top = it.calculateTopPadding()),
                     titles = DetailTabs.values().map { it.name },
-                    tabSelected = index,
-                ) { index = it }
+                    tabSelected = pagerState.currentPage,
+                    onTabSelected = {
+                        pagerScope.launch {
+                            pagerState.animateScrollToPage(it.ordinal)
+                        }
+//                        index = it
+                    }
+                )
+                HorizontalPager(
+                    state = pagerState,
+//                    flingBehavior = PagerDefaults.flingBehavior(
+//                        state = pagerState,
+//                    ),
+                    flingBehavior = PagerDefaults.flingBehavior(state = pagerState, snapAnimationSpec = spring(stiffness = Spring.StiffnessVeryLow) )
+//                    pageNestedScrollConnection = nestedScrollConnection
+                ) { currentPage ->
+                    when (currentPage) {
+                        0 -> {
+                            if (media == null) {
+                                LoadingCircle()
+                            } else {
+                                Overview(
+                                    media,
+                                    onNavigateToDetails,
+                                    onNavigateToLargeCover,
+                                    navigateToStudioDetails
+                                )
+                            }
+                        }
 
-                //            HorizontalPager(
-                //                state = pagerState
-                //            ) { page ->
-                when (index.ordinal) {
-                    0 -> {
-                        if (media == null) {
-                            LoadingCircle()
-                        } else {
-                            Overview(
-                                media,
-                                onNavigateToDetails,
-                                onNavigateToLargeCover,
-                                navigateToStudioDetails
+                        1 -> {
+                            Characters(
+                                media?.characterWithVoiceActors.orEmpty()
+                                    .map { it.voiceActorLanguage }
+                                    .distinct(),
+                                media?.characterWithVoiceActors.orEmpty(),
+                                navigateToCharacter = navigateToCharacter,
+                                navigateToStaff = navigateToStaff,
                             )
                         }
-                    }
 
-                    1 -> {
-                        Characters(
-                            media?.characterWithVoiceActors.orEmpty().map { it.voiceActorLanguage }
-                                .distinct(),
-                            media?.characterWithVoiceActors.orEmpty(),
-                            navigateToCharacter = navigateToCharacter,
-                            navigateToStaff = navigateToStaff,
-                        )
-                    }
-
-                    2 -> {
-                        StaffScreen(staff, onNavigateToStaff)
-                    }
-
-                    3 -> {
-                        //fixme
-                        if (false) {
-                            LoadingCircle()
-                        } else {
-                            Reviews(
-                                reviews,
-                                vote = { rating, reviewId ->
-                                    mediaDetailsViewModel.rateReview(reviewId, rating)
-                                    mediaDetailsViewModel.fetchMedia(mediaId)
-                                },
-                                onNavigateToReviewDetails
-                            )
+                        2 -> {
+                            StaffScreen(staff, onNavigateToStaff)
                         }
-                    }
+
+                        3 -> {
+                            //fixme
+                            val dataIsLoaded: Boolean =
+                                reviews.loadState.source.refresh is LoadState.NotLoading
+                            if (!dataIsLoaded) {
+                                LoadingCircle()
+                            } else {
+                                Reviews(
+                                    reviews,
+                                    vote = { rating, reviewId ->
+                                        mediaDetailsViewModel.rateReview(reviewId, rating)
+                                        fetchMedia()
+                                    },
+                                    onNavigateToReviewDetails
+                                )
+                            }
+                        }
 
                         4 -> {
                             if (media == null) {
@@ -325,20 +344,27 @@ fun MediaDetail(
                             } else {
                                 Stats(media?.stats ?: Stats())
                             }
+                        }
                     }
                 }
-            }
-            if (editStatusBottomSheetIsVisible) {
-                EditStatusModalSheet(
-                    editSheetState = editSheetState,
-                    hideEditSheet = hideEditSheet,
-                    currentStatus = media?.personalStatus ?: MediaStatus.UNKNOWN,
-                    currentMedia = media ?: Media(),
-                    saveStatus = { mediaDetailsViewModel.updateProgress(it) },
-                    isAnime = isAnime,
-                    reloadMyMedia = { /*TODO*/ },
-                    deleteListEntry = { mediaDetailsViewModel.deleteEntry(it) }
-                )
+                if (editStatusBottomSheetIsVisible) {
+                    Log.d(TAG, "Current media is $media")
+                    EditStatusModalSheet(
+                        editSheetState = editSheetState,
+                        hideEditSheet = hideEditSheet,
+                        currentMedia = media ?: Media(),
+                        saveStatus = {
+                            mediaDetailsViewModel.updateProgress(
+                                it,
+                                mediaId,
+                                surfaceColor = surfaceColor,
+                                onSurfaceColor = onSurfaceColor
+                            )
+                        },
+                        isAnime = isAnime,
+                        deleteListEntry = { mediaDetailsViewModel.deleteEntry(it) }
+                    )
+                }
             }
         }
     }
@@ -436,7 +462,7 @@ private fun OverviewRelations(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = relation.relation,
+                        text = relation.relation.toString(LocalContext.current),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 10.dp),
@@ -453,16 +479,7 @@ private fun OverviewTrailer(
     trailerImage: String,
     openUri: () -> Unit,
 ) {
-    if (trailerImage == "") {
-//        Image(
-//            painter = painterResource(id = R.drawable.kimetsu_no_yaiba_trailer),
-//            contentDescription = "Trailer",
-//            contentScale = ContentScale.FillWidth,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .clickable { openUri() }
-//        )
-    } else {
+    if (trailerImage != "") {
         HeadLine("Trailer")
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -483,12 +500,12 @@ private fun OverviewTrailer(
 private fun AniDetailTabs(
     modifier: Modifier = Modifier,
     titles: List<String>,
-    tabSelected: DetailTabs,
+    tabSelected: Int,
     onTabSelected: (DetailTabs) -> Unit,
 ) {
-    ScrollableTabRow(selectedTabIndex = tabSelected.ordinal, modifier = modifier, tabs = {
+    ScrollableTabRow(selectedTabIndex = tabSelected, modifier = modifier, tabs = {
         titles.forEachIndexed { index, title ->
-            val selected = index == tabSelected.ordinal
+            val selected = index == tabSelected
             Tab(
                 selected = selected,
                 onClick = { onTabSelected(DetailTabs.values()[index]) },
@@ -498,7 +515,7 @@ private fun AniDetailTabs(
     })
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Characters(
     languages: List<String>,
@@ -508,7 +525,7 @@ fun Characters(
 ) {
     if (characterWithVoiceActors.isNotEmpty()) {
         var selected by remember { mutableIntStateOf(0) }
-        Column() {
+        Column {
             val lazyGridState = rememberLazyGridState()
             val coroutineScope = rememberCoroutineScope()
             LazyRow(
@@ -739,21 +756,25 @@ fun QuickInfo(media: Media, isAnime: Boolean) {
 
 @Composable
 private fun OverviewDescription(description: String) {
-    HeadLine("Description")
+
 //    val color = MaterialTheme.colorScheme.onSurface.toArgb()
 //    HtmlText(text = description, style = MaterialTheme.typography.bodyMedium)
+//    Column {
+//        de.charlex.compose.HtmlText(
+//            text = description,
+//            style = MaterialTheme.typography.bodyMedium,
+//            color = MaterialTheme.colorScheme.onSurfaceVariant,
+//            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
+////                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
+//        )
+//    }
     Column {
-        de.charlex.compose.HtmlText(
-            text = description,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
-//                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
-        )
-    }
+        HeadLine("Description")
+        FormattedHtmlWebView(html = description)
 //    AndroidView(factory = { context ->
 //        HtmlText(context, description, color)
 //    })
+    }
 }
 
 
@@ -1133,4 +1154,12 @@ fun OverviewPreview() {
                 ), navigateToStudioDetails = {})
         }
     }
+}
+
+@Preview(showBackground = true, group = "Description")
+@Composable
+fun OverviewDescriptionPreview() {
+    OverviewDescription(
+        "Gold Roger was known as the Pirate King, the strongest and most infamous being to have sailed the Grand Line. The capture and death of Roger by the World Government brought a change throughout the world. His last words before his death revealed the location of the greatest treasure in the world, One Piece. It was this revelation that brought about the Grand Age of Pirates, men who dreamed of finding One Piece (which promises an unlimited amount of riches and fame), and quite possibly the most coveted of titles for the person who found it, the title of the Pirate King.<br><br>\\nEnter Monkey D. Luffy, a 17-year-old boy that defies your standard definition of a pirate. Rather than the popular persona of a wicked, hardened, toothless pirate who ransacks villages for fun, Luffy’s reason for being a pirate is one of pure wonder; the thought of an exciting adventure and meeting new and intriguing people, along with finding One Piece, are his reasons of becoming a pirate. Following in the footsteps of his childhood hero, Luffy and his crew travel across the Grand Line, experiencing crazy adventures, unveiling dark mysteries and battling strong enemies, all in order to reach One Piece.<br><br>\\n<b>*This includes following special episodes:<\\/b><br>\\n- Chopperman to the Rescue! Protect the TV Station by the Shore! (Episode 336)<br>\\n- The Strongest Tag-Team! Luffy and Toriko's Hard Struggle! (Episode 492)<br>\\n- Team Formation! Save Chopper (Episode 542)<br>\\n- History's Strongest Collaboration vs. Glutton of the Sea (Episode 590)<br>\\n- 20th Anniversary! Special Romance Dawn (Episode 907)"
+    )
 }

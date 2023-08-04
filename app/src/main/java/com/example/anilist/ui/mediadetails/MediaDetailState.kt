@@ -40,6 +40,6 @@ class MediaDetailState(
 
     init {
         // Start loading data
-        viewModel.fetchMedia(mediaId)
+//        viewModel.fetchMedia(mediaId)
     }
 }

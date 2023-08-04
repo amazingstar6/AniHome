@@ -27,7 +27,8 @@ class SettingsViewModel @Inject constructor(
                     tokenType = userData.tokenType,
                     expiresIn = userData.expiresIn,
                     titleFormat = userData.titleFormat,
-                    theme = userData.theme
+                    theme = userData.theme,
+                    userId = userData.userId
                 ),
             )
         }

@@ -2,6 +2,7 @@ package com.example.anilist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.anilist.data.repository.MainActivityRepository
 import com.example.anilist.data.repository.UserDataRepository
 import com.example.anilist.data.repository.UserSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +15,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
-    private val userDataRepository: UserDataRepository
+    private val userDataRepository: UserDataRepository,
+    private val mainActivityRepository: MainActivityRepository
 ) : ViewModel() {
     val uiState: StateFlow<MainActivityUiState> = userDataRepository.userPreferencesFlow.map {
         MainActivityUiState.Success(it)
@@ -24,9 +26,11 @@ class MainActivityViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
     )
 
-    fun saveAccessCode(accessCode: String, tokenType: String, expiresIn: String) {
+    fun saveAccessCodeAndUserId(accessCode: String, tokenType: String, expiresIn: String) {
         viewModelScope.launch {
             userDataRepository.saveAccessCode(accessCode = accessCode, tokenType = tokenType, expiresIn = expiresIn)
+            val userId = mainActivityRepository.getUserId()
+            userDataRepository.saveUserId(userId)
         }
     }
 }
