@@ -42,6 +42,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -49,6 +52,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -91,6 +95,7 @@ import java.util.Locale
 
 private const val TAG = "HomeScreen"
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
@@ -180,6 +185,26 @@ fun HomeScreen(
                     .padding(top = it.calculateTopPadding())
                     .verticalScroll(rememberScrollState()),
             ) {
+                var selectedIndex by remember { mutableIntStateOf(0) }
+                val options = listOf("Anime", "Manga")
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimens.PaddingNormal)
+                ) {
+                    options.forEachIndexed { index, label ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.shape(
+                                position = index,
+                                count = options.size
+                            ),
+                            onClick = { selectedIndex = index },
+                            selected = index == selectedIndex
+                        ) {
+                            Text(label)
+                        }
+                    }
+                }
                 HeadlineText(
                     text = stringResource(R.string.trending_now),
                     onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TRENDING_NOW) })
