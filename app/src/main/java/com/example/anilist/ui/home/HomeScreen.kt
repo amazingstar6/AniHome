@@ -1,6 +1,7 @@
 package com.example.anilist.ui.home
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
@@ -78,6 +79,7 @@ import com.example.anilist.R
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
+import com.example.anilist.data.repository.HomeTrendingTypes
 import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.mediadetails.LoadingCircle
@@ -87,7 +89,7 @@ import com.example.anilist.utils.AsyncImageRoundedCorners
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.util.Locale
 
-private const val TAG = "AniHome"
+private const val TAG = "HomeScreen"
 
 @Composable
 fun HomeScreen(
@@ -100,7 +102,8 @@ fun HomeScreen(
     onNavigateToStaffDetails: (Int) -> Unit,
     navigateToUserDetails: (Int) -> Unit,
     navigateToThreadDetails: (Int) -> Unit,
-    navigateToStudioDetails: (Int) -> Unit
+    navigateToStudioDetails: (Int) -> Unit,
+    navigateToOverview: (HomeTrendingTypes) -> Unit
 ) {
     val uiState =
         HomeUiState(
@@ -177,15 +180,26 @@ fun HomeScreen(
                     .padding(top = it.calculateTopPadding())
                     .verticalScroll(rememberScrollState()),
             ) {
-                HeadlineText(stringResource(R.string.trending_now))
+                HeadlineText(
+                    text = stringResource(R.string.trending_now),
+                    onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TRENDING_NOW) })
                 LazyRowLazyPagingItems(uiState.pagerTrendingNow, onNavigateToMediaDetails)
-                HeadlineText(stringResource(R.string.popular_this_season))
+                HeadlineText(
+                    text = stringResource(R.string.popular_this_season),
+                    onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_THIS_SEASON) })
                 LazyRowLazyPagingItems(uiState.pagerPopularThisSeason, onNavigateToMediaDetails)
-                HeadlineText(stringResource(R.string.upcoming_next_season))
+                HeadlineText(
+                    text = stringResource(R.string.upcoming_next_season),
+                    onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.UPCOMING_NEXT_SEASON) })
+                Log.d(TAG, "${uiState.pagerUpcomingNextSeason.itemCount}")
                 LazyRowLazyPagingItems(uiState.pagerUpcomingNextSeason, onNavigateToMediaDetails)
-                HeadlineText(stringResource(R.string.all_time_popular))
+                HeadlineText(
+                    text = stringResource(R.string.all_time_popular),
+                    onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.ALL_TIME_POPULAR) })
                 LazyRowLazyPagingItems(uiState.pagerAllTimePopular, onNavigateToMediaDetails)
-                HeadlineText(stringResource(R.string.top_100_anime))
+                HeadlineText(
+                    text = stringResource(R.string.top_100_anime),
+                    onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TOP_100_ANIME) })
                 LazyRowLazyPagingItems(uiState.pagerTop100Anime, onNavigateToMediaDetails)
             }
         } else {
@@ -661,7 +675,11 @@ fun SearchCardCharacter(
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Row(horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Dimens.PaddingSmall)) {
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = Dimens.PaddingSmall)
+            ) {
                 Text(
                     text = favourites.toString(),
                     style = MaterialTheme.typography.titleLarge,
@@ -770,7 +788,7 @@ fun AnimeRow(
 }
 
 @Composable
-fun HeadlineText(text: String, onNavigateToOverview: () -> Unit = {}) {
+fun HeadlineText(text: String, onNavigateToOverview: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,

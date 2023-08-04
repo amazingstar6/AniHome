@@ -58,18 +58,46 @@ private const val TAG = "EditStatusSheet"
 @OptIn(ExperimentalMaterial3Api::class)
 fun EditStatusModalSheet(
     editSheetState: SheetState,
-    currentMedia: Media,
+    unchangedMedia: Media,
     isAnime: Boolean,
     hideEditSheet: () -> Unit,
     saveStatus: (StatusUpdate) -> Unit,
     deleteListEntry: (id: Int) -> Unit
 ) {
-    var currentMedia1 by remember { mutableStateOf(currentMedia) }
-    Log.d(TAG, "Current media remembered is $currentMedia1\ncurrent media passed as parameter is $currentMedia")
+    var currentMedia1 by remember { mutableStateOf(unchangedMedia) }
+//    val unChangedMedia = currentMedia
+    var showCloseConfirmation by remember {
+        mutableStateOf(false)
+    }
     ModalBottomSheet(sheetState = editSheetState,
         onDismissRequest = { hideEditSheet() }) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            var selectedOptionText by remember { mutableStateOf(currentMedia.personalStatus) }
+            /*do we need this? fixme */
+            var selectedOptionText by remember { mutableStateOf(unchangedMedia.personalStatus) }
+            AnimatedVisibility(showCloseConfirmation) {
+                AlertDialog(
+                    title = { Text(text = "Discard pending changes?") },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            showCloseConfirmation = false
+                            hideEditSheet()
+                        }) {
+                            Text(text = stringResource(R.string.discard))
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showCloseConfirmation = false
+                        }) {
+                            Text(stringResource(R.string.keep_editing))
+                        }
+                    },
+                    onDismissRequest = {
+                        showCloseConfirmation = false
+                        hideEditSheet()
+                    })
+            }
+
             CenterAlignedTopAppBar(
                 title = {
                     Text(
@@ -78,7 +106,15 @@ fun EditStatusModalSheet(
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = hideEditSheet,
+                        onClick = {
+                            if (unchangedMedia == currentMedia1) {
+                                Log.d(TAG, "Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1")
+                                hideEditSheet()
+                            } else {
+                                Log.d(TAG, "Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1")
+                                showCloseConfirmation = true
+                            }
+                        },
                         modifier = Modifier.padding(Dimens.PaddingNormal),
                     ) {
                         Icon(
@@ -115,6 +151,7 @@ fun EditStatusModalSheet(
                     }
                 },
             )
+
             DropDownMenuStatus(
                 selectedOptionText,
                 isAnime = isAnime

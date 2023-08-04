@@ -3,8 +3,10 @@ package com.example.anilist.ui.navigation
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.anilist.R
+import com.example.anilist.data.repository.HomeTrendingTypes
 
 object AniListRoute {
+    const val MEDIA_OVERVIEW: String = "MediaOverviewRoute"
     const val CHARACTER_DETAIL_ROUTE: String = "CharacterDetail"
     const val STAFF_DETAIL_ROUTE: String = "StaffDetail"
     const val REVIEW_DETAIL_ROUTE: String = "ReviewDetail"
@@ -100,6 +102,12 @@ class AniListNavigationActions(private val navController: NavController) {
             route = AniListRoute.STATUS_EDITOR + "/$id"
         )
     }
+
+    fun navigateToOverview(homeTrendingTypes: HomeTrendingTypes) {
+        navController.navigate(
+            route = AniListRoute.MEDIA_OVERVIEW + "/${homeTrendingTypes.ordinal}"
+        )
+    }
 }
 
 val TOP_LEVEL_DESTINATIONS = listOf(
@@ -113,13 +121,13 @@ val TOP_LEVEL_DESTINATIONS = listOf(
         route = AniListRoute.ANIME_ROUTE,
         selectedIcon = R.drawable.navigation_anime_filled,
         unselectedIcon = R.drawable.navigation_anime_outlined,
-        iconTextId = R.string.anime,
+        iconTextId = R.string.my_anime,
     ),
     AnilistTopLevelDestination(
         route = AniListRoute.MANGA_ROUTE,
         selectedIcon = R.drawable.navigation_manga_filled,
         unselectedIcon = R.drawable.navigation_manga_outlined,
-        iconTextId = R.string.manga,
+        iconTextId = R.string.my_manga,
     ),
 //    AnilistTopLevelDestination(
 //        route = AniListRoute.FEED_ROUTE,

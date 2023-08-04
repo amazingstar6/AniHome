@@ -1,20 +1,15 @@
 package com.example.anilist.ui.mediadetails
 
+import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.util.Log
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.ScrollableDefaults
-import androidx.compose.foundation.gestures.snapping.SnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -83,6 +78,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -115,8 +111,6 @@ import com.example.anilist.ui.EditStatusModalSheet
 import com.example.anilist.ui.theme.AnilistTheme
 import com.example.anilist.utils.FormattedHtmlWebView
 import com.example.anilist.utils.quantityStringResource
-import com.google.accompanist.web.WebView
-import com.google.accompanist.web.rememberWebViewStateWithHTMLData
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -220,41 +214,7 @@ fun MediaDetail(
                     )
                 }
             }
-            PlainTooltipBox(tooltip = {
-                Text(
-                    text = "Open in browser",
-                )
-            }) {
-                IconButton(
-                    onClick = { uriHandler.openUri(uri) },
-                    modifier = Modifier.tooltipTrigger(),
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
-                        contentDescription = "open in browser",
-                    )
-                }
-            }
-            PlainTooltipBox(tooltip = { Text(stringResource(id = R.string.share)) }) {
-                IconButton(onClick = {
-                    val sendIntent: Intent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, uri)
-                        putExtra(Intent.EXTRA_TITLE, "Share AniList.co URL")
-                        type = "text/plain"
-                    }
-
-                    val shareIntent = Intent.createChooser(sendIntent, "Share AniList.co URL")
-                    startActivity(context, shareIntent, null)
-                }, modifier = Modifier.tooltipTrigger()) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = stringResource(
-                            id = R.string.share,
-                        ),
-                    )
-                }
-            }
+            OpenInBrowserAndShareToolTips(uriHandler, uri, context)
         })
     }, floatingActionButton = {
         FloatingActionButton(
@@ -352,7 +312,7 @@ fun MediaDetail(
                     EditStatusModalSheet(
                         editSheetState = editSheetState,
                         hideEditSheet = hideEditSheet,
-                        currentMedia = media ?: Media(),
+                        unchangedMedia = media ?: Media(),
                         saveStatus = {
                             mediaDetailsViewModel.updateProgress(
                                 it,
@@ -366,6 +326,50 @@ fun MediaDetail(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun OpenInBrowserAndShareToolTips(
+    uriHandler: UriHandler,
+    uri: String,
+    context: Context
+) {
+    PlainTooltipBox(tooltip = {
+        Text(
+            text = "Open in browser",
+        )
+    }) {
+        IconButton(
+            onClick = { uriHandler.openUri(uri) },
+            modifier = Modifier.tooltipTrigger(),
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
+                contentDescription = "open in browser",
+            )
+        }
+    }
+    PlainTooltipBox(tooltip = { Text(stringResource(id = R.string.share)) }) {
+        IconButton(onClick = {
+            val sendIntent: Intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, uri)
+                putExtra(Intent.EXTRA_TITLE, "Share AniList.co URL")
+                type = "text/plain"
+            }
+
+            val shareIntent = Intent.createChooser(sendIntent, "Share AniList.co URL")
+            startActivity(context, shareIntent, null)
+        }, modifier = Modifier.tooltipTrigger()) {
+            Icon(
+                imageVector = Icons.Default.Share,
+                contentDescription = stringResource(
+                    id = R.string.share,
+                ),
+            )
         }
     }
 }

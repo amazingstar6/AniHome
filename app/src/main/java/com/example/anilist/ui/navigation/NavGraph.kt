@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -16,6 +15,7 @@ import com.example.anilist.ui.PleaseLogin
 import com.example.anilist.ui.feed.FeedScreen
 import com.example.anilist.ui.forum.ForumScreen
 import com.example.anilist.ui.home.HomeScreen
+import com.example.anilist.ui.home.MediaOverview
 import com.example.anilist.ui.home.NotificationScreen
 import com.example.anilist.ui.home.SettingsScreen
 import com.example.anilist.ui.mediadetails.CharacterDetailScreen
@@ -59,7 +59,22 @@ fun AniNavHost(
                 onNavigateToStaffDetails = navigationActions::navigateToStaff,
                 navigateToStudioDetails = navigationActions::navigateToStudio,
                 navigateToThreadDetails = navigationActions::navigateToThread,
-                navigateToUserDetails = navigationActions::navigateToUser
+                navigateToUserDetails = navigationActions::navigateToUser,
+                navigateToOverview = navigationActions::navigateToOverview
+            )
+        }
+        composable(
+            route = AniListRoute.MEDIA_OVERVIEW + "/{trendingType}",
+            arguments = listOf(navArgument("trendingType") {
+                type = NavType.IntType
+            })
+        ) { navBackStackEntry ->
+            val ordinalNumber = navBackStackEntry.arguments?.getInt("trendingType") ?: -1
+            setBottomBarState(false)
+            MediaOverview(
+                ordinalNumber,
+                navigateBack = navigationActions::navigateBack,
+                navigateToDetails = navigationActions::navigateToMediaDetails
             )
         }
         composable(
@@ -114,6 +129,7 @@ fun AniNavHost(
             content = { backStackEntry ->
                 ReviewDetailScreen(
                     reviewId = backStackEntry.arguments?.getInt("reviewId") ?: -1,
+                    onNavigateBack = navigationActions::navigateBack
                 )
             },
         )
@@ -146,25 +162,21 @@ fun AniNavHost(
                 )
             },
         )
-        composable(
-            route = AniListRoute.COVER_LARGE + "/{imageString}",
+        composable(route = AniListRoute.COVER_LARGE + "/{imageString}",
             arguments = listOf(navArgument("imageString") { type = NavType.StringType }),
             content = { navBackStackEntry ->
                 CoverLarge(
                     coverImage = navBackStackEntry.arguments?.getString("imageString") ?: "",
                     navigateBack = navigationActions::navigateBack
                 )
-            }
-        )
-        composable(
-            route = AniListRoute.STATUS_EDITOR + "/{mediaId}",
+            })
+        composable(route = AniListRoute.STATUS_EDITOR + "/{mediaId}",
             arguments = listOf(navArgument("mediaId") { type = NavType.StringType }),
             content = { navBackStackEntry ->
                 navBackStackEntry.arguments?.getInt("mediaId")?.let {
                     StatusEditor(listEntryId = it)
                 }
-            }
-        )
+            })
         composable(
             AniListRoute.NOTIFICATION_ROUTE,
         ) {

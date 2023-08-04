@@ -275,7 +275,7 @@ private fun MyMedia(
                 EditStatusModalSheet(
                     editSheetState = editSheetState,
                     hideEditSheet = hideEditSheet,
-                    currentMedia = currentMedia,
+                    unchangedMedia = currentMedia,
                     saveStatus = saveStatus,
                     isAnime = isAnime,
                     deleteListEntry = deleteListEntry
@@ -555,17 +555,17 @@ fun DatePickerDialogue(
                 it,
             ).toLocalDateTime(TimeZone.UTC)
         }
-    setValue(
-        if (time != null) {
-            FuzzyDate(
-                time.year,
-                time.monthNumber,
-                time.dayOfMonth,
-            )
-        } else {
-            null
-        },
-    )
+//    setValue(
+//        if (time != null) {
+//            FuzzyDate(
+//                time.year,
+//                time.monthNumber,
+//                time.dayOfMonth,
+//            )
+//        } else {
+//            null
+//        },
+//    )
     val timeString =
         if (time != null) {
             String.format(

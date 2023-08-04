@@ -1,5 +1,7 @@
 package com.example.anilist.data.repository
 
+import android.content.Context
+import android.util.Log
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.utils.Apollo
@@ -10,6 +12,7 @@ import com.example.anilist.GetTop100AnimeQuery
 import com.example.anilist.GetTrendingMediaQuery
 import com.example.anilist.GetTrendingNowQuery
 import com.example.anilist.GetUpComingNextSeasonQuery
+import com.example.anilist.R
 import com.example.anilist.SearchCharactersQuery
 import com.example.anilist.SearchMediaQuery
 import com.example.anilist.SearchStaffQuery
@@ -48,7 +51,17 @@ enum class HomeTrendingTypes {
     POPULAR_THIS_SEASON,
     UPCOMING_NEXT_SEASON,
     ALL_TIME_POPULAR,
-    TOP_100_ANIME,
+    TOP_100_ANIME;
+
+    fun toString(context: Context): String {
+        return when (this) {
+            TRENDING_NOW -> context.getString(R.string.trending_now)
+            POPULAR_THIS_SEASON -> context.getString(R.string.popular_this_season)
+            UPCOMING_NEXT_SEASON -> context.getString(R.string.upcoming_next_season)
+            ALL_TIME_POPULAR -> context.getString(R.string.all_time_popular)
+            TOP_100_ANIME -> context.getString(R.string.top_100_anime)
+        }
+    }
 }
 
 data class HomeMedia(
@@ -134,6 +147,7 @@ class HomeRepository @Inject constructor() {
 
     suspend fun getUpcomingNextSeason(page: Int, pageSize: Int): List<Media> {
         try {
+//            Log.d(TAG, "Parameters are: $page, $pageSize, ${getNextSeason()}, ${getNextYear()}")
             val result =
                 Apollo.apolloClient.query(
                     GetUpComingNextSeasonQuery(
@@ -148,6 +162,7 @@ class HomeRepository @Inject constructor() {
                 // these errors are related to GraphQL errors
             }
             val data = result.data
+//            Log.d(TAG, "Data for upcoming this season received is ${data?.Page?.media}")
             if (data != null) {
                 return data.Page?.media?.filterNotNull()
                     ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
@@ -170,7 +185,7 @@ class HomeRepository @Inject constructor() {
         // plus four months equals the next season
         return getMediaSeasonFromMonth(
             (Clock.System.now()
-                .toLocalDateTime(TimeZone.currentSystemDefault()).monthNumber + 4) % 12
+                .toLocalDateTime(TimeZone.currentSystemDefault()).monthNumber + 4 % 12)
         )
     }
 
