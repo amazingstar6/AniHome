@@ -45,69 +45,49 @@ query GetTrendingMedia(
     }
 }
 
-query GetTrendingNow($page: Int!, $pageSize: Int!) {
+query GetTrendingNow($mediaType: MediaType!, $page: Int!, $pageSize: Int!) {
     Page(page: $page, perPage: $pageSize) {
-        media(sort: TRENDING_DESC, type: ANIME) {
+        media(sort: TRENDING_DESC, type: $mediaType) {
             ...mediaTitleCover
         }
     }
 }
 
-query GetPopularThisSeason($page: Int!, $pageSize: Int!, $currentSeason: MediaSeason!, $currentYear: Int!) {
+query GetPopularThisSeason($mediaType: MediaType = ANIME, $page: Int!, $pageSize: Int!, $currentSeason: MediaSeason!, $currentYear: Int!) {
     Page(page: $page, perPage: $pageSize, ) {
-        media(sort:POPULARITY_DESC, type: ANIME, season: $currentSeason, seasonYear: $currentYear) {
+        media(sort:POPULARITY_DESC, type: $mediaType, season: $currentSeason, seasonYear: $currentYear) {
             ...mediaTitleCover
         }
     }
 }
 
-query GetUpComingNextSeason($page: Int!, $pageSize: Int!, $nextSeason: MediaSeason!, $nextYear: Int!) {
+query GetUpComingNextSeason($mediaType: MediaType = ANIME, $page: Int!, $pageSize: Int!, $nextSeason: MediaSeason!, $nextYear: Int!) {
     Page(page: $page, perPage: $pageSize) {
-        media(sort: POPULARITY_DESC, type: ANIME, season: $nextSeason, seasonYear: $nextYear) {
+        media(sort: POPULARITY_DESC, type: $mediaType, season: $nextSeason, seasonYear: $nextYear) {
             ...mediaTitleCover
         }
     }
 }
 
-query GetAllTimePopular($page: Int!, $pageSize: Int!) {
+query GetAllTimePopular($mediaType: MediaType!, $page: Int!, $pageSize: Int!) {
     Page(page: $page, perPage: $pageSize) {
-        media(sort: POPULARITY_DESC, type: ANIME) {
+        media(sort: POPULARITY_DESC, type: $mediaType) {
             ...mediaTitleCover
         }
     }
 }
 
-query GetTop100Anime($page: Int!, $pageSize: Int!) {
+query GetTop100Anime($mediaType: MediaType!, $page: Int!, $pageSize: Int!) {
     Page(page: $page, perPage: $pageSize) {
-        media(sort: SCORE_DESC, type: ANIME) {
+        media(sort: SCORE_DESC, type: $mediaType) {
             ...mediaTitleCover
         }
     }
 }
 
-query GetMorePopularThisSeason(
-    $page: Int!,
-    $type: MediaType!,
-    $currentSeason: MediaSeason!,
-    $currentYear: Int!
-) {
-    popularThisSeason:
-    Page(page: $page) {
-        media(sort:POPULARITY_DESC, type: $type, season: $currentSeason, seasonYear: $currentYear) {
-            ...mediaTitleCover
-        }
-    }
-}
-
-query GetMoreTrendingNow(
-    $page: Int!,
-    $type: MediaType!,
-    $currentSeason: MediaSeason!,
-    $currentYear: Int!
-) {
-    trendingNow:
-    Page(page: $page) {
-        media(sort: TRENDING, type:$type, season: $currentSeason, seasonYear: $currentYear) {
+query GetPopularManhwa($page: Int!, $pageSize: Int!) {
+    Page(page: $page, perPage: $pageSize) {
+        media(sort: POPULARITY_DESC, type: MANGA, countryOfOrigin: KR) {
             ...mediaTitleCover
         }
     }

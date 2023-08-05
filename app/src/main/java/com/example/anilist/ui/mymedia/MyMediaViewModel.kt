@@ -17,10 +17,10 @@ private const val TAG = "MyMediaViewModel"
 class MyMediaViewModel @Inject constructor(
     private val myMediaRepository: MyMediaRepository,
 ) : ViewModel() {
-    private val _myAnime = MutableLiveData<Map<MediaStatus, List<Media>>>()
-    val myAnime: MutableLiveData<Map<MediaStatus, List<Media>>> = _myAnime
-    private val _myManga = MutableLiveData<Map<MediaStatus, List<Media>>>()
-    val myManga: LiveData<Map<MediaStatus, List<Media>>> = _myManga
+    private val _myAnime = MutableLiveData<Map<PersonalMediaStatus, List<Media>>>()
+    val myAnime: MutableLiveData<Map<PersonalMediaStatus, List<Media>>> = _myAnime
+    private val _myManga = MutableLiveData<Map<PersonalMediaStatus, List<Media>>>()
+    val myManga: LiveData<Map<PersonalMediaStatus, List<Media>>> = _myManga
 
     fun fetchMyMedia(isAnime: Boolean) {
         viewModelScope.launch {

@@ -32,7 +32,7 @@ fun MediaOverview(
     ordinalNumber: Int,
     navigateBack: () -> Unit,
     navigateToDetails: (Int) -> Unit,
-    homeViewModel: HomeViewModel = hiltViewModel()
+    homeViewModel: HomeViewModel
 ) {
     val type = HomeTrendingTypes.values()[ordinalNumber]
     val pager = when (type) {
@@ -41,6 +41,7 @@ fun MediaOverview(
         HomeTrendingTypes.UPCOMING_NEXT_SEASON -> homeViewModel.upComingNextSeasonPager
         HomeTrendingTypes.ALL_TIME_POPULAR -> homeViewModel.allTimePopularPager
         HomeTrendingTypes.TOP_100_ANIME -> homeViewModel.top100AnimePager
+        HomeTrendingTypes.POPULAR_MANHWA -> homeViewModel.popularManhwaPager
     }.collectAsLazyPagingItems()
 
     Scaffold(topBar = {

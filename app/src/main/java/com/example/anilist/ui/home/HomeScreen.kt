@@ -35,6 +35,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,11 +51,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.NonRestartableComposable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -91,6 +94,7 @@ import com.example.anilist.ui.mediadetails.MediaDetailsViewModel
 import com.example.anilist.ui.mediadetails.QuickInfo
 import com.example.anilist.utils.AsyncImageRoundedCorners
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 private const val TAG = "HomeScreen"
@@ -98,7 +102,7 @@ private const val TAG = "HomeScreen"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    homeViewModel: HomeViewModel = hiltViewModel(),
+    homeViewModel: HomeViewModel,
     mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
     onNavigateToMediaDetails: (Int) -> Unit,
     onNavigateToNotification: () -> Unit,
@@ -117,6 +121,7 @@ fun HomeScreen(
             pagerUpcomingNextSeason = homeViewModel.upComingNextSeasonPager.collectAsLazyPagingItems(),
             pagerAllTimePopular = homeViewModel.allTimePopularPager.collectAsLazyPagingItems(),
             pagerTop100Anime = homeViewModel.top100AnimePager.collectAsLazyPagingItems(),
+            pagerPopularManhwa = homeViewModel.popularManhwaPager.collectAsLazyPagingItems(),
             searchResultsMedia = homeViewModel.searchResultsMedia.collectAsLazyPagingItems(),
             searchResultsCharacter = homeViewModel.searchResultsCharacter.collectAsLazyPagingItems(),
             searchResultsStaff = homeViewModel.searchResultsStaff.collectAsLazyPagingItems(),
@@ -126,6 +131,7 @@ fun HomeScreen(
             searchIsActive = false,
         )
 
+    val isAnime by homeViewModel.isAnime.collectAsStateWithLifecycle()
     val search by homeViewModel.search.collectAsStateWithLifecycle()
     val searchType by homeViewModel.searchType.collectAsStateWithLifecycle()
     val mediaSortType by homeViewModel.mediaSortType.collectAsStateWithLifecycle()
@@ -136,6 +142,8 @@ fun HomeScreen(
         mutableStateOf(false)
     }
     val focusRequester by remember { mutableStateOf(FocusRequester()) }
+    val columnScrollState = rememberScrollState()
+    val columnScrollScope = rememberCoroutineScope()
 
     Scaffold(topBar = {
         AniSearchBar(
@@ -183,49 +191,98 @@ fun HomeScreen(
             Column(
                 modifier = Modifier
                     .padding(top = it.calculateTopPadding())
-                    .verticalScroll(rememberScrollState()),
+//                    .verticalScroll(rememberScrollState()),
             ) {
-                var selectedIndex by remember { mutableIntStateOf(0) }
+                var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
                 val options = listOf("Anime", "Manga")
                 SingleChoiceSegmentedButtonRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Dimens.PaddingNormal)
+                        .padding(
+                            start = Dimens.PaddingNormal,
+                            end = Dimens.PaddingNormal,
+                            bottom = Dimens.PaddingSmall
+                        )
                 ) {
-                    options.forEachIndexed { index, label ->
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.shape(
-                                position = index,
-                                count = options.size
-                            ),
-                            onClick = { selectedIndex = index },
-                            selected = index == selectedIndex
-                        ) {
-                            Text(label)
-                        }
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.shape(
+                            position = 0,
+                            count = options.size
+                        ),
+                        onClick = {
+                            columnScrollScope.launch {
+                                columnScrollState.animateScrollTo(0)
+                            }
+                            selectedIndex = 0
+                            homeViewModel.setToAnime()
+                        },
+                        selected = 0 == selectedIndex
+                    ) {
+                        Text("Anime")
+                    }
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.shape(
+                            position = 1,
+                            count = options.size
+                        ),
+                        onClick = {
+                            columnScrollScope.launch {
+                                columnScrollState.animateScrollTo(0)
+                            }
+                            selectedIndex = 1
+                            homeViewModel.setToManga()
+                        },
+                        selected = 1 == selectedIndex
+                    ) {
+                        Text("Manga")
                     }
                 }
-                HeadlineText(
-                    text = stringResource(R.string.trending_now),
-                    onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TRENDING_NOW) })
-                LazyRowLazyPagingItems(uiState.pagerTrendingNow, onNavigateToMediaDetails)
-                HeadlineText(
-                    text = stringResource(R.string.popular_this_season),
-                    onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_THIS_SEASON) })
-                LazyRowLazyPagingItems(uiState.pagerPopularThisSeason, onNavigateToMediaDetails)
-                HeadlineText(
-                    text = stringResource(R.string.upcoming_next_season),
-                    onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.UPCOMING_NEXT_SEASON) })
-                Log.d(TAG, "${uiState.pagerUpcomingNextSeason.itemCount}")
-                LazyRowLazyPagingItems(uiState.pagerUpcomingNextSeason, onNavigateToMediaDetails)
-                HeadlineText(
-                    text = stringResource(R.string.all_time_popular),
-                    onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.ALL_TIME_POPULAR) })
-                LazyRowLazyPagingItems(uiState.pagerAllTimePopular, onNavigateToMediaDetails)
-                HeadlineText(
-                    text = stringResource(R.string.top_100_anime),
-                    onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TOP_100_ANIME) })
-                LazyRowLazyPagingItems(uiState.pagerTop100Anime, onNavigateToMediaDetails)
+
+
+                Column(modifier = Modifier.verticalScroll(columnScrollState)) {
+                    HeadlineText(
+                        text = stringResource(R.string.trending_now),
+                        onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TRENDING_NOW) })
+                    LazyRowLazyPagingItems(uiState.pagerTrendingNow, onNavigateToMediaDetails)
+
+                    if (isAnime) {
+                        HeadlineText(
+                            text = stringResource(R.string.popular_this_season),
+                            onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_THIS_SEASON) })
+                        LazyRowLazyPagingItems(
+                            uiState.pagerPopularThisSeason,
+                            onNavigateToMediaDetails
+                        )
+                        HeadlineText(
+                            text = stringResource(R.string.upcoming_next_season),
+                            onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.UPCOMING_NEXT_SEASON) })
+                        Log.d(TAG, "${uiState.pagerUpcomingNextSeason.itemCount}")
+                        LazyRowLazyPagingItems(
+                            uiState.pagerUpcomingNextSeason,
+                            onNavigateToMediaDetails
+                        )
+                    }
+
+                    if (!isAnime) {
+                        HeadlineText(
+                            text = stringResource(id = R.string.popular_manhwa),
+                            onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_MANHWA) })
+                        LazyRowLazyPagingItems(
+                            pager = uiState.pagerPopularManhwa,
+                            onNavigateToMediaDetails = onNavigateToMediaDetails
+                        )
+                    }
+
+                    HeadlineText(
+                        text = stringResource(R.string.all_time_popular),
+                        onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.ALL_TIME_POPULAR) })
+                    LazyRowLazyPagingItems(uiState.pagerAllTimePopular, onNavigateToMediaDetails)
+
+                    HeadlineText(
+                        text = stringResource(if (isAnime) R.string.top_100_anime else R.string.top_100_manga),
+                        onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TOP_100_ANIME) })
+                    LazyRowLazyPagingItems(uiState.pagerTop100Anime, onNavigateToMediaDetails)
+                }
             }
         } else {
             LoadingCircle()
@@ -442,7 +499,7 @@ private fun AniSearchBar(
                 var showSortingBottomSheet by remember { mutableStateOf(false) }
                 FlowRow(modifier = Modifier.padding(start = Dimens.PaddingNormal)) {
                     if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME || selectedChip == SearchFilter.MANGA) {
-                        Divider()
+                        HorizontalDivider()
                         AssistChip(
                             onClick = { showSortingBottomSheet = true },
                             label = { Text(text = currentMediaSort.toString(LocalContext.current)) },
@@ -456,7 +513,7 @@ private fun AniSearchBar(
                             },
                         )
                     } else if (selectedChip == SearchFilter.CHARACTERS) {
-                        Divider()
+                        HorizontalDivider()
                         AssistChip(
                             onClick = { showSortingBottomSheet = true },
                             label = { Text(text = characterSort.toString(LocalContext.current)) },

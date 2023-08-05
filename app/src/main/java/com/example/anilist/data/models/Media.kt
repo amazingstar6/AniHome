@@ -1,6 +1,6 @@
 package com.example.anilist.data.models
 
-import com.example.anilist.ui.mymedia.MediaStatus
+import com.example.anilist.ui.mymedia.PersonalMediaStatus
 
 data class Media(
     val id: Int = -1,
@@ -18,7 +18,7 @@ data class Media(
     val mostPopular: String = "",
     val description: String = "",
     val relations: List<Relation> = emptyList(),
-    val infoList: Map<String, String> = emptyMap(),
+    val infoList: MediaDetailInfoList = MediaDetailInfoList(),
     val tags: List<Tag> = emptyList(),
     val trailerImage: String = "",
     val trailerLink: String = "",
@@ -42,7 +42,7 @@ data class Media(
 
     val startedAt: FuzzyDate? = null,
     val completedAt: FuzzyDate? = null,
-    val personalStatus: MediaStatus = MediaStatus.UNKNOWN,
+    val personalStatus: PersonalMediaStatus = PersonalMediaStatus.UNKNOWN,
 
     val rawScore: Double = -1.0,
     val studios: List<AniStudio> = emptyList()

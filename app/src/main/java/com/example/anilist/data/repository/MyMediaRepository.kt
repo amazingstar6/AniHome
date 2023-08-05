@@ -15,7 +15,7 @@ import com.example.anilist.fragment.MyMedia
 import com.example.anilist.type.FuzzyDateInput
 import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaType
-import com.example.anilist.ui.mymedia.MediaStatus
+import com.example.anilist.ui.mymedia.PersonalMediaStatus
 import com.example.anilist.utils.Apollo
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,7 +24,7 @@ private const val TAG = "MyMediaRepository"
 
 @Singleton
 class MyMediaRepository @Inject constructor() {
-    suspend fun getMyMedia(isAnime: Boolean): Map<MediaStatus, List<Media>> {
+    suspend fun getMyMedia(isAnime: Boolean): Map<PersonalMediaStatus, List<Media>> {
         try {
 //            val currentUser = ApolloClient.Builder().httpHeaders(
 //                listOf(
@@ -48,13 +48,13 @@ class MyMediaRepository @Inject constructor() {
             }
             val data = result.data
             if (data != null) {
-                val resultMap = mutableMapOf<MediaStatus, List<Media>>()
+                val resultMap = mutableMapOf<PersonalMediaStatus, List<Media>>()
                 for (statusList in data.MediaListCollection?.lists.orEmpty()) {
                     val list = mutableListOf<Media>()
                     for (entries in statusList?.entries.orEmpty()) {
                         list.add(parseMedia(entries?.myMedia, statusList?.status?.toAniStatus()))
                     }
-                    resultMap[statusList?.status?.toAniStatus() ?: MediaStatus.UNKNOWN] = list
+                    resultMap[statusList?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN] = list
                 }
                 return resultMap
             }
@@ -71,13 +71,13 @@ class MyMediaRepository @Inject constructor() {
         Log.d(TAG, "changing status of entry list id ${statusUpdate.entryListId}")
         try {
             val status = when (statusUpdate.status) {
-                MediaStatus.CURRENT -> Optional.present(MediaListStatus.CURRENT)
-                MediaStatus.PLANNING -> Optional.present(MediaListStatus.PLANNING)
-                MediaStatus.COMPLETED -> Optional.present(MediaListStatus.COMPLETED)
-                MediaStatus.DROPPED -> Optional.present(MediaListStatus.DROPPED)
-                MediaStatus.PAUSED -> Optional.present(MediaListStatus.PAUSED)
-                MediaStatus.REPEATING -> Optional.present(MediaListStatus.REPEATING)
-                MediaStatus.UNKNOWN -> Optional.present(MediaListStatus.UNKNOWN__)
+                PersonalMediaStatus.CURRENT -> Optional.present(MediaListStatus.CURRENT)
+                PersonalMediaStatus.PLANNING -> Optional.present(MediaListStatus.PLANNING)
+                PersonalMediaStatus.COMPLETED -> Optional.present(MediaListStatus.COMPLETED)
+                PersonalMediaStatus.DROPPED -> Optional.present(MediaListStatus.DROPPED)
+                PersonalMediaStatus.PAUSED -> Optional.present(MediaListStatus.PAUSED)
+                PersonalMediaStatus.REPEATING -> Optional.present(MediaListStatus.REPEATING)
+                PersonalMediaStatus.UNKNOWN -> Optional.present(MediaListStatus.UNKNOWN__)
                 null -> Optional.Absent
             }
 
@@ -196,7 +196,7 @@ class MyMediaRepository @Inject constructor() {
         }
     }
 
-    private fun parseMedia(data: MyMedia?, status: MediaStatus?): Media {
+    private fun parseMedia(data: MyMedia?, status: PersonalMediaStatus?): Media {
         return Media(
             id = data?.media?.id ?: -1,
             listEntryId = data?.id ?: -1,
@@ -231,7 +231,7 @@ class MyMediaRepository @Inject constructor() {
                 null
             },
             rawScore = data?.score ?: -1.0,
-            personalStatus = status ?: MediaStatus.UNKNOWN
+            personalStatus = status ?: PersonalMediaStatus.UNKNOWN
         )
     }
 
@@ -304,14 +304,14 @@ class MyMediaRepository @Inject constructor() {
 //    return emptyList()
 // }
 
-fun MediaListStatus.toAniStatus(): MediaStatus {
+fun MediaListStatus.toAniStatus(): PersonalMediaStatus {
     return when (this) {
-        MediaListStatus.CURRENT -> MediaStatus.CURRENT
-        MediaListStatus.PLANNING -> MediaStatus.PLANNING
-        MediaListStatus.COMPLETED -> MediaStatus.COMPLETED
-        MediaListStatus.DROPPED -> MediaStatus.DROPPED
-        MediaListStatus.PAUSED -> MediaStatus.PAUSED
-        MediaListStatus.REPEATING -> MediaStatus.REPEATING
-        MediaListStatus.UNKNOWN__ -> MediaStatus.UNKNOWN
+        MediaListStatus.CURRENT -> PersonalMediaStatus.CURRENT
+        MediaListStatus.PLANNING -> PersonalMediaStatus.PLANNING
+        MediaListStatus.COMPLETED -> PersonalMediaStatus.COMPLETED
+        MediaListStatus.DROPPED -> PersonalMediaStatus.DROPPED
+        MediaListStatus.PAUSED -> PersonalMediaStatus.PAUSED
+        MediaListStatus.REPEATING -> PersonalMediaStatus.REPEATING
+        MediaListStatus.UNKNOWN__ -> PersonalMediaStatus.UNKNOWN
     }
 }

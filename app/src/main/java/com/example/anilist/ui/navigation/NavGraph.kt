@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -15,6 +16,7 @@ import com.example.anilist.ui.PleaseLogin
 import com.example.anilist.ui.feed.FeedScreen
 import com.example.anilist.ui.forum.ForumScreen
 import com.example.anilist.ui.home.HomeScreen
+import com.example.anilist.ui.home.HomeViewModel
 import com.example.anilist.ui.home.MediaOverview
 import com.example.anilist.ui.home.NotificationScreen
 import com.example.anilist.ui.home.SettingsScreen
@@ -40,6 +42,7 @@ fun AniNavHost(
     navigationActions: AniListNavigationActions,
     setBottomBarState: (Boolean) -> Unit,
 ) {
+    val homeViewModel: HomeViewModel = hiltViewModel()
     NavHost(
         modifier = modifier,
         navController = navController,
@@ -48,6 +51,7 @@ fun AniNavHost(
         composable(AniListRoute.HOME_ROUTE) {
             setBottomBarState(true)
             HomeScreen(
+                homeViewModel = homeViewModel,
                 onNavigateToNotification = {
                     navController.navigate(route = AniListRoute.NOTIFICATION_ROUTE)
                 },
@@ -72,7 +76,8 @@ fun AniNavHost(
             val ordinalNumber = navBackStackEntry.arguments?.getInt("trendingType") ?: -1
             setBottomBarState(false)
             MediaOverview(
-                ordinalNumber,
+                homeViewModel = homeViewModel,
+                ordinalNumber = ordinalNumber,
                 navigateBack = navigationActions::navigateBack,
                 navigateToDetails = navigationActions::navigateToMediaDetails
             )

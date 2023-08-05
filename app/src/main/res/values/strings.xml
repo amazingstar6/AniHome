@@ -78,6 +78,8 @@
     <string name="discard">Discard</string>
     <string name="my_anime">My anime</string>
     <string name="my_manga">My manga</string>
+    <string name="popular_manhwa">Popular manhwa</string>
+    <string name="top_100_manga">Top 100 manga</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>

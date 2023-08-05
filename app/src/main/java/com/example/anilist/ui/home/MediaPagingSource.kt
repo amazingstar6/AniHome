@@ -17,7 +17,8 @@ private const val TAG = "MediaPagingSource"
 
 class MediaPagingSource @Inject constructor(
     private val homeRepository: HomeRepository,
-    private val type: HomeTrendingTypes
+    private val type: HomeTrendingTypes,
+    private val isAnime: Boolean
 ) : PagingSource<Int, Media>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Media> {
         val start = params.key ?: STARTING_KEY
@@ -26,28 +27,36 @@ class MediaPagingSource @Inject constructor(
         val pageSize = min(PAGE_SIZE, params.loadSize)
         val data = when (type) {
             HomeTrendingTypes.TRENDING_NOW -> homeRepository.getTrendingNow(
-                start,
-                pageSize
+                isAnime = isAnime,
+                page = start,
+                pageSize = pageSize
             )
 
             HomeTrendingTypes.POPULAR_THIS_SEASON -> homeRepository.getPopularThisSeason(
-                start,
-                pageSize
+                page = start,
+                pageSize = pageSize
             )
 
             HomeTrendingTypes.UPCOMING_NEXT_SEASON -> homeRepository.getUpcomingNextSeason(
-                start,
-                pageSize
+                page = start,
+                pageSize = pageSize
             )
 
             HomeTrendingTypes.ALL_TIME_POPULAR -> homeRepository.getAllTimePopularMedia(
-                start,
-                pageSize
+                isAnime = isAnime,
+                page = start,
+                pageSize = pageSize
             )
 
             HomeTrendingTypes.TOP_100_ANIME -> homeRepository.getTop100Anime(
-                start,
-                pageSize
+                isAnime = isAnime,
+                page = start,
+                pageSize = pageSize
+            )
+
+            HomeTrendingTypes.POPULAR_MANHWA -> homeRepository.getPopularManhwa(
+                page = start,
+                pageSize = pageSize
             )
         }
         return LoadResult.Page(

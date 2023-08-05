@@ -100,6 +100,7 @@ import com.example.anilist.R
 import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.MediaDetailInfoList
 import com.example.anilist.data.models.MediaType
 import com.example.anilist.data.models.Relation
 import com.example.anilist.data.models.Season
@@ -231,7 +232,7 @@ fun MediaDetail(
                     rememberPagerState(initialPage = 0, pageCount = { DetailTabs.values().size })
                 val pagerScope = rememberCoroutineScope()
 //                val nestedScrollConnection = PagerDefaults.pageNestedScrollConnection(Orientation.Horizontal)
-                
+
                 AniDetailTabs(
                     modifier = Modifier.padding(top = it.calculateTopPadding()),
                     titles = DetailTabs.values().map { it.name },
@@ -248,7 +249,10 @@ fun MediaDetail(
 //                    flingBehavior = PagerDefaults.flingBehavior(
 //                        state = pagerState,
 //                    ),
-                    flingBehavior = PagerDefaults.flingBehavior(state = pagerState, snapAnimationSpec = spring(stiffness = Spring.StiffnessVeryLow) )
+                    flingBehavior = PagerDefaults.flingBehavior(
+                        state = pagerState,
+                        snapAnimationSpec = spring(stiffness = Spring.StiffnessVeryLow)
+                    )
 //                    pageNestedScrollConnection = nestedScrollConnection
                 ) { currentPage ->
                     when (currentPage) {
@@ -643,7 +647,7 @@ private fun OverviewAnimeCoverDetails(
                 contentDescription = "Cover of ${media.title}",
                 placeholder = painterResource(id = R.drawable.no_image),
                 fallback = painterResource(id = R.drawable.no_image),
-                contentScale = ContentScale.FillHeight,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .height(250.dp)
                     .width(175.dp)
@@ -915,82 +919,164 @@ private fun OverViewInfo(anime1: Media, navigateToStudioDetails: (Int) -> Unit) 
                 .padding(horizontal = Dimens.PaddingNormal),
             verticalArrangement = Arrangement.Bottom,
         ) {
-            if (anime1.infoList.containsKey("format")) {
+            if (anime1.infoList.format != "") {
                 InfoName("Format")
             }
-            if (anime1.infoList.containsKey("status")) {
+            if (anime1.infoList.status != "") {
                 InfoName("Status")
             }
-            if (anime1.infoList.containsKey("startDate")) {
+            if (anime1.infoList.startDate != "") {
                 InfoName("Start date")
             }
-            if (anime1.infoList.containsKey("endDate")) {
+            if (anime1.infoList.endDate != "") {
                 InfoName(text = "End date")
             }
             InfoName("Episodes")
-            if (anime1.infoList.containsKey("duration")) {
+            if (anime1.infoList.duration != -1) {
                 InfoName("Duration")
             }
-            if (anime1.infoList.containsKey("country")) {
+            if (anime1.infoList.country != "") {
                 InfoName("Country")
             }
-            if (anime1.infoList.containsKey("source")) {
+            if (anime1.infoList.source != "") {
                 InfoName("Source")
             }
-            if (anime1.infoList.containsKey("hashtag")) {
+            if (anime1.infoList.hashtag.isNotEmpty()) {
                 InfoName("Hashtag")
             }
-            if (anime1.infoList.containsKey("licensed")) {
+            if (anime1.infoList.licensed != null) {
                 InfoName("Licensed")
             }
-            if (anime1.infoList.containsKey("updatedAt")) {
+            if (anime1.infoList.updatedAt.isNotEmpty()) {
                 InfoName("Updated at")
             }
-            if (anime1.infoList.containsKey("nsfw")) {
+            if (anime1.infoList.nsfw != null) {
                 InfoName("NSFW")
             }
-            if (anime1.infoList.containsKey("synonyms")) {
+            if (anime1.infoList.synonyms.isNotEmpty()) {
                 InfoName("Synonyms")
             }
+//            if (anime1.infoList.containsKey("format")) {
+//                InfoName("Format")
+//            }
+//            if (anime1.infoList.containsKey("status")) {
+//                InfoName("Status")
+//            }
+//            if (anime1.infoList.containsKey("startDate")) {
+//                InfoName("Start date")
+//            }
+//            if (anime1.infoList.containsKey("endDate")) {
+//                InfoName(text = "End date")
+//            }
+//            InfoName("Episodes")
+//            if (anime1.infoList.containsKey("duration")) {
+//                InfoName("Duration")
+//            }
+//            if (anime1.infoList.containsKey("country")) {
+//                InfoName("Country")
+//            }
+//            if (anime1.infoList.containsKey("source")) {
+//                InfoName("Source")
+//            }
+//            if (anime1.infoList.containsKey("hashtag")) {
+//                InfoName("Hashtag")
+//            }
+//            if (anime1.infoList.containsKey("licensed")) {
+//                InfoName("Licensed")
+//            }
+//            if (anime1.infoList.containsKey("updatedAt")) {
+//                InfoName("Updated at")
+//            }
+//            if (anime1.infoList.containsKey("nsfw")) {
+//                InfoName("NSFW")
+//            }
+//            if (anime1.infoList.containsKey("synonyms")) {
+//                InfoName("Synonyms")
+//            }
         }
         Column {
-            if (anime1.infoList.containsKey("format")) {
-                InfoData(anime1.infoList["format"]!!)
+            if (anime1.infoList.format != "") {
+                InfoData(anime1.infoList.format)
             }
-            if (anime1.infoList.containsKey("status")) {
-                InfoData(anime1.infoList["status"]!!)
+            if (anime1.infoList.status != "") {
+                InfoData(anime1.infoList.status)
             }
-            if (anime1.infoList.containsKey("startDate")) {
-                InfoData(anime1.infoList["startDate"]!!)
+            if (anime1.infoList.startDate != "") {
+                InfoData(anime1.infoList.startDate)
             }
-            if (anime1.infoList.containsKey("endDate")) {
-                InfoData(anime1.infoList["endDate"]!!)
+            if (anime1.infoList.endDate != "") {
+                InfoData(anime1.infoList.endDate)
             }
-            InfoData(anime1.episodeAmount.toString())
-            if (anime1.infoList.containsKey("duration")) {
-                InfoData(anime1.infoList["duration"]!!)
+            if (anime1.episodeAmount != -1) {
+                InfoData(anime1.episodeAmount.toString())
             }
-            if (anime1.infoList.containsKey("country")) {
-                InfoData(anime1.infoList["country"]!!)
+            if (anime1.infoList.duration != -1) {
+                InfoData(anime1.infoList.duration.toString())
             }
-            if (anime1.infoList.containsKey("source")) {
-                InfoData(anime1.infoList["source"]!!)
+            if (anime1.infoList.country != "") {
+                InfoData(anime1.infoList.country)
             }
-            if (anime1.infoList.containsKey("hashtag")) {
-                InfoData(anime1.infoList["hashtag"]!!)
+            if (anime1.infoList.source != "") {
+                InfoData(anime1.infoList.source)
             }
-            if (anime1.infoList.containsKey("licensed")) {
-                InfoData(anime1.infoList["licensed"]!!)
+            if (anime1.infoList.hashtag.isNotEmpty()) {
+                InfoData(anime1.infoList.hashtag)
             }
-            if (anime1.infoList.containsKey("updatedAt")) {
-                InfoData(anime1.infoList["updatedAt"]!!)
+            if (anime1.infoList.licensed != null) {
+                InfoData(anime1.infoList.licensed.toString())
             }
-            if (anime1.infoList.containsKey("nsfw")) {
-                InfoData(anime1.infoList["nsfw"]!!)
+            if (anime1.infoList.updatedAt.isNotEmpty()) {
+                InfoData(anime1.infoList.updatedAt)
             }
-            if (anime1.infoList.containsKey("synonyms")) {
-                InfoData(anime1.infoList["synonyms"]!!)
+            if (anime1.infoList.nsfw != null) {
+                InfoData(anime1.infoList.nsfw.toString())
             }
+            if (anime1.infoList.synonyms.isNotEmpty()) {
+                InfoData(buildString { anime1.infoList.synonyms.forEachIndexed { index, synonym ->
+                    if (index != anime1.infoList.synonyms.lastIndex) {
+                        append("$synonym, ")
+                    } else {
+                        append(synonym)
+                    }
+                }  })
+            }
+//            if (anime1.infoList.containsKey("format")) {
+//                InfoData(anime1.infoList["format"]!!)
+//            }
+//            if (anime1.infoList.containsKey("status")) {
+//                InfoData(anime1.infoList["status"]!!)
+//            }
+//            if (anime1.infoList.containsKey("startDate")) {
+//                InfoData(anime1.infoList["startDate"]!!)
+//            }
+//            if (anime1.infoList.containsKey("endDate")) {
+//                InfoData(anime1.infoList["endDate"]!!)
+//            }
+//            InfoData(anime1.episodeAmount.toString())
+//            if (anime1.infoList.containsKey("duration")) {
+//                InfoData(anime1.infoList["duration"]!!)
+//            }
+//            if (anime1.infoList.containsKey("country")) {
+//                InfoData(anime1.infoList["country"]!!)
+//            }
+//            if (anime1.infoList.containsKey("source")) {
+//                InfoData(anime1.infoList["source"]!!)
+//            }
+//            if (anime1.infoList.containsKey("hashtag")) {
+//                InfoData(anime1.infoList["hashtag"]!!)
+//            }
+//            if (anime1.infoList.containsKey("licensed")) {
+//                InfoData(anime1.infoList["licensed"]!!)
+//            }
+//            if (anime1.infoList.containsKey("updatedAt")) {
+//                InfoData(anime1.infoList["updatedAt"]!!)
+//            }
+//            if (anime1.infoList.containsKey("nsfw")) {
+//                InfoData(anime1.infoList["nsfw"]!!)
+//            }
+//            if (anime1.infoList.containsKey("synonyms")) {
+//                InfoData(anime1.infoList["synonyms"]!!)
+//            }
         }
     }
 }
@@ -1114,19 +1200,23 @@ fun OverviewPreview() {
                     mostPopular = "#183 Most popular all time",
                     description = "Adaptation of the Swordsmith Village Arc.<br>\n<br>\nTanjiro\u2019s journey leads him to the Swordsmith Village, where he reunites with two Hashira, members of the Demon Slayer Corps\u2019 highest-ranking swordsmen - Mist Hashira Muichiro Tokito and Love Hashira Mitsuri Kanroji. With the shadows of demons lurking near, a new battle begins for Tanjiro and his comrades.\n<br><br>\n<i>Notes:<br>\n\u2022 The first episode has a runtime of ~49 minutes, and received an early premiere in cinemas worldwide as part of a special screening alongside the final two episodes of Kimetsu no Yaiba: Yuukaku-hen.<br>\n\u2022 The final episode has a runtime of ~52 minutes. </i>",
                     relations = emptyList(),
-                    infoList = mapOf(
-                        "format" to "TV",
-                        "status" to "Finished",
-                        "startDate" to "04-09-2023",
-                        "endDate" to "06-18-2023",
-                        "duration" to "24",
-                        "country" to "Japan",
-                        "source" to "Manga",
-                        "hashtag" to "#鬼滅の刃",
-                        "licensed" to "Yes",
-                        "updatedAt" to "04-06-2023",
-                        "synonyms" to "KnY 3ดาบพิฆาตอสูร ภาค 3 บทหมู่บ้านช่างตีดาบ\n" + "Demon Slayer: Kimetsu no Yaiba - Le village des forgerons\n" + "Истребитель демонов: Kimetsu no Yaiba. Деревня кузнецов",
-                        "nsfw" to "No",
+                    infoList = MediaDetailInfoList(
+                        format = "TV",
+                        status = "Finished",
+                        startDate = "04-09-2023",
+                        endDate = "06-18-2023",
+                        duration = 24,
+                        country = "Japan",
+                        source = "Manga",
+                        hashtag = "#鬼滅の刃",
+                        licensed = true,
+                        updatedAt = "04-06-2023",
+                        synonyms = listOf(
+                            "KnY 3ดาบพิฆาตอสูร ภาค 3 บทหมู่บ้านช่างตีดาบ",
+                            "Demon Slayer: Kimetsu no Yaiba - Le village des forgerons",
+                            "Истребитель демонов: Kimetsu no Yaiba. Деревня кузнецов"
+                        ),
+                        nsfw = false,
                     ),
                     tags = listOf(
                         Tag(name = "Demons", 96, false),

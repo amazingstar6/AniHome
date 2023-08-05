@@ -1,10 +1,10 @@
 package com.example.anilist.data.models
 
-import com.example.anilist.ui.mymedia.MediaStatus
+import com.example.anilist.ui.mymedia.PersonalMediaStatus
 
 data class StatusUpdate(
     val entryListId: Int,
-    val status: MediaStatus?,
+    val status: PersonalMediaStatus?,
     val scoreRaw: Int?,
     val progress: Int?,
     val progressVolumes: Int?,

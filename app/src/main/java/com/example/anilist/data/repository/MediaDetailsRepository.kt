@@ -20,6 +20,7 @@ import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.MediaDetailInfoList
 import com.example.anilist.data.models.Relation
 import com.example.anilist.data.models.RelationTypes
 import com.example.anilist.data.models.Review
@@ -38,9 +39,9 @@ import com.example.anilist.type.MediaRelation
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaType
 import com.example.anilist.type.ReviewRating
-import com.example.anilist.ui.mymedia.MediaStatus
+import com.example.anilist.ui.mymedia.PersonalMediaStatus
 import com.example.anilist.utils.Apollo
-import java.util.Locale
+import com.patrykandpatrick.vico.core.extension.orZero
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -697,42 +698,68 @@ class MediaDetailsRepository @Inject constructor() {
             format = media?.format?.toCapitalizedString() ?: "",
             season = media?.season?.toAniHomeSeason() ?: Season.UNKNOWN,
             seasonYear = media?.seasonYear ?: -1,
-            episodeAmount = media?.episodes ?: 0,
+            episodeAmount = media?.episodes ?: -1,
             volumes = media?.volumes ?: -1,
             chapters = media?.chapters ?: -1,
             averageScore = media?.averageScore ?: 0,
             genres = genres,
             description = media?.description ?: "No description",
             relations = relations,
-            infoList = mapOf(
-                "format" to media?.format?.name.orEmpty(),
-                "status" to media?.status?.name?.lowercase()
-                    ?.replaceFirstChar {
-                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-                    }
-                    .orEmpty(),
-                "startDate" to if (media?.startDate != null) "${media.startDate.day}-${media.startDate.month}-${media.startDate.year}" else "Unknown",
-                "endDate" to if (media?.endDate?.year != null && media.endDate.month != null && media.endDate.day != null) "${media.endDate.day}-${media.endDate.month}-${media.endDate.year}" else "Unknown",
-                "duration" to if (media?.duration == null) "Unknown" else media.duration.toString(),
-                "country" to media?.countryOfOrigin.toString(),
-                "source" to (media?.source?.rawValue ?: "Unknown"),
-                "hashtag" to (media?.hashtag ?: "Unknown"),
-                "licensed" to media?.isLicensed.toString(),
-                "updatedAt" to media?.updatedAt.toString(),
-                "synonyms" to synonyms,
-                "nsfw" to media?.isAdult.toString(),
-            ),
+            infoList = MediaDetailInfoList(
+                format = media?.format?.name.orEmpty(),
+                status = media?.status?.name.orEmpty(),
+                startDate = if (media?.startDate != null) String.format(
+                    "%02d-%02d-%02d",
+                    media.startDate.day ?: "?",
+                    media.startDate.month ?: "?",
+                    media.startDate.year ?: "?"
+                ) else "Unknown",
+                endDate = if (media?.endDate != null) "${
+                    media.endDate.day?.toString()?.padStart(2, '0') ?: "?"
+                }-${
+                    media.endDate.month?.toString()?.padStart(2, '0') ?: "?"
+                }-${media.endDate.year?.toString()?.padStart(2, '0') ?: "?"}"
+                else "Unknown",
+                duration = media?.duration ?: -1,
+                country = media?.countryOfOrigin.toString(),
+                source = media?.source?.name.orEmpty(),
+                hashtag = media?.hashtag.orEmpty(),
+                licensed = media?.isLicensed,
+                updatedAt = media?.updatedAt.toString(),
+                synonyms = media?.synonyms?.filterNotNull().orEmpty(),
+                nsfw = media?.isAdult
+            )
+//            mapOf(
+//                "format" to media?.format?.name.orEmpty(),
+//                "status" to media?.status?.name?.lowercase()
+//                    ?.replaceFirstChar {
+//                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+//                    }
+//                    .orEmpty(),
+//                "startDate" to if (media?.startDate != null) "${media.startDate.day}-${media.startDate.month}-${media.startDate.year}" else "Unknown",
+//                "endDate" to if (media?.endDate?.year != null && media.endDate.month != null && media.endDate.day != null) "${media.endDate.day}-${media.endDate.month}-${media.endDate.year}" else "Unknown",
+//                "duration" to if (media?.duration == null) "Unknown" else media.duration.toString(),
+//                "country" to media?.countryOfOrigin.toString(),
+//                "source" to (media?.source?.rawValue ?: "Unknown"),
+//                "hashtag" to (media?.hashtag ?: "Unknown"),
+//                "licensed" to media?.isLicensed.toString(),
+//                "updatedAt" to media?.updatedAt.toString(),
+//                "synonyms" to synonyms,
+//                "nsfw" to media?.isAdult.toString(),
+//            )
+            ,
             tags = tags,
             trailerImage = media?.trailer?.thumbnail ?: "",
             // todo add dailymotion
-            trailerLink = if (media?.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${media.trailer.id}" else if (media?.trailer?.site == "dailymotion") "" else "",
+            trailerLink =
+            if (media?.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${media.trailer.id}" else if (media?.trailer?.site == "dailymotion") "" else "",
             externalLinks = externalLinks,
             stats = parseStats(media),
             characterWithVoiceActors = parseCharacters(media),
             favourites = media?.favourites ?: -1,
             isFavourite = media?.isFavourite ?: false,
             isFavouriteBlocked = media?.isFavouriteBlocked ?: false,
-            personalStatus = data?.MediaList?.status?.toAniStatus() ?: MediaStatus.UNKNOWN,
+            personalStatus = data?.MediaList?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN,
             studios = data?.Media?.studios?.nodes?.filterNotNull()
                 ?.map { AniStudio(id = it.id, name = it.name) }.orEmpty(),
             personalProgress = data?.MediaList?.progress ?: -1,

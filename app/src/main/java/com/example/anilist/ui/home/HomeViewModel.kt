@@ -32,6 +32,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -64,23 +65,41 @@ class HomeViewModel @Inject constructor(
 ) :
     ViewModel() {
 
-    val trendingNowPager = Pager(
-        config = PagingConfig(
-            pageSize = PAGE_SIZE,
-            prefetchDistance = PREFETCH_DISTANCE,
-            enablePlaceholders = false
-        ),
-        pagingSourceFactory = { homeRepository.trendingNowPagingSource() }
-    ).flow.cachedIn(viewModelScope)
+    private var _isAnime = MutableStateFlow(true)
+    val isAnime: StateFlow<Boolean> = _isAnime
 
-    val popularThisSeasonPager = Pager(
-        config = PagingConfig(
-            pageSize = PAGE_SIZE,
-            prefetchDistance = PREFETCH_DISTANCE,
-            enablePlaceholders = false
-        ),
-        pagingSourceFactory = { homeRepository.popularThisSeasonPagingSource() }
-    ).flow.cachedIn(viewModelScope)
+    fun setToAnime() {
+        _isAnime.value = true
+    }
+
+    fun setToManga() {
+        Log.d(TAG, "Set to manga was called")
+        _isAnime.value = false
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val trendingNowPager: Flow<PagingData<Media>> =
+//            Log.d(TAG, "isAnime on home screen is $isAnime")
+        isAnime.flatMapLatest {
+            Pager(
+                config = PagingConfig(
+                    pageSize = PAGE_SIZE,
+                    prefetchDistance = PREFETCH_DISTANCE,
+                    enablePlaceholders = false
+                ),
+                pagingSourceFactory = { homeRepository.trendingNowPagingSource(isAnime = isAnime.value) }
+            ).flow.cachedIn(viewModelScope)
+        }
+
+    val popularThisSeasonPager =
+        Pager(
+            config = PagingConfig(
+                pageSize = PAGE_SIZE,
+                prefetchDistance = PREFETCH_DISTANCE,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { homeRepository.popularThisSeasonPagingSource() }
+        ).flow.cachedIn(viewModelScope)
 
     val upComingNextSeasonPager = Pager(
         config = PagingConfig(
@@ -91,23 +110,41 @@ class HomeViewModel @Inject constructor(
         pagingSourceFactory = { homeRepository.upcomingNextSeasonPagingSource() }
     ).flow.cachedIn(viewModelScope)
 
-    val allTimePopularPager = Pager(
-        config = PagingConfig(
-            pageSize = 25,
-            prefetchDistance = PREFETCH_DISTANCE,
-            enablePlaceholders = false
-        ),
-        pagingSourceFactory = { homeRepository.allTimePopularPagingSource() }
-    ).flow.cachedIn(viewModelScope)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val allTimePopularPager =
+        isAnime.flatMapLatest {
+            Pager(
+                config = PagingConfig(
+                    pageSize = 25,
+                    prefetchDistance = PREFETCH_DISTANCE,
+                    enablePlaceholders = false
+                ),
+                pagingSourceFactory = { homeRepository.allTimePopularPagingSource(isAnime = isAnime.value) }
+            ).flow.cachedIn(viewModelScope)
+        }
 
-    val top100AnimePager = Pager(
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val top100AnimePager = isAnime.flatMapLatest {
+        Pager(
+            config = PagingConfig(
+                pageSize = PAGE_SIZE,
+                prefetchDistance = PREFETCH_DISTANCE,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { homeRepository.top100AnimePagingSource(isAnime = isAnime.value) }
+        ).flow.cachedIn(viewModelScope)
+    }
+
+    val popularManhwaPager = Pager(
         config = PagingConfig(
             pageSize = PAGE_SIZE,
             prefetchDistance = PREFETCH_DISTANCE,
             enablePlaceholders = false
         ),
-        pagingSourceFactory = { homeRepository.top100AnimePagingSource() }
+        pagingSourceFactory = { homeRepository.popularManhwaPagingSource() }
     ).flow.cachedIn(viewModelScope)
+
 
     private val _search = MutableStateFlow("")
     val search = _search.asStateFlow()
@@ -439,3 +476,4 @@ class HomeViewModel @Inject constructor(
         // todo
     }
 }
+

@@ -90,7 +90,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 
-enum class MediaStatus {
+enum class PersonalMediaStatus {
     CURRENT,
     PLANNING,
     COMPLETED,
@@ -145,7 +145,7 @@ fun MyMediaScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun MyMedia(
     isAnime: Boolean,
-    myMedia: Map<MediaStatus, List<Media>>?,
+    myMedia: Map<PersonalMediaStatus, List<Media>>?,
     navigateToDetails: (Int) -> Unit,
     saveStatus: (StatusUpdate) -> Unit,
     reloadMyMedia: () -> Unit,
@@ -188,7 +188,7 @@ private fun MyMedia(
         modalSheetScope.launch { editSheetState.hide() }
     }
 
-    var filter by rememberSaveable { mutableStateOf(MediaStatus.UNKNOWN) }
+    var filter by rememberSaveable { mutableStateOf(PersonalMediaStatus.UNKNOWN) }
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(text = if (isAnime) "Watching" else "Reading") }, actions = {
@@ -286,7 +286,7 @@ private fun MyMedia(
                     sheetState = filterSheetState,
                     onDismissRequest = hideFilterSheet,
                 ) {
-                    val filterFunction = { it: MediaStatus -> filter = it }
+                    val filterFunction = { it: PersonalMediaStatus -> filter = it }
                     CenterAlignedTopAppBar(title = {
                         Text(
                             text = stringResource(R.string.filter),
@@ -307,62 +307,62 @@ private fun MyMedia(
                     )
                     TextButton(
                         onClick = {
-                            filterFunction(MediaStatus.CURRENT)
+                            filterFunction(PersonalMediaStatus.CURRENT)
                             hideFilterSheet()
                         }, modifier = Modifier
                             .fillMaxWidth(), shape = RectangleShape
                     ) {
                         Text(
                             if (isAnime) stringResource(R.string.watching) else stringResource(R.string.reading),
-                            color = if (filter == MediaStatus.CURRENT) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            color = if (filter == PersonalMediaStatus.CURRENT) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     TextButton(
                         onClick = {
-                            filterFunction(MediaStatus.REPEATING)
+                            filterFunction(PersonalMediaStatus.REPEATING)
                             hideFilterSheet()
                         }, modifier = Modifier
                             .fillMaxWidth(), shape = RectangleShape
                     ) {
                         Text(
                             if (isAnime) stringResource(R.string.rewatching) else stringResource(R.string.rereading),
-                            color = if (filter == MediaStatus.REPEATING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            color = if (filter == PersonalMediaStatus.REPEATING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     TextButton(
                         onClick = {
-                            filterFunction(MediaStatus.DROPPED)
+                            filterFunction(PersonalMediaStatus.DROPPED)
                             hideFilterSheet()
                         }, modifier = Modifier
                             .fillMaxWidth(), shape = RectangleShape
                     ) {
                         Text(
                             "Dropped",
-                            color = if (filter == MediaStatus.DROPPED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            color = if (filter == PersonalMediaStatus.DROPPED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     TextButton(
                         onClick = {
-                            filterFunction(MediaStatus.COMPLETED)
+                            filterFunction(PersonalMediaStatus.COMPLETED)
                             hideFilterSheet()
                         }, modifier = Modifier
                             .fillMaxWidth(), shape = RectangleShape
                     ) {
                         Text(
                             "Completed",
-                            color = if (filter == MediaStatus.COMPLETED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            color = if (filter == PersonalMediaStatus.COMPLETED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     TextButton(
                         onClick = {
-                            filterFunction(MediaStatus.PLANNING)
+                            filterFunction(PersonalMediaStatus.PLANNING)
                             hideFilterSheet()
                         }, modifier = Modifier
                             .fillMaxWidth(), shape = RectangleShape
                     ) {
                         Text(
                             "Planning",
-                            color = if (filter == MediaStatus.PLANNING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            color = if (filter == PersonalMediaStatus.PLANNING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -373,20 +373,20 @@ private fun MyMedia(
 
 @Composable
 private fun ModalSheetTextButton(
-    filterFunction: (MediaStatus) -> Unit,
+    filterFunction: (PersonalMediaStatus) -> Unit,
     hideFilterSheet: () -> Unit,
-    filter: MediaStatus
+    filter: PersonalMediaStatus
 ) {
     TextButton(
         onClick = {
-            filterFunction(MediaStatus.UNKNOWN)
+            filterFunction(PersonalMediaStatus.UNKNOWN)
             hideFilterSheet()
         }, modifier = Modifier
             .fillMaxWidth(), shape = RectangleShape
     ) {
         Text(
             stringResource(R.string.all),
-            color = if (filter == MediaStatus.UNKNOWN) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            color = if (filter == PersonalMediaStatus.UNKNOWN) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -395,8 +395,8 @@ private fun ModalSheetTextButton(
 @OptIn(ExperimentalFoundationApi::class)
 private fun MyMediaLazyList(
     it: PaddingValues,
-    filter: MediaStatus,
-    myMedia: Map<MediaStatus, List<Media>>?,
+    filter: PersonalMediaStatus,
+    myMedia: Map<PersonalMediaStatus, List<Media>>?,
     navigateToDetails: (Int) -> Unit,
     increaseEpisodeProgress: (entryId: Int, newProgress: Int) -> Unit,
     increaseVolumeProgress: (entryId: Int, newProgress: Int) -> Unit,
@@ -404,7 +404,7 @@ private fun MyMediaLazyList(
     isAnime: Boolean,
 ) {
     LazyColumn(modifier = Modifier.padding(top = it.calculateTopPadding())) {
-        if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.CURRENT) {
+        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.CURRENT) {
             stickyHeader {
                 MyMediaHeadline(
                     if (isAnime) stringResource(id = R.string.watching) else stringResource(
@@ -412,7 +412,7 @@ private fun MyMediaLazyList(
                     )
                 )
             }
-            items(myMedia?.get(MediaStatus.CURRENT).orEmpty()) { media ->
+            items(myMedia?.get(PersonalMediaStatus.CURRENT).orEmpty()) { media ->
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
@@ -423,7 +423,7 @@ private fun MyMediaLazyList(
                 )
             }
         }
-        if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.REPEATING) {
+        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.REPEATING) {
             stickyHeader {
                 MyMediaHeadline(
                     text = if (isAnime) stringResource(id = R.string.rewatching) else stringResource(
@@ -431,7 +431,7 @@ private fun MyMediaLazyList(
                     )
                 )
             }
-            items(myMedia?.get(MediaStatus.REPEATING).orEmpty()) { media ->
+            items(myMedia?.get(PersonalMediaStatus.REPEATING).orEmpty()) { media ->
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
@@ -442,7 +442,7 @@ private fun MyMediaLazyList(
                 )
             }
         }
-        if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.PLANNING) {
+        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.PLANNING) {
             stickyHeader {
                 MyMediaHeadline(
                     text = if (isAnime) stringResource(R.string.plan_to_watch) else stringResource(
@@ -450,7 +450,7 @@ private fun MyMediaLazyList(
                     )
                 )
             }
-            items(myMedia?.get(MediaStatus.PLANNING).orEmpty()) { media ->
+            items(myMedia?.get(PersonalMediaStatus.PLANNING).orEmpty()) { media ->
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
@@ -461,9 +461,9 @@ private fun MyMediaLazyList(
                 )
             }
         }
-        if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.COMPLETED) {
+        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.COMPLETED) {
             stickyHeader { MyMediaHeadline(text = stringResource(R.string.completed)) }
-            items(myMedia?.get(MediaStatus.COMPLETED).orEmpty()) { media ->
+            items(myMedia?.get(PersonalMediaStatus.COMPLETED).orEmpty()) { media ->
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
@@ -474,9 +474,9 @@ private fun MyMediaLazyList(
                 )
             }
         }
-        if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.DROPPED) {
+        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.DROPPED) {
             stickyHeader { MyMediaHeadline(text = stringResource(R.string.dropped)) }
-            items(myMedia?.get(MediaStatus.DROPPED).orEmpty()) { media ->
+            items(myMedia?.get(PersonalMediaStatus.DROPPED).orEmpty()) { media ->
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
@@ -487,11 +487,11 @@ private fun MyMediaLazyList(
                 )
             }
         }
-        if (filter == MediaStatus.UNKNOWN || filter == MediaStatus.PAUSED) {
+        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.PAUSED) {
             stickyHeader {
                 MyMediaHeadline(text = "Paused")
             }
-            items(myMedia?.get(MediaStatus.PAUSED).orEmpty()) { media ->
+            items(myMedia?.get(PersonalMediaStatus.PAUSED).orEmpty()) { media ->
                 MediaCard(
                     navigateToDetails,
                     increaseEpisodeProgress,
@@ -647,9 +647,9 @@ fun DatePickerDialogue(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun DropDownMenuStatus(
-    selectedOptionText: MediaStatus,
+    selectedOptionText: PersonalMediaStatus,
     isAnime: Boolean,
-    setSelectedOptionText: (MediaStatus) -> Unit,
+    setSelectedOptionText: (PersonalMediaStatus) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     // We want to react on tap/press on TextField to show menu
@@ -674,7 +674,7 @@ fun DropDownMenuStatus(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
-            MediaStatus.values().forEach { selectionOption ->
+            PersonalMediaStatus.values().forEach { selectionOption ->
                 DropdownMenuItem(
                     text = { Text(selectionOption.getString(isAnime)) },
                     onClick = {
@@ -995,7 +995,7 @@ fun MyAnimePreview() {
     MyMedia(
         isAnime = false,
         myMedia = mapOf(
-            MediaStatus.CURRENT to listOf(
+            PersonalMediaStatus.CURRENT to listOf(
                 Media(
                     title = "鬼滅の刃",
                     format = "TV",

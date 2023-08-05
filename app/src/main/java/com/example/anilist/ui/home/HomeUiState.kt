@@ -15,6 +15,7 @@ data class HomeUiState(
     val pagerUpcomingNextSeason: LazyPagingItems<Media>,
     val pagerAllTimePopular: LazyPagingItems<Media>,
     val pagerTop100Anime: LazyPagingItems<Media>,
+    val pagerPopularManhwa: LazyPagingItems<Media>,
     val searchResultsMedia: LazyPagingItems<Media>,
     val searchResultsCharacter: LazyPagingItems<CharacterDetail>,
     val searchResultsStaff: LazyPagingItems<StaffDetail>,
