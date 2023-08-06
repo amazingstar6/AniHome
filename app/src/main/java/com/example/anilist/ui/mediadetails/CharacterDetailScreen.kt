@@ -82,7 +82,6 @@ fun CharacterDetailScreen(
     onNavigateBack: () -> Unit,
 ) {
     val character by mediaDetailsViewModel.character.observeAsState()
-//    val isFavourite by mediaDetailsViewModel.isFavouriteCharacter.observeAsState(false)
     mediaDetailsViewModel.fetchCharacter(id)
     Scaffold(topBar = {
         TopAppBar(title = {
@@ -119,10 +118,6 @@ fun CharacterDetailScreen(
             )
         }
     }
-//    if (character != null) {
-//    } else {
-//        LoadingCircle()
-//    }
 }
 
 @Composable
@@ -152,10 +147,14 @@ private fun CharacterDetail(
         if (character.description != "") {
             Description(character.description)
         }
-        Headline("Voice actors")
-        VoiceActors(character.voiceActors, onNavigateToStaff)
-        Headline("Related media")
-        RelatedMedia(character.relatedMedia, onNavigateToMedia)
+        if (character.voiceActors.isNotEmpty()) {
+            Headline("Voice actors")
+            VoiceActors(character.voiceActors, onNavigateToStaff)
+        }
+        if (character.relatedMedia.isNotEmpty()) {
+            Headline("Related media")
+            RelatedMedia(character.relatedMedia, onNavigateToMedia)
+        }
     }
 }
 

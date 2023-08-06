@@ -47,7 +47,6 @@ query getMediaDetail($id: Int!, $userId: Int!, $skipMediaList: Boolean = false) 
         isLicensed
         source
         hashtag
-        # what is the id?
         trailer {
             id
             site
@@ -67,7 +66,7 @@ query getMediaDetail($id: Int!, $userId: Int!, $skipMediaList: Boolean = false) 
         meanScore
         # number of users with the media on their list
         popularity
-        #     Locked media may not be added to lists our favorited. This may be due to the entry pending for deletion or other reasons.
+        # Locked media may not be added to lists or favorited. This may be due to the entry pending for deletion or other reasons.
         isLocked
         # amount of related activity in the past hour
         trending

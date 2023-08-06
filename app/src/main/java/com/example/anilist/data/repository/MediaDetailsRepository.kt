@@ -13,6 +13,7 @@ import com.example.anilist.GetStaffInfoQuery
 import com.example.anilist.MainActivity
 import com.example.anilist.RateReviewMutation
 import com.example.anilist.ToggleFavoriteCharacterMutation
+import com.example.anilist.data.models.AniCharacterRole
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.CharacterMediaConnection
@@ -33,6 +34,7 @@ import com.example.anilist.data.models.Stats
 import com.example.anilist.data.models.Status
 import com.example.anilist.data.models.Tag
 import com.example.anilist.fragment.StaffMedia
+import com.example.anilist.type.CharacterRole
 import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaRankType
 import com.example.anilist.type.MediaRelation
@@ -202,7 +204,7 @@ class MediaDetailsRepository @Inject constructor() {
                 CharacterWithVoiceActor(
                     id = character?.node?.id ?: -1,
                     name = character?.node?.name?.userPreferred ?: "",
-                    role = character?.role?.name ?: "",
+                    role = character?.role?.toAniRole() ?: AniCharacterRole.UNKNOWN,
                     coverImage = character?.node?.image?.large ?: "",
                 ),
             )
@@ -789,28 +791,41 @@ class MediaDetailsRepository @Inject constructor() {
         }
 
     private fun parseCharacters(anime: GetMediaDetailQuery.Media?): List<CharacterWithVoiceActor> {
-        val languages: MutableList<String> = mutableListOf()
         val characterWithVoiceActors: MutableList<CharacterWithVoiceActor> = mutableListOf()
-        for (character in anime?.characters?.edges.orEmpty()) {
-            for (voiceActor in character?.voiceActorRoles.orEmpty()) {
-                if (languages.contains(voiceActor?.voiceActor?.languageV2) &&
-                    voiceActor?.voiceActor?.languageV2 != null
-                ) {
-                    languages.add(voiceActor.voiceActor.languageV2)
+        if (anime?.type == MediaType.ANIME) {
+            val languages: MutableList<String> = mutableListOf()
+            for (character in anime?.characters?.edges.orEmpty()) {
+                for (voiceActor in character?.voiceActorRoles.orEmpty()) {
+                    if (languages.contains(voiceActor?.voiceActor?.languageV2) &&
+                        voiceActor?.voiceActor?.languageV2 != null
+                    ) {
+                        languages.add(voiceActor.voiceActor.languageV2)
+                    }
+                    if (character != null && voiceActor != null) {
+                        characterWithVoiceActors.add(
+                            CharacterWithVoiceActor(
+                                id = character.node?.id ?: 0,
+                                voiceActorId = voiceActor.voiceActor?.id ?: -1,
+                                name = character.node?.name?.native ?: "",
+                                coverImage = character.node?.image?.large ?: "",
+                                voiceActorName = voiceActor.voiceActor?.name?.userPreferred ?: "",
+                                voiceActorCoverImage = voiceActor.voiceActor?.image?.large ?: "",
+                                voiceActorLanguage = voiceActor.voiceActor?.languageV2 ?: "",
+                                role = character.role.toAniRole()
+                            ),
+                        )
+                    }
                 }
-                if (character != null && voiceActor != null) {
-                    characterWithVoiceActors.add(
-                        CharacterWithVoiceActor(
-                            id = character.node?.id ?: 0,
-                            voiceActorId = voiceActor.voiceActor?.id ?: -1,
-                            name = character.node?.name?.native ?: "",
-                            coverImage = character.node?.image?.large ?: "",
-                            voiceActorName = voiceActor.voiceActor?.name?.userPreferred ?: "",
-                            voiceActorCoverImage = voiceActor.voiceActor?.image?.large ?: "",
-                            voiceActorLanguage = voiceActor.voiceActor?.languageV2 ?: "",
-                        ),
-                    )
-                }
+            }
+        } else if (anime?.type == MediaType.MANGA) {
+            for (character in anime.characters?.edges.orEmpty()) {
+                characterWithVoiceActors.add(
+                    CharacterWithVoiceActor(
+                        id = character?.node?.id ?: 0,
+                        name = character?.node?.name?.native ?: "",
+                        coverImage = character?.node?.image?.large ?: "",
+                        role = character?.role.toAniRole()
+                ))
             }
         }
         return characterWithVoiceActors
@@ -832,6 +847,16 @@ class MediaDetailsRepository @Inject constructor() {
         return list
     }
 
+}
+
+private fun CharacterRole?.toAniRole(): AniCharacterRole {
+    return when(this) {
+        CharacterRole.MAIN -> AniCharacterRole.MAIN
+        CharacterRole.SUPPORTING -> AniCharacterRole.SUPPORTING
+        CharacterRole.BACKGROUND -> AniCharacterRole.BACKGROUND
+        CharacterRole.UNKNOWN__ -> AniCharacterRole.UNKNOWN
+        null -> AniCharacterRole.UNKNOWN
+    }
 }
 
 private fun MediaRelation?.toAniRelation(): RelationTypes {

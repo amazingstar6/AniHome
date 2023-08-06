@@ -271,6 +271,7 @@ fun MediaDetail(
 
                         1 -> {
                             Characters(
+                                isAnime = isAnime,
                                 media?.characterWithVoiceActors.orEmpty()
                                     .map { it.voiceActorLanguage }
                                     .distinct(),
@@ -526,6 +527,7 @@ private fun AniDetailTabs(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Characters(
+    isAnime: Boolean,
     languages: List<String>,
     characterWithVoiceActors: List<CharacterWithVoiceActor>,
     navigateToCharacter: (Int) -> Unit,
@@ -533,27 +535,29 @@ fun Characters(
 ) {
     if (characterWithVoiceActors.isNotEmpty()) {
         var selected by remember { mutableIntStateOf(0) }
-        Column {
+        Column(modifier = Modifier.fillMaxHeight()) {
             val lazyGridState = rememberLazyGridState()
             val coroutineScope = rememberCoroutineScope()
-            LazyRow(
-                modifier = Modifier.padding(
+            if (isAnime) {
+                LazyRow(
+                    modifier = Modifier.padding(
 //                    horizontal = Dimens.PaddingNormal,
-                    vertical = Dimens.PaddingSmall
-                )
-            ) {
-                itemsIndexed(languages) { index, language ->
-                    FilterChip(
-                        selected = selected == index,
-                        onClick = {
-                            coroutineScope.launch {
-                                lazyGridState.animateScrollToItem(0)
-                            }
-                            selected = index
-                        },
-                        label = { Text(text = language) },
-                        modifier = Modifier.padding(start = Dimens.PaddingNormal),
+                        vertical = Dimens.PaddingSmall
                     )
+                ) {
+                    itemsIndexed(languages) { index, language ->
+                        FilterChip(
+                            selected = selected == index,
+                            onClick = {
+                                coroutineScope.launch {
+                                    lazyGridState.animateScrollToItem(0)
+                                }
+                                selected = index
+                            },
+                            label = { Text(text = language) },
+                            modifier = Modifier.padding(start = Dimens.PaddingNormal),
+                        )
+                    }
                 }
             }
             LazyVerticalGrid(
@@ -583,23 +587,25 @@ fun Characters(
 //                                    .fillMaxWidth(),
                             )
                         }
-                        Column(
-                            modifier = Modifier
-                                .clickable { navigateToStaff(character.voiceActorId) }
-                                .padding(12.dp)
-                                .align(Alignment.CenterHorizontally),
-
-                            ) {
-                            ProfilePicture(character.voiceActorCoverImage, character.voiceActorName)
-                            Text(
-                                text = character.voiceActorName,
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                textAlign = TextAlign.Center,
+                        if (isAnime) {
+                            Column(
                                 modifier = Modifier
-                                    .padding(top = 6.dp, bottom = 6.dp)
-                                    .fillMaxWidth(),
-                            )
+                                    .clickable { navigateToStaff(character.voiceActorId) }
+                                    .padding(12.dp)
+                                    .align(Alignment.CenterHorizontally),
+
+                                ) {
+                                ProfilePicture(character.voiceActorCoverImage, character.voiceActorName)
+                                Text(
+                                    text = character.voiceActorName,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .padding(top = 6.dp, bottom = 6.dp)
+                                        .fillMaxWidth(),
+                                )
+                            }
                         }
                     }
                 }
@@ -1149,6 +1155,7 @@ fun IconWithText(
 @Composable
 fun CharactersPreview() {
     Characters(
+        isAnime = false,
         listOf("Japanese", "Portuguese", "English", "French"),
         characterWithVoiceActors = listOf(
             CharacterWithVoiceActor(

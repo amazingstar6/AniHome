@@ -39,49 +39,54 @@ fun StaffScreen(
     onNavigateToStaff: (Int) -> Unit,
 ) {
     val state = rememberLazyGridState()
-    LazyVerticalGrid(state = state, columns = GridCells.Fixed(2), content = {
-        items(
-            staffList.itemCount,
-        ) { index ->
-            val staff = staffList[index]
-            if (staff != null) {
-                Row(
-                    modifier = Modifier
-                        .padding(Dimens.PaddingNormal)
-                        .clickable {
-                            onNavigateToStaff(staff.id)
-                        },
-                ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current).data(staff.coverImage)
-                            .crossfade(true).build(),
-                        contentDescription = "",
-                        placeholder = painterResource(id = R.drawable.no_image),
-                        fallback = painterResource(id = R.drawable.no_image),
-                        contentScale = ContentScale.FillHeight,
+    LazyVerticalGrid(
+        modifier = Modifier.fillMaxHeight(),
+        state = state,
+        columns = GridCells.Fixed(2),
+        content = {
+            items(
+                staffList.itemCount,
+            ) { index ->
+                val staff = staffList[index]
+                if (staff != null) {
+                    Row(
                         modifier = Modifier
-                            .fillMaxHeight()
+                            .padding(Dimens.PaddingNormal)
+                            .clickable {
+                                onNavigateToStaff(staff.id)
+                            },
+                    ) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(staff.coverImage)
+                                .crossfade(true).build(),
+                            contentDescription = "",
+                            placeholder = painterResource(id = R.drawable.no_image),
+                            fallback = painterResource(id = R.drawable.no_image),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxHeight()
 //                        .width(100.dp)
-                            .padding(end = Dimens.PaddingNormal)
-                            .clip(MaterialTheme.shapes.medium),
+                                .padding(end = Dimens.PaddingNormal)
+                                .clip(MaterialTheme.shapes.medium),
 
-                        )
-                    Column() {
-                        Text(
-                            text = staff.name,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            text = staff.role,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                            )
+                        Column() {
+                            Text(
+                                text = staff.name,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = staff.role,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }
-        }
-    })
+        })
 }
 
 //@Preview(showBackground = true)

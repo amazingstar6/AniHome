@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.anilist.R
@@ -153,7 +154,7 @@ fun VoiceCharacters(characterWithVoiceActors: List<CharacterWithVoiceActor>, onN
             ImageWithTitleAndSubTitle(
                 character.coverImage,
                 character.name,
-                character.role,
+                character.role.toString(LocalContext.current),
                 character.id,
                 onNavigateToCharacter,
             )
