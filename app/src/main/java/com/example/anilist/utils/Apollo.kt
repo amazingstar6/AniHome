@@ -3,9 +3,13 @@ package com.example.anilist.utils
 import android.util.Log
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.http.HttpHeader
+import com.apollographql.apollo3.api.http.HttpRequest
+import com.apollographql.apollo3.api.http.HttpResponse
 import com.apollographql.apollo3.cache.normalized.api.CacheResolver
 import com.apollographql.apollo3.cache.normalized.api.MemoryCacheFactory
 import com.apollographql.apollo3.cache.normalized.normalizedCache
+import com.apollographql.apollo3.network.http.HttpInterceptor
+import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.apollographql.apollo3.network.okHttpClient
 import com.example.anilist.MainActivity
 import com.example.anilist.data.models.Notification
@@ -36,13 +40,15 @@ class Apollo {
         ) else emptyList()
         val apolloClient =
             ApolloClient.Builder()
-                .httpHeaders(headers)
+//                .httpHeaders(headers)
 //                .okHttpClient(
 //                    OkHttpClient.Builder().addInterceptor(AuthorizationInterceptor()).build()
 //                )
                 //fixme i don't think cache works (in general) //for deleting
 //                .normalizedCache(cacheFactory)
-                .serverUrl("https://graphql.anilist.co").build()
+                .serverUrl("https://graphql.anilist.co")
+                .addHttpInterceptor(AuthorizationInterceptor(accessCode))
+                .build()
 
         // todo function does not work, we take it directly from mainActivity in the above snippet anyway, that's why it sitll works
         fun setAccessCode(newAccessCode: String) {
@@ -58,20 +64,12 @@ class Apollo {
         }
     }
 }
-
-private class AuthorizationInterceptor : Interceptor {
-    override fun intercept(chain: Interceptor.Chain): Response {
-        val request = chain.request().newBuilder()
-            .header("Authorization", "Bearer ${MainActivity.accessCode}")
-//            .apply {
-//                if (MainActivity.accessCode != "") {
-//                    addHeader("Authorization", "Bearer ${MainActivity.accessCode}")
-//                }
-//            }
-            .build()
-        return chain.proceed(request)
+class AuthorizationInterceptor(val token: String) : HttpInterceptor {
+    override suspend fun intercept(request: HttpRequest, chain: HttpInterceptorChain): HttpResponse {
+        return chain.proceed(request.newBuilder().addHeader("Authorization", "Bearer $token").build())
     }
 }
+
 
 enum class ResultStatus {
     SUCCESSFUL,

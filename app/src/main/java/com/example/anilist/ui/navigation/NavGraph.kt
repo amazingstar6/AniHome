@@ -29,7 +29,6 @@ import com.example.anilist.ui.mediadetails.StaffDetailScreen
 import com.example.anilist.ui.mediadetails.StudioDetailScreen
 import com.example.anilist.ui.mediadetails.UserDetailScreen
 import com.example.anilist.ui.mymedia.MyMediaScreen
-import com.example.anilist.ui.mymedia.StatusEditor
 
 private const val TAG = "AniNavGraph"
 
@@ -100,7 +99,6 @@ fun AniNavHost(
                 navigateToCharacter = navigationActions::navigateToCharacter,
                 onNavigateToStaff = navigationActions::navigateToStaff,
                 onNavigateToLargeCover = navigationActions::navigateToLargeCover,
-                onNavigateToStatusEditor = navigationActions::navigateToStatusEditor,
                 navigateToStudioDetails = navigationActions::navigateToStudio
             )
         }
@@ -174,13 +172,6 @@ fun AniNavHost(
                     coverImage = navBackStackEntry.arguments?.getString("imageString") ?: "",
                     navigateBack = navigationActions::navigateBack
                 )
-            })
-        composable(route = AniListRoute.STATUS_EDITOR + "/{mediaId}",
-            arguments = listOf(navArgument("mediaId") { type = NavType.StringType }),
-            content = { navBackStackEntry ->
-                navBackStackEntry.arguments?.getInt("mediaId")?.let {
-                    StatusEditor(listEntryId = it)
-                }
             })
         composable(
             AniListRoute.NOTIFICATION_ROUTE,

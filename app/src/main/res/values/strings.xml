@@ -83,6 +83,8 @@
     <string name="background">Background</string>
     <string name="supporting">Supporting</string>
     <string name="main">Main</string>
+    <string name="plus_one_episode">+ 1 ep</string>
+    <string name="edit">Edit</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>

@@ -910,7 +910,6 @@ fun AnimeCard(
             contentDescription = "Cover of $title",
             contentScale = ContentScale.Crop,
             modifier = Modifier
-//                .fillMaxWidth()
                 .height(160.dp)
                 .clip(RoundedCornerShape(12.dp)),
 

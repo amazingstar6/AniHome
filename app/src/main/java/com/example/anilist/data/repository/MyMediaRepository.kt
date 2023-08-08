@@ -5,9 +5,9 @@ import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.DeleteEntryMutation
 import com.example.anilist.GetMyMediaQuery
-import com.example.anilist.IncreaseEpisodeProgressMutation
 import com.example.anilist.MainActivity
 import com.example.anilist.UpdateStatusMutation
+import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StatusUpdate
@@ -24,50 +24,40 @@ private const val TAG = "MyMediaRepository"
 
 @Singleton
 class MyMediaRepository @Inject constructor() {
-    suspend fun getMyMedia(isAnime: Boolean): Map<PersonalMediaStatus, List<Media>> {
+    suspend fun getMyMedia(isAnime: Boolean): AniResult<Map<PersonalMediaStatus, List<Media>>> {
         try {
-//            val currentUser = ApolloClient.Builder().httpHeaders(
-//                listOf(
-//                    HttpHeader(
-//                        "Authorization",
-//                        "Bearer " + "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjI0MzFmYjM2MjMwNWFiM2Y2NzI5MmNlMGY4M2RmOGM0MmM1NGI0NmEyYmI5NjNlN2ZiODA1YzI1YTU0ZGU4ZjJmZTk5NWUxMDEwNGRiNWUxIn0.eyJhdWQiOiIxMzYxNiIsImp0aSI6IjI0MzFmYjM2MjMwNWFiM2Y2NzI5MmNlMGY4M2RmOGM0MmM1NGI0NmEyYmI5NjNlN2ZiODA1YzI1YTU0ZGU4ZjJmZTk5NWUxMDEwNGRiNWUxIiwiaWF0IjoxNjg5NzYwNTQ3LCJuYmYiOjE2ODk3NjA1NDcsImV4cCI6MTcyMTM4Mjk0Nywic3ViIjoiODA4NjI2Iiwic2NvcGVzIjpbXX0.RD0LdCD8AmzNlJM_OIWbrPz-Ec9RBKZrtGE0vWhvM7G9cs5vWf4WF3QGrd0P5k5-YZJB_Cr7YJCe8mV_n2B0yHm3Ia0kde7gdRx1V9aaXDRNH-MNidYjVq-RuVLfkI-bgw82vGXQ42Y_dhFZypJiYdh2SYIY09OWgNqwvxLu-D-EYVJMBEdsWbd6RRJdKzyCQ0EMsUxgmBCgHuMt2KghA5FMhTj_eWzT30rEs1ziREGTpIz_aJS-pHed8husWF-WhwC0YY0r0NXbuge--tpGvGd8ShJb2AQ0lDvQ7JomvFlkqEUXZf7jC_rQqeLApKqnx-iwCTy-0JMDLuRGHkvXtn6pGCgdFwySTLfoMYInXX3vuYMxlfuheINkkx2qL5n51PlMRXRaADfH_C2jmFFU5fNLHFSmTE_tvVMMdflEmQWwt1htz1g-EZp9wGMC88j56fXpoNeI4htppkOWn5mLioyZFoX5hqD7zPu3yQd6A9cistkQWvz0VBIOGQH0d-5eKlVkHIQpP289cx3ho2abxBmilDQsF0RhOueLaSPHtsuyuvOie-gcvmQUPYuMEkwUpEvyxrXqg976YwTGCcN1Rl6BG4RhCgj5ngF3HhPTj4HSO1X5-gynKLcL3S61yjD6je3WecFrYqj8xStZekffuYcD0TKyAOYE0BQndC7xQTg"
-//                    )
-//                )
-//            ).serverUrl("https://graphql.anilist.co").build().query(GetCurrentUserQuery()).execute()
-//            val currentUser = Apollo.apolloClient.query(GetCurrentUserQuery()).execute()
-//            val userId = currentUser.data?.Viewer?.id ?: -1
-            Log.d(TAG, "Found user id ${MainActivity.userId}")
-
             val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
             val result =
                 Apollo.apolloClient.query(GetMyMediaQuery(param, MainActivity.userId))
                     .execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
-                Log.d(TAG, result.errors.toString())
+                return AniResult.Failure(buildString { result.errors?.forEach { append(it.message + "\n") } })
             }
             val data = result.data
-            if (data != null) {
+            return if (data != null) {
                 val resultMap = mutableMapOf<PersonalMediaStatus, List<Media>>()
                 for (statusList in data.MediaListCollection?.lists.orEmpty()) {
                     val list = mutableListOf<Media>()
                     for (entries in statusList?.entries.orEmpty()) {
-                        list.add(parseMedia(entries?.myMedia, statusList?.status?.toAniStatus()))
+                        list.add(parseMedia(entries?.myMedia))
                     }
-                    resultMap[statusList?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN] = list
+                    resultMap[statusList?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN] =
+                        list
                 }
-                return resultMap
+                AniResult.Success(resultMap)
+            } else {
+                AniResult.Failure("Data received was empty")
             }
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
-            Log.d(TAG, exception.message ?: "No error message given")
+            return AniResult.Failure(exception.message ?: "No exception message given")
         }
-        return emptyMap()
     }
 
     suspend fun updateProgress(
         statusUpdate: StatusUpdate,
-    ): Media {
+    ): AniResult<Media> {
         Log.d(TAG, "changing status of entry list id ${statusUpdate.entryListId}")
         try {
             val status = when (statusUpdate.status) {
@@ -183,20 +173,50 @@ class MyMediaRepository @Inject constructor() {
                 ).execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
-                Log.d(TAG, result.errors.toString())
+                return AniResult.Failure(buildString { result.errors?.forEach { appendLine(it.message) } })
             }
-            return parseMedia(
-                result.data?.SaveMediaListEntry?.myMedia,
-                statusUpdate.status //fixme
-            )
+
+            return if (result.data != null) {
+                AniResult.Success(
+                    parseMedia(result.data?.SaveMediaListEntry?.myMedia)
+                )
+            } else {
+                Log.d(TAG, statusUpdate.toString())
+                Log.d(TAG, result.exception?.message ?: "No message")
+                AniResult.Failure("Failed updating progress, please try again")
+            }
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
-            Log.d(TAG, exception.message ?: "No exception message")
-            return Media()
+            return AniResult.Failure(exception.message ?: "No exception message given")
         }
     }
 
-    private fun parseMedia(data: MyMedia?, status: PersonalMediaStatus?): Media {
+    /**
+     * Delete a media list entry
+     * @param entryListId id of the list entry (not the media id!)
+     * @return whether the deletion was successful
+     */
+    suspend fun deleteEntry(entryListId: Int): Boolean {
+        try {
+            val result =
+                Apollo.apolloClient.mutation(
+                    DeleteEntryMutation(
+                        entryListId
+                    ),
+                ).execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+                Log.d(TAG, result.errors.toString())
+            }
+            return result.data?.DeleteMediaListEntry?.deleted ?: false
+        } catch (exception: ApolloException) {
+            // handle exception here,, these are mainly for network errors
+            Log.d(TAG, exception.message ?: "No exception message")
+            return false
+        }
+    }
+
+    private fun parseMedia(data: MyMedia?): Media {
         return Media(
             id = data?.media?.id ?: -1,
             listEntryId = data?.id ?: -1,
@@ -231,78 +251,11 @@ class MyMediaRepository @Inject constructor() {
                 null
             },
             rawScore = data?.score ?: -1.0,
-            personalStatus = status ?: PersonalMediaStatus.UNKNOWN
+            personalStatus = data?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN,
+            updatedAt = data?.updatedAt ?: -1
         )
     }
-
-    suspend fun increaseEpisodeProgress(mediaId: Int, newProgress: Int): Int {
-        Log.i(TAG, "Episode progress is being increased")
-        try {
-            val result =
-                Apollo.apolloClient.mutation(
-                    IncreaseEpisodeProgressMutation(
-                        mediaId,
-                        newProgress,
-                    ),
-                ).execute()
-            if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
-                Log.d(TAG, result.errors.toString())
-            }
-            return result.data?.SaveMediaListEntry?.progress ?: -1
-        } catch (exception: ApolloException) {
-            // handle exception here,, these are mainly for network errors
-            Log.d(TAG, exception.message ?: "No exception message")
-            return -1
-        }
-    }
-
-    /**
-     * Delete a media list entry
-     * @param id id of the list entry (not the media id!)
-     * @return whether the deletion was successful
-     */
-    suspend fun deleteEntry(id: Int): Boolean {
-        try {
-            val result =
-                Apollo.apolloClient.mutation(
-                    DeleteEntryMutation(
-                        id
-                    ),
-                ).execute()
-            if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
-                Log.d(TAG, result.errors.toString())
-            }
-            return result.data?.DeleteMediaListEntry?.deleted ?: false
-        } catch (exception: ApolloException) {
-            // handle exception here,, these are mainly for network errors
-            Log.d(TAG, exception.message ?: "No exception message")
-            return false
-        }
-    }
 }
-
-// suspend fun reloadMedia(isAnime: Boolean): List<Media> {
-//    try {
-//        val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
-//        val result =
-//            Apollo.apolloClient.query(GetMyMediaQuery(Optional.present(param)))
-//                .execute()
-//        if (result.hasErrors()) {
-//            // these errors are related to GraphQL errors
-// //                emit(ResultData(ResultStatus.ERROR, result.errors.toString()))
-//        }
-//        val data = result.data
-//        if (data != null) {
-//            return parseMedia(data)
-//        }
-//    } catch (exception: ApolloException) {
-//        // handle exception here,, these are mainly for network errors
-// //            emit(ResultData(ResultStatus.ERROR, exception.message ?: "No error message"))
-//    }
-//    return emptyList()
-// }
 
 fun MediaListStatus.toAniStatus(): PersonalMediaStatus {
     return when (this) {

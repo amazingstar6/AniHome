@@ -1,13 +1,15 @@
 package com.example.anilist.ui.mymedia
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.data.repository.MyMediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,68 +19,127 @@ private const val TAG = "MyMediaViewModel"
 class MyMediaViewModel @Inject constructor(
     private val myMediaRepository: MyMediaRepository,
 ) : ViewModel() {
-    private val _myAnime = MutableLiveData<Map<PersonalMediaStatus, List<Media>>>()
-    val myAnime: MutableLiveData<Map<PersonalMediaStatus, List<Media>>> = _myAnime
-    private val _myManga = MutableLiveData<Map<PersonalMediaStatus, List<Media>>>()
-    val myManga: LiveData<Map<PersonalMediaStatus, List<Media>>> = _myManga
+
+    private val _uiState: MutableStateFlow<MyMediaUiState> =
+        MutableStateFlow(MyMediaUiState.Loading)
+    val uiState = _uiState.asStateFlow()
 
     fun fetchMyMedia(isAnime: Boolean) {
+        Log.d(TAG, "Fetch media got called")
         viewModelScope.launch {
-            val data = myMediaRepository.getMyMedia(isAnime)
-            if (isAnime) {
-                _myAnime.value = data
-            } else {
-                _myManga.value = data
+            when (val data = myMediaRepository.getMyMedia(isAnime)) {
+                is AniResult.Success -> {
+                    _uiState.value = MyMediaUiState.Success(data.data)
+                }
+
+                is AniResult.Failure -> {
+                    _uiState.value = MyMediaUiState.Error(data.error)
+                }
             }
+
+
         }
     }
 
+    /**
+     * Updates the progress and changes the media list only for that updated media and sorts it by updated at descending again.
+     */
     fun updateProgress(
-        statusUpdate: StatusUpdate,
-        isAnime: Boolean
+        statusUpdate: StatusUpdate
     ) {
         viewModelScope.launch {
-            val newMedia: Media = myMediaRepository.updateProgress(
+            val newMedia = myMediaRepository.updateProgress(
                 statusUpdate,
             )
-            val data = myMediaRepository.getMyMedia(isAnime)
-            if (isAnime) {
-//                _myAnime.value = data
+            when (newMedia) {
+                is AniResult.Success -> {
+                    when (val currentList = _uiState.value) {
+                        is MyMediaUiState.Error -> Unit
+                        is MyMediaUiState.Loading -> Unit
+                        is MyMediaUiState.Success -> {
+                            val mapCopy = currentList.myMedia.mapValues { it.value.toMutableList() }
+                                .toMutableMap()
 
-                val mapCopy = _myAnime.value?.mapValues { it.value.toMutableList() }
-                mapCopy?.forEach {
-                    val indexToReplace =
-                        it.value.indexOfFirst { it.listEntryId == statusUpdate.entryListId }
-                    if (indexToReplace != -1) {
-                        it.value[indexToReplace] = newMedia
+                            // first we move the status if we need to
+                            if (statusUpdate.status != null) {
+                                // first we remove the current entry from the wrong list
+                                mapCopy.forEach {
+                                    val indexToRemove =
+                                        it.value.indexOfFirst { value -> value.listEntryId == statusUpdate.entryListId }
+                                    if (indexToRemove != -1) {
+                                        it.value.removeAt(indexToRemove)
+                                    }
+                                }
+                                // then we add the new media
+                                if (mapCopy[statusUpdate.status] != null) {
+                                    mapCopy[statusUpdate.status]!!.add(newMedia.data)
+                                } else {
+                                    mapCopy[statusUpdate.status] = mutableListOf(newMedia.data)
+                                }
+                            }
+
+                            mapCopy.forEach {
+                                val indexToReplace =
+                                    it.value.indexOfFirst { value -> value.listEntryId == statusUpdate.entryListId }
+                                if (indexToReplace != -1) {
+                                    it.value[indexToReplace] = newMedia.data
+                                }
+                            }
+
+                            // sorting the list afterwards in case any media got moved around from status
+                            mapCopy.forEach {
+                                it.value.sortByDescending { media ->
+                                    media.updatedAt
+                                }
+                            }
+                            _uiState.value = MyMediaUiState.Success(mapCopy)
+                        }
                     }
+                }
 
+                is AniResult.Failure -> {
+                    _uiState.value = MyMediaUiState.Error(newMedia.error)
                 }
-                mapCopy.let {
-                    _myAnime.value = it
-                }
-            } else {
-                _myManga.value = data
+
             }
         }
     }
 
-    fun deleteEntry(id: Int, isAnime: Boolean) {
+    /**
+     * Deletes an entry by its entry list id and if the deletion was successful, it removes it locally as well
+     */
+    fun deleteEntry(entryListId: Int) {
         viewModelScope.launch {
-            myMediaRepository.deleteEntry(id)
-            val data = myMediaRepository.getMyMedia(isAnime)
-            if (isAnime) {
-                _myAnime.value = data
-            } else {
-                _myManga.value = data
+            val deletionIsSuccessful = myMediaRepository.deleteEntry(entryListId)
+            if (!deletionIsSuccessful) {
+                _uiState.value = MyMediaUiState.Error("Deleting entry failed, please try again")
+            }
+
+            when (val currentList = _uiState.value) {
+                is MyMediaUiState.Error -> Unit
+                is MyMediaUiState.Loading -> Unit
+                is MyMediaUiState.Success -> {
+                    val mapCopy = currentList.myMedia.mapValues { it.value.toMutableList() }
+                    mapCopy.forEach {
+                        val indexToRemove =
+                            it.value.indexOfFirst { value -> value.listEntryId == entryListId }
+                        if (indexToRemove != -1) {
+                            it.value.removeAt(indexToRemove)
+                        }
+                        it.value.sortByDescending { media ->
+                            media.updatedAt
+                        }
+                    }
+                    _uiState.value = MyMediaUiState.Success(mapCopy)
+                }
             }
         }
     }
+}
 
-//    fun increaseEpisodeProgress(mediaId: Int, newProgress: Int) {
-//        Log.i(TAG, "Episode progress is being increased in view model")
-//        viewModelScope.launch {
-//            myMediaRepository.increaseEpisodeProgress(mediaId, newProgress)
-//        }
-//    }
+
+sealed interface MyMediaUiState {
+    object Loading : MyMediaUiState
+    data class Success(val myMedia: Map<PersonalMediaStatus, List<Media>>) : MyMediaUiState
+    data class Error(val message: String) : MyMediaUiState
 }

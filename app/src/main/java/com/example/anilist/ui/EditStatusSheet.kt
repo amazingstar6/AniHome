@@ -108,10 +108,16 @@ fun EditStatusModalSheet(
                     IconButton(
                         onClick = {
                             if (unchangedMedia == currentMedia1) {
-                                Log.d(TAG, "Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1")
+                                Log.d(
+                                    TAG,
+                                    "Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1"
+                                )
                                 hideEditSheet()
                             } else {
-                                Log.d(TAG, "Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1")
+                                Log.d(
+                                    TAG,
+                                    "Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1"
+                                )
                                 showCloseConfirmation = true
                             }
                         },
@@ -196,67 +202,9 @@ fun EditStatusModalSheet(
                 setValue = { currentMedia1 = currentMedia1.copy(rewatches = it) },
                 maxCount = Int.MAX_VALUE,
             )
-            var sliderPosition by remember {
-                mutableFloatStateOf(
-                    currentMedia1.rawScore.roundToInt().toFloat(),
-                )
-            }
-            val valueRange = 0f..100f
-            var text by remember {
-                mutableStateOf("${sliderPosition.toInt()}")
-            }
-            val context = LocalContext.current
-            OutlinedTextField(
-                value = text,
-                onValueChange = { newInput ->
-                    text = try {
-                        if (newInput.toFloat() in valueRange) {
-                            newInput
-                        } else {
-                            //fixme should we make a toast?
-                            Toast.makeText(
-                                context,
-                                R.string.input_a_valid_value,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            ""
-                        }
-                    } catch (e: NumberFormatException) {
-                        ""
-                    }
-                    sliderPosition = try {
-                        if (newInput.toFloat() in valueRange) {
-                            newInput.toFloat()
-                        } else {
-                            0f
-                        }
-                    } catch (e: NumberFormatException) {
-                        0f
-                    }
-                },
-                label = { Text("Score") },
-                suffix = { Text(text = "/100") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier
-                    .padding(Dimens.PaddingNormal),
-            )
-            Slider(
-                modifier = Modifier
-                    .semantics {
-                        contentDescription = "Localized Description"
-                    }
-                    .padding(Dimens.PaddingNormal),
-                valueRange = valueRange,
-                value = sliderPosition,
-                onValueChange = {
-                    sliderPosition = it
-                    currentMedia1 =
-                        currentMedia1.copy(rawScore = it.roundToInt().toDouble())
-                    text = it.roundToInt().toString()
-                },
-                steps = 100,
-            )
+            SliderTextField(
+                currentMedia1.rawScore,
+                setRawScore = { currentMedia1 = currentMedia1.copy(rawScore = it) })
 
             DatePickerDialogue(
                 "Start date",
@@ -363,4 +311,68 @@ fun EditStatusModalSheet(
             }
         }
     }
+}
+
+@Composable
+fun SliderTextField(rawScore: Double, setRawScore: (Double) -> Unit) {
+    var sliderPosition by remember {
+        mutableFloatStateOf(
+            rawScore.roundToInt().toFloat(),
+        )
+    }
+    val valueRange = 0f..100f
+    var text by remember {
+        mutableStateOf("${sliderPosition.toInt()}")
+    }
+    val context = LocalContext.current
+    OutlinedTextField(
+        value = text,
+        onValueChange = { newInput ->
+            text = try {
+                if (newInput.toFloat() in valueRange) {
+                    newInput
+                } else {
+                    //fixme should we make a toast?
+                    Toast.makeText(
+                        context,
+                        R.string.input_a_valid_value,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    ""
+                }
+            } catch (e: NumberFormatException) {
+                ""
+            }
+            sliderPosition = try {
+                if (newInput.toFloat() in valueRange) {
+                    newInput.toFloat()
+                } else {
+                    0f
+                }
+            } catch (e: NumberFormatException) {
+                0f
+            }
+        },
+        label = { Text("Score") },
+        suffix = { Text(text = "/100") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier
+            .padding(Dimens.PaddingNormal),
+    )
+    Slider(
+        modifier = Modifier
+            .semantics {
+                contentDescription = "Localized Description"
+            }
+            .padding(Dimens.PaddingNormal),
+        valueRange = valueRange,
+        value = sliderPosition,
+        onValueChange = {
+            sliderPosition = it
+            setRawScore(it.roundToInt().toDouble())
+            text = it.roundToInt().toString()
+        },
+        steps = 100,
+    )
 }

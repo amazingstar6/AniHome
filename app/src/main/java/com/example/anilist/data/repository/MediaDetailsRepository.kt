@@ -43,7 +43,6 @@ import com.example.anilist.type.MediaType
 import com.example.anilist.type.ReviewRating
 import com.example.anilist.ui.mymedia.PersonalMediaStatus
 import com.example.anilist.utils.Apollo
-import com.patrykandpatrick.vico.core.extension.orZero
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -673,25 +672,7 @@ class MediaDetailsRepository @Inject constructor() {
                 ),
             )
         }
-//        val rawDescription = media?.description
-//        val surface =  surfaceColor.toHexString()
-//        Log.d(TAG, "surface color is $surface")
-//        val onSurface = onSurfaceColor.toHexString()
-//        Log.d(TAG, "on surface color is $onSurface")
-//        val description = """
-//            <html>
-//
-//            <style>
-//                body {color: $onSurface; background-color: $surface}
-//            </style>
-//
-//            <body>
-//            $rawDescription
-//            </body>
-//            </html>
-//        """.trimIndent()
-
-        val media2 = Media(
+        return Media(
             id = media?.id ?: -1,
             title = media?.title?.native ?: "Unknown",
             type = media?.type?.toAniHomeType()
@@ -710,12 +691,12 @@ class MediaDetailsRepository @Inject constructor() {
             infoList = MediaDetailInfoList(
                 format = media?.format?.name.orEmpty(),
                 status = media?.status?.name.orEmpty(),
-                startDate = if (media?.startDate != null) String.format(
-                    "%02d-%02d-%02d",
-                    media.startDate.day ?: "?",
-                    media.startDate.month ?: "?",
-                    media.startDate.year ?: "?"
-                ) else "Unknown",
+                startDate = if (media?.startDate != null) "${
+                    media.startDate.day?.toString()?.padStart(2, '0') ?: "?"
+                }-${
+                    media.startDate.month?.toString()?.padStart(2, '0') ?: "?"
+                }-${media.startDate.year?.toString()?.padStart(2, '0') ?: "?"}"
+                else "Unknown",
                 endDate = if (media?.endDate != null) "${
                     media.endDate.day?.toString()?.padStart(2, '0') ?: "?"
                 }-${
@@ -774,7 +755,6 @@ class MediaDetailsRepository @Inject constructor() {
             note = data?.MediaList?.notes ?: "",
             listEntryId = data?.MediaList?.id ?: -1
         )
-        return media2
     }
 
     private fun getFuzzyDate(
@@ -825,7 +805,8 @@ class MediaDetailsRepository @Inject constructor() {
                         name = character?.node?.name?.native ?: "",
                         coverImage = character?.node?.image?.large ?: "",
                         role = character?.role.toAniRole()
-                ))
+                    )
+                )
             }
         }
         return characterWithVoiceActors
@@ -850,7 +831,7 @@ class MediaDetailsRepository @Inject constructor() {
 }
 
 private fun CharacterRole?.toAniRole(): AniCharacterRole {
-    return when(this) {
+    return when (this) {
         CharacterRole.MAIN -> AniCharacterRole.MAIN
         CharacterRole.SUPPORTING -> AniCharacterRole.SUPPORTING
         CharacterRole.BACKGROUND -> AniCharacterRole.BACKGROUND

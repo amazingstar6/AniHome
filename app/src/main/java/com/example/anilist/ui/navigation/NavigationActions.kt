@@ -14,7 +14,6 @@ object AniListRoute {
     const val THREAD_DETAIL_ROUTE: String = "ThreadDetail"
     const val USER_DETAIL_ROUTE: String = "UserDetail"
     const val COVER_LARGE: String = "CoverLarge"
-    const val STATUS_EDITOR: String = "StatusEditor"
     const val SETTINGS: String = "Settings"
     const val NOTIFICATION_ROUTE: String = "Notification"
     const val HOME_ROUTE = "Home"
@@ -94,12 +93,6 @@ class AniListNavigationActions(private val navController: NavController) {
     fun navigateToLargeCover(imageString: String) {
         navController.navigate(
             route = AniListRoute.COVER_LARGE + "/$imageString"
-        )
-    }
-
-    fun navigateToStatusEditor(id: Int) {
-        navController.navigate(
-            route = AniListRoute.STATUS_EDITOR + "/$id"
         )
     }
 

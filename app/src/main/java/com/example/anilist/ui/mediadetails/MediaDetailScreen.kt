@@ -140,7 +140,6 @@ fun MediaDetail(
     navigateToCharacter: (Int) -> Unit,
     onNavigateToStaff: (Int) -> Unit,
     onNavigateToLargeCover: (String) -> Unit,
-    onNavigateToStatusEditor: (Int) -> Unit,
     navigateToStudioDetails: (Int) -> Unit
 ) {
     val media by mediaDetailsViewModel.media.observeAsState()

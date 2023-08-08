@@ -1,6 +1,5 @@
 package com.example.anilist.ui.mymedia
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -24,6 +23,8 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -42,7 +43,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -51,8 +54,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -74,6 +79,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
@@ -82,6 +88,7 @@ import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.EditStatusModalSheet
+import com.example.anilist.ui.SliderTextField
 import com.example.anilist.ui.mediadetails.LoadingCircle
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -114,30 +121,67 @@ enum class PersonalMediaStatus {
 
 private const val TAG = "MyMediaScreen"
 
+/**
+ * The hilt view model is given here and not shared between my anime and my manga,
+ * so that the my anime screen and my manga screen don't use the same ui state
+ */
 @Composable
 fun MyMediaScreen(
     myMediaViewModel: MyMediaViewModel = hiltViewModel(),
     navigateToDetails: (Int) -> Unit,
     isAnime: Boolean,
 ) {
-    val myAnime by myMediaViewModel.myAnime.observeAsState()
-    val myManga by myMediaViewModel.myManga.observeAsState()
-    myMediaViewModel.fetchMyMedia(isAnime)
-    if ((if (isAnime) myAnime else myManga) != null) {
-        MyMedia(
-            isAnime = isAnime,
-            myMedia = if (isAnime) myAnime else myManga,
-            navigateToDetails = navigateToDetails,
-            saveStatus = {
-                Log.d(TAG, "Clicked on save button!")
-                myMediaViewModel.updateProgress(isAnime = isAnime, statusUpdate = it)
-            },
-            reloadMyMedia = {
-                myMediaViewModel.fetchMyMedia(isAnime)
-            }
-        ) { myMediaViewModel.deleteEntry(it, isAnime) }
-    } else {
-        LoadingCircle()
+    val uiState by myMediaViewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(key1 = isAnime) {
+        myMediaViewModel.fetchMyMedia(isAnime)
+    }
+    when (uiState) {
+        is MyMediaUiState.Success -> {
+            MyMedia(
+                isAnime = isAnime,
+                myMedia = (uiState as MyMediaUiState.Success).myMedia,
+                navigateToDetails = navigateToDetails,
+                saveStatus = {
+                    myMediaViewModel.updateProgress(statusUpdate = it)
+                },
+                reloadMyMedia = {
+                    myMediaViewModel.fetchMyMedia(isAnime)
+                },
+                deleteListEntry = {
+                    myMediaViewModel.deleteEntry(it)
+                }
+            )
+        }
+
+        is MyMediaUiState.Loading -> {
+            LoadingCircle()
+        }
+
+        is MyMediaUiState.Error -> {
+            val errorMessage = (uiState as MyMediaUiState.Error).message
+            val reloadMedia = { myMediaViewModel.fetchMyMedia(isAnime) }
+            ErrorScreen(errorMessage, reloadMedia)
+        }
+    }
+}
+
+@Composable
+private fun ErrorScreen(errorMessage: String, reloadMedia: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(Dimens.PaddingNormal),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = errorMessage)
+        Text(text = "Check your network connections and reload your media list")
+        Button(onClick = {
+            reloadMedia()
+        }) {
+            Text(text = "Reload")
+        }
     }
 }
 
@@ -188,7 +232,14 @@ private fun MyMedia(
         modalSheetScope.launch { editSheetState.hide() }
     }
 
+    var showRatingDialog by remember { mutableStateOf(false) }
+    val openRatingDialog: (Media) -> Unit = {
+        showRatingDialog = true
+        currentMedia = it
+    }
+
     var filter by rememberSaveable { mutableStateOf(PersonalMediaStatus.UNKNOWN) }
+    val setFilter: (PersonalMediaStatus) -> Unit = { filter = it }
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(text = if (isAnime) "Watching" else "Reading") }, actions = {
@@ -268,9 +319,52 @@ private fun MyMedia(
                         )
                     )
                 },
-                showEditSheet,
-                isAnime,
+                showEditSheet = showEditSheet,
+                isAnime = isAnime,
+                openRatingDialog = openRatingDialog
             )
+            if (showRatingDialog) {
+                AlertDialog(onDismissRequest = { showRatingDialog = false }, dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showRatingDialog =
+                                false
+                        }) {
+                        Text(text = stringResource(id = R.string.cancel))
+                    }
+                }, confirmButton = {
+                    TextButton(
+                        onClick = {
+                            saveStatus(
+                                StatusUpdate(
+                                    entryListId = currentMedia.listEntryId,
+                                    progressVolumes = null,
+                                    status = null,
+                                    scoreRaw = currentMedia.rawScore.toInt(),
+                                    progress = null,
+                                    repeat = null,
+                                    priority = null,
+                                    privateToUser = null,
+                                    notes = null,
+                                    hiddenFromStatusList = null,
+                                    customLists = null,
+                                    advancedScores = null,
+                                    startedAt = null,
+                                    completedAt = null
+                                )
+                            )
+                            showRatingDialog = false
+                        }) {
+                        Text(text = "Save")
+                    }
+                }, text = {
+                    Column {
+                        SliderTextField(
+                            rawScore = currentMedia.rawScore,
+                            setRawScore = { currentMedia = currentMedia.copy(rawScore = it) })
+                    }
+                })
+            }
             if (editSheetIsVisible) {
                 EditStatusModalSheet(
                     editSheetState = editSheetState,
@@ -282,92 +376,155 @@ private fun MyMedia(
                 )
             }
             if (filterSheetIsVisible) {
-                ModalBottomSheet(
-                    sheetState = filterSheetState,
-                    onDismissRequest = hideFilterSheet,
-                ) {
-                    val filterFunction = { it: PersonalMediaStatus -> filter = it }
-                    CenterAlignedTopAppBar(title = {
-                        Text(
-                            text = stringResource(R.string.filter),
-                        )
-                    }, navigationIcon = {
-                        IconButton(
-                            onClick = hideFilterSheet,
-                            modifier = Modifier.padding(Dimens.PaddingNormal),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = stringResource(R.string.close),
-                            )
-                        }
-                    })
-                    ModalSheetTextButton(
-                        filterFunction, hideFilterSheet, filter
-                    )
-                    TextButton(
-                        onClick = {
-                            filterFunction(PersonalMediaStatus.CURRENT)
-                            hideFilterSheet()
-                        }, modifier = Modifier
-                            .fillMaxWidth(), shape = RectangleShape
-                    ) {
-                        Text(
-                            if (isAnime) stringResource(R.string.watching) else stringResource(R.string.reading),
-                            color = if (filter == PersonalMediaStatus.CURRENT) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    TextButton(
-                        onClick = {
-                            filterFunction(PersonalMediaStatus.REPEATING)
-                            hideFilterSheet()
-                        }, modifier = Modifier
-                            .fillMaxWidth(), shape = RectangleShape
-                    ) {
-                        Text(
-                            if (isAnime) stringResource(R.string.rewatching) else stringResource(R.string.rereading),
-                            color = if (filter == PersonalMediaStatus.REPEATING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    TextButton(
-                        onClick = {
-                            filterFunction(PersonalMediaStatus.DROPPED)
-                            hideFilterSheet()
-                        }, modifier = Modifier
-                            .fillMaxWidth(), shape = RectangleShape
-                    ) {
-                        Text(
-                            "Dropped",
-                            color = if (filter == PersonalMediaStatus.DROPPED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    TextButton(
-                        onClick = {
-                            filterFunction(PersonalMediaStatus.COMPLETED)
-                            hideFilterSheet()
-                        }, modifier = Modifier
-                            .fillMaxWidth(), shape = RectangleShape
-                    ) {
-                        Text(
-                            "Completed",
-                            color = if (filter == PersonalMediaStatus.COMPLETED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    TextButton(
-                        onClick = {
-                            filterFunction(PersonalMediaStatus.PLANNING)
-                            hideFilterSheet()
-                        }, modifier = Modifier
-                            .fillMaxWidth(), shape = RectangleShape
-                    ) {
-                        Text(
-                            "Planning",
-                            color = if (filter == PersonalMediaStatus.PLANNING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
+                FilterModalSheet(
+                    filterSheetState,
+                    hideFilterSheet,
+                    filter,
+                    setFilter = setFilter,
+                    isAnime
+                )
             }
         }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun FilterModalSheet(
+    filterSheetState: SheetState,
+    hideFilterSheet: () -> Unit,
+    filter: PersonalMediaStatus,
+    setFilter: (PersonalMediaStatus) -> Unit,
+    isAnime: Boolean
+) {
+    ModalBottomSheet(
+        sheetState = filterSheetState,
+        onDismissRequest = hideFilterSheet,
+    ) {
+        CenterAlignedTopAppBar(title = {
+            Text(
+                text = stringResource(R.string.filter),
+            )
+        }, navigationIcon = {
+            IconButton(
+                onClick = hideFilterSheet,
+                modifier = Modifier.padding(Dimens.PaddingNormal),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.close),
+                )
+            }
+        })
+        ModalSheetTextButton(
+            filterFunction = setFilter,
+            hideFilterSheet = hideFilterSheet,
+            filter = filter,
+            thisFilter = PersonalMediaStatus.UNKNOWN,
+            name = stringResource(R.string.all)
+        )
+        ModalSheetTextButton(
+            filterFunction = setFilter,
+            hideFilterSheet = hideFilterSheet,
+            filter = filter,
+            thisFilter = PersonalMediaStatus.CURRENT,
+            name = if (isAnime) stringResource(R.string.watching) else stringResource(R.string.reading)
+        )
+        ModalSheetTextButton(
+            filterFunction = setFilter,
+            hideFilterSheet = hideFilterSheet,
+            filter = filter,
+            thisFilter = PersonalMediaStatus.REPEATING,
+            name = if (isAnime) stringResource(R.string.rewatching) else stringResource(R.string.rereading),
+        )
+        ModalSheetTextButton(
+            filterFunction = setFilter,
+            hideFilterSheet = hideFilterSheet,
+            filter = filter,
+            thisFilter = PersonalMediaStatus.PAUSED,
+            name = "Paused"
+        )
+        ModalSheetTextButton(
+            filterFunction = setFilter,
+            hideFilterSheet = hideFilterSheet,
+            filter = filter,
+            thisFilter = PersonalMediaStatus.DROPPED,
+            name = "Dropped"
+        )
+        ModalSheetTextButton(
+            filterFunction = setFilter,
+            hideFilterSheet = hideFilterSheet,
+            filter = filter,
+            thisFilter = PersonalMediaStatus.COMPLETED,
+            name = "Completed"
+        )
+        ModalSheetTextButton(
+            filterFunction = setFilter,
+            hideFilterSheet = hideFilterSheet,
+            filter = filter,
+            thisFilter = PersonalMediaStatus.PLANNING,
+            name = "Planning"
+        )
+//        TextButton(
+//            onClick = {
+//                setFilter(PersonalMediaStatus.CURRENT)
+//                hideFilterSheet()
+//            }, modifier = Modifier
+//                .fillMaxWidth(), shape = RectangleShape
+//        ) {
+//            Text(
+//                if (isAnime) stringResource(R.string.watching) else stringResource(R.string.reading),
+//                color = if (filter == PersonalMediaStatus.CURRENT) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+//            )
+//        }
+//        TextButton(
+//            onClick = {
+//                setFilter(PersonalMediaStatus.REPEATING)
+//                hideFilterSheet()
+//            }, modifier = Modifier
+//                .fillMaxWidth(), shape = RectangleShape
+//        ) {
+//            Text(
+//                if (isAnime) stringResource(R.string.rewatching) else stringResource(R.string.rereading),
+//                color = if (filter == PersonalMediaStatus.REPEATING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+//            )
+//        }
+//        TextButton(
+//            onClick = {
+//                setFilter(PersonalMediaStatus.DROPPED)
+//                hideFilterSheet()
+//            }, modifier = Modifier
+//                .fillMaxWidth(), shape = RectangleShape
+//        ) {
+//            Text(
+//                "Dropped",
+//                color = if (filter == PersonalMediaStatus.DROPPED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+//            )
+//        }
+//        TextButton(
+//            onClick = {
+//                setFilter(PersonalMediaStatus.COMPLETED)
+//                hideFilterSheet()
+//            }, modifier = Modifier
+//                .fillMaxWidth(), shape = RectangleShape
+//        ) {
+//            Text(
+//                "Completed",
+//                color = if (filter == PersonalMediaStatus.COMPLETED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+//            )
+//        }
+//        TextButton(
+//            onClick = {
+//                setFilter(PersonalMediaStatus.PLANNING)
+//                hideFilterSheet()
+//            }, modifier = Modifier
+//                .fillMaxWidth(), shape = RectangleShape
+//        ) {
+//            Text(
+//                "Planning",
+//                color = if (filter == PersonalMediaStatus.PLANNING) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+//            )
+//        }
     }
 }
 
@@ -375,21 +532,34 @@ private fun MyMedia(
 private fun ModalSheetTextButton(
     filterFunction: (PersonalMediaStatus) -> Unit,
     hideFilterSheet: () -> Unit,
-    filter: PersonalMediaStatus
+    filter: PersonalMediaStatus,
+    thisFilter: PersonalMediaStatus,
+    name: String
 ) {
-    TextButton(
-        onClick = {
-            filterFunction(PersonalMediaStatus.UNKNOWN)
-            hideFilterSheet()
-        }, modifier = Modifier
-            .fillMaxWidth(), shape = RectangleShape
-    ) {
-        Text(
-            stringResource(R.string.all),
-            color = if (filter == PersonalMediaStatus.UNKNOWN) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-        )
+    Row() {
+        TextButton(
+            onClick = {
+                filterFunction(thisFilter)
+                hideFilterSheet()
+            }, modifier = Modifier
+                .fillMaxWidth(), shape = RectangleShape
+        ) {
+//            Icon(
+//                painter = painterResource(id = R.drawable.my_media_filter),
+//                contentDescription = "icon"
+//            )
+            Text(
+                name,
+                color = if (filter == thisFilter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
+
+data class MyMediaTypes(
+    val filter: PersonalMediaStatus,
+    val headLineId: Int
+)
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
@@ -401,105 +571,157 @@ private fun MyMediaLazyList(
     increaseEpisodeProgress: (entryId: Int, newProgress: Int) -> Unit,
     increaseVolumeProgress: (entryId: Int, newProgress: Int) -> Unit,
     showEditSheet: (Media) -> Unit,
+    openRatingDialog: (Media) -> Unit,
     isAnime: Boolean,
 ) {
     LazyColumn(modifier = Modifier.padding(top = it.calculateTopPadding())) {
+//        val listOfHeaders: List<MyMediaTypes> = listOf(
+//            MyMediaTypes(
+//                filter = PersonalMediaStatus.CURRENT,
+//                headLineId = if (isAnime) R.string.watching else
+//                    R.string.reading
+//            )
+//        )
+//        items(listOfHeaders) {
+//            stickyHeader {
+//                MyMediaHeadline(
+//                    if (isAnime) stringResource(id = R.string.watching) else stringResource(
+//                        id = R.string.reading
+//                    )
+//                )
+//            }
+//            items(myMedia?.get(PersonalMediaStatus.CURRENT).orEmpty()) { media ->
+//                MediaCard(
+//                    navigateToDetails,
+//                    increaseEpisodeProgress,
+//                    increaseVolumeProgress,
+//                    media,
+//                    { showEditSheet(media) },
+//                    isAnime = isAnime,
+//                )
+//            }
+//        }
+
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.CURRENT) {
-            stickyHeader {
-                MyMediaHeadline(
-                    if (isAnime) stringResource(id = R.string.watching) else stringResource(
-                        id = R.string.reading
+            val mediaList = myMedia?.get(PersonalMediaStatus.CURRENT).orEmpty()
+            if (mediaList.isNotEmpty()) {
+                stickyHeader {
+                    MyMediaHeadline(
+                        if (isAnime) stringResource(id = R.string.watching) else stringResource(
+                            id = R.string.reading
+                        )
                     )
-                )
-            }
-            items(myMedia?.get(PersonalMediaStatus.CURRENT).orEmpty()) { media ->
-                MediaCard(
-                    navigateToDetails,
-                    increaseEpisodeProgress,
-                    increaseVolumeProgress,
-                    media,
-                    { showEditSheet(media) },
-                    isAnime = isAnime,
-                )
+                }
+                items(myMedia?.get(PersonalMediaStatus.CURRENT).orEmpty()) { media ->
+                    MediaCard(
+                        navigateToDetails,
+                        increaseEpisodeProgress,
+                        increaseVolumeProgress,
+                        media,
+                        { showEditSheet(media) },
+                        isAnime = isAnime,
+                        openRatingDialog = { openRatingDialog(media) }
+                    )
+                }
             }
         }
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.REPEATING) {
-            stickyHeader {
-                MyMediaHeadline(
-                    text = if (isAnime) stringResource(id = R.string.rewatching) else stringResource(
-                        id = R.string.rereading
+            val mediaList = myMedia?.get(PersonalMediaStatus.REPEATING).orEmpty()
+            if (mediaList.isNotEmpty()) {
+                stickyHeader {
+                    MyMediaHeadline(
+                        text = if (isAnime) stringResource(id = R.string.rewatching) else stringResource(
+                            id = R.string.rereading
+                        )
                     )
-                )
-            }
-            items(myMedia?.get(PersonalMediaStatus.REPEATING).orEmpty()) { media ->
-                MediaCard(
-                    navigateToDetails,
-                    increaseEpisodeProgress,
-                    increaseVolumeProgress,
-                    media,
-                    { showEditSheet(media) },
-                    isAnime = isAnime,
-                )
+                }
+                items(mediaList) { media ->
+                    MediaCard(
+                        navigateToDetails,
+                        increaseEpisodeProgress,
+                        increaseVolumeProgress,
+                        media,
+                        { showEditSheet(media) },
+                        isAnime = isAnime,
+                        openRatingDialog = { openRatingDialog(media) }
+                    )
+                }
             }
         }
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.PLANNING) {
-            stickyHeader {
-                MyMediaHeadline(
-                    text = if (isAnime) stringResource(R.string.plan_to_watch) else stringResource(
-                        R.string.plan_to_read
+            val mediaList = myMedia?.get(PersonalMediaStatus.PLANNING).orEmpty()
+            if (mediaList.isNotEmpty()) {
+                stickyHeader {
+                    MyMediaHeadline(
+                        text = if (isAnime) stringResource(R.string.plan_to_watch) else stringResource(
+                            R.string.plan_to_read
+                        )
                     )
-                )
-            }
-            items(myMedia?.get(PersonalMediaStatus.PLANNING).orEmpty()) { media ->
-                MediaCard(
-                    navigateToDetails,
-                    increaseEpisodeProgress,
-                    increaseVolumeProgress,
-                    media,
-                    { showEditSheet(media) },
-                    isAnime = isAnime,
-                )
+                }
+                items(mediaList) { media ->
+                    MediaCard(
+                        navigateToDetails,
+                        increaseEpisodeProgress,
+                        increaseVolumeProgress,
+                        media,
+                        { showEditSheet(media) },
+                        isAnime = isAnime,
+                        openRatingDialog = { openRatingDialog(media) }
+                    )
+                }
             }
         }
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.COMPLETED) {
-            stickyHeader { MyMediaHeadline(text = stringResource(R.string.completed)) }
-            items(myMedia?.get(PersonalMediaStatus.COMPLETED).orEmpty()) { media ->
-                MediaCard(
-                    navigateToDetails,
-                    increaseEpisodeProgress,
-                    increaseVolumeProgress,
-                    media,
-                    { showEditSheet(media) },
-                    isAnime = isAnime,
-                )
+            val mediaList = myMedia?.get(PersonalMediaStatus.COMPLETED).orEmpty()
+            if (mediaList.isNotEmpty()) {
+                stickyHeader { MyMediaHeadline(text = stringResource(R.string.completed)) }
+                items(mediaList) { media ->
+                    MediaCard(
+                        navigateToDetails,
+                        increaseEpisodeProgress,
+                        increaseVolumeProgress,
+                        media,
+                        { showEditSheet(media) },
+                        isAnime = isAnime,
+                        openRatingDialog = { openRatingDialog(media) }
+                    )
+                }
             }
         }
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.DROPPED) {
-            stickyHeader { MyMediaHeadline(text = stringResource(R.string.dropped)) }
-            items(myMedia?.get(PersonalMediaStatus.DROPPED).orEmpty()) { media ->
-                MediaCard(
-                    navigateToDetails,
-                    increaseEpisodeProgress,
-                    increaseVolumeProgress,
-                    media,
-                    { showEditSheet(media) },
-                    isAnime = isAnime,
-                )
+            val mediaList = myMedia?.get(PersonalMediaStatus.COMPLETED).orEmpty()
+            if (mediaList.isNotEmpty()) {
+                stickyHeader { MyMediaHeadline(text = stringResource(R.string.dropped)) }
+                items(myMedia?.get(PersonalMediaStatus.DROPPED).orEmpty()) { media ->
+                    MediaCard(
+                        navigateToDetails,
+                        increaseEpisodeProgress,
+                        increaseVolumeProgress,
+                        media,
+                        { showEditSheet(media) },
+                        isAnime = isAnime,
+                        openRatingDialog = { openRatingDialog(media) }
+                    )
+                }
             }
         }
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.PAUSED) {
-            stickyHeader {
-                MyMediaHeadline(text = "Paused")
-            }
-            items(myMedia?.get(PersonalMediaStatus.PAUSED).orEmpty()) { media ->
-                MediaCard(
-                    navigateToDetails,
-                    increaseEpisodeProgress,
-                    increaseVolumeProgress,
-                    media,
-                    { showEditSheet(media) },
-                    isAnime = isAnime,
-                )
+            val mediaList = myMedia?.get(PersonalMediaStatus.PAUSED).orEmpty()
+            if (mediaList.isNotEmpty()) {
+                stickyHeader {
+                    MyMediaHeadline(text = "Paused")
+                }
+                items(myMedia?.get(PersonalMediaStatus.PAUSED).orEmpty()) { media ->
+                    MediaCard(
+                        navigateToDetails,
+                        increaseEpisodeProgress,
+                        increaseVolumeProgress,
+                        media,
+                        { showEditSheet(media) },
+                        isAnime = isAnime,
+                        openRatingDialog = { openRatingDialog(media) }
+                    )
+                }
             }
         }
     }
@@ -764,13 +986,14 @@ fun NumberTextField(
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 private fun MediaCard(
     navigateToDetails: (Int) -> Unit,
     increaseEpisodeProgress: (mediaId: Int, newProgress: Int) -> Unit,
     increaseVolumeProgress: (mediaId: Int, newProgress: Int) -> Unit,
     media: Media,
     openEditStatusSheet: () -> Unit,
+    openRatingDialog: () -> Unit,
     isAnime: Boolean,
 ) {
 //    val personalEpisodeProgress by remember { mutableIntStateOf(media.personalProgress) }
@@ -810,7 +1033,7 @@ private fun MediaCard(
                         .fillMaxSize()
                         .padding(
                             top = Dimens.PaddingSmall,
-                            bottom = Dimens.PaddingSmall,
+                            bottom = Dimens.PaddingNormal,
                             start = Dimens.PaddingSmall,
                         ),
                 ) {
@@ -834,11 +1057,15 @@ private fun MediaCard(
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start,
+                            modifier = Modifier.clickable {
+                                openRatingDialog()
+                            }
                         ) {
                             Icon(
                                 painterResource(id = R.drawable.anime_details_rating_star),
                                 contentDescription = "star",
                                 tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.padding(end = 2.dp)
                             )
                             Text(
                                 text = media.personalRating.div(10).toString(),
@@ -877,15 +1104,25 @@ private fun MediaCard(
                             )
                         }
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        IconButton(
-                            onClick = openEditStatusSheet,
-                            //                        modifier = Modifier.weight(1f, false)
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxHeight()
+                    ) {
+                        PlainTooltipBox(
+                            tooltip = { Text(text = stringResource(R.string.edit)) },
+//                            modifier = Modifier.align(Alignment.BottomCenter),
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "edit",
-                            )
+                            IconButton(
+                                onClick = openEditStatusSheet,
+                                modifier = Modifier.tooltipTrigger()
+                                //                        modifier = Modifier.weight(1f, false)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "edit",
+                                )
+                            }
                         }
                         if (isAnime) {
                             if (media.personalProgress != media.episodeAmount) {
@@ -893,7 +1130,7 @@ private fun MediaCard(
                                     increaseEpisodeProgress,
                                     media.listEntryId,
                                     media.personalProgress,
-                                    stringResource(id = R.string.plus_one),
+                                    stringResource(id = R.string.plus_one_episode),
                                 )
                             }
                         } else {
@@ -993,7 +1230,7 @@ private fun IncreaseProgress(
 @Composable
 fun MyAnimePreview() {
     MyMedia(
-        isAnime = false,
+        isAnime = true,
         myMedia = mapOf(
             PersonalMediaStatus.CURRENT to listOf(
                 Media(
@@ -1044,4 +1281,33 @@ fun DatePickerPreview() {
 @Composable
 fun DatePickerNoDatePreview() {
     DatePickerDialogue("Start date", initialValue = null, setValue = {})
+}
+
+@Preview(showBackground = true, group = "Dialog")
+@Composable
+fun RangeSliderTextPreview() {
+    var rawScore by remember {
+        mutableDoubleStateOf(23.0)
+    }
+    Column {
+        SliderTextField(rawScore = rawScore, setRawScore = { rawScore = it })
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, group = "Modal sheet")
+@Composable
+fun FilterModalSheetPreview() {
+    val state = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+    scope.launch {
+        state.show()
+    }
+    FilterModalSheet(
+        filterSheetState = state,
+        hideFilterSheet = { },
+        filter = PersonalMediaStatus.CURRENT,
+        setFilter = {},
+        isAnime = true
+    )
 }

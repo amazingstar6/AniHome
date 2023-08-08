@@ -79,19 +79,6 @@ fragment MyMedia on MediaList {
     createdAt
 }
 
-mutation IncreaseEpisodeProgress($mediaId: Int!, $newProgress: Int!){
-    SaveMediaListEntry(mediaId: $mediaId, progress: $newProgress) {
-        id
-        mediaId
-        media {
-            title {
-                userPreferred
-            }
-        }
-        progress
-    }
-}
-
 mutation DeleteEntry($id: Int!) {
     DeleteMediaListEntry(id: $id) {
         deleted
