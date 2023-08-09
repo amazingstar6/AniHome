@@ -182,7 +182,7 @@ fun MediaDetail(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = Icons.Default.ArrowBack.toString(),
+                    contentDescription = stringResource(id = R.string.back),
                 )
             }
         }, actions = {
@@ -207,7 +207,7 @@ fun MediaDetail(
                         painter = painterResource(
                             id = if (media?.isFavourite == true) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart,
                         ),
-                        contentDescription = "open in browser",
+                        contentDescription = "Add to favourites",
                     )
                 }
             }

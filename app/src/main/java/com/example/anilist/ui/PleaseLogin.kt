@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 fun PleaseLogin() {
     val uriHandler = LocalUriHandler.current
     Column(
-        Modifier.fillMaxSize().padding(16.dp),
+        Modifier.fillMaxSize().padding(Dimens.PaddingNormal),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -28,9 +28,9 @@ fun PleaseLogin() {
             style = MaterialTheme.typography.displayMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
         )
         Button(onClick = {
-//            uriHandler.openUri("https://anilist.co/api/v2/oauth/authorize?client_id=13616&redirect_uri=anihome://login&response_type=code")
             uriHandler.openUri("https://anilist.co/api/v2/oauth/authorize?client_id=13616&response_type=token")
         }) {
             Text("Login to AniList")

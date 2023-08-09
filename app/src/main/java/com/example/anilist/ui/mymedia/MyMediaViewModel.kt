@@ -4,8 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.PersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
-import com.example.anilist.data.repository.MyMediaRepositoryImpl
+import com.example.anilist.data.repository.mymedia.MyMediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,11 +16,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val TAG = "MyMediaViewModel"
-
 @HiltViewModel
 class MyMediaViewModel @Inject constructor(
-    private val myMediaRepository: MyMediaRepositoryImpl,
+    private val myMediaRepository: MyMediaRepository,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<MyMediaUiState> =

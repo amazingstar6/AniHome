@@ -1,4 +1,4 @@
-package com.example.anilist.data.repository
+package com.example.anilist.data.repository.mymedia
 
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.cache.normalized.FetchPolicy
@@ -17,7 +17,7 @@ import com.example.anilist.fragment.MyMedia
 import com.example.anilist.type.FuzzyDateInput
 import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaType
-import com.example.anilist.ui.mymedia.PersonalMediaStatus
+import com.example.anilist.data.models.PersonalMediaStatus
 import com.example.anilist.utils.Apollo
 import timber.log.Timber
 import javax.inject.Inject
@@ -26,8 +26,8 @@ import javax.inject.Singleton
 private const val TAG = "MyMediaRepository"
 
 @Singleton
-class MyMediaRepositoryImpl @Inject constructor() {
-    suspend fun getMyMedia(
+class MyMediaRepositoryImpl @Inject constructor(): MyMediaRepository {
+    override suspend fun getMyMedia(
         isAnime: Boolean,
         useNetworkFirst: Boolean
     ): AniResult<Pair<Map<PersonalMediaStatus, List<Media>>, Boolean>> {
@@ -64,7 +64,7 @@ class MyMediaRepositoryImpl @Inject constructor() {
         }
     }
 
-    suspend fun updateProgress(
+   override suspend fun updateProgress(
         statusUpdate: StatusUpdate,
     ): AniResult<Media> {
         Timber.d("changing status of entry list id " + statusUpdate.entryListId)
@@ -205,7 +205,7 @@ class MyMediaRepositoryImpl @Inject constructor() {
      * @param entryListId id of the list entry (not the media id!)
      * @return whether the deletion was successful
      */
-    suspend fun deleteEntry(entryListId: Int): Boolean {
+    override suspend fun deleteEntry(entryListId: Int): Boolean {
         try {
             val result =
                 Apollo.apolloClient.mutation(

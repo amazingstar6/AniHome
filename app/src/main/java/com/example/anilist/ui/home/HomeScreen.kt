@@ -907,7 +907,7 @@ fun AnimeCard(
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
                 .build(),
-            contentDescription = "Cover of $title",
+            contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .height(160.dp)

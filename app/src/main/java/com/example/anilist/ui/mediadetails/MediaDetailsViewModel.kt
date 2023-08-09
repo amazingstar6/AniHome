@@ -17,7 +17,7 @@ import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.data.repository.MediaDetailsRepository
-import com.example.anilist.data.repository.MyMediaRepositoryImpl
+import com.example.anilist.data.repository.mymedia.MyMediaRepositoryImpl
 import com.example.anilist.data.repository.StudioDetailRepository
 import com.example.anilist.data.repository.StudioMediaPagingSource
 import com.example.anilist.ui.home.PREFETCH_DISTANCE

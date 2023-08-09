@@ -1,6 +1,5 @@
 package com.example.anilist.ui
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -21,6 +20,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -31,12 +32,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,14 +53,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.anilist.R
+import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.PersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
-import com.example.anilist.ui.mymedia.DatePickerDialogue
-import com.example.anilist.ui.mymedia.PersonalMediaStatus
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
+import timber.log.Timber
 import kotlin.math.roundToInt
-
-private const val TAG = "EditStatusSheet"
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -111,16 +121,10 @@ fun EditStatusModalSheet(
                     IconButton(
                         onClick = {
                             if (unchangedMedia == currentMedia1) {
-                                Log.d(
-                                    TAG,
-                                    "Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1"
-                                )
+                                Timber.d("Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1")
                                 hideEditSheet()
                             } else {
-                                Log.d(
-                                    TAG,
-                                    "Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1"
-                                )
+                                Timber.d("Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1")
                                 showCloseConfirmation = true
                             }
                         },
@@ -498,5 +502,161 @@ fun NumberTextField(
         }) {
             Text(text = stringResource(R.string.plus_one))
         }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun DatePickerDialogue(
+    label: String,
+    initialValue: FuzzyDate?,
+    setValue: (FuzzyDate?) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = if (initialValue == null) {
+            null
+        } else {
+            LocalDate(
+                initialValue.year,
+                initialValue.month,
+                initialValue.day,
+            ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+        },
+    )
+//    ExposedDropdownMenuBox(
+//        expanded = expanded,
+//        onExpandedChange = { expanded = !expanded },
+//        modifier = Modifier.padding(Dimens.PaddingNormal),
+//    ) {
+    val time =
+        datePickerState.selectedDateMillis?.let {
+            Instant.fromEpochMilliseconds(
+                it,
+            ).toLocalDateTime(TimeZone.UTC)
+        }
+//    setValue(
+//        if (time != null) {
+//            FuzzyDate(
+//                time.year,
+//                time.monthNumber,
+//                time.dayOfMonth,
+//            )
+//        } else {
+//            null
+//        },
+//    )
+    val timeString =
+        if (time != null) {
+            String.format(
+                "%04d-%02d-%02d",
+                time.year,
+                time.monthNumber,
+                time.dayOfMonth,
+            )
+        } else {
+            ""
+        }
+    OutlinedTextField(
+        // The `menuAnchor` modifier must be passed to the text field for correctness.
+        modifier = Modifier
+//                .menuAnchor()
+            .clickable {
+                expanded = !expanded
+            }
+            .padding(Dimens.PaddingNormal)
+            .fillMaxWidth(),
+        readOnly = true,
+        enabled = false,
+        value = timeString,
+        onValueChange = { },
+        label = { Text(label) },
+        trailingIcon = {
+            if (datePickerState.selectedDateMillis != null) IconButton(onClick = {
+                datePickerState.selectedDateMillis = null
+            }) {
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = stringResource(id = R.string.clear)
+                )
+            }
+        },
+        colors = OutlinedTextFieldDefaults.colors(
+            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+            disabledBorderColor = MaterialTheme.colorScheme.outline,
+            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+//            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+    )
+//    }
+    if (expanded) {
+        DatePickerDialog(
+            onDismissRequest = {
+                // Dismiss the dialog when the user clicks outside the dialog or on the back
+                // button. If you want to disable that functionality, simply use an empty
+                // onDismissRequest.
+                expanded = false
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        expanded = false
+                    },
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        expanded = false
+                    },
+                ) {
+                    Text("Cancel")
+                }
+            },
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+fun EditStatusModalSheetPreview() {
+    EditStatusModalSheet(
+        editSheetState = rememberModalBottomSheetState(),
+        unchangedMedia = Media(),
+        isAnime = true,
+        hideEditSheet = { },
+        saveStatus = { },
+        deleteListEntry = { }
+    )
+}
+
+@Preview(showBackground = true, group = "Date picker")
+@Composable
+fun DatePickerPreview() {
+    DatePickerDialogue("Start date", initialValue = FuzzyDate(2022, 7, 22), setValue = {})
+}
+
+@Preview(showBackground = true, group = "Date picker")
+@Composable
+fun DatePickerNoDatePreview() {
+    DatePickerDialogue("Start date", initialValue = null, setValue = {})
+}
+
+@Preview(showBackground = true, group = "Dialog")
+@Composable
+fun RangeSliderTextPreview() {
+    var rawScore by remember {
+        mutableDoubleStateOf(23.0)
+    }
+    Column {
+        SliderTextField(rawScore = rawScore, setRawScore = { rawScore = it })
     }
 }

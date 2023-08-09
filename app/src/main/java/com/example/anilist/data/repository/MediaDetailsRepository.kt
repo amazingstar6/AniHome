@@ -32,6 +32,7 @@ import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.models.Stats
 import com.example.anilist.data.models.Status
 import com.example.anilist.data.models.Tag
+import com.example.anilist.data.repository.mymedia.toAniStatus
 import com.example.anilist.fragment.StaffMedia
 import com.example.anilist.type.CharacterRole
 import com.example.anilist.type.MediaListStatus
@@ -40,7 +41,7 @@ import com.example.anilist.type.MediaRelation
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaType
 import com.example.anilist.type.ReviewRating
-import com.example.anilist.ui.mymedia.PersonalMediaStatus
+import com.example.anilist.data.models.PersonalMediaStatus
 import com.example.anilist.utils.Apollo
 import timber.log.Timber
 import javax.inject.Inject

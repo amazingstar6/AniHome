@@ -1,7 +1,5 @@
 package com.example.anilist.data.models
 
-import com.example.anilist.ui.mymedia.PersonalMediaStatus
-
 data class Media(
     val id: Int = -1,
     val listEntryId: Int = -1,

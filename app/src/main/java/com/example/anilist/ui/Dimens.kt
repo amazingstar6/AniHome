@@ -22,8 +22,4 @@ object Dimens {
         @Composable get() = dimensionResource(R.dimen.margin_normal)
 
     val PaddingLarge: Dp = 24.dp
-
-    val ToolbarIconPadding = 12.dp
-
-    val ToolbarIconSize = 32.dp
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -100,45 +101,45 @@ fun Stats(stats: Stats) {
             StatsLegendText(text = "Dropped", droppedColor)
         }
         Row {
-            Divider(
-                thickness = 12.dp,
+            HorizontalDivider(
                 modifier = Modifier.weight(
                     (
-                        total / (
-                            statusDistribution[Status.COMPLETED]?.toFloat()
-                                ?: 1f
-                            )
-                        ),
+                            total / (
+                                    statusDistribution[Status.COMPLETED]?.toFloat()
+                                        ?: 1f
+                                    )
+                            ),
                 ),
-                color = completedColor,
-            )
-            Divider(
                 thickness = 12.dp,
+                color = completedColor
+            )
+            HorizontalDivider(
                 modifier = Modifier.weight(
                     total / (statusDistribution[Status.CURRENT]?.toFloat() ?: 1f),
                 ),
-                color = currentColor,
-            )
-            Divider(
                 thickness = 12.dp,
+                color = currentColor
+            )
+            HorizontalDivider(
                 modifier = Modifier.weight(
                     total / (statusDistribution[Status.PLANNING]?.toFloat() ?: 1f),
                 ),
-                color = planningColor,
-            )
-            Divider(
                 thickness = 12.dp,
+                color = planningColor
+            )
+            HorizontalDivider(
                 modifier = Modifier.weight(
                     total / (statusDistribution[Status.PAUSED]?.toFloat() ?: 1f),
                 ),
-                color = pausedColor,
-            )
-            Divider(
                 thickness = 12.dp,
+                color = pausedColor
+            )
+            HorizontalDivider(
                 modifier = Modifier.weight(
                     total / (statusDistribution[Status.DROPPED]?.toFloat() ?: 1f),
                 ),
-                color = droppedColor,
+                thickness = 12.dp,
+                color = droppedColor
             )
         }
     }
@@ -245,7 +246,7 @@ private fun IconWithTextRankings(text: String, showHeart: Boolean) {
                     R.drawable.anime_details_rating_star
                 },
             ),
-            contentDescription = text,
+            contentDescription = null,
             tint = MaterialTheme.colorScheme.secondary,
         )
         Text(

@@ -88,6 +88,14 @@
     <string name="refresh">Refresh</string>
     <string name="my_anime_list">My anime list</string>
     <string name="my_manga_list">My manga list</string>
+    <string name="no_anime_add_something_to_your_list">No anime! Add something to your list ♥</string>
+    <string name="no_manga_add_something_to_your_list">No manga! Add something to your list ♥</string>
+    <string name="paused">Paused</string>
+    <string name="rating">Rating</string>
+    <string name="network_error_info">"Check your network connections and reload your media list, if the issue still persists, try logging out through the settings menu on the home page"</string>
+    <string name="reload">Reload</string>
+    <string name="planning">Planning</string>
+    <string name="save">Save</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>
