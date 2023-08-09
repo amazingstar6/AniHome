@@ -5,20 +5,17 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -67,7 +64,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -79,7 +75,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -105,7 +100,6 @@ import com.example.anilist.utils.Utils
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.LocalDate
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -123,21 +117,20 @@ fun HomeScreen(
     navigateToStudioDetails: (Int) -> Unit,
     navigateToOverview: (HomeTrendingTypes) -> Unit
 ) {
-    val uiState =
-        HomeUiStateData(
-            pagerTrendingNow = homeViewModel.trendingNowPager.collectAsLazyPagingItems(),
-            pagerPopularThisSeason = homeViewModel.popularThisSeasonPager.collectAsLazyPagingItems(),
-            pagerUpcomingNextSeason = homeViewModel.upComingNextSeasonPager.collectAsLazyPagingItems(),
-            pagerAllTimePopular = homeViewModel.allTimePopularPager.collectAsLazyPagingItems(),
-            pagerTop100Anime = homeViewModel.top100AnimePager.collectAsLazyPagingItems(),
-            pagerPopularManhwa = homeViewModel.popularManhwaPager.collectAsLazyPagingItems(),
-            searchResultsMedia = homeViewModel.searchResultsMedia.collectAsLazyPagingItems(),
-            searchResultsCharacter = homeViewModel.searchResultsCharacter.collectAsLazyPagingItems(),
-            searchResultsStaff = homeViewModel.searchResultsStaff.collectAsLazyPagingItems(),
-            searchResultsStudio = homeViewModel.searchResultsStudio.collectAsLazyPagingItems(),
-            searchResultsThread = homeViewModel.searchResultsThread.collectAsLazyPagingItems(),
-            searchResultsUser = homeViewModel.searchResultsUser.collectAsLazyPagingItems(),
-        )
+    val uiState = HomeUiStateData(
+        pagerTrendingNow = homeViewModel.trendingNowPager.collectAsLazyPagingItems(),
+        pagerPopularThisSeason = homeViewModel.popularThisSeasonPager.collectAsLazyPagingItems(),
+        pagerUpcomingNextSeason = homeViewModel.upComingNextSeasonPager.collectAsLazyPagingItems(),
+        pagerAllTimePopular = homeViewModel.allTimePopularPager.collectAsLazyPagingItems(),
+        pagerTop100Anime = homeViewModel.top100AnimePager.collectAsLazyPagingItems(),
+        pagerPopularManhwa = homeViewModel.popularManhwaPager.collectAsLazyPagingItems(),
+        searchResultsMedia = homeViewModel.searchResultsMedia.collectAsLazyPagingItems(),
+        searchResultsCharacter = homeViewModel.searchResultsCharacter.collectAsLazyPagingItems(),
+        searchResultsStaff = homeViewModel.searchResultsStaff.collectAsLazyPagingItems(),
+        searchResultsStudio = homeViewModel.searchResultsStudio.collectAsLazyPagingItems(),
+        searchResultsThread = homeViewModel.searchResultsThread.collectAsLazyPagingItems(),
+        searchResultsUser = homeViewModel.searchResultsUser.collectAsLazyPagingItems(),
+    )
 
     val isAnime by homeViewModel.isAnime.collectAsStateWithLifecycle()
     val search by homeViewModel.search.collectAsStateWithLifecycle()
@@ -157,8 +150,7 @@ fun HomeScreen(
     val columnScrollScope = rememberCoroutineScope()
 
     Scaffold(topBar = {
-        AniSearchBar(
-            uiState = uiState,
+        AniSearchBar(uiState = uiState,
             query = search,
             updateSearch = homeViewModel::setSearch,
             active = active,
@@ -180,12 +172,10 @@ fun HomeScreen(
             navigateToStudioDetails = navigateToStudioDetails,
             toggleFavourite = {
                 mediaDetailsViewModel.toggleFavourite(
-                    MediaDetailsRepository.LikeAbleType.STUDIO,
-                    it
+                    MediaDetailsRepository.LikeAbleType.STUDIO, it
                 )
                 uiState.searchResultsStudio.refresh()
-            }
-        )
+            })
     }, floatingActionButton = {
         FloatingActionButton(
             onClick = { active = true; focusRequester.requestFocus() },
@@ -199,8 +189,7 @@ fun HomeScreen(
         // checks if there are any values loaded yet
         if (uiState.pagerTrendingNow.itemCount != 0 || uiState.pagerPopularThisSeason.itemCount != 0 || uiState.pagerUpcomingNextSeason.itemCount != 0 || uiState.pagerAllTimePopular.itemCount != 0 || uiState.pagerTop100Anime.itemCount != 0) {
             Column(
-                modifier = Modifier
-                    .padding(top = it.calculateTopPadding())
+                modifier = Modifier.padding(top = it.calculateTopPadding())
 //                    .verticalScroll(rememberScrollState()),
             ) {
                 var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -214,68 +203,52 @@ fun HomeScreen(
                             bottom = Dimens.PaddingSmall
                         )
                 ) {
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.shape(
-                            position = 0,
-                            count = options.size
-                        ),
-                        onClick = {
-                            columnScrollScope.launch {
-                                columnScrollState.animateScrollTo(0)
-                            }
-                            selectedIndex = 0
-                            homeViewModel.setToAnime()
-                        },
-                        selected = 0 == selectedIndex
-                    ) {
+                    SegmentedButton(shape = SegmentedButtonDefaults.shape(
+                        position = 0, count = options.size
+                    ), onClick = {
+                        columnScrollScope.launch {
+                            columnScrollState.animateScrollTo(0)
+                        }
+                        selectedIndex = 0
+                        homeViewModel.setToAnime()
+                    }, selected = 0 == selectedIndex, icon = { }) {
                         Text("Anime")
                     }
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.shape(
-                            position = 1,
-                            count = options.size
-                        ),
-                        onClick = {
-                            columnScrollScope.launch {
-                                columnScrollState.animateScrollTo(0)
-                            }
-                            selectedIndex = 1
-                            homeViewModel.setToManga()
-                        },
-                        selected = 1 == selectedIndex
-                    ) {
+                    SegmentedButton(shape = SegmentedButtonDefaults.shape(
+                        position = 1, count = options.size
+                    ), onClick = {
+                        columnScrollScope.launch {
+                            columnScrollState.animateScrollTo(0)
+                        }
+                        selectedIndex = 1
+                        homeViewModel.setToManga()
+                    }, selected = 1 == selectedIndex, icon = { }) {
                         Text("Manga")
                     }
                 }
 
 
                 Column(modifier = Modifier.verticalScroll(columnScrollState)) {
-                    HeadlineText(
-                        text = stringResource(R.string.trending_now),
+                    HeadlineText(text = stringResource(R.string.trending_now),
                         onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TRENDING_NOW) })
                     LazyRowLazyPagingItems(uiState.pagerTrendingNow, onNavigateToMediaDetails)
 
                     if (isAnime) {
-                        HeadlineText(
-                            text = stringResource(R.string.popular_this_season),
+                        HeadlineText(text = stringResource(R.string.popular_this_season),
                             onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_THIS_SEASON) })
                         LazyRowLazyPagingItems(
-                            uiState.pagerPopularThisSeason,
-                            onNavigateToMediaDetails
+                            uiState.pagerPopularThisSeason, onNavigateToMediaDetails
                         )
-                        HeadlineText(
-                            text = stringResource(R.string.upcoming_next_season),
+                        HeadlineText(text = stringResource(R.string.upcoming_next_season),
                             onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.UPCOMING_NEXT_SEASON) })
                         Timber.d(uiState.pagerUpcomingNextSeason.itemCount.toString())
                         LazyRowLazyPagingItems(
-                            uiState.pagerUpcomingNextSeason,
-                            onNavigateToMediaDetails
+                            uiState.pagerUpcomingNextSeason, onNavigateToMediaDetails
                         )
                     }
 
                     if (!isAnime) {
-                        HeadlineText(
-                            text = stringResource(id = R.string.popular_manhwa),
+                        HeadlineText(text = stringResource(id = R.string.popular_manhwa),
                             onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_MANHWA) })
                         LazyRowLazyPagingItems(
                             pager = uiState.pagerPopularManhwa,
@@ -283,13 +256,11 @@ fun HomeScreen(
                         )
                     }
 
-                    HeadlineText(
-                        text = stringResource(R.string.all_time_popular),
+                    HeadlineText(text = stringResource(R.string.all_time_popular),
                         onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.ALL_TIME_POPULAR) })
                     LazyRowLazyPagingItems(uiState.pagerAllTimePopular, onNavigateToMediaDetails)
 
-                    HeadlineText(
-                        text = stringResource(if (isAnime) R.string.top_100_anime else R.string.top_100_manga),
+                    HeadlineText(text = stringResource(if (isAnime) R.string.top_100_anime else R.string.top_100_manga),
                         onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TOP_100_ANIME) })
                     LazyRowLazyPagingItems(uiState.pagerTop100Anime, onNavigateToMediaDetails)
                 }
@@ -303,8 +274,7 @@ fun HomeScreen(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun LazyRowLazyPagingItems(
-    pager: LazyPagingItems<Media>,
-    onNavigateToMediaDetails: (Int) -> Unit
+    pager: LazyPagingItems<Media>, onNavigateToMediaDetails: (Int) -> Unit
 ) {
     LazyRow {
         items(count = pager.itemCount) { index ->
@@ -321,14 +291,7 @@ private fun LazyRowLazyPagingItems(
 }
 
 enum class SearchFilter {
-    MEDIA,
-    ANIME,
-    MANGA,
-    CHARACTERS,
-    STAFF,
-    STUDIOS,
-    THREADS,
-    USER;
+    MEDIA, ANIME, MANGA, CHARACTERS, STAFF, STUDIOS, THREADS, USER;
 
     override fun toString(): String {
         return this.name.lowercase()
@@ -338,29 +301,19 @@ enum class SearchFilter {
     fun getIconResource(): Int {
         return when (this) {
             MEDIA -> R.drawable.outline_description_24
-            ANIME -> R.drawable.anime_details_heart
+            ANIME -> R.drawable.navigation_anime_outlined
             MANGA -> R.drawable.navigation_manga_outlined
-            CHARACTERS -> R.drawable.anime_details_heart
-            STAFF -> R.drawable.anime_details_heart
-            STUDIOS -> R.drawable.anime_details_heart
-            THREADS -> R.drawable.anime_details_heart
-            USER -> R.drawable.anime_details_heart
+            CHARACTERS -> R.drawable.baseline_face_24
+            STAFF -> R.drawable.outline_group_24
+            STUDIOS -> R.drawable.baseline_apartment_24
+            THREADS -> R.drawable.navigation_forum_outlined
+            USER -> R.drawable.outline_person_24
         }
     }
 }
 
 enum class AniMediaSort {
-    SEARCH_MATCH,
-    START_DATE,
-    END_DATE,
-    SCORE,
-    POPULARITY,
-    TRENDING,
-    EPISODES,
-    DURATION,
-    CHAPTERS,
-    VOLUMES,
-    FAVOURITES;
+    SEARCH_MATCH, START_DATE, END_DATE, SCORE, POPULARITY, TRENDING, EPISODES, DURATION, CHAPTERS, VOLUMES, FAVOURITES;
 
     fun toString(context: Context): String {
         return when (this) {
@@ -385,8 +338,7 @@ enum class AniCharacterSort {
     //    RELEVANCE,
 //    ROLE,
 //    ROLE_DESC,
-    FAVOURITES,
-    FAVOURITES_DESC;
+    FAVOURITES, FAVOURITES_DESC;
 
     fun toString(context: Context): String {
         return when (this) {
@@ -399,15 +351,14 @@ enum class AniCharacterSort {
 
 @Composable
 @OptIn(
-    ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class,
-    ExperimentalFoundationApi::class
+    ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class
 )
 private fun AniSearchBar(
     characterSort: AniCharacterSort,
     setCharacterSort: (AniCharacterSort) -> Unit,
     uiState: HomeUiStateData,
     query: String,
-    updateSearch: (String, Season, AniMediaStatus) -> Unit,
+    updateSearch: (text: String, filter: SearchFilter, mediaSort: AniMediaSort, season: Season, mediaStatus: AniMediaStatus, year: Int) -> Unit,
     active: Boolean,
     setActive: (Boolean) -> Unit,
     focusRequester: FocusRequester,
@@ -426,9 +377,7 @@ private fun AniSearchBar(
     navigateToStudioDetails: (Int) -> Unit
 ) {
     val padding by animateDpAsState(
-        targetValue = if (!active) Dimens.PaddingNormal else 0.dp,
-        label = "increase padding" +
-                ""
+        targetValue = if (!active) Dimens.PaddingNormal else 0.dp, label = "increase padding" + ""
     )
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -436,11 +385,17 @@ private fun AniSearchBar(
     var selectedYear by remember { mutableIntStateOf(-1) }
     var selectedStatus by remember { mutableStateOf(AniMediaStatus.UNKNOWN) }
 
+    val updateSearchParameterless: (String) -> Unit = {
+        updateSearch(
+            it, selectedChip, currentMediaSort, selectedSeason, selectedStatus, selectedYear
+        )
+    }
+
     SearchBar(
         query = query,
-        onQueryChange = { updateSearch(it, selectedSeason, selectedStatus) },
+        onQueryChange = { updateSearchParameterless(it) },
         onSearch = {
-            updateSearch(it, selectedSeason, selectedStatus)
+            updateSearchParameterless(it)
             keyboardController?.hide()
         },
         active = active,
@@ -494,7 +449,7 @@ private fun AniSearchBar(
             } else {
                 PlainTooltipBox(tooltip = { Text(text = "Clear text") }) {
                     IconButton(
-                        onClick = { updateSearch("", selectedSeason, selectedStatus) },
+                        onClick = { updateSearchParameterless("") },
                         modifier = Modifier.tooltipTrigger()
                     ) {
                         Icon(
@@ -514,28 +469,30 @@ private fun AniSearchBar(
         Box {
             Column {
                 val filterList = SearchFilter.values()
-                LazyRow {
+                LazyRow(modifier = Modifier.padding(top = Dimens.PaddingSmall)) {
                     itemsIndexed(filterList) { index, filterName ->
-                        FilterChip(
-                            selected = index == selectedChip.ordinal,
-                            onClick = {
-                                setSelectedChipValue(filterList[index])
-                            },
-                            label = { Text(text = filterName.toString()) },
-                            leadingIcon = {
-                                if (index == selectedChip.ordinal) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null
-                                    )
-                                } else {
-                                    Icon(
-                                        painter = painterResource(id = filterName.getIconResource()),
-                                        contentDescription = null
-                                    )
-                                }
-                            },
-                            modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                        FilterChip(selected = index == selectedChip.ordinal, onClick = {
+                            setSelectedChipValue(filterList[index])
+                            updateSearchParameterless(query)
+                        }, label = { Text(text = filterName.toString()) }, leadingIcon = {
+                            if (index == selectedChip.ordinal) {
+                                Icon(
+                                    imageVector = Icons.Default.Check, contentDescription = null
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(id = filterName.getIconResource()),
+                                    contentDescription = null
+                                )
+                            }
+                        }, modifier = Modifier.padding(
+                            start = Dimens.PaddingNormal,
+                            end = if (index == filterList.lastIndex) {
+                                Dimens.PaddingNormal
+                            } else {
+                                0.dp
+                            }
+                        )
                         )
                     }
                 }
@@ -546,13 +503,16 @@ private fun AniSearchBar(
                 var showAiringStatusBottomSheet by remember { mutableStateOf(false) }
 
 
-
-                FlowRow(modifier = Modifier.padding(start = Dimens.PaddingNormal)) {
+                val context = LocalContext.current
+                FlowRow(
+                    horizontalArrangement = Arrangement.Start,
+                    modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                ) {
                     if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME || selectedChip == SearchFilter.MANGA) {
-                        HorizontalDivider()
+                        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
                         AssistChip(
                             onClick = { showSortingBottomSheet = true },
-                            label = { Text(text = currentMediaSort.toString(LocalContext.current)) },
+                            label = { Text(text = currentMediaSort.toString(context)) },
                             leadingIcon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.sort),
@@ -561,52 +521,77 @@ private fun AniSearchBar(
                                     )
                                 )
                             },
+                            modifier = Modifier.padding(end = Dimens.PaddingNormal)
                         )
                         AssistChip(
                             onClick = { showGenreDialog = true },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.outline_theater_comedy_24),
+                                    contentDescription = null
+                                )
+                            },
                             label = { Text(text = "Genre") },
-                            modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                            modifier = Modifier.padding(end = Dimens.PaddingNormal)
                         )
 
                         AssistChip(
                             onClick = { showYearDialog = true },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.anime_details_calendar),
+                                    contentDescription = null
+                                )
+                            },
                             label = { Text(text = if (selectedYear == -1) stringResource(id = R.string.year) else selectedYear.toString()) },
-                            modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                            modifier = Modifier.padding(end = Dimens.PaddingNormal)
                         )
 
                         if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME) {
+                            AssistChip(onClick = { showSeasonBottomSheet = true }, leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_local_florist_24),
+                                    contentDescription = null
+                                )
+                            }, label = {
+                                Text(
+                                    text = if (selectedSeason == Season.UNKNOWN) {
+                                        stringResource(id = R.string.season)
+                                    } else selectedSeason.getString(
+                                        context
+                                    )
+                                )
+                            }, modifier = Modifier.padding(end = Dimens.PaddingNormal)
+                            )
+                        }
+
+                        if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME) {
                             AssistChip(
-                                onClick = { showSeasonBottomSheet = true },
+                                onClick = { showAiringStatusBottomSheet = true },
                                 leadingIcon = {
                                     Icon(
-                                        painter = painterResource(id = R.drawable.baseline_local_florist_24),
+                                        painter = painterResource(id = R.drawable.baseline_cast_24),
                                         contentDescription = null
                                     )
                                 },
                                 label = {
                                     Text(
-                                        text = if (selectedSeason == Season.UNKNOWN) {
-                                            stringResource(id = R.string.season)
-                                        } else selectedSeason.getString(
-                                            LocalContext.current
-                                        )
+                                        text = if (selectedStatus == AniMediaStatus.UNKNOWN) {
+                                            stringResource(R.string.airing_status)
+                                        } else {
+                                            selectedStatus.getString(context)
+                                        }
                                     )
                                 },
-                                modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                                modifier = Modifier.padding(end = Dimens.PaddingNormal)
                             )
                         }
-
-                        AssistChip(
-                            onClick = { showAiringStatusBottomSheet = true },
-                            label = { Text(text = "Airing Status") },
-                            modifier = Modifier.padding(start = Dimens.PaddingNormal)
-                        )
 
                     } else if (selectedChip == SearchFilter.CHARACTERS) {
                         HorizontalDivider()
                         AssistChip(
                             onClick = { showSortingBottomSheet = true },
-                            label = { Text(text = characterSort.toString(LocalContext.current)) },
+                            label = { Text(text = characterSort.toString(context)) },
                             leadingIcon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.sort),
@@ -625,12 +610,12 @@ private fun AniSearchBar(
                                 TextButton(
                                     onClick = {
                                         setCurrentMediaSort(mediaSort)
+                                        updateSearchParameterless(query)
                                         showSortingBottomSheet = false
-                                    }, modifier = Modifier
-                                        .fillMaxWidth(), shape = RectangleShape
+                                    }, modifier = Modifier.fillMaxWidth(), shape = RectangleShape
                                 ) {
                                     Text(
-                                        mediaSort.toString(LocalContext.current),
+                                        mediaSort.toString(context),
                                         color = if (currentMediaSort == mediaSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
@@ -641,11 +626,10 @@ private fun AniSearchBar(
                                     onClick = {
                                         setCharacterSort(aniCharacterSort)
                                         showSortingBottomSheet = false
-                                    }, modifier = Modifier
-                                        .fillMaxWidth(), shape = RectangleShape
+                                    }, modifier = Modifier.fillMaxWidth(), shape = RectangleShape
                                 ) {
                                     Text(
-                                        aniCharacterSort.toString(LocalContext.current),
+                                        aniCharacterSort.toString(context),
                                         color = if (characterSort == aniCharacterSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
@@ -654,94 +638,55 @@ private fun AniSearchBar(
                     }
                 }
                 if (showGenreDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showGenreDialog = false },
-                        confirmButton = { showGenreDialog = false })
+                    AlertDialog(onDismissRequest = { showGenreDialog = false },
+                        confirmButton = { showGenreDialog = false },
+                        title = { Text(text = "Genre") },
+                        text = {
+
+                        })
                 }
                 if (showYearDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showYearDialog = true },
-                        confirmButton = {
-                            TextButton(onClick = { showYearDialog = false }) {
-                                Text(text = "Confirm")
-                            }
-                        },
-                        title = { Text(text = stringResource(id = R.string.year)) },
-                        text = {
-                            val startIndex = 0
-                            val lazyListState = rememberLazyListState(startIndex)
-                            val yearsRange = 1940..Utils.currentYear()
-                            LazyColumn {
-                                items(yearsRange.toList()) {
-                                    Text(text = it.toString())
+                    val unchangedYear by remember(key1 = showYearDialog) {
+                        mutableIntStateOf(selectedYear)
+                    }
+                    AlertDialog(onDismissRequest = { showYearDialog = true }, dismissButton = {
+                        TextButton(onClick = {
+                            selectedYear = unchangedYear
+                            showYearDialog = false
+                        }) {
+                            Text(text = "Close")
+                        }
+                    }, confirmButton = {
+                        TextButton(onClick = {
+                            updateSearchParameterless(query)
+                            showYearDialog = false
+                        }) {
+                            Text(text = "Confirm")
+                        }
+                    }, title = { Text(text = stringResource(id = R.string.year)) }, text = {
+                        val yearsRange = 1940..Utils.nextYear()
+                        LazyColumn {
+                            items(yearsRange.toList().sortedDescending()) { year ->
+                                TextButton(
+                                    onClick = {
+                                        selectedYear = if (selectedYear == year) {
+                                            -1
+                                        } else {
+                                            year
+                                        }
+                                    }, modifier = Modifier.fillMaxWidth(), shape = RectangleShape
+                                ) {
+                                    Text(
+                                        year.toString(), color = if (selectedYear == year) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        }
+                                    )
                                 }
                             }
-//                            val years = yearsRange.map {
-//                                Year(
-//                                    text = it.toString(),
-//                                    value = it,
-//                                    index = yearsRange.indexOf(it)
-//                                )
-//                            }
-                            val size = DpSize(256.dp, 128.dp)
-                            val startDate = LocalDate.now()
-                            var snappedDate by remember { mutableStateOf(startDate) }
-                            val minDate: LocalDate = LocalDate.ofYearDay(yearsRange.first, 1)
-                            val maxDate: LocalDate = LocalDate.ofYearDay(yearsRange.last, 1)
-//                            var dayOfMonths = calculateDayOfMonths(snappedDate.month.value, snappedDate.year)
-//                            WheelPicker(lazyListState, range)
-//                            WheelDatePicker(yearsRange = range) {
-//                                snappedDate ->
-//                                selectedYear = snappedDate.year
-//                            }
-//                            WheelTextPicker(
-//                                size = DpSize(
-//                                    width = size.width / 3,
-//                                    height = size.height
-//                                ),
-//                                texts = years.map { it.text },
-//                                rowCount = 3,
-//                                style = MaterialTheme.typography.titleMedium,
-//                                color = LocalContentColor.current,
-//                                selectorProperties = WheelPickerDefaults.selectorProperties(
-//                                    enabled = false
-//                                ),
-//                                startIndex = years.find { it.value == startDate.year }?.index ?: 0,
-//                                onScrollFinished = { snappedIndex ->
-//
-//                                    val newYear = years.find { it.index == snappedIndex }?.value
-//
-//                                    newYear?.let {
-//
-//                                        val newDate = snappedDate.withYear(newYear)
-//
-//                                        if (!newDate.isBefore(minDate) && !newDate.isAfter(maxDate)) {
-//                                            snappedDate = newDate
-//                                        }
-//
-//                                        dayOfMonths = calculateDayOfMonths(
-//                                            snappedDate.month.value,
-//                                            snappedDate.year
-//                                        )
-//
-//                                        val newIndex =
-//                                            years.find { it.value == snappedDate.year }?.index
-//
-//                                        newIndex?.let {
-//                                            onSnappedDate(
-//                                                SnappedDate.Year(
-//                                                    localDate = snappedDate,
-//                                                    index = newIndex
-//                                                )
-//                                            )?.let { return@WheelTextPicker it }
-//
-//                                        }
-//                                    }
-//
-//                                    return@WheelTextPicker years.find { it.value == snappedDate.year }?.index
-//                                }
-//                            )
-                        })
+                        }
+                    })
                 }
                 if (showSeasonBottomSheet) {
                     ModalBottomSheet(onDismissRequest = { showSeasonBottomSheet = false }) {
@@ -754,12 +699,11 @@ private fun AniSearchBar(
                                         } else {
                                             season
                                         }
-                                        updateSearch(query, selectedSeason, selectedStatus)
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
+                                        updateSearchParameterless(query)
+                                    }, modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        text = season.getString(LocalContext.current),
+                                        text = season.getString(context),
                                         color = if (season == selectedSeason) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
@@ -778,12 +722,11 @@ private fun AniSearchBar(
                                         } else {
                                             status
                                         }
-                                        updateSearch(query, selectedSeason, selectedStatus)
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
+                                        updateSearchParameterless(query)
+                                    }, modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        text = status.getString(LocalContext.current),
+                                        text = status.getString(context),
                                         color = if (status == selectedStatus) {
                                             MaterialTheme.colorScheme.primary
                                         } else {
@@ -810,52 +753,6 @@ private fun AniSearchBar(
             }
         }
     }
-}
-
-//private data class Year(
-//    val text: String,
-//    val value: Int,
-//    val index: Int
-//)
-//
-
-@Composable
-@OptIn(ExperimentalFoundationApi::class)
-private fun WheelPicker(
-    lazyListState: LazyListState,
-    range: IntRange
-) {
-    LazyColumn(
-        state = lazyListState,
-        contentPadding = PaddingValues(Dimens.PaddingNormal),
-        flingBehavior = rememberSnapFlingBehavior(lazyListState = lazyListState),
-    ) {
-        itemsIndexed(range.toList()) { index, item ->
-            val elementIsVisible =
-                (lazyListState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index } != null)
-            Box(
-                modifier = Modifier
-                    .height(50.dp / (range.last - range.first))
-                    .width(120.dp)
-                    .alpha(
-                        if (elementIsVisible) {
-                            1f
-                        } else {
-                            1f
-                        }
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = item.toString(), color = MaterialTheme.colorScheme.onSurface)
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true, group = "WheelPicker")
-@Composable
-fun WheelPickerPreview() {
-    WheelPicker(lazyListState = rememberLazyListState(), range = 1..10)
 }
 
 @Composable
@@ -949,9 +846,7 @@ private fun SearchResults(
                     val studio = uiState.searchResultsStudio[index]
                     if (studio != null) {
                         SearchCardStudio(
-                            studio,
-                            navigateToStudioDetails,
-                            toggleFavourite
+                            studio, navigateToStudioDetails, toggleFavourite
                         )
                     }
                 }
@@ -962,9 +857,7 @@ private fun SearchResults(
                     val thread = uiState.searchResultsThread[index]
                     if (thread != null) {
                         SearchCardForum(
-                            thread.id,
-                            thread.title,
-                            navigateToThreadDetails
+                            thread.id, thread.title, navigateToThreadDetails
                         )
                     }
                 }
@@ -975,9 +868,7 @@ private fun SearchResults(
                     val user = uiState.searchResultsUser[index]
                     if (user != null) {
                         SearchCardUser(
-                            user.id,
-                            user.name,
-                            navigateToUserDetails
+                            user.id, user.name, navigateToUserDetails
                         )
                     }
                 }
@@ -1004,12 +895,9 @@ fun SearchCardForum(id: Int, title: String, navigateToThreadDetails: (Int) -> Un
 
 @Composable
 fun SearchCardStudio(
-    studio: AniStudio,
-    navigateToStudioDetails: (Int) -> Unit,
-    toggleFavourite: (Int) -> Unit
+    studio: AniStudio, navigateToStudioDetails: (Int) -> Unit, toggleFavourite: (Int) -> Unit
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    Row(verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
@@ -1029,13 +917,11 @@ fun SearchCardStudio(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = Dimens.PaddingSmall)
         )
-        Icon(
-            painter = painterResource(id = if (!studio.isFavourite) R.drawable.anime_details_heart else R.drawable.baseline_favorite_24),
+        Icon(painter = painterResource(id = if (!studio.isFavourite) R.drawable.anime_details_heart else R.drawable.baseline_favorite_24),
             contentDescription = "Favourites",
             modifier = Modifier.clickable {
                 toggleFavourite(studio.id)
-            }
-        )
+            })
     }
 }
 
@@ -1094,8 +980,8 @@ private fun SearchCardMedia(
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current).data(coverImage)
-                .crossfade(true).build(),
+            model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
+                .build(),
             contentDescription = "Cover of $title",
             placeholder = painterResource(id = R.drawable.no_image),
             fallback = painterResource(id = R.drawable.no_image),
@@ -1143,11 +1029,9 @@ fun AnimeRow(
             AnimeCard(
                 title = anime.title,
                 coverImage = anime.coverImage,
-                onNavigateToDetails = (
-                        {
-                            onNavigateToDetails(anime.id)
-                        }
-                        ),
+                onNavigateToDetails = ({
+                    onNavigateToDetails(anime.id)
+                }),
             )
         }
     }
@@ -1228,8 +1112,7 @@ fun AnimeCard(
 @Preview(showBackground = true)
 @Composable
 fun SearchCardStudioPreview() {
-    SearchCardStudio(
-        AniStudio(id = 12, name = "Tokyo TV", favourites = 2123),
+    SearchCardStudio(AniStudio(id = 12, name = "Tokyo TV", favourites = 2123),
         navigateToStudioDetails = { },
         toggleFavourite = { })
 }

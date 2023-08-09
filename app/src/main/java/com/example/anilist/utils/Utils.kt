@@ -64,5 +64,9 @@ class Utils {
         fun currentYear(): Int {
             return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year
         }
+
+        fun nextYear(): Int {
+            return currentYear() + 1
+        }
     }
 }

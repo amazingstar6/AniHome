@@ -41,21 +41,21 @@ fun FilterSheet(
         sheetState = filterSheetState,
         onDismissRequest = hideFilterSheet,
     ) {
-        CenterAlignedTopAppBar(title = {
-            Text(
-                text = stringResource(R.string.filter),
-            )
-        }, navigationIcon = {
-            IconButton(
-                onClick = hideFilterSheet,
-                modifier = Modifier.padding(Dimens.PaddingNormal),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.close),
-                )
-            }
-        })
+//        CenterAlignedTopAppBar(title = {
+//            Text(
+//                text = stringResource(R.string.filter),
+//            )
+//        }, navigationIcon = {
+//            IconButton(
+//                onClick = hideFilterSheet,
+//                modifier = Modifier.padding(Dimens.PaddingNormal),
+//            ) {
+//                Icon(
+//                    imageVector = Icons.Default.Close,
+//                    contentDescription = stringResource(R.string.close),
+//                )
+//            }
+//        })
         ModalSheetTextButton(
             filterFunction = setFilter,
             hideFilterSheet = hideFilterSheet,

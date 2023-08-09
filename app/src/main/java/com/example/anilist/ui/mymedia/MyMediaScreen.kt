@@ -156,7 +156,7 @@ private fun MyMedia(
         mutableStateOf(false)
     }
 
-    val filterSheetState = rememberModalBottomSheetState()
+    val filterSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val editSheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = false, confirmValueChange = {
             it != SheetValue.Hidden

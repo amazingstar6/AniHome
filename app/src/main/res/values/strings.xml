@@ -108,6 +108,7 @@
     <string name="not_yet_released">Not yet released</string>
     <string name="cancelled">Cancelled</string>
     <string name="hiatus">Hiatus</string>
+    <string name="airing_status">Airing Status</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>

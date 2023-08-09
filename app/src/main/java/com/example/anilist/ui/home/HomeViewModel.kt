@@ -53,7 +53,8 @@ data class MediaSearchState(
     val searchType: SearchFilter,
     val sort: AniMediaSort,
     val currentSeason: Season,
-    val status: AniMediaStatus
+    val status: AniMediaStatus,
+    val year: Int
 )
 
 data class CharacterSearchState(
@@ -199,47 +200,77 @@ class HomeViewModel @Inject constructor(
         SharingStarted.WhileSubscribed(),
         initialValue = AniCharacterSort.DEFAULT
     )
-    private val season = MutableStateFlow(Season.UNKNOWN)
-    private val status = MutableStateFlow(AniMediaStatus.UNKNOWN)
+
+    private val mediaSearchState = MutableStateFlow(
+        MediaSearchState(
+            query = "",
+            searchType = SearchFilter.MEDIA,
+            sort = AniMediaSort.POPULARITY,
+            currentSeason = Season.UNKNOWN,
+            status = AniMediaStatus.UNKNOWN,
+            year = -1
+        )
+    )
 
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val searchResultsMedia =
-        combine(
-            _mediaSearch,
-            searchType,
-            mediaSortType,
-            season,
-            status
-        ) { query, searchType, sortType, currentSeason, status ->
-            MediaSearchState(
-                query = query,
-                searchType = searchType,
-                sort = sortType,
-                currentSeason = currentSeason,
-                status = status
-            )
+        mediaSearchState.debounce(TIME_OUT).flatMapLatest { searchState ->
+            Timber.d("Media search is searching for " + searchState.query)
+            Pager(
+                config = PagingConfig(
+                    pageSize = PAGE_SIZE,
+                    prefetchDistance = 5,
+                    enablePlaceholders = true
+                ),
+                pagingSourceFactory = {
+                    SearchMediaPagingSource(
+                        homeRepository = homeRepository,
+                        search = searchState.query,
+                        mediaSearchType = searchState.searchType,
+                        sortType = searchState.sort,
+                        season = searchState.currentSeason,
+                        status = searchState.status,
+                        year = searchState.year
+                    )
+                }
+            ).flow.cachedIn(viewModelScope)
         }
-            .debounce(300).flatMapLatest { searchState ->
-                Timber.d("Media search is searching for " + searchState.query)
-                Pager(
-                    config = PagingConfig(
-                        pageSize = PAGE_SIZE,
-                        prefetchDistance = 5,
-                        enablePlaceholders = true
-                    ),
-                    pagingSourceFactory = {
-                        SearchMediaPagingSource(
-                            homeRepository = homeRepository,
-                            search = searchState.query,
-                            mediaSearchType = searchState.searchType,
-                            sortType = searchState.sort,
-                            season = searchState.currentSeason,
-                            status = searchState.status
-                        )
-                    }
-                ).flow.cachedIn(viewModelScope)
-            }
+//        combine(
+//            _mediaSearch,
+//            searchType,
+//            mediaSortType,
+//            season,
+//            status
+//        ) { query, searchType, sortType, currentSeason, status ->
+//            MediaSearchState(
+//                query = query,
+//                searchType = searchType,
+//                sort = sortType,
+//                currentSeason = currentSeason,
+//                status = status
+//            )
+//        }
+//            .debounce(300).flatMapLatest { searchState ->
+//                Timber.d("Media search is searching for " + searchState.query)
+//                Pager(
+//                    config = PagingConfig(
+//                        pageSize = PAGE_SIZE,
+//                        prefetchDistance = 5,
+//                        enablePlaceholders = true
+//                    ),
+//                    pagingSourceFactory = {
+//                        SearchMediaPagingSource(
+//                            homeRepository = homeRepository,
+//                            search = searchState.query,
+//                            mediaSearchType = searchState.searchType,
+//                            sortType = searchState.sort,
+//                            season = searchState.currentSeason,
+//                            status = searchState.status
+//                        )
+//                    }
+//                ).flow.cachedIn(viewModelScope)
+//            }
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val searchResultsCharacter: Flow<PagingData<CharacterDetail>> =
@@ -337,10 +368,24 @@ class HomeViewModel @Inject constructor(
             ).flow.cachedIn(viewModelScope)
         }
 
-    fun setSearch(query: String, season: Season, status: AniMediaStatus) {
+    fun setSearch(
+        query: String,
+        searchType: SearchFilter,
+        mediaSort: AniMediaSort,
+        season: Season,
+        status: AniMediaStatus,
+        year: Int
+    ) {
         _search.value = query
-        this.season.value = season
-        this.status.value = status
+
+        mediaSearchState.value = mediaSearchState.value.copy(
+            query = query,
+            searchType = searchType,
+            sort = mediaSort,
+            currentSeason = season,
+            status = status,
+            year = year
+        )
     }
 
     fun setMediaSearchType(searchType: SearchFilter) {

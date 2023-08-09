@@ -443,7 +443,8 @@ class HomeRepository @Inject constructor() {
         type: SearchFilter,
         sort: AniMediaSort,
         season: Season,
-        status: AniMediaStatus
+        status: AniMediaStatus,
+        year: Int
     ): AniResult<List<Media>> {
         try {
             when (type) {
@@ -477,7 +478,8 @@ class HomeRepository @Inject constructor() {
                                 )
                             } else {
                                 Optional.absent()
-                            }
+                            },
+                            year = if (year != -1) Optional.present(year) else Optional.absent()
                         )
 
 //                        SearchFilter.ANIME -> SearchMediaQuery(
