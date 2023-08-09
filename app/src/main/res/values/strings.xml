@@ -96,6 +96,7 @@
     <string name="reload">Reload</string>
     <string name="planning">Planning</string>
     <string name="save">Save</string>
+    <string name="please_login_to_use_this_feature">Please login to use this feature</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>

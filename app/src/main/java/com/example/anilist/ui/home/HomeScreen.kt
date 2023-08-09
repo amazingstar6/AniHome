@@ -31,7 +31,6 @@ import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -51,7 +50,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.NonRestartableComposable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -115,7 +113,7 @@ fun HomeScreen(
     navigateToOverview: (HomeTrendingTypes) -> Unit
 ) {
     val uiState =
-        HomeUiState(
+        HomeUiStateData(
             pagerTrendingNow = homeViewModel.trendingNowPager.collectAsLazyPagingItems(),
             pagerPopularThisSeason = homeViewModel.popularThisSeasonPager.collectAsLazyPagingItems(),
             pagerUpcomingNextSeason = homeViewModel.upComingNextSeasonPager.collectAsLazyPagingItems(),
@@ -136,6 +134,8 @@ fun HomeScreen(
     val searchType by homeViewModel.searchType.collectAsStateWithLifecycle()
     val mediaSortType by homeViewModel.mediaSortType.collectAsStateWithLifecycle()
     val characterSortType by homeViewModel.characterSortType.collectAsStateWithLifecycle()
+
+    val uiState2 by homeViewModel.uiState.collectAsStateWithLifecycle()
 
 
     var active by rememberSaveable {
@@ -382,7 +382,7 @@ enum class AniCharacterSort {
 private fun AniSearchBar(
     characterSort: AniCharacterSort,
     setCharacterSort: (AniCharacterSort) -> Unit,
-    uiState: HomeUiState,
+    uiState: HomeUiStateData,
     query: String,
     updateSearch: (String) -> Unit,
     active: Boolean,
@@ -583,7 +583,7 @@ private fun AniSearchBar(
 
 @Composable
 private fun SearchResults(
-    uiState: HomeUiState,
+    uiState: HomeUiStateData,
     selectedChip: SearchFilter,
     onNavigateToMediaDetails: (Int) -> Unit,
     onNavigateToCharacterDetails: (Int) -> Unit,

@@ -1,6 +1,5 @@
 package com.example.anilist.ui.home
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -15,6 +14,7 @@ import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.AniUser
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.PersonalMediaStatus
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.HomeMedia
 import com.example.anilist.data.repository.HomeRepository
@@ -40,9 +40,9 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
-private const val TAG = "AniHomeViewModel"
 private const val TIME_OUT = 300L //milli seconds
 private const val PAGE_SIZE = 25
 const val PREFETCH_DISTANCE = 10
@@ -65,6 +65,12 @@ class HomeViewModel @Inject constructor(
 ) :
     ViewModel() {
 
+    private val _uiState = MutableStateFlow(HomeUiState.Loading)
+    val uiState: StateFlow<HomeUiState> = _uiState
+
+    private val _trendingUiState = MutableStateFlow(HomeUiState.Loading)
+    val trendingUiState: StateFlow<HomeUiState> = _trendingUiState
+
     private var _isAnime = MutableStateFlow(true)
     val isAnime: StateFlow<Boolean> = _isAnime
 
@@ -73,13 +79,12 @@ class HomeViewModel @Inject constructor(
     }
 
     fun setToManga() {
-        Log.d(TAG, "Set to manga was called")
+        Timber.d("Set to manga was called")
         _isAnime.value = false
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val trendingNowPager: Flow<PagingData<Media>> =
-//            Log.d(TAG, "isAnime on home screen is $isAnime")
         isAnime.flatMapLatest {
             Pager(
                 config = PagingConfig(
@@ -186,7 +191,7 @@ class HomeViewModel @Inject constructor(
             MediaSearchState(query = query, searchType = searchType, sort = sortType)
         }
             .debounce(300).flatMapLatest { searchState ->
-                Log.d(TAG, "Media search is searching for ${searchState.query}")
+                Timber.d("Media search is searching for " + searchState.query)
                 Pager(
                     config = PagingConfig(
                         pageSize = PAGE_SIZE,
@@ -210,10 +215,7 @@ class HomeViewModel @Inject constructor(
             CharacterSearchState(query = query, sort = sortType)
         }
             .debounce(300).flatMapLatest { searchState ->
-                Log.d(
-                    TAG,
-                    "Character search is searching for ${searchState.query} with sort ${searchState.sort}"
-                )
+                Timber.d("Character search is searching for " + searchState.query + " with sort " + searchState.sort)
                 Pager(
                     config = PagingConfig(
                         pageSize = PAGE_SIZE,
@@ -351,29 +353,29 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private val _userSettings: MutableLiveData<UserSettings> = MutableLiveData()
-
-    //    fun getNotifications:
-    val userSettings: LiveData<UserSettings>
-        get() = _userSettings
-
     init {
-//        _userSettings.value = userPreferencesFlow.asLiveData().value
         viewModelScope.launch {
             search.collectLatest { query ->
-                Log.i(TAG, "Current search filter in init block viewmodel is ${searchType.value}")
-                if (searchType.value == SearchFilter.MEDIA || searchType.value == SearchFilter.ANIME || searchType.value == SearchFilter.MANGA) {
-                    _mediaSearch.emit(query)
-                } else if (searchType.value == SearchFilter.CHARACTERS) {
-                    _characterSearch.emit(query)
-                } else if (searchType.value == SearchFilter.STAFF) {
-                    _staffSearch.emit(query)
-                } else if (searchType.value == SearchFilter.STUDIOS) {
-                    _studioSearch.emit(query)
-                } else if (searchType.value == SearchFilter.THREADS) {
-                    _threadSearch.emit(query)
-                } else if (searchType.value == SearchFilter.USER) {
-                    _userSearch.emit(query)
+                Timber.i("Current search filter in init block view model is " + searchType.value)
+                when (searchType.value) {
+                    SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
+                        _mediaSearch.emit(query)
+                    }
+                    SearchFilter.CHARACTERS -> {
+                        _characterSearch.emit(query)
+                    }
+                    SearchFilter.STAFF -> {
+                        _staffSearch.emit(query)
+                    }
+                    SearchFilter.STUDIOS -> {
+                        _studioSearch.emit(query)
+                    }
+                    SearchFilter.THREADS -> {
+                        _threadSearch.emit(query)
+                    }
+                    SearchFilter.USER -> {
+                        _userSearch.emit(query)
+                    }
                 }
             }
         }
@@ -477,3 +479,8 @@ class HomeViewModel @Inject constructor(
     }
 }
 
+sealed interface HomeUiState {
+    object Loading : HomeUiState
+    data class Success(val myMedia: HomeUiStateData) : HomeUiState
+    data class Error(val message: String) : HomeUiState
+}

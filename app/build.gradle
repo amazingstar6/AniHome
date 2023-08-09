@@ -20,7 +20,7 @@ android {
 
         resourceConfigurations += ["en", "nl"]
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "com.example.anilist.CustomTestRunner"
         vectorDrawables {
             useSupportLibrary true
         }
@@ -65,6 +65,8 @@ dependencies {
     // For window size classes
     implementation 'androidx.compose.material3:material3-window-size-class:1.1.1'
     implementation 'com.jakewharton.timber:timber:5.0.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
 
     def lifecycle_version = "2.6.1"
     def apollo_version = "4.0.0-alpha.1"
@@ -89,6 +91,11 @@ dependencies {
     androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
+
+    // Hilt for instrumented tests.
+    androidTestImplementation 'com.google.dagger:hilt-android-testing:2.46.1'
+    // ...with Kotlin.
+    kaptAndroidTest 'com.google.dagger:hilt-android-compiler:2.46.1'
 
     // ViewModel utilities for Compose
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"

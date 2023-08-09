@@ -1,6 +1,5 @@
 package com.example.anilist.ui.home
 
-import androidx.compose.runtime.State
 import androidx.paging.compose.LazyPagingItems
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniThread
@@ -9,7 +8,7 @@ import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StaffDetail
 
-data class HomeUiState(
+data class HomeUiStateData(
     val pagerTrendingNow: LazyPagingItems<Media>,
     val pagerPopularThisSeason: LazyPagingItems<Media>,
     val pagerUpcomingNextSeason: LazyPagingItems<Media>,

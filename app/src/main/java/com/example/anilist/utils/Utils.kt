@@ -47,19 +47,11 @@ class Utils {
             }
         }
 
-        fun getRefreshKey(state: PagingState<Int, Any>): Int? {
-            return state.anchorPosition?.let { anchorPosition ->
-                // anchor position is the last index that successfully fetched data
-                val anchorPage = state.closestPageToPosition(anchorPosition)
-                anchorPage?.prevKey ?: anchorPage?.nextKey
-            }
-        }
-
-        fun convertToRFC3339(secondsToAdd: Long): String {
-            val currentTime = ZonedDateTime.now().plusSeconds(secondsToAdd)
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
-            return currentTime.format(formatter)
-        }
+//        fun convertToRFC3339(secondsToAdd: Long): String {
+//            val currentTime = ZonedDateTime.now().plusSeconds(secondsToAdd)
+//            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
+//            return currentTime.format(formatter)
+//        }
 
         fun Color.toHexString(): String {
             val red = (this.red * 255).toInt()

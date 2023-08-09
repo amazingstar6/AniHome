@@ -2,7 +2,6 @@ package com.example.anilist
 
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -35,14 +34,11 @@ import com.example.anilist.ui.navigation.AniListRoute
 import com.example.anilist.ui.navigation.AniNavHost
 import com.example.anilist.ui.theme.AnilistTheme
 import com.example.anilist.utils.Apollo
-import com.patrykandpatrick.vico.core.BuildConfig
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import timber.log.Timber
-
-private const val TAG = "MainActivity"
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -59,13 +55,11 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (/*BuildConfig.DEBUG*/ true){
-            Timber.plant(Timber.DebugTree());
-        }
+        Timber.plant(Timber.DebugTree()) //fixme disable for release
 
         // processing the uri received for logging in
         if (intent?.data != null) {
-            Log.i(TAG, "Data is ${intent.data}")
+            Timber.i("Data is " + intent.data)
 //            val code: String = intent.data.toString().substringAfter("anihome:://login?code=")
             val uri = intent.data.toString()
             val query = uri.substringAfter("#")
@@ -77,10 +71,7 @@ class MainActivity : ComponentActivity() {
             accessCode = parameterMap["access_token"] ?: ""
             val tokenType = parameterMap["token_type"] ?: ""
             val expiresIn = parameterMap["expires_in"] ?: ""
-            Log.i(
-                TAG,
-                "Access code is $accessCode, token type is $tokenType, expires in $expiresIn seconds",
-            )
+            Timber.i("Access code is $accessCode, token type is $tokenType, expires in $expiresIn seconds")
             viewModel.saveAccessCodeAndUserId(accessCode, tokenType, expiresIn)
         }
 
@@ -144,10 +135,7 @@ class MainActivity : ComponentActivity() {
                             }
 
                             is MainActivityUiState.Success -> {
-                                Log.d(
-                                    TAG,
-                                    "Access code when starting up is ${(uiState as MainActivityUiState.Success).userData.accessCode}"
-                                )
+                                Timber.d("Access code when starting up is " + (uiState as MainActivityUiState.Success).userData.accessCode)
                                 accessCode =
                                     (uiState as MainActivityUiState.Success).userData.accessCode
                                 Apollo.setAccessCode(accessCode)

@@ -11,20 +11,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.anilist.R
 
 @Composable
 fun PleaseLogin() {
     val uriHandler = LocalUriHandler.current
     Column(
-        Modifier.fillMaxSize().padding(Dimens.PaddingNormal),
+        Modifier
+            .fillMaxSize()
+            .padding(Dimens.PaddingNormal),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "Please login to use this feature",
+            text = stringResource(R.string.please_login_to_use_this_feature),
             style = MaterialTheme.typography.displayMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,

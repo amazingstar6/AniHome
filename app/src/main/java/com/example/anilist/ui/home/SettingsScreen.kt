@@ -30,11 +30,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.anilist.R
 import com.example.anilist.data.repository.Theme
 import com.example.anilist.data.repository.TitleFormat
 import com.example.anilist.ui.Dimens
@@ -55,7 +57,9 @@ fun SettingsScreen(
                 title = { Text(text = "Settings") },
                 navigationIcon = {
                     IconButton(onClick = navigateBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "back")
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = stringResource(
+                            id = R.string.back
+                        ))
                     }
                 })
         },

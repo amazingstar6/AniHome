@@ -1,6 +1,5 @@
 package com.example.anilist.data.repository
 
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -10,8 +9,10 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 import java.io.IOException
 import javax.inject.Inject
+import javax.inject.Singleton
 
 enum class TitleFormat {
     ROMAJI,
@@ -43,8 +44,7 @@ data class UserSettings(
     val theme: Theme
 )
 
-private const val TAG: String = "UserSettingsRepo"
-
+@Singleton
 class UserDataRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) {
@@ -66,7 +66,7 @@ class UserDataRepository @Inject constructor(
         .catch { exception ->
             // dataStore.data throws an IOException when an error is encountered when reading data
             if (exception is IOException) {
-                Log.e(TAG, "Error reading preferences.", exception)
+                Timber.e(exception, "Error reading preferences.")
                 emit(emptyPreferences())
             } else {
                 throw exception
@@ -94,16 +94,16 @@ class UserDataRepository @Inject constructor(
 
     suspend fun saveTheme(theme: Theme) {
         dataStore.edit { settings ->
-            Log.d(TAG, "Saving theme $theme in data store")
+            Timber.d("Saving theme $theme in data store")
             settings[PreferencesKeys.THEME] = theme.name
         }
     }
 
     suspend fun saveAccessCode(accessCode: String, tokenType: String, expiresIn: String) {
-        // updateData handles data transactionally, ensuring that if the sort is updated at the same
+        // updateData handles data transactional, ensuring that if the sort is updated at the same
         // time from another thread, we won't have conflicts
         dataStore.edit { preferences ->
-            Log.i(TAG, "Access code in user preference repository parameter is $accessCode")
+            Timber.i("Access code in user preference repository parameter is $accessCode")
             preferences[PreferencesKeys.ACCESS_CODE] = accessCode
             preferences[PreferencesKeys.TOKEN_TYPE] = tokenType
             preferences[PreferencesKeys.EXPIRES_IN] = expiresIn
