@@ -133,44 +133,44 @@ query SearchMedia($page: Int!, $pageSize: Int!, $search: String!, $type: MediaTy
             season
             seasonYear
         }
-        characters(search: $search, sort: [$sort]) {
-            id
-            name {
-                userPreferred
-            }
-            image {
-                large
-            }
-            favourites
-            isFavourite
-            isFavouriteBlocked
-        }
-        staff(search: $search) {
-            id
-            name {
-                userPreferred
-            }
-            favourites
-            image {
-                large
-            }
-            isFavourite
-            isFavouriteBlocked
-        }
-        studios(search: $search) {
-            id
-            name
-            favourites
-            isFavourite
-        }
-        threads(search: $search) {
-            id
-            title
-        }
-        users(search: $search) {
-            id
-            name
-        }
+#        characters(search: $search, sort: [$characterSort]) {
+#            id
+#            name {
+#                userPreferred
+#            }
+#            image {
+#                large
+#            }
+#            favourites
+#            isFavourite
+#            isFavouriteBlocked
+#        }
+#        staff(search: $search) {
+#            id
+#            name {
+#                userPreferred
+#            }
+#            favourites
+#            image {
+#                large
+#            }
+#            isFavourite
+#            isFavouriteBlocked
+#        }
+#        studios(search: $search) {
+#            id
+#            name
+#            favourites
+#            isFavourite
+#        }
+#        threads(search: $search) {
+#            id
+#            title
+#        }
+#        users(search: $search) {
+#            id
+#            name
+#        }
     }
 }
 

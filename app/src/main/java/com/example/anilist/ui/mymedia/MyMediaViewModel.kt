@@ -113,7 +113,7 @@ class MyMediaViewModel @Inject constructor(
                 }
 
                 is AniResult.Failure -> {
-                    _uiState.value = MyMediaUiState.Error(newMedia.error)
+                    sendMessage("Updating progress failed, please try again")
                 }
 
             }
@@ -127,27 +127,29 @@ class MyMediaViewModel @Inject constructor(
         viewModelScope.launch {
             val deletionIsSuccessful = myMediaRepository.deleteEntry(entryListId)
             if (!deletionIsSuccessful) {
-                _uiState.value = MyMediaUiState.Error("Deleting entry failed, please try again")
-            }
-
-            when (val currentList = _uiState.value) {
-                is MyMediaUiState.Error -> Unit
-                is MyMediaUiState.Loading -> Unit
-                is MyMediaUiState.Success -> {
-                    val mapCopy = currentList.myMedia.mapValues { it.value.toMutableList() }
-                    mapCopy.forEach {
-                        val indexToRemove =
-                            it.value.indexOfFirst { value -> value.listEntryId == entryListId }
-                        if (indexToRemove != -1) {
-                            it.value.removeAt(indexToRemove)
+//                _uiState.value = MyMediaUiState.Error("Deleting entry failed, please try again")
+                sendMessage("Deletion failed, please try again")
+            } else {
+                when (val currentList = _uiState.value) {
+                    is MyMediaUiState.Error -> Unit
+                    is MyMediaUiState.Loading -> Unit
+                    is MyMediaUiState.Success -> {
+                        val mapCopy = currentList.myMedia.mapValues { it.value.toMutableList() }
+                        mapCopy.forEach {
+                            val indexToRemove =
+                                it.value.indexOfFirst { value -> value.listEntryId == entryListId }
+                            if (indexToRemove != -1) {
+                                it.value.removeAt(indexToRemove)
+                            }
+                            it.value.sortByDescending { media ->
+                                media.updatedAt
+                            }
                         }
-                        it.value.sortByDescending { media ->
-                            media.updatedAt
-                        }
+                        _uiState.value = MyMediaUiState.Success(mapCopy)
                     }
-                    _uiState.value = MyMediaUiState.Success(mapCopy)
                 }
             }
+
         }
     }
 }

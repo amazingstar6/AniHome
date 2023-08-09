@@ -3,6 +3,7 @@ package com.example.anilist.utils
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.paging.PagingState
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -58,6 +59,10 @@ class Utils {
             val green = (this.green * 255).toInt()
             val blue = (this.blue * 255).toInt()
             return String.format("#%02X%02X%02X", red, green, blue)
+        }
+
+        fun currentYear(): Int {
+            return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year
         }
     }
 }

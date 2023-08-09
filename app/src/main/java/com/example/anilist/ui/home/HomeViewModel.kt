@@ -9,17 +9,18 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.example.anilist.data.models.AniMediaStatus
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.AniUser
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.PersonalMediaStatus
+import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.HomeMedia
 import com.example.anilist.data.repository.HomeRepository
 import com.example.anilist.data.repository.NotificationRepository
-import com.example.anilist.data.repository.UserSettings
+import com.example.anilist.data.repository.TrendingTogether
 import com.example.anilist.ui.home.searchpagingsource.SearchCharactersPagingSource
 import com.example.anilist.ui.home.searchpagingsource.SearchMediaPagingSource
 import com.example.anilist.ui.home.searchpagingsource.SearchStaffPagingSource
@@ -50,7 +51,9 @@ const val PREFETCH_DISTANCE = 10
 data class MediaSearchState(
     val query: String,
     val searchType: SearchFilter,
-    val sort: AniMediaSort
+    val sort: AniMediaSort,
+    val currentSeason: Season,
+    val status: AniMediaStatus
 )
 
 data class CharacterSearchState(
@@ -82,6 +85,19 @@ class HomeViewModel @Inject constructor(
         Timber.d("Set to manga was called")
         _isAnime.value = false
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val trendingTogetherPager: Flow<PagingData<TrendingTogether>> =
+        isAnime.flatMapLatest {
+            Pager(
+                config = PagingConfig(
+                    pageSize = PAGE_SIZE,
+                    prefetchDistance = PREFETCH_DISTANCE,
+                    enablePlaceholders = false
+                ),
+                pagingSourceFactory = { homeRepository.trendingTogetherPagingSource(isAnime = isAnime.value) }
+            ).flow.cachedIn(viewModelScope)
+        }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val trendingNowPager: Flow<PagingData<Media>> =
@@ -183,12 +199,26 @@ class HomeViewModel @Inject constructor(
         SharingStarted.WhileSubscribed(),
         initialValue = AniCharacterSort.DEFAULT
     )
+    private val season = MutableStateFlow(Season.UNKNOWN)
+    private val status = MutableStateFlow(AniMediaStatus.UNKNOWN)
 
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val searchResultsMedia =
-        combine(_mediaSearch, searchType, mediaSortType) { query, searchType, sortType ->
-            MediaSearchState(query = query, searchType = searchType, sort = sortType)
+        combine(
+            _mediaSearch,
+            searchType,
+            mediaSortType,
+            season,
+            status
+        ) { query, searchType, sortType, currentSeason, status ->
+            MediaSearchState(
+                query = query,
+                searchType = searchType,
+                sort = sortType,
+                currentSeason = currentSeason,
+                status = status
+            )
         }
             .debounce(300).flatMapLatest { searchState ->
                 Timber.d("Media search is searching for " + searchState.query)
@@ -203,7 +233,9 @@ class HomeViewModel @Inject constructor(
                             homeRepository = homeRepository,
                             search = searchState.query,
                             mediaSearchType = searchState.searchType,
-                            sortType = searchState.sort
+                            sortType = searchState.sort,
+                            season = searchState.currentSeason,
+                            status = searchState.status
                         )
                     }
                 ).flow.cachedIn(viewModelScope)
@@ -305,8 +337,10 @@ class HomeViewModel @Inject constructor(
             ).flow.cachedIn(viewModelScope)
         }
 
-    fun setSearch(query: String) {
+    fun setSearch(query: String, season: Season, status: AniMediaStatus) {
         _search.value = query
+        this.season.value = season
+        this.status.value = status
     }
 
     fun setMediaSearchType(searchType: SearchFilter) {
@@ -347,12 +381,6 @@ class HomeViewModel @Inject constructor(
         _characterSortType.value = type
     }
 
-    fun triggerSearch() {
-        viewModelScope.launch {
-            _search.emit(_search.value)
-        }
-    }
-
     init {
         viewModelScope.launch {
             search.collectLatest { query ->
@@ -361,18 +389,23 @@ class HomeViewModel @Inject constructor(
                     SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
                         _mediaSearch.emit(query)
                     }
+
                     SearchFilter.CHARACTERS -> {
                         _characterSearch.emit(query)
                     }
+
                     SearchFilter.STAFF -> {
                         _staffSearch.emit(query)
                     }
+
                     SearchFilter.STUDIOS -> {
                         _studioSearch.emit(query)
                     }
+
                     SearchFilter.THREADS -> {
                         _threadSearch.emit(query)
                     }
+
                     SearchFilter.USER -> {
                         _userSearch.emit(query)
                     }

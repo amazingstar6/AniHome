@@ -1,5 +1,8 @@
 package com.example.anilist.data.models
 
+import android.content.Context
+import com.example.anilist.R
+
 data class Stats(
     val ranksIsNotEmpty: Boolean = true,
     val highestRatedAllTime: Int = -1,
@@ -52,16 +55,15 @@ enum class Season {
     SPRING,
     SUMMER,
     FALL,
-    WINTER,
-    ;
+    WINTER;
 
-    fun getName(): String {
+    fun getString(context: Context): String {
         return when (this) {
-            UNKNOWN -> "Unknown"
-            SPRING -> "Spring"
-            SUMMER -> "Summer"
-            FALL -> "Fall"
-            WINTER -> "Winter"
+            UNKNOWN -> context.getString(R.string.unknown)
+            SPRING -> context.getString(R.string.spring)
+            SUMMER -> context.getString(R.string.summer)
+            FALL -> context.getString(R.string.fall)
+            WINTER -> context.getString(R.string.winter)
         }
     }
 }

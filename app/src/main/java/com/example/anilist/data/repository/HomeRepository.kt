@@ -17,6 +17,8 @@ import com.example.anilist.SearchStaffQuery
 import com.example.anilist.SearchStudiosQuery
 import com.example.anilist.SearchThreadsQuery
 import com.example.anilist.SearchUsersQuery
+import com.example.anilist.data.models.AniMediaStatus
+import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.AniUser
@@ -30,6 +32,7 @@ import com.example.anilist.type.CharacterSort
 import com.example.anilist.type.MediaFormat
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaSort
+import com.example.anilist.type.MediaStatus
 import com.example.anilist.type.MediaType
 import com.example.anilist.ui.home.AniCharacterSort
 import com.example.anilist.ui.home.AniMediaSort
@@ -41,6 +44,7 @@ import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
+import timber.log.Timber
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -77,6 +81,9 @@ private const val TAG = "HomeRepository"
 
 @Singleton
 class HomeRepository @Inject constructor() {
+
+    fun trendingTogetherPagingSource(isAnime: Boolean) =
+        TrendingTogetherPagingSource(this, isAnime = isAnime)
 
     fun trendingNowPagingSource(isAnime: Boolean) =
         MediaPagingSource(this, HomeTrendingTypes.TRENDING_NOW, isAnime = isAnime)
@@ -434,34 +441,60 @@ class HomeRepository @Inject constructor() {
         pageSize: Int,
         text: String,
         type: SearchFilter,
-        sort: AniMediaSort
-    ): List<Media> {
+        sort: AniMediaSort,
+        season: Season,
+        status: AniMediaStatus
+    ): AniResult<List<Media>> {
         try {
             when (type) {
                 SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
+                    Timber.d("Season is $season")
                     val query: SearchMediaQuery = when (type) {
-                        SearchFilter.MEDIA -> SearchMediaQuery(
+                        SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> SearchMediaQuery(
                             page = page,
                             pageSize = pageSize,
                             text,
-                            sort = Optional.present(listOf(MediaSort.fromAniCharacterSort(sort)))
+                            sort = Optional.present(
+                                listOf(MediaSort.fromAniMediaSort(sort))
+                            ),
+                            type = when (type) {
+                                SearchFilter.MEDIA -> Optional.absent()
+                                SearchFilter.ANIME -> Optional.present(MediaType.ANIME)
+                                SearchFilter.MANGA -> Optional.present(MediaType.MANGA)
+                                else -> Optional.absent() // cannot happen
+                            },
+                            season =
+                            if (season != Season.UNKNOWN && type != SearchFilter.MANGA) {
+                                Optional.present(
+                                    MediaSeason.fromAniSeason(season)
+                                )
+                            } else {
+                                Optional.absent()
+                            },
+                            airingStatus = if (status != AniMediaStatus.UNKNOWN && type != SearchFilter.MANGA) {
+                                Optional.present(
+                                    MediaStatus.fromAniMediaStatus(status)
+                                )
+                            } else {
+                                Optional.absent()
+                            }
                         )
 
-                        SearchFilter.ANIME -> SearchMediaQuery(
-                            page,
-                            pageSize,
-                            text,
-                            type = Optional.present(MediaType.ANIME),
-                            sort = Optional.present(listOf(MediaSort.fromAniCharacterSort(sort)))
-                        )
-
-                        SearchFilter.MANGA -> SearchMediaQuery(
-                            page,
-                            pageSize,
-                            text,
-                            type = Optional.present(MediaType.MANGA),
-                            sort = Optional.present(listOf(MediaSort.fromAniCharacterSort(sort)))
-                        )
+//                        SearchFilter.ANIME -> SearchMediaQuery(
+//                            page,
+//                            pageSize,
+//                            text,
+//                            type = Optional.present(MediaType.ANIME),
+//                            sort = Optional.present(listOf(MediaSort.fromAniCharacterSort(sort)))
+//                        )
+//
+//                        SearchFilter.MANGA -> SearchMediaQuery(
+//                            page,
+//                            pageSize,
+//                            text,
+//                            type = Optional.present(MediaType.MANGA),
+//                            sort = Optional.present(listOf(MediaSort.fromAniCharacterSort(sort)))
+//                        )
 
                         else -> {
                             SearchMediaQuery(page, pageSize, text)
@@ -474,25 +507,33 @@ class HomeRepository @Inject constructor() {
                             .execute()
                     if (result.hasErrors()) {
                         // these errors are related to GraphQL errors
-                        return emptyList()
+                        return AniResult.Failure(buildString {
+                            result.errors?.forEach { appendLine(it.message) }
+                        })
                     }
 
                     val resultList = mutableListOf<Media>()
-                    result.data?.Page?.media?.forEach {
-                        if (it != null) {
-                            resultList.add(parseSearchMedia(it))
+                    if (result.data != null) {
+                        result.data?.Page?.media?.forEach {
+                            if (it != null) {
+                                resultList.add(parseSearchMedia(it))
+                            }
                         }
+                        return AniResult.Success(resultList)
+                    } else {
+                        return AniResult.Failure("Network error")
                     }
-                    return resultList
                 }
 
-                else -> return emptyList()
+                else -> return AniResult.Failure("Wrong search type!")
             }
 
         } catch (exception: ApolloException) {
             // handle exception here, these are mainly for network errors
+            return AniResult.Failure(
+                exception.localizedMessage ?: "No message given from exception"
+            )
         }
-        return emptyList()
     }
 
     private fun parseSearchCharacters(character: SearchCharactersQuery.Character): CharacterDetail {
@@ -722,6 +763,27 @@ class HomeRepository @Inject constructor() {
 //    }
 }
 
+private fun MediaStatus.Companion.fromAniMediaStatus(status: AniMediaStatus): MediaStatus {
+    return when (status) {
+        AniMediaStatus.FINISHED -> MediaStatus.FINISHED
+        AniMediaStatus.RELEASING -> MediaStatus.RELEASING
+        AniMediaStatus.NOT_YET_RELEASED -> MediaStatus.NOT_YET_RELEASED
+        AniMediaStatus.CANCELLED -> MediaStatus.CANCELLED
+        AniMediaStatus.HIATUS -> MediaStatus.HIATUS
+        AniMediaStatus.UNKNOWN -> MediaStatus.UNKNOWN__
+    }
+}
+
+private fun MediaSeason.Companion.fromAniSeason(season: Season): MediaSeason {
+    return when (season) {
+        Season.UNKNOWN -> MediaSeason.UNKNOWN__
+        Season.SPRING -> MediaSeason.SPRING
+        Season.SUMMER -> MediaSeason.SUMMER
+        Season.FALL -> MediaSeason.FALL
+        Season.WINTER -> MediaSeason.WINTER
+    }
+}
+
 private fun CharacterSort.Companion.fromAniCharacterSort(sort: AniCharacterSort): CharacterSort {
     return when (sort) {
         AniCharacterSort.DEFAULT -> CharacterSort.SEARCH_MATCH
@@ -743,7 +805,7 @@ fun MediaFormat?.toCapitalizedString(): String {
     }
 }
 
-fun MediaSort.Companion.fromAniCharacterSort(it: AniMediaSort): MediaSort {
+fun MediaSort.Companion.fromAniMediaSort(it: AniMediaSort): MediaSort {
     return when (it) {
         AniMediaSort.SEARCH_MATCH -> MediaSort.SEARCH_MATCH
         AniMediaSort.START_DATE -> MediaSort.START_DATE_DESC

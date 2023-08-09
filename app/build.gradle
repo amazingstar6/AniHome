@@ -132,6 +132,8 @@ dependencies {
     implementation "com.patrykandpatrick.vico:compose-m3:1.6.5"
     // For kotlinx date time
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+    // For wheel picker compose
+//    implementation 'com.github.commandiron:WheelPickerCompose:1.1.11'
 }
 
 apollo {

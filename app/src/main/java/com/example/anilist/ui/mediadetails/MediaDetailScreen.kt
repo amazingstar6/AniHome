@@ -719,7 +719,7 @@ fun QuickInfo(media: Media, isAnime: Boolean) {
         IconWithText(
             R.drawable.anime_details_calendar,
             text = if (isAnime) {
-                "${media.season.getName()}${if (media.seasonYear != -1) " " + media.seasonYear else ""}"
+                "${media.season.getString(LocalContext.current)}${if (media.seasonYear != -1) " " + media.seasonYear else ""}"
             } else {
                 if (media.startedAt != null) {
                     "${media.startedAt.year}-${media.startedAt.month}-${media.startedAt.day}"

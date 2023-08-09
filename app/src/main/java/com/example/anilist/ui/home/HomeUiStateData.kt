@@ -21,5 +21,4 @@ data class HomeUiStateData(
     val searchResultsStudio: LazyPagingItems<AniStudio>,
     val searchResultsThread: LazyPagingItems<AniThread>,
     val searchResultsUser: LazyPagingItems<AniUser>,
-    val searchIsActive: Boolean,
 )

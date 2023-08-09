@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -195,7 +196,7 @@ fun Rankings(stats: Stats, modifier: Modifier = Modifier) {
                 stringResource(
                     id = R.string.highest_rated_season,
                     stats.highestRatedSeasonRank,
-                    stats.highestRatedSeasonSeason.getName(),
+                    stats.highestRatedSeasonSeason.getString(LocalContext.current),
                     stats.highestRatedSeasonYear,
                 ),
                 false,
@@ -207,7 +208,7 @@ fun Rankings(stats: Stats, modifier: Modifier = Modifier) {
                 stringResource(
                     id = R.string.most_popular_season,
                     stats.mostPopularSeasonRank,
-                    stats.mostPopularSeasonSeason.getName(),
+                    stats.mostPopularSeasonSeason.getString(LocalContext.current),
                     stats.mostPopularSeasonYear,
                 ),
                 true,

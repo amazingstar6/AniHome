@@ -1,21 +1,24 @@
 package com.example.anilist.ui.home
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -25,12 +28,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -60,8 +66,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -73,17 +79,21 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
+import com.example.anilist.data.models.AniMediaStatus
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
+import com.example.anilist.data.models.Season
 import com.example.anilist.data.repository.HomeTrendingTypes
 import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.Dimens
@@ -91,11 +101,12 @@ import com.example.anilist.ui.mediadetails.LoadingCircle
 import com.example.anilist.ui.mediadetails.MediaDetailsViewModel
 import com.example.anilist.ui.mediadetails.QuickInfo
 import com.example.anilist.utils.AsyncImageRoundedCorners
+import com.example.anilist.utils.Utils
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.time.LocalDate
 import java.util.Locale
-
-private const val TAG = "HomeScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,7 +137,6 @@ fun HomeScreen(
             searchResultsStudio = homeViewModel.searchResultsStudio.collectAsLazyPagingItems(),
             searchResultsThread = homeViewModel.searchResultsThread.collectAsLazyPagingItems(),
             searchResultsUser = homeViewModel.searchResultsUser.collectAsLazyPagingItems(),
-            searchIsActive = false,
         )
 
     val isAnime by homeViewModel.isAnime.collectAsStateWithLifecycle()
@@ -136,6 +146,7 @@ fun HomeScreen(
     val characterSortType by homeViewModel.characterSortType.collectAsStateWithLifecycle()
 
     val uiState2 by homeViewModel.uiState.collectAsStateWithLifecycle()
+//    val trendingTogethery by homeViewModel.trendingTogetherPager.collectAsLazyPagingItems()
 
 
     var active by rememberSaveable {
@@ -152,7 +163,6 @@ fun HomeScreen(
             updateSearch = homeViewModel::setSearch,
             active = active,
             setActive = { active = it },
-            search = homeViewModel::triggerSearch,
             onNavigateToMediaDetails = onNavigateToMediaDetails,
             onNavigateToNotification = onNavigateToNotification,
             onNavigateToSettings = onNavigateToSettings,
@@ -256,7 +266,7 @@ fun HomeScreen(
                         HeadlineText(
                             text = stringResource(R.string.upcoming_next_season),
                             onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.UPCOMING_NEXT_SEASON) })
-                        Log.d(TAG, "${uiState.pagerUpcomingNextSeason.itemCount}")
+                        Timber.d(uiState.pagerUpcomingNextSeason.itemCount.toString())
                         LazyRowLazyPagingItems(
                             uiState.pagerUpcomingNextSeason,
                             onNavigateToMediaDetails
@@ -324,6 +334,19 @@ enum class SearchFilter {
         return this.name.lowercase()
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
+
+    fun getIconResource(): Int {
+        return when (this) {
+            MEDIA -> R.drawable.outline_description_24
+            ANIME -> R.drawable.anime_details_heart
+            MANGA -> R.drawable.navigation_manga_outlined
+            CHARACTERS -> R.drawable.anime_details_heart
+            STAFF -> R.drawable.anime_details_heart
+            STUDIOS -> R.drawable.anime_details_heart
+            THREADS -> R.drawable.anime_details_heart
+            USER -> R.drawable.anime_details_heart
+        }
+    }
 }
 
 enum class AniMediaSort {
@@ -377,31 +400,30 @@ enum class AniCharacterSort {
 @Composable
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class,
-    ExperimentalComposeUiApi::class
+    ExperimentalFoundationApi::class
 )
 private fun AniSearchBar(
     characterSort: AniCharacterSort,
     setCharacterSort: (AniCharacterSort) -> Unit,
     uiState: HomeUiStateData,
     query: String,
-    updateSearch: (String) -> Unit,
+    updateSearch: (String, Season, AniMediaStatus) -> Unit,
     active: Boolean,
     setActive: (Boolean) -> Unit,
-    search: () -> Unit,
-    onNavigateToMediaDetails: (Int) -> Unit,
-    onNavigateToNotification: () -> Unit,
-    onNavigateToSettings: () -> Unit,
     focusRequester: FocusRequester,
     selectedChip: SearchFilter,
     setSelectedChipValue: (SearchFilter) -> Unit,
-    onNavigateToCharacterDetails: (Int) -> Unit,
-    onNavigateToStaffDetails: (Int) -> Unit,
-    navigateToUserDetails: (Int) -> Unit,
-    navigateToThreadDetails: (Int) -> Unit,
-    navigateToStudioDetails: (Int) -> Unit,
     currentMediaSort: AniMediaSort,
     setCurrentMediaSort: (AniMediaSort) -> Unit,
-    toggleFavourite: (Int) -> Unit
+    toggleFavourite: (Int) -> Unit,
+    onNavigateToMediaDetails: (Int) -> Unit,
+    onNavigateToNotification: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToCharacterDetails: (Int) -> Unit,
+    navigateToUserDetails: (Int) -> Unit,
+    onNavigateToStaffDetails: (Int) -> Unit,
+    navigateToThreadDetails: (Int) -> Unit,
+    navigateToStudioDetails: (Int) -> Unit
 ) {
     val padding by animateDpAsState(
         targetValue = if (!active) Dimens.PaddingNormal else 0.dp,
@@ -409,10 +431,16 @@ private fun AniSearchBar(
                 ""
     )
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    var selectedSeason by remember { mutableStateOf(Season.UNKNOWN) }
+    var selectedYear by remember { mutableIntStateOf(-1) }
+    var selectedStatus by remember { mutableStateOf(AniMediaStatus.UNKNOWN) }
+
     SearchBar(
         query = query,
-        onQueryChange = { updateSearch(it) },
+        onQueryChange = { updateSearch(it, selectedSeason, selectedStatus) },
         onSearch = {
+            updateSearch(it, selectedSeason, selectedStatus)
             keyboardController?.hide()
         },
         active = active,
@@ -464,11 +492,16 @@ private fun AniSearchBar(
                     modifier = Modifier.padding(end = 16.dp),
                 )
             } else {
-                IconButton(onClick = { updateSearch("") }) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = stringResource(R.string.clear)
-                    )
+                PlainTooltipBox(tooltip = { Text(text = "Clear text") }) {
+                    IconButton(
+                        onClick = { updateSearch("", selectedSeason, selectedStatus) },
+                        modifier = Modifier.tooltipTrigger()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear)
+                        )
+                    }
                 }
             }
         },
@@ -487,16 +520,33 @@ private fun AniSearchBar(
                             selected = index == selectedChip.ordinal,
                             onClick = {
                                 setSelectedChipValue(filterList[index])
-                                if (query.isNotBlank()) {
-                                    search()
-                                }
                             },
                             label = { Text(text = filterName.toString()) },
+                            leadingIcon = {
+                                if (index == selectedChip.ordinal) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(id = filterName.getIconResource()),
+                                        contentDescription = null
+                                    )
+                                }
+                            },
                             modifier = Modifier.padding(start = Dimens.PaddingNormal)
                         )
                     }
                 }
                 var showSortingBottomSheet by remember { mutableStateOf(false) }
+                var showGenreDialog by remember { mutableStateOf(false) }
+                var showYearDialog by remember { mutableStateOf(false) }
+                var showSeasonBottomSheet by remember { mutableStateOf(false) }
+                var showAiringStatusBottomSheet by remember { mutableStateOf(false) }
+
+
+
                 FlowRow(modifier = Modifier.padding(start = Dimens.PaddingNormal)) {
                     if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME || selectedChip == SearchFilter.MANGA) {
                         HorizontalDivider()
@@ -512,6 +562,46 @@ private fun AniSearchBar(
                                 )
                             },
                         )
+                        AssistChip(
+                            onClick = { showGenreDialog = true },
+                            label = { Text(text = "Genre") },
+                            modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                        )
+
+                        AssistChip(
+                            onClick = { showYearDialog = true },
+                            label = { Text(text = if (selectedYear == -1) stringResource(id = R.string.year) else selectedYear.toString()) },
+                            modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                        )
+
+                        if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME) {
+                            AssistChip(
+                                onClick = { showSeasonBottomSheet = true },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.baseline_local_florist_24),
+                                        contentDescription = null
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = if (selectedSeason == Season.UNKNOWN) {
+                                            stringResource(id = R.string.season)
+                                        } else selectedSeason.getString(
+                                            LocalContext.current
+                                        )
+                                    )
+                                },
+                                modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                            )
+                        }
+
+                        AssistChip(
+                            onClick = { showAiringStatusBottomSheet = true },
+                            label = { Text(text = "Airing Status") },
+                            modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                        )
+
                     } else if (selectedChip == SearchFilter.CHARACTERS) {
                         HorizontalDivider()
                         AssistChip(
@@ -536,7 +626,6 @@ private fun AniSearchBar(
                                     onClick = {
                                         setCurrentMediaSort(mediaSort)
                                         showSortingBottomSheet = false
-                                        search()
                                     }, modifier = Modifier
                                         .fillMaxWidth(), shape = RectangleShape
                                 ) {
@@ -552,7 +641,6 @@ private fun AniSearchBar(
                                     onClick = {
                                         setCharacterSort(aniCharacterSort)
                                         showSortingBottomSheet = false
-                                        search()
                                     }, modifier = Modifier
                                         .fillMaxWidth(), shape = RectangleShape
                                 ) {
@@ -565,6 +653,149 @@ private fun AniSearchBar(
                         }
                     }
                 }
+                if (showGenreDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showGenreDialog = false },
+                        confirmButton = { showGenreDialog = false })
+                }
+                if (showYearDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showYearDialog = true },
+                        confirmButton = {
+                            TextButton(onClick = { showYearDialog = false }) {
+                                Text(text = "Confirm")
+                            }
+                        },
+                        title = { Text(text = stringResource(id = R.string.year)) },
+                        text = {
+                            val startIndex = 0
+                            val lazyListState = rememberLazyListState(startIndex)
+                            val yearsRange = 1940..Utils.currentYear()
+                            LazyColumn {
+                                items(yearsRange.toList()) {
+                                    Text(text = it.toString())
+                                }
+                            }
+//                            val years = yearsRange.map {
+//                                Year(
+//                                    text = it.toString(),
+//                                    value = it,
+//                                    index = yearsRange.indexOf(it)
+//                                )
+//                            }
+                            val size = DpSize(256.dp, 128.dp)
+                            val startDate = LocalDate.now()
+                            var snappedDate by remember { mutableStateOf(startDate) }
+                            val minDate: LocalDate = LocalDate.ofYearDay(yearsRange.first, 1)
+                            val maxDate: LocalDate = LocalDate.ofYearDay(yearsRange.last, 1)
+//                            var dayOfMonths = calculateDayOfMonths(snappedDate.month.value, snappedDate.year)
+//                            WheelPicker(lazyListState, range)
+//                            WheelDatePicker(yearsRange = range) {
+//                                snappedDate ->
+//                                selectedYear = snappedDate.year
+//                            }
+//                            WheelTextPicker(
+//                                size = DpSize(
+//                                    width = size.width / 3,
+//                                    height = size.height
+//                                ),
+//                                texts = years.map { it.text },
+//                                rowCount = 3,
+//                                style = MaterialTheme.typography.titleMedium,
+//                                color = LocalContentColor.current,
+//                                selectorProperties = WheelPickerDefaults.selectorProperties(
+//                                    enabled = false
+//                                ),
+//                                startIndex = years.find { it.value == startDate.year }?.index ?: 0,
+//                                onScrollFinished = { snappedIndex ->
+//
+//                                    val newYear = years.find { it.index == snappedIndex }?.value
+//
+//                                    newYear?.let {
+//
+//                                        val newDate = snappedDate.withYear(newYear)
+//
+//                                        if (!newDate.isBefore(minDate) && !newDate.isAfter(maxDate)) {
+//                                            snappedDate = newDate
+//                                        }
+//
+//                                        dayOfMonths = calculateDayOfMonths(
+//                                            snappedDate.month.value,
+//                                            snappedDate.year
+//                                        )
+//
+//                                        val newIndex =
+//                                            years.find { it.value == snappedDate.year }?.index
+//
+//                                        newIndex?.let {
+//                                            onSnappedDate(
+//                                                SnappedDate.Year(
+//                                                    localDate = snappedDate,
+//                                                    index = newIndex
+//                                                )
+//                                            )?.let { return@WheelTextPicker it }
+//
+//                                        }
+//                                    }
+//
+//                                    return@WheelTextPicker years.find { it.value == snappedDate.year }?.index
+//                                }
+//                            )
+                        })
+                }
+                if (showSeasonBottomSheet) {
+                    ModalBottomSheet(onDismissRequest = { showSeasonBottomSheet = false }) {
+                        Season.values().forEach { season ->
+                            if (season != Season.UNKNOWN) {
+                                TextButton(
+                                    onClick = {
+                                        selectedSeason = if (selectedSeason == season) {
+                                            Season.UNKNOWN
+                                        } else {
+                                            season
+                                        }
+                                        updateSearch(query, selectedSeason, selectedStatus)
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = season.getString(LocalContext.current),
+                                        color = if (season == selectedSeason) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                if (showAiringStatusBottomSheet) {
+                    ModalBottomSheet(onDismissRequest = { showAiringStatusBottomSheet = false }) {
+                        AniMediaStatus.values().forEach { status ->
+                            if (status != AniMediaStatus.UNKNOWN) {
+                                TextButton(
+                                    onClick = {
+                                        selectedStatus = if (selectedStatus == status) {
+                                            AniMediaStatus.UNKNOWN
+                                        } else {
+                                            status
+                                        }
+                                        updateSearch(query, selectedSeason, selectedStatus)
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = status.getString(LocalContext.current),
+                                        color = if (status == selectedStatus) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
                 SearchResults(
                     uiState = uiState,
                     selectedChip = selectedChip,
@@ -579,6 +810,52 @@ private fun AniSearchBar(
             }
         }
     }
+}
+
+//private data class Year(
+//    val text: String,
+//    val value: Int,
+//    val index: Int
+//)
+//
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+private fun WheelPicker(
+    lazyListState: LazyListState,
+    range: IntRange
+) {
+    LazyColumn(
+        state = lazyListState,
+        contentPadding = PaddingValues(Dimens.PaddingNormal),
+        flingBehavior = rememberSnapFlingBehavior(lazyListState = lazyListState),
+    ) {
+        itemsIndexed(range.toList()) { index, item ->
+            val elementIsVisible =
+                (lazyListState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index } != null)
+            Box(
+                modifier = Modifier
+                    .height(50.dp / (range.last - range.first))
+                    .width(120.dp)
+                    .alpha(
+                        if (elementIsVisible) {
+                            1f
+                        } else {
+                            1f
+                        }
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = item.toString(), color = MaterialTheme.colorScheme.onSurface)
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, group = "WheelPicker")
+@Composable
+fun WheelPickerPreview() {
+    WheelPicker(lazyListState = rememberLazyListState(), range = 1..10)
 }
 
 @Composable
@@ -596,17 +873,41 @@ private fun SearchResults(
     LazyColumn {
         when (selectedChip) {
             SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
-                items(uiState.searchResultsMedia.itemCount) { index ->
-                    val media = uiState.searchResultsMedia[index]
-                    if (media != null) {
-                        SearchCardMedia(
-                            media,
-                            onNavigateToMediaDetails,
-                            media.id,
-                            media.coverImage,
-                            media.title,
-                            media.type
-                        )
+                val pager = uiState.searchResultsMedia
+                Timber.d("Refresh loadstate is: " + pager.loadState.refresh.toString() + "\nappend load state is : ${pager.loadState.append}")
+                when (pager.loadState.refresh) {
+                    is LoadState.Error -> {
+                        item {
+                            Text(text = "Network error! Please try searching again")
+                        }
+                    }
+
+                    is LoadState.Loading -> {
+                        item {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    is LoadState.NotLoading -> {
+                        if (pager.itemCount != 0) {
+                            items(pager.itemCount) { index ->
+                                val media = uiState.searchResultsMedia[index]
+                                if (media != null) {
+                                    SearchCardMedia(
+                                        media,
+                                        onNavigateToMediaDetails,
+                                        media.id,
+                                        media.coverImage,
+                                        media.title,
+                                        media.type
+                                    )
+                                }
+                            }
+                        } else {
+                            item {
+//                                Text(text = "no results") todo?
+                            }
+                        }
                     }
                 }
             }

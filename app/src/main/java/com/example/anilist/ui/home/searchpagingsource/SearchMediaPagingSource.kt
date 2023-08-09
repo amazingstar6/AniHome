@@ -1,12 +1,15 @@
 package com.example.anilist.ui.home.searchpagingsource
 
-import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.example.anilist.data.models.AniMediaStatus
+import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.Season
 import com.example.anilist.data.repository.HomeRepository
 import com.example.anilist.ui.home.AniMediaSort
 import com.example.anilist.ui.home.SearchFilter
+import timber.log.Timber
 
 private const val STARTING_KEY = 1
 private const val TAG = "SearchPagingSource"
@@ -15,18 +18,23 @@ class SearchMediaPagingSource(
     private val homeRepository: HomeRepository,
     private val search: String,
     private val mediaSearchType: SearchFilter,
-    private val sortType: AniMediaSort
+    private val sortType: AniMediaSort,
+    private val season: Season,
+    private val status: AniMediaStatus
 ) : PagingSource<Int, Media>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Media> {
         val start = params.key ?: STARTING_KEY
-        val data = homeRepository.searchMedia(start, params.loadSize, search, mediaSearchType, sortType)
-        Log.d(TAG, "Data received in search paging source is $data")
-        Log.d(TAG, "Current search page being loaded is ${params.key} with query $search")
-        return LoadResult.Page(
-            data = data,
-            prevKey = if (start == STARTING_KEY) null else start - 1,
-            nextKey = if (data.isNotEmpty()) start + 1 else null
-        )
+        val data =
+            homeRepository.searchMedia(start, params.loadSize, search, mediaSearchType, sortType, season = season, status = status)
+        Timber.d("Current search page being loaded is " + params.key + " with query " + search)
+        return when (data) {
+            is AniResult.Failure -> LoadResult.Error(Exception(data.error))
+            is AniResult.Success -> LoadResult.Page(
+                data = data.data,
+                prevKey = if (start == STARTING_KEY) null else start - 1,
+                nextKey = if (data.data.isNotEmpty()) start + 1 else null
+            )
+        }
     }
 
     override fun getRefreshKey(state: PagingState<Int, Media>): Int? {

@@ -97,6 +97,17 @@
     <string name="planning">Planning</string>
     <string name="save">Save</string>
     <string name="please_login_to_use_this_feature">Please login to use this feature</string>
+    <string name="spring">Spring</string>
+    <string name="summer">Summer</string>
+    <string name="fall">Fall</string>
+    <string name="winter">Winter</string>
+    <string name="season">Season</string>
+    <string name="year">Year</string>
+    <string name="finished">Finished</string>
+    <string name="releasing">Releasing</string>
+    <string name="not_yet_released">Not yet released</string>
+    <string name="cancelled">Cancelled</string>
+    <string name="hiatus">Hiatus</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>
