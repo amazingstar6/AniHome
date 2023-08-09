@@ -1,9 +1,9 @@
 package com.example.anilist.ui.mediadetails
 
 import android.util.Log
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -17,10 +17,11 @@ import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.data.repository.MediaDetailsRepository
-import com.example.anilist.data.repository.MyMediaRepository
+import com.example.anilist.data.repository.MyMediaRepositoryImpl
 import com.example.anilist.data.repository.StudioDetailRepository
 import com.example.anilist.data.repository.StudioMediaPagingSource
 import com.example.anilist.ui.home.PREFETCH_DISTANCE
+import com.example.anilist.ui.navigation.AniListRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 // data class MediaDetailsUiState(
@@ -41,9 +43,15 @@ private const val TAG = "MediaDetailsViewModel"
 @HiltViewModel
 class MediaDetailsViewModel @Inject constructor(
     private val mediaDetailsRepository: MediaDetailsRepository,
-    private val myMediaRepository: MyMediaRepository,
-    private val studioDetailRepository: StudioDetailRepository
+    private val myMediaRepository: MyMediaRepositoryImpl,
+    private val studioDetailRepository: StudioDetailRepository,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    init {
+        Timber.d("Init block got called!")
+        savedStateHandle.get<Int>(AniListRoute.MEDIA_DETAIL_ID_KEY)?.let { fetchMedia(it) }
+    }
 
     private val _media = MutableLiveData<Media>()
     val media: LiveData<Media> = _media
@@ -106,9 +114,10 @@ class MediaDetailsViewModel @Inject constructor(
     }
 
 
-    fun fetchMedia(mediaId: Int, surfaceColor: Color, onSurfaceColor: Color) {
+    fun fetchMedia(mediaId: Int) {
+        Timber.d("Saved state handle has ${savedStateHandle.get<Int>(AniListRoute.MEDIA_DETAIL_ID_KEY)}")
         viewModelScope.launch {
-            val data = mediaDetailsRepository.fetchMedia(mediaId, surfaceColor, onSurfaceColor)
+            val data = mediaDetailsRepository.fetchMedia(mediaId)
             _media.value = data.getOrNull()
             _mediaId.emit(mediaId)
         }
@@ -166,12 +175,14 @@ class MediaDetailsViewModel @Inject constructor(
         }
     }
 
-    fun updateProgress(statusUpdate: StatusUpdate, mediaId: Int, surfaceColor: Color, onSurfaceColor: Color) {
+    fun updateProgress(statusUpdate: StatusUpdate, mediaId: Int) {
         viewModelScope.launch {
             myMediaRepository.updateProgress(
                 statusUpdate,
             )
-            _media.value = mediaDetailsRepository.fetchMedia(mediaId, surfaceColor = surfaceColor, onSurfaceColor= onSurfaceColor).getOrNull()
+            _media.value = mediaDetailsRepository.fetchMedia(
+                mediaId
+            ).getOrNull()
         }
     }
 

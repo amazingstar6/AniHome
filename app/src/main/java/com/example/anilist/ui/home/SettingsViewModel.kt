@@ -22,14 +22,7 @@ class SettingsViewModel @Inject constructor(
     val settingsUiState: StateFlow<SettingsUiState> =
         userDataRepository.userPreferencesFlow.map { userData ->
             SettingsUiState.Success(
-                settings = UserSettings(
-                    accessCode = userData.accessCode,
-                    tokenType = userData.tokenType,
-                    expiresIn = userData.expiresIn,
-                    titleFormat = userData.titleFormat,
-                    theme = userData.theme,
-                    userId = userData.userId
-                ),
+                settings = userData,
             )
         }
             .stateIn(

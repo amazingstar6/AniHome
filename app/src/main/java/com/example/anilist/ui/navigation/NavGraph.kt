@@ -67,7 +67,7 @@ fun AniNavHost(
             )
         }
         composable(
-            route = AniListRoute.MEDIA_OVERVIEW + "/{trendingType}",
+            route = AniListRoute.MEDIA_OVERVIEW_ROUTE + "/{trendingType}",
             arguments = listOf(navArgument("trendingType") {
                 type = NavType.IntType
             })
@@ -82,16 +82,16 @@ fun AniNavHost(
             )
         }
         composable(
-            AniListRoute.ANIME_DETAIL_ROUTE + "/{animeId}",
+            "${AniListRoute.MEDIA_DETAIL_ROUTE}/{${AniListRoute.MEDIA_DETAIL_ID_KEY}}",
             arguments = listOf(
-                navArgument("animeId") {
+                navArgument(AniListRoute.MEDIA_DETAIL_ID_KEY) {
                     type = NavType.IntType
                 },
             ),
         ) { backStackEntry ->
             setBottomBarState(false)
             MediaDetail(
-                mediaId = backStackEntry.arguments?.getInt("animeId") ?: -1,
+                mediaId = backStackEntry.arguments?.getInt(AniListRoute.MEDIA_DETAIL_ID_KEY) ?: -1,
                 onNavigateBack = navigationActions::navigateBack,
                 onNavigateToDetails = navigationActions::navigateToMediaDetails,
                 onNavigateToReviewDetails = navigationActions::navigateToReviewDetails,
@@ -193,7 +193,7 @@ fun AniNavHost(
             if (accessCode != "") {
                 MyMediaScreen(
                     navigateToDetails = { id ->
-                        navController.navigate(route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id")
+                        navController.navigate(route = AniListRoute.MEDIA_DETAIL_ROUTE + "/$id")
                     },
                     isAnime = true,
                 )
@@ -206,7 +206,7 @@ fun AniNavHost(
             if (accessCode != "") {
                 MyMediaScreen(
                     navigateToDetails = { id ->
-                        navController.navigate(route = AniListRoute.ANIME_DETAIL_ROUTE + "/$id")
+                        navController.navigate(route = AniListRoute.MEDIA_DETAIL_ROUTE + "/$id")
                     },
                     isAnime = false,
                 )

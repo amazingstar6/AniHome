@@ -21,10 +21,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
@@ -48,8 +52,7 @@ import com.example.anilist.R
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.ui.mymedia.DatePickerDialogue
-import com.example.anilist.ui.mymedia.DropDownMenuStatus
-import com.example.anilist.ui.mymedia.NumberTextField
+import com.example.anilist.ui.mymedia.PersonalMediaStatus
 import kotlin.math.roundToInt
 
 private const val TAG = "EditStatusSheet"
@@ -375,4 +378,125 @@ fun SliderTextField(rawScore: Double, setRawScore: (Double) -> Unit) {
         },
         steps = 100,
     )
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun DropDownMenuStatus(
+    selectedOptionText: PersonalMediaStatus,
+    isAnime: Boolean,
+    setSelectedOptionText: (PersonalMediaStatus) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    // We want to react on tap/press on TextField to show menu
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = Modifier.padding(Dimens.PaddingNormal),
+    ) {
+        OutlinedTextField(
+            // The `menuAnchor` modifier must be passed to the text field for correctness.
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            readOnly = true,
+            value = selectedOptionText.getString(isAnime),
+            onValueChange = {},
+            label = { Text("Status") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            PersonalMediaStatus.values().forEach { selectionOption ->
+                if (selectionOption != PersonalMediaStatus.UNKNOWN) {
+                    DropdownMenuItem(
+                        text = { Text(selectionOption.getString(isAnime)) },
+                        onClick = {
+                            setSelectedOptionText(selectionOption)
+                            expanded = false
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                        colors = MenuDefaults.itemColors(),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun NumberTextField(
+    suffix: String,
+    label: String,
+    initialValue: Int,
+    setValue: (Int) -> Unit,
+    maxCount: Int,
+) {
+    var text by remember {
+        mutableStateOf(initialValue.toString())
+    }
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        OutlinedTextField(
+            value = text,
+            onValueChange = { newInput ->
+                try {
+                    if (newInput.toInt() in 0..maxCount) {
+                        text = newInput
+                        setValue(
+                            newInput.toInt()
+                        )
+                    } else {
+                        text = ""
+                        setValue(0)
+                    }
+                } catch (e: NumberFormatException) {
+                    text = ""
+                    setValue(0)
+                }
+            },
+            singleLine = true,
+            label = { Text(label) },
+            suffix = { if (suffix.isNotEmpty()) Text(text = "/$suffix") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            placeholder = { Text(text = (0).toString()) },
+            modifier = Modifier
+                .padding(Dimens.PaddingNormal)
+                .weight(1f),
+        )
+        TextButton(onClick = {
+            text = try {
+                if (text.toInt() < 1) {
+                    setValue(0)
+                    (0).toString()
+                } else {
+                    setValue(text.toInt().dec())
+                    text.toInt().dec().toString()
+                }
+            } catch (e: NumberFormatException) {
+                setValue(0)
+                (0).toString()
+            }
+        }) {
+            Text(text = stringResource(R.string.minus_one))
+        }
+        TextButton(onClick = {
+            try {
+                if (text.toInt() < maxCount) {
+                    setValue(text.toInt().inc())
+                    text = text.toInt().inc().toString()
+                }
+            } catch (e: NumberFormatException) {
+                setValue(0)
+                text = (0).toString()
+            }
+        }) {
+            Text(text = stringResource(R.string.plus_one))
+        }
+    }
 }

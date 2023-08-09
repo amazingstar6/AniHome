@@ -6,9 +6,7 @@ import androidx.paging.PagingState
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.repository.HomeRepository
 import com.example.anilist.data.repository.HomeTrendingTypes
-import com.example.anilist.data.repository.MyMediaRepository
 import javax.inject.Inject
-import kotlin.math.max
 import kotlin.math.min
 
 private const val STARTING_KEY = 1

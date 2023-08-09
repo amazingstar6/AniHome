@@ -160,16 +160,13 @@ fun MediaDetail(
         modalSheetScope.launch { editSheetState.hide() }
     }
 
-    val surfaceColor = MaterialTheme.colorScheme.surface
-    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
     val fetchMedia = {
         mediaDetailsViewModel.fetchMedia(
-            mediaId = mediaId,
-            surfaceColor = surfaceColor,
-            onSurfaceColor = onSurfaceColor
+            mediaId = mediaId
         )
     }
-    fetchMedia()
+
+//    fetchMedia()
 
     val reviews = mediaDetailsViewModel.reviews.collectAsLazyPagingItems()
     val staff = mediaDetailsViewModel.staffList.collectAsLazyPagingItems()
@@ -295,7 +292,7 @@ fun MediaDetail(
                                     reviews,
                                     vote = { rating, reviewId ->
                                         mediaDetailsViewModel.rateReview(reviewId, rating)
-                                        fetchMedia()
+                                        fetchMedia() //fixme don't reload pls
                                     },
                                     onNavigateToReviewDetails
                                 )
@@ -320,9 +317,7 @@ fun MediaDetail(
                         saveStatus = {
                             mediaDetailsViewModel.updateProgress(
                                 it,
-                                mediaId,
-                                surfaceColor = surfaceColor,
-                                onSurfaceColor = onSurfaceColor
+                                mediaId
                             )
                         },
                         isAnime = isAnime,

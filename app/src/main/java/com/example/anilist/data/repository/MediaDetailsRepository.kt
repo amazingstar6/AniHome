@@ -1,7 +1,6 @@
 package com.example.anilist.data.repository
 
 import android.util.Log
-import androidx.compose.ui.graphics.Color
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.GetCharacterDetailQuery
@@ -43,6 +42,7 @@ import com.example.anilist.type.MediaType
 import com.example.anilist.type.ReviewRating
 import com.example.anilist.ui.mymedia.PersonalMediaStatus
 import com.example.anilist.utils.Apollo
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -52,13 +52,11 @@ private const val TAG = "MediaDetailRepository"
 class MediaDetailsRepository @Inject constructor() {
 
     suspend fun fetchMedia(
-        mediaId: Int,
-        surfaceColor: Color,
-        onSurfaceColor: Color
+        mediaId: Int
     ): Result<Media> {
         try {
-            Log.d(TAG, "user id found in main activity is ${MainActivity.userId}")
-            Log.d(TAG, "media id being used is $mediaId")
+            Timber.d("user id found in main activity is " + MainActivity.userId)
+            Timber.d("media id being used is $mediaId")
             val result =
                 Apollo.apolloClient.query(
                     GetMediaDetailQuery(mediaId, MainActivity.userId),

@@ -1,5 +1,7 @@
 package com.example.anilist.ui.mymedia
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -17,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
@@ -28,17 +29,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -56,7 +53,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,7 +70,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -96,14 +91,15 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import timber.log.Timber
 
 enum class PersonalMediaStatus {
     CURRENT,
     PLANNING,
     COMPLETED,
-    DROPPED,
-    PAUSED,
     REPEATING,
+    PAUSED,
+    DROPPED,
     UNKNOWN, ;
 
     fun getString(isAnime: Boolean): String {
@@ -133,9 +129,27 @@ fun MyMediaScreen(
 ) {
     val uiState by myMediaViewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(key1 = isAnime) {
-        myMediaViewModel.fetchMyMedia(isAnime)
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        myMediaViewModel
+            .toastMessage
+            .collect { message ->
+                Toast.makeText(
+                    context,
+                    message,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
     }
+
+    if (uiState !is MyMediaUiState.Success) {
+        LaunchedEffect(key1 = Unit) {
+            Timber.d("Media got fetched, isAnime is $isAnime")
+            myMediaViewModel.fetchMyMedia(isAnime, true)
+        }
+    }
+
     when (uiState) {
         is MyMediaUiState.Success -> {
             MyMedia(
@@ -146,7 +160,7 @@ fun MyMediaScreen(
                     myMediaViewModel.updateProgress(statusUpdate = it)
                 },
                 reloadMyMedia = {
-                    myMediaViewModel.fetchMyMedia(isAnime)
+                    myMediaViewModel.fetchMyMedia(isAnime, true)
                 },
                 deleteListEntry = {
                     myMediaViewModel.deleteEntry(it)
@@ -160,7 +174,7 @@ fun MyMediaScreen(
 
         is MyMediaUiState.Error -> {
             val errorMessage = (uiState as MyMediaUiState.Error).message
-            val reloadMedia = { myMediaViewModel.fetchMyMedia(isAnime) }
+            val reloadMedia = { myMediaViewModel.fetchMyMedia(isAnime, true) }
             ErrorScreen(errorMessage, reloadMedia)
         }
     }
@@ -176,7 +190,8 @@ private fun ErrorScreen(errorMessage: String, reloadMedia: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = errorMessage)
-        Text(text = "Check your network connections and reload your media list")
+        Text(text = "Check your network connections and reload your media list, " +
+                "if the issue still persists, try logging out through the settings menu on the home page")
         Button(onClick = {
             reloadMedia()
         }) {
@@ -242,13 +257,37 @@ private fun MyMedia(
     val setFilter: (PersonalMediaStatus) -> Unit = { filter = it }
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(text = if (isAnime) "Watching" else "Reading") }, actions = {
-                IconButton(
-                    onClick = reloadMyMedia
-                ) {
-                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
-                }
-            })
+            TopAppBar(
+                title = {
+                    Text(
+                        text = if (isAnime) stringResource(R.string.my_anime_list) else stringResource(
+                            R.string.my_manga_list
+                        )
+                    )
+                },
+                actions = {
+                    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.refresh)) }) {
+                        IconButton(
+                            onClick = reloadMyMedia,
+                            modifier = Modifier.tooltipTrigger()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Refresh"
+                            )
+                        }
+                    }
+                    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.sort)) }) {
+                        IconButton(onClick = { /*TODO*/ }, modifier = Modifier.tooltipTrigger()) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.sort),
+                                contentDescription = stringResource(
+                                    id = R.string.sort
+                                )
+                            )
+                        }
+                    }
+                })
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -421,14 +460,16 @@ private fun FilterModalSheet(
             hideFilterSheet = hideFilterSheet,
             filter = filter,
             thisFilter = PersonalMediaStatus.UNKNOWN,
-            name = stringResource(R.string.all)
+            name = stringResource(R.string.all),
+            icon = R.drawable.baseline_done_all_24
         )
         ModalSheetTextButton(
             filterFunction = setFilter,
             hideFilterSheet = hideFilterSheet,
             filter = filter,
             thisFilter = PersonalMediaStatus.CURRENT,
-            name = if (isAnime) stringResource(R.string.watching) else stringResource(R.string.reading)
+            name = if (isAnime) stringResource(R.string.watching) else stringResource(R.string.reading),
+            icon = R.drawable.outline_play_circle_24
         )
         ModalSheetTextButton(
             filterFunction = setFilter,
@@ -436,34 +477,41 @@ private fun FilterModalSheet(
             filter = filter,
             thisFilter = PersonalMediaStatus.REPEATING,
             name = if (isAnime) stringResource(R.string.rewatching) else stringResource(R.string.rereading),
-        )
-        ModalSheetTextButton(
-            filterFunction = setFilter,
-            hideFilterSheet = hideFilterSheet,
-            filter = filter,
-            thisFilter = PersonalMediaStatus.PAUSED,
-            name = "Paused"
-        )
-        ModalSheetTextButton(
-            filterFunction = setFilter,
-            hideFilterSheet = hideFilterSheet,
-            filter = filter,
-            thisFilter = PersonalMediaStatus.DROPPED,
-            name = "Dropped"
+            icon = R.drawable.outline_replay_24
         )
         ModalSheetTextButton(
             filterFunction = setFilter,
             hideFilterSheet = hideFilterSheet,
             filter = filter,
             thisFilter = PersonalMediaStatus.COMPLETED,
-            name = "Completed"
+            name = "Completed",
+//            icon = R.drawable.outline_done_24
+            icon = R.drawable.outline_check_circle_24
+        )
+        ModalSheetTextButton(
+            filterFunction = setFilter,
+            hideFilterSheet = hideFilterSheet,
+            filter = filter,
+            thisFilter = PersonalMediaStatus.PAUSED,
+            name = "Paused",
+            icon = R.drawable.outline_pause_circle_24
+        )
+        ModalSheetTextButton(
+            filterFunction = setFilter,
+            hideFilterSheet = hideFilterSheet,
+            filter = filter,
+            thisFilter = PersonalMediaStatus.DROPPED,
+            name = "Dropped",
+//            icon = R.drawable.outline_arrow_drop_down_circle_24
+            icon = R.drawable.outline_cancel_24
         )
         ModalSheetTextButton(
             filterFunction = setFilter,
             hideFilterSheet = hideFilterSheet,
             filter = filter,
             thisFilter = PersonalMediaStatus.PLANNING,
-            name = "Planning"
+            name = "Planning",
+            icon = R.drawable.outline_task_alt_24
         )
 //        TextButton(
 //            onClick = {
@@ -534,23 +582,25 @@ private fun ModalSheetTextButton(
     hideFilterSheet: () -> Unit,
     filter: PersonalMediaStatus,
     thisFilter: PersonalMediaStatus,
+    icon: Int,
     name: String
 ) {
-    Row() {
+    Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth()) {
         TextButton(
             onClick = {
                 filterFunction(thisFilter)
                 hideFilterSheet()
-            }, modifier = Modifier
-                .fillMaxWidth(), shape = RectangleShape
+            }, shape = RectangleShape
         ) {
-//            Icon(
-//                painter = painterResource(id = R.drawable.my_media_filter),
-//                contentDescription = "icon"
-//            )
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = "icon",
+                modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+            )
             Text(
                 name,
                 color = if (filter == thisFilter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -867,125 +917,6 @@ fun DatePickerDialogue(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
-fun DropDownMenuStatus(
-    selectedOptionText: PersonalMediaStatus,
-    isAnime: Boolean,
-    setSelectedOptionText: (PersonalMediaStatus) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    // We want to react on tap/press on TextField to show menu
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.padding(Dimens.PaddingNormal),
-    ) {
-        OutlinedTextField(
-            // The `menuAnchor` modifier must be passed to the text field for correctness.
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth(),
-            readOnly = true,
-            value = selectedOptionText.getString(isAnime),
-            onValueChange = {},
-            label = { Text("Status") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            PersonalMediaStatus.values().forEach { selectionOption ->
-                DropdownMenuItem(
-                    text = { Text(selectionOption.getString(isAnime)) },
-                    onClick = {
-                        setSelectedOptionText(selectionOption)
-                        expanded = false
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                    colors = MenuDefaults.itemColors(),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun NumberTextField(
-    suffix: String,
-    label: String,
-    initialValue: Int,
-    setValue: (Int) -> Unit,
-    maxCount: Int,
-) {
-    var text by remember {
-        mutableStateOf(initialValue.toString())
-    }
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = { newInput ->
-                try {
-                    if (newInput.toInt() in 0..maxCount) {
-                        text = newInput
-                        setValue(
-                            newInput.toInt()
-                        )
-                    } else {
-                        text = ""
-                        setValue(0)
-                    }
-                } catch (e: NumberFormatException) {
-                    text = ""
-                    setValue(0)
-                }
-            },
-            singleLine = true,
-            label = { Text(label) },
-            suffix = { if (suffix.isNotEmpty()) Text(text = "/$suffix") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            placeholder = { Text(text = (0).toString()) },
-            modifier = Modifier
-                .padding(Dimens.PaddingNormal)
-                .weight(1f),
-        )
-        TextButton(onClick = {
-            text = try {
-                if (text.toInt() < 1) {
-                    setValue(0)
-                    (0).toString()
-                } else {
-                    setValue(text.toInt().dec())
-                    text.toInt().dec().toString()
-                }
-            } catch (e: NumberFormatException) {
-                setValue(0)
-                (0).toString()
-            }
-        }) {
-            Text(text = stringResource(R.string.minus_one))
-        }
-        TextButton(onClick = {
-            try {
-                if (text.toInt() < maxCount) {
-                    setValue(text.toInt().inc())
-                    text = text.toInt().inc().toString()
-                }
-            } catch (e: NumberFormatException) {
-                setValue(0)
-                text = (0).toString()
-            }
-        }) {
-            Text(text = stringResource(R.string.plus_one))
-        }
-    }
-}
-
-@Composable
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 private fun MediaCard(
     navigateToDetails: (Int) -> Unit,
@@ -1295,19 +1226,30 @@ fun RangeSliderTextPreview() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, group = "Modal sheet")
+@Preview(showBackground = true, group = "Filter")
 @Composable
 fun FilterModalSheetPreview() {
     val state = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
-    scope.launch {
-        state.show()
-    }
+    rememberCoroutineScope()
+    LaunchedEffect(key1 = state.currentValue, block = { state.show() })
     FilterModalSheet(
         filterSheetState = state,
         hideFilterSheet = { },
         filter = PersonalMediaStatus.CURRENT,
         setFilter = {},
         isAnime = true
+    )
+}
+
+@Preview(showBackground = true, group = "Filter")
+@Composable
+fun FilterComponentPreview() {
+    ModalSheetTextButton(
+        filterFunction = {},
+        hideFilterSheet = { },
+        filter = PersonalMediaStatus.PLANNING,
+        thisFilter = PersonalMediaStatus.REPEATING,
+        name = "Repeating",
+        icon = R.drawable.outline_replay_24
     )
 }

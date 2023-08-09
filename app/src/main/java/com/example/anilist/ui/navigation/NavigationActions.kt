@@ -6,7 +6,7 @@ import com.example.anilist.R
 import com.example.anilist.data.repository.HomeTrendingTypes
 
 object AniListRoute {
-    const val MEDIA_OVERVIEW: String = "MediaOverviewRoute"
+    const val MEDIA_OVERVIEW_ROUTE: String = "MediaOverviewRoute"
     const val CHARACTER_DETAIL_ROUTE: String = "CharacterDetail"
     const val STAFF_DETAIL_ROUTE: String = "StaffDetail"
     const val REVIEW_DETAIL_ROUTE: String = "ReviewDetail"
@@ -17,7 +17,8 @@ object AniListRoute {
     const val SETTINGS: String = "Settings"
     const val NOTIFICATION_ROUTE: String = "Notification"
     const val HOME_ROUTE = "Home"
-    const val ANIME_DETAIL_ROUTE = "Detail"
+    const val MEDIA_DETAIL_ROUTE = "Detail"
+    const val MEDIA_DETAIL_ID_KEY = "mediaId"
     const val ANIME_ROUTE = "Anime"
     const val MANGA_ROUTE = "Manga"
     const val FEED_ROUTE = "Feed"
@@ -46,7 +47,7 @@ class AniListNavigationActions(private val navController: NavController) {
 
     fun navigateToMediaDetails(mediaId: Int) {
         navController.navigate(
-            route = AniListRoute.ANIME_DETAIL_ROUTE + "/$mediaId",
+            route = AniListRoute.MEDIA_DETAIL_ROUTE + "/$mediaId",
         )
     }
 
@@ -98,7 +99,7 @@ class AniListNavigationActions(private val navController: NavController) {
 
     fun navigateToOverview(homeTrendingTypes: HomeTrendingTypes) {
         navController.navigate(
-            route = AniListRoute.MEDIA_OVERVIEW + "/${homeTrendingTypes.ordinal}"
+            route = AniListRoute.MEDIA_OVERVIEW_ROUTE + "/${homeTrendingTypes.ordinal}"
         )
     }
 }

@@ -85,6 +85,9 @@
     <string name="main">Main</string>
     <string name="plus_one_episode">+ 1 ep</string>
     <string name="edit">Edit</string>
+    <string name="refresh">Refresh</string>
+    <string name="my_anime_list">My anime list</string>
+    <string name="my_manga_list">My manga list</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>

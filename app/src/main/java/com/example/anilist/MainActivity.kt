@@ -35,10 +35,12 @@ import com.example.anilist.ui.navigation.AniListRoute
 import com.example.anilist.ui.navigation.AniNavHost
 import com.example.anilist.ui.theme.AnilistTheme
 import com.example.anilist.utils.Apollo
+import com.patrykandpatrick.vico.core.BuildConfig
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 private const val TAG = "MainActivity"
 
@@ -57,6 +59,10 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (/*BuildConfig.DEBUG*/ true){
+            Timber.plant(Timber.DebugTree());
+        }
+
         // processing the uri received for logging in
         if (intent?.data != null) {
             Log.i(TAG, "Data is ${intent.data}")

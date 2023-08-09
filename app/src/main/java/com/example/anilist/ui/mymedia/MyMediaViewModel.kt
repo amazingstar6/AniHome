@@ -1,14 +1,16 @@
 package com.example.anilist.ui.mymedia
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StatusUpdate
-import com.example.anilist.data.repository.MyMediaRepository
+import com.example.anilist.data.repository.MyMediaRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -17,19 +19,33 @@ private const val TAG = "MyMediaViewModel"
 
 @HiltViewModel
 class MyMediaViewModel @Inject constructor(
-    private val myMediaRepository: MyMediaRepository,
+    private val myMediaRepository: MyMediaRepositoryImpl,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<MyMediaUiState> =
         MutableStateFlow(MyMediaUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
-    fun fetchMyMedia(isAnime: Boolean) {
-        Log.d(TAG, "Fetch media got called")
+    private val _toastMessage = MutableSharedFlow<String>()
+    val toastMessage: SharedFlow<String> = _toastMessage.asSharedFlow()
+
+    private fun sendMessage(message: String) {
         viewModelScope.launch {
-            when (val data = myMediaRepository.getMyMedia(isAnime)) {
+            _toastMessage.emit(message)
+        }
+    }
+
+    // todo remove useNetworkFirst parameter?
+    fun fetchMyMedia(isAnime: Boolean, useNetworkFirst: Boolean) {
+        viewModelScope.launch {
+            when (val data = myMediaRepository.getMyMedia(isAnime, useNetworkFirst)) {
                 is AniResult.Success -> {
-                    _uiState.value = MyMediaUiState.Success(data.data)
+                    // notifies the user if the data is from cache when reloading
+                    if (data.data.second /*boolean value notating whether cache was used*/ && useNetworkFirst) {
+                        sendMessage("Network error, loaded data from cache")
+                    }
+
+                    _uiState.value = MyMediaUiState.Success(data.data.first)
                 }
 
                 is AniResult.Failure -> {
