@@ -5,6 +5,7 @@ import androidx.paging.PagingState
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.repository.HomeRepository
 import com.example.anilist.ui.home.AniCharacterSort
+import timber.log.Timber
 
 private const val STARTING_KEY = 1
 
@@ -22,6 +23,7 @@ class SearchCharactersPagingSource(
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, CharacterDetail> {
+        Timber.d("Character is querying for $search")
         val start = params.key ?: STARTING_KEY
         val data = homeRepository.searchCharacters(start, params.loadSize, search, sortType)
         return LoadResult.Page(

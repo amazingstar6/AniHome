@@ -41,8 +41,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -180,12 +180,10 @@ class HomeViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(),
             initialValue = ""
         )
-    private val _mediaSearch = MutableStateFlow("")
-    private val _characterSearch = MutableStateFlow("")
-    private val _staffSearch = MutableStateFlow("")
-    private val _studioSearch = MutableStateFlow("")
-    private val _threadSearch = MutableStateFlow("")
-    private val _userSearch = MutableStateFlow("")
+//    private val _mediaSearch = MutableStateFlow("")
+//    private val _characterSearch = MutableStateFlow("")
+//    private val _threadSearch = MutableStateFlow("")
+//    private val _userSearch = MutableStateFlow("")
 
     private val _searchType = MutableStateFlow(SearchFilter.MEDIA)
     val searchType = _searchType.asStateFlow().stateIn(
@@ -194,23 +192,24 @@ class HomeViewModel @Inject constructor(
         initialValue = SearchFilter.MEDIA
     )
 
-    private val _characterSortType = MutableStateFlow(AniCharacterSort.DEFAULT)
-    val characterSortType = _characterSortType.asStateFlow().stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(),
-        initialValue = AniCharacterSort.DEFAULT
-    )
+//    private val _characterSortType = MutableStateFlow(AniCharacterSort.DEFAULT)
+//    val characterSortType = _characterSortType.asStateFlow().stateIn(
+//        viewModelScope,
+//        SharingStarted.WhileSubscribed(),
+//        initialValue = AniCharacterSort.DEFAULT
+//    )
 
     private val mediaSearchState = MutableStateFlow(
         MediaSearchState(
             query = "",
             searchType = SearchFilter.MEDIA,
-            sort = AniMediaSort.POPULARITY,
+            mediaSort = AniMediaSort.POPULARITY,
             currentSeason = Season.UNKNOWN,
             status = AniMediaStatus.UNKNOWN,
             year = -1,
             genres = emptyList(),
-            tags = emptyList()
+            tags = emptyList(),
+            characterSort = AniCharacterSort.FAVOURITES_DESC
         )
     )
 
@@ -218,29 +217,10 @@ class HomeViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val searchResultsMedia =
         mediaSearchState.debounce(TIME_OUT).flatMapLatest { searchState ->
-            Timber.d("Media search is searching for " + searchState.query)
-            Pager(
-                config = PagingConfig(
-                    pageSize = PAGE_SIZE,
-                    prefetchDistance = 5,
-                    enablePlaceholders = true
-                ),
-                pagingSourceFactory = {
-                    SearchMediaPagingSource(
-                        homeRepository = homeRepository,
-                        searchState = searchState
-                    )
-                }
-            ).flow.cachedIn(viewModelScope)
-        }
-
-    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-    val searchResultsCharacter: Flow<PagingData<CharacterDetail>> =
-        combine(_characterSearch, characterSortType) { query, sortType ->
-            CharacterSearchState(query = query, sort = sortType)
-        }
-            .debounce(300).flatMapLatest { searchState ->
-                Timber.d("Character search is searching for " + searchState.query + " with sort " + searchState.sort)
+            if (searchState.searchType == SearchFilter.MEDIA
+                || searchState.searchType == SearchFilter.ANIME
+                || searchState.searchType == SearchFilter.MANGA) {
+                Timber.d("Media search is searching for " + searchState.query)
                 Pager(
                     config = PagingConfig(
                         pageSize = PAGE_SIZE,
@@ -248,18 +228,69 @@ class HomeViewModel @Inject constructor(
                         enablePlaceholders = true
                     ),
                     pagingSourceFactory = {
-                        SearchCharactersPagingSource(
+                        SearchMediaPagingSource(
                             homeRepository = homeRepository,
-                            search = searchState.query,
-                            sortType = searchState.sort
+                            searchState = searchState
                         )
                     }
                 ).flow.cachedIn(viewModelScope)
+            } else {
+                emptyFlow()
+            }
+        }
+
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    val searchResultsCharacter: Flow<PagingData<CharacterDetail>> =
+        mediaSearchState
+            .debounce(300).flatMapLatest { searchState ->
+                if (searchState.searchType == SearchFilter.CHARACTERS) {
+                    Timber.d("Character search is searching for " + searchState.query + " with sort " + searchState.mediaSort)
+                    Pager(
+                        config = PagingConfig(
+                            pageSize = PAGE_SIZE,
+                            prefetchDistance = 5,
+                            enablePlaceholders = true
+                        ),
+                        pagingSourceFactory = {
+                            SearchCharactersPagingSource(
+                                homeRepository = homeRepository,
+                                search = searchState.query,
+                                sortType = searchState.characterSort
+                            )
+                        }
+                    ).flow.cachedIn(viewModelScope)
+                } else {
+                    emptyFlow()
+                }
             }
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val searchResultsStaff: Flow<PagingData<StaffDetail>> =
-        _staffSearch.debounce(300).flatMapLatest { query ->
+        mediaSearchState.debounce(300).flatMapLatest { state ->
+            if (state.searchType == SearchFilter.STAFF) {
+                Pager(
+                    config = PagingConfig(
+                        pageSize = PAGE_SIZE,
+                        prefetchDistance = 5,
+                        enablePlaceholders = true
+                    ),
+                    pagingSourceFactory = {
+                        SearchStaffPagingSource(
+                            homeRepository = homeRepository,
+                            search = state.query,
+                        )
+                    }
+                ).flow.cachedIn(viewModelScope)
+            } else {
+                emptyFlow()
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    val searchResultsStudio: Flow<PagingData<AniStudio>> = mediaSearchState.debounce(
+        TIME_OUT
+    ).flatMapLatest { state ->
+        if (state.searchType == SearchFilter.STUDIOS) {
             Pager(
                 config = PagingConfig(
                     pageSize = PAGE_SIZE,
@@ -267,67 +298,59 @@ class HomeViewModel @Inject constructor(
                     enablePlaceholders = true
                 ),
                 pagingSourceFactory = {
-                    SearchStaffPagingSource(
+                    SearchStudioPagingSource(
                         homeRepository = homeRepository,
-                        search = query,
+                        search = state.query,
                     )
                 }
             ).flow.cachedIn(viewModelScope)
+        } else {
+            emptyFlow()
         }
-
-    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    val searchResultsStudio: Flow<PagingData<AniStudio>> = _studioSearch.debounce(
-        TIME_OUT
-    ).flatMapLatest { query ->
-        Pager(
-            config = PagingConfig(
-                pageSize = PAGE_SIZE,
-                prefetchDistance = 5,
-                enablePlaceholders = true
-            ),
-            pagingSourceFactory = {
-                SearchStudioPagingSource(
-                    homeRepository = homeRepository,
-                    search = query,
-                )
-            }
-        ).flow.cachedIn(viewModelScope)
     }
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val searchResultsThread: Flow<PagingData<AniThread>> =
-        _threadSearch.debounce(TIME_OUT).flatMapLatest { query ->
-            Pager(
-                config = PagingConfig(
-                    pageSize = PAGE_SIZE,
-                    prefetchDistance = 5,
-                    enablePlaceholders = true
-                ),
-                pagingSourceFactory = {
-                    SearchThreadPagingSource(
-                        homeRepository = homeRepository,
-                        search = query,
-                    )
-                }
-            ).flow.cachedIn(viewModelScope)
+        mediaSearchState.debounce(TIME_OUT).flatMapLatest { state ->
+            if (state.searchType == SearchFilter.THREADS) {
+                Pager(
+                    config = PagingConfig(
+                        pageSize = PAGE_SIZE,
+                        prefetchDistance = 5,
+                        enablePlaceholders = true
+                    ),
+                    pagingSourceFactory = {
+                        SearchThreadPagingSource(
+                            homeRepository = homeRepository,
+                            search = state.query,
+                        )
+                    }
+                ).flow.cachedIn(viewModelScope)
+            } else {
+                emptyFlow()
+            }
         }
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val searchResultsUser: Flow<PagingData<AniUser>> =
-        _userSearch.debounce(TIME_OUT).flatMapLatest { query ->
-            Pager(
-                config = PagingConfig(
-                    pageSize = PAGE_SIZE,
-                    prefetchDistance = 5,
-                    enablePlaceholders = true
-                ),
-                pagingSourceFactory = {
-                    SearchUserPagingSource(
-                        homeRepository = homeRepository,
-                        search = query,
-                    )
-                }
-            ).flow.cachedIn(viewModelScope)
+        mediaSearchState.debounce(TIME_OUT).flatMapLatest { state ->
+            if (state.searchType == SearchFilter.USER) {
+                Pager(
+                    config = PagingConfig(
+                        pageSize = PAGE_SIZE,
+                        prefetchDistance = 5,
+                        enablePlaceholders = true
+                    ),
+                    pagingSourceFactory = {
+                        SearchUserPagingSource(
+                            homeRepository = homeRepository,
+                            search = state.query,
+                        )
+                    }
+                ).flow.cachedIn(viewModelScope)
+            } else {
+                emptyFlow()
+            }
         }
 
     fun setSearch(
@@ -347,7 +370,7 @@ class HomeViewModel @Inject constructor(
         mediaSearchState.value = mediaSearchState.value.copy(
             query = query,
             searchType = searchType,
-            sort = mediaSort,
+            mediaSort = mediaSort,
             currentSeason = season,
             status = status,
             year = year,
@@ -357,40 +380,41 @@ class HomeViewModel @Inject constructor(
     }
 
     fun setMediaSearchType(searchType: SearchFilter) {
+        mediaSearchState.value = mediaSearchState.value.copy(searchType = searchType)
+
         _searchType.value = searchType
         val query = search.value
         when (searchType) {
             SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
                 Timber.d("Updating media search to have type $searchType")
-                _mediaSearch.value = query
-                mediaSearchState.value = mediaSearchState.value.copy(searchType = searchType)
+//                _mediaSearch.value = query
             }
 
             SearchFilter.CHARACTERS -> {
-                _characterSearch.value = query
+//                _characterSearch.value = query
             }
 
             SearchFilter.STAFF -> {
-                _staffSearch.value = query
+//                _staffSearch.value = query
             }
 
             SearchFilter.STUDIOS -> {
-                _studioSearch.value = query
+//                _studioSearch.value = query
             }
 
             SearchFilter.THREADS -> {
-                _threadSearch.value = query
+//                _threadSearch.value = query
             }
 
             SearchFilter.USER -> {
-                _userSearch.value = query
+//                _userSearch.value = query
             }
         }
     }
 
-    fun setCharacterSortType(type: AniCharacterSort) {
-        _characterSortType.value = type
-    }
+//    fun setCharacterSortType(type: AniCharacterSort) {
+//        _characterSortType.value = type
+//    }
 
     init {
         fetchTags()
@@ -401,27 +425,27 @@ class HomeViewModel @Inject constructor(
                 Timber.i("Current search filter in init block view model is " + searchType.value)
                 when (searchType.value) {
                     SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
-                        _mediaSearch.emit(query)
+//                        _mediaSearch.emit(query)
                     }
 
                     SearchFilter.CHARACTERS -> {
-                        _characterSearch.emit(query)
+//                        _characterSearch.emit(query)
                     }
 
                     SearchFilter.STAFF -> {
-                        _staffSearch.emit(query)
+//                        _staffSearch.emit(query)
                     }
 
                     SearchFilter.STUDIOS -> {
-                        _studioSearch.emit(query)
+//                        _studioSearch.emit(query)
                     }
 
                     SearchFilter.THREADS -> {
-                        _threadSearch.emit(query)
+//                        _threadSearch.emit(query)
                     }
 
                     SearchFilter.USER -> {
-                        _userSearch.emit(query)
+//                        _userSearch.emit(query)
                     }
                 }
             }
@@ -471,7 +495,8 @@ class HomeViewModel @Inject constructor(
 data class MediaSearchState(
     val query: String,
     val searchType: SearchFilter,
-    val sort: AniMediaSort,
+    val mediaSort: AniMediaSort,
+    val characterSort: AniCharacterSort,
     val currentSeason: Season,
     val status: AniMediaStatus,
     val year: Int,

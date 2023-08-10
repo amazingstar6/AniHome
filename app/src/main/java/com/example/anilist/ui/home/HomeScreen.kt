@@ -147,7 +147,7 @@ fun HomeScreen(
     val isAnime by homeViewModel.isAnime.collectAsStateWithLifecycle()
     val search by homeViewModel.search.collectAsStateWithLifecycle()
     val searchType by homeViewModel.searchType.collectAsStateWithLifecycle()
-    val characterSortType by homeViewModel.characterSortType.collectAsStateWithLifecycle()
+//    val characterSortType by homeViewModel.characterSortType.collectAsStateWithLifecycle()
 
     val uiState2 by homeViewModel.uiState.collectAsStateWithLifecycle()
 //    val trendingTogethery by homeViewModel.trendingTogetherPager.collectAsLazyPagingItems()
@@ -190,8 +190,8 @@ fun HomeScreen(
             onNavigateToSettings = onNavigateToSettings,
             focusRequester = focusRequester,
             selectedChip = searchType,
-            characterSort = characterSortType,
-            setCharacterSort = homeViewModel::setCharacterSortType,
+//            characterSort = characterSortType,
+//            setCharacterSort = homeViewModel::setCharacterSortType,
             setSelectedChipValue = homeViewModel::setMediaSearchType,
             onNavigateToCharacterDetails = onNavigateToCharacterDetails,
             onNavigateToStaffDetails = onNavigateToStaffDetails,
@@ -426,8 +426,8 @@ fun GenreCheckBox(selectedGenres: MutableList<String>, genre: String) {
     ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class
 )
 private fun AniSearchBar(
-    characterSort: AniCharacterSort,
-    setCharacterSort: (AniCharacterSort) -> Unit,
+//    characterSort: AniCharacterSort,
+//    setCharacterSort: (AniCharacterSort) -> Unit,
     uiState: HomeUiStateData,
     query: String,
     updateSearch: (text: String, filter: SearchFilter, mediaSort: AniMediaSort, season: Season, mediaStatus: AniMediaStatus, year: Int, selectedGenres: List<String>, selectedTags: List<String>) -> Unit,
@@ -457,6 +457,10 @@ private fun AniSearchBar(
 
     var currentMediaSort by rememberSaveable {
         mutableStateOf(AniMediaSort.POPULARITY)
+    }
+
+    var currentCharacterSort by rememberSaveable {
+        mutableStateOf(AniCharacterSort.FAVOURITES_DESC)
     }
 
     var selectedSeason by rememberSaveable { mutableStateOf(Season.UNKNOWN) }
@@ -694,7 +698,7 @@ private fun AniSearchBar(
                         HorizontalDivider()
                         AssistChip(
                             onClick = { showSortingBottomSheet = true },
-                            label = { Text(text = characterSort.toString(context)) },
+                            label = { Text(text = currentCharacterSort.toString(context)) },
                             leadingIcon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.sort),
@@ -727,13 +731,13 @@ private fun AniSearchBar(
                             AniCharacterSort.values().forEach { aniCharacterSort ->
                                 TextButton(
                                     onClick = {
-                                        setCharacterSort(aniCharacterSort)
+                                        currentCharacterSort = aniCharacterSort
                                         showSortingBottomSheet = false
                                     }, modifier = Modifier.fillMaxWidth(), shape = RectangleShape
                                 ) {
                                     Text(
                                         aniCharacterSort.toString(context),
-                                        color = if (characterSort == aniCharacterSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        color = if (currentCharacterSort == aniCharacterSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }

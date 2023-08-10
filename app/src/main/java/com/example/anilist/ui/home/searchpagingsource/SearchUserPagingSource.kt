@@ -4,6 +4,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.anilist.data.models.AniUser
 import com.example.anilist.data.repository.HomeRepository
+import timber.log.Timber
 
 private const val STARTING_KEY = 1
 
@@ -20,6 +21,7 @@ class SearchUserPagingSource(
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, AniUser> {
+        Timber.d("User is querying for $search")
         val start = params.key ?: STARTING_KEY
         val data = homeRepository.searchUser(page = start, pageSize = params.loadSize, text = search)
         return LoadResult.Page(

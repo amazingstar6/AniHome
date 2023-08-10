@@ -13,7 +13,6 @@ import com.example.anilist.ui.home.SearchFilter
 import timber.log.Timber
 
 private const val STARTING_KEY = 1
-private const val TAG = "SearchPagingSource"
 
 class SearchMediaPagingSource(
     private val homeRepository: HomeRepository,

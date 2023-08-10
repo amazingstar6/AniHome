@@ -1,7 +1,6 @@
 package com.example.anilist.data.repository
 
 import android.content.Context
-import android.util.Log
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.GetAllTimePopularQuery
@@ -449,14 +448,13 @@ class HomeRepository @Inject constructor() {
         try {
             when (searchState.searchType) {
                 SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
-                    Timber.d("Season is ${searchState.currentSeason}")
                     val query: SearchMediaQuery = when (searchState.searchType) {
                         SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> SearchMediaQuery(
                             page = page,
                             pageSize = pageSize,
                             searchState.query,
                             sort = Optional.present(
-                                listOf(MediaSort.fromAniMediaSort(searchState.sort))
+                                listOf(MediaSort.fromAniMediaSort(searchState.mediaSort))
                             ),
                             type = when (searchState.searchType) {
                                 SearchFilter.MEDIA -> Optional.absent()

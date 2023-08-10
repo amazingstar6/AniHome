@@ -4,6 +4,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.repository.HomeRepository
+import timber.log.Timber
 
 private const val STARTING_KEY = 1
 
@@ -20,6 +21,7 @@ class SearchStudioPagingSource(
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, AniStudio> {
+        Timber.d("Studio is querying for $search")
         val start = params.key ?: STARTING_KEY
         val data = homeRepository.searchStudio(page = start, pageSize = params.loadSize, text = search)
         return LoadResult.Page(
