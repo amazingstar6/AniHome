@@ -104,9 +104,9 @@ fragment mediaTitleCover on Media {
     type
 }
 
-query SearchMedia($page: Int!, $pageSize: Int!, $search: String!, $type: MediaType, $sort: [MediaSort] = SEARCH_MATCH, $genres: [String], $year: Int, $season: MediaSeason, $airingStatus: MediaStatus) {
+query SearchMedia($page: Int!, $pageSize: Int!, $search: String!, $type: MediaType, $sort: [MediaSort] = SEARCH_MATCH, $genres: [String], $tags: [String], $year: Int, $season: MediaSeason, $airingStatus: MediaStatus) {
     Page(page: $page, perPage: $pageSize) {
-        media(search: $search, type: $type, sort: $sort, genre_in: $genres, seasonYear: $year, season: $season, status: $airingStatus) {
+        media(search: $search, type: $type, sort: $sort, genre_in: $genres, seasonYear: $year, season: $season, status: $airingStatus, tag_in: $tags) {
             id
             startDate {
                 year
@@ -133,44 +133,44 @@ query SearchMedia($page: Int!, $pageSize: Int!, $search: String!, $type: MediaTy
             season
             seasonYear
         }
-#        characters(search: $search, sort: [$characterSort]) {
-#            id
-#            name {
-#                userPreferred
-#            }
-#            image {
-#                large
-#            }
-#            favourites
-#            isFavourite
-#            isFavouriteBlocked
-#        }
-#        staff(search: $search) {
-#            id
-#            name {
-#                userPreferred
-#            }
-#            favourites
-#            image {
-#                large
-#            }
-#            isFavourite
-#            isFavouriteBlocked
-#        }
-#        studios(search: $search) {
-#            id
-#            name
-#            favourites
-#            isFavourite
-#        }
-#        threads(search: $search) {
-#            id
-#            title
-#        }
-#        users(search: $search) {
-#            id
-#            name
-#        }
+        #        characters(search: $search, sort: [$characterSort]) {
+        #            id
+        #            name {
+        #                userPreferred
+        #            }
+        #            image {
+        #                large
+        #            }
+        #            favourites
+        #            isFavourite
+        #            isFavouriteBlocked
+        #        }
+        #        staff(search: $search) {
+        #            id
+        #            name {
+        #                userPreferred
+        #            }
+        #            favourites
+        #            image {
+        #                large
+        #            }
+        #            isFavourite
+        #            isFavouriteBlocked
+        #        }
+        #        studios(search: $search) {
+        #            id
+        #            name
+        #            favourites
+        #            isFavourite
+        #        }
+        #        threads(search: $search) {
+        #            id
+        #            title
+        #        }
+        #        users(search: $search) {
+        #            id
+        #            name
+        #        }
     }
 }
 

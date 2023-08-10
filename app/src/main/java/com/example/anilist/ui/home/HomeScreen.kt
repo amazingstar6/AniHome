@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -56,6 +57,7 @@ import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -86,6 +88,7 @@ import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.AniMediaStatus
 import com.example.anilist.data.models.AniStudio
+import com.example.anilist.data.models.AniTag
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
 import com.example.anilist.data.models.Season
@@ -99,6 +102,7 @@ import com.example.anilist.utils.AsyncImageRoundedCorners
 import com.example.anilist.utils.Utils
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import okhttp3.internal.toImmutableList
 import timber.log.Timber
 import java.util.Locale
 
@@ -142,8 +146,8 @@ fun HomeScreen(
 //    val trendingTogethery by homeViewModel.trendingTogetherPager.collectAsLazyPagingItems()
 
 
-    val tags = homeViewModel.tags.collectAsStateWithLifecycle()
-    val genres = homeViewModel.genres.collectAsStateWithLifecycle()
+    val tags by homeViewModel.tags.collectAsStateWithLifecycle()
+    val genres by homeViewModel.genres.collectAsStateWithLifecycle()
 
     var active by rememberSaveable {
         mutableStateOf(false)
@@ -153,7 +157,10 @@ fun HomeScreen(
     val columnScrollScope = rememberCoroutineScope()
 
     Scaffold(topBar = {
-        AniSearchBar(uiState = uiState,
+        AniSearchBar(
+            uiState = uiState,
+            tags = tags,
+            genres = genres,
             query = search,
             updateSearch = homeViewModel::setSearch,
             active = active,
@@ -354,14 +361,14 @@ enum class AniCharacterSort {
 
 @Composable
 @OptIn(
-    ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class
+    ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class
 )
 private fun AniSearchBar(
     characterSort: AniCharacterSort,
     setCharacterSort: (AniCharacterSort) -> Unit,
     uiState: HomeUiStateData,
     query: String,
-    updateSearch: (text: String, filter: SearchFilter, mediaSort: AniMediaSort, season: Season, mediaStatus: AniMediaStatus, year: Int) -> Unit,
+    updateSearch: (text: String, filter: SearchFilter, mediaSort: AniMediaSort, season: Season, mediaStatus: AniMediaStatus, year: Int, selectedGenres: List<String>, selectedTags: List<String>) -> Unit,
     active: Boolean,
     setActive: (Boolean) -> Unit,
     focusRequester: FocusRequester,
@@ -377,7 +384,9 @@ private fun AniSearchBar(
     navigateToUserDetails: (Int) -> Unit,
     onNavigateToStaffDetails: (Int) -> Unit,
     navigateToThreadDetails: (Int) -> Unit,
-    navigateToStudioDetails: (Int) -> Unit
+    navigateToStudioDetails: (Int) -> Unit,
+    tags: List<AniTag>,
+    genres: List<String>
 ) {
     val padding by animateDpAsState(
         targetValue = if (!active) Dimens.PaddingNormal else 0.dp, label = "increase padding" + ""
@@ -387,10 +396,21 @@ private fun AniSearchBar(
     var selectedSeason by remember { mutableStateOf(Season.UNKNOWN) }
     var selectedYear by remember { mutableIntStateOf(-1) }
     var selectedStatus by remember { mutableStateOf(AniMediaStatus.UNKNOWN) }
+    var selectedGenres: List<String> by remember { mutableStateOf(emptyList()) }
+    val selectedTags: MutableList<String> by remember {
+        mutableStateOf(mutableListOf())  //fixme warning?
+    }
 
     val updateSearchParameterless: (String) -> Unit = {
         updateSearch(
-            it, selectedChip, currentMediaSort, selectedSeason, selectedStatus, selectedYear
+            it,
+            selectedChip,
+            currentMediaSort,
+            selectedSeason,
+            selectedStatus,
+            selectedYear,
+            selectedGenres,
+            selectedTags
         )
     }
 
@@ -501,6 +521,7 @@ private fun AniSearchBar(
                 }
                 var showSortingBottomSheet by remember { mutableStateOf(false) }
                 var showGenreDialog by remember { mutableStateOf(false) }
+                var showTagDialog by remember { mutableStateOf(false) }
                 var showYearDialog by remember { mutableStateOf(false) }
                 var showSeasonBottomSheet by remember { mutableStateOf(false) }
                 var showAiringStatusBottomSheet by remember { mutableStateOf(false) }
@@ -535,6 +556,18 @@ private fun AniSearchBar(
                                 )
                             },
                             label = { Text(text = "Genre") },
+                            modifier = Modifier.padding(end = Dimens.PaddingNormal)
+                        )
+
+                        AssistChip(
+                            onClick = { showTagDialog = true },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.outline_theater_comedy_24),
+                                    contentDescription = null
+                                )
+                            },
+                            label = { Text(text = "Tags") },
                             modifier = Modifier.padding(end = Dimens.PaddingNormal)
                         )
 
@@ -654,7 +687,63 @@ private fun AniSearchBar(
                         },
                         title = { Text(text = "Genre") },
                         text = {
+                            LazyColumn {
+                                items(genres) { genre ->
+                                    Text(text = genre)
+                                }
+                            }
+                        })
+                }
+                if (showTagDialog) {
+                    val unChangedTags by remember(key1 = showTagDialog) {
+                        mutableStateOf(selectedTags.toImmutableList())
+                    }
+                    AlertDialog(onDismissRequest = { showTagDialog = false },
+                        dismissButton = {
+                            TextButton(onClick = {
+                                selectedTags.apply {
+                                    clear()
+                                    addAll(unChangedTags)
+                                }
+                                showTagDialog = false
+                            }) {
+                                Text(text = "Dismiss")
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showTagDialog = false }) {
+                                Text(text = "Confirm")
+                            }
+                        },
+                        title = { Text(text = "Tags") },
+                        text = {
+                            if (tags.isNotEmpty()) {
+                                LazyColumn {
+                                    val alphabeticalListOfTagCategories =
+                                        tags.map { it.category }.distinct().sorted()
+                                    Timber.d(alphabeticalListOfTagCategories.toString())
 
+                                    alphabeticalListOfTagCategories.forEach { category ->
+                                        stickyHeader {
+                                            Text(
+                                                text = category,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                        items(tags.filter { tag -> tag.category == category }) { aniTag ->
+                                            TagCheckBox(selectedTags = selectedTags, tag = aniTag)
+                                        }
+                                    }
+
+//                                    items(tags) { tag ->
+//                                        TagCheckBox(selectedTags, tag)
+//                                    }
+                                }
+                            } else {
+                                Text(text = "Failed to load")
+                                //todo reload button
+                            }
                         })
                 }
                 if (showYearDialog) {
@@ -764,6 +853,37 @@ private fun AniSearchBar(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun TagCheckBox(
+    selectedTags: MutableList<String>,
+    tag: AniTag
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        var checked by remember {
+            mutableStateOf(
+                selectedTags.contains(
+                    tag.name
+                )
+            )
+        }
+        Checkbox(
+            checked = checked,
+            onCheckedChange = {
+                if (it) {
+                    checked = true
+                    selectedTags.add(tag.name)
+                } else {
+                    checked = false
+                    selectedTags.remove(tag.name)
+                }
+                Timber.d(
+                    "Checkbox change in tag: parameter is $it\n list of tags is $selectedTags\n check status is $checked"
+                )
+            })
+        Text(text = tag.name)
     }
 }
 

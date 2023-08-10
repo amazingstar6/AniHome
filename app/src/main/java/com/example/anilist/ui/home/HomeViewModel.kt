@@ -56,7 +56,9 @@ data class MediaSearchState(
     val sort: AniMediaSort,
     val currentSeason: Season,
     val status: AniMediaStatus,
-    val year: Int
+    val year: Int,
+    val genres: List<String>,
+    val tags: List<String>
 )
 
 data class CharacterSearchState(
@@ -216,7 +218,9 @@ class HomeViewModel @Inject constructor(
             sort = AniMediaSort.POPULARITY,
             currentSeason = Season.UNKNOWN,
             status = AniMediaStatus.UNKNOWN,
-            year = -1
+            year = -1,
+            genres = emptyList(),
+            tags = emptyList()
         )
     )
 
@@ -382,7 +386,9 @@ class HomeViewModel @Inject constructor(
         mediaSort: AniMediaSort,
         season: Season,
         status: AniMediaStatus,
-        year: Int
+        year: Int,
+        selectedGenres: List<String>,
+        selectedTags: List<String>
     ) {
         _search.value = query
 
@@ -392,7 +398,9 @@ class HomeViewModel @Inject constructor(
             sort = mediaSort,
             currentSeason = season,
             status = status,
-            year = year
+            year = year,
+            genres = selectedGenres,
+            tags = selectedTags
         )
     }
 
@@ -440,6 +448,7 @@ class HomeViewModel @Inject constructor(
                 is AniResult.Success -> {
                     _tags.value = tagsData.data;
                 }
+
                 is AniResult.Failure -> {
                     //todo handle failure (e.g. toast)
                 }
@@ -448,6 +457,7 @@ class HomeViewModel @Inject constructor(
                 is AniResult.Success -> {
                     _genres.value = genreData.data
                 }
+
                 is AniResult.Failure -> {
                     //todo handle failure (e.g. toast)
                 }
