@@ -6,7 +6,7 @@ data class Media(
     val type: MediaType = MediaType.UNKNOWN,
     val title: String = "?",
     val coverImage: String = "",
-    val format: String = "?",
+    val format: AniMediaFormat = AniMediaFormat.UNKNOWN,
     val season: Season = Season.UNKNOWN,
     val seasonYear: Int = -1,
     val episodeAmount: Int = -1,

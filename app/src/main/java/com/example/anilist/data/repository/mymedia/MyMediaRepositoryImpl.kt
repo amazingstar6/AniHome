@@ -9,6 +9,7 @@ import com.example.anilist.DeleteEntryMutation
 import com.example.anilist.GetMyMediaQuery
 import com.example.anilist.MainActivity
 import com.example.anilist.UpdateStatusMutation
+import com.example.anilist.data.models.AniMediaFormat
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
@@ -18,6 +19,7 @@ import com.example.anilist.type.FuzzyDateInput
 import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaType
 import com.example.anilist.data.models.PersonalMediaStatus
+import com.example.anilist.data.repository.toAni
 import com.example.anilist.utils.Apollo
 import timber.log.Timber
 import javax.inject.Inject
@@ -231,7 +233,7 @@ class MyMediaRepositoryImpl @Inject constructor(): MyMediaRepository {
             listEntryId = data?.id ?: -1,
             title = data?.media?.title?.userPreferred ?: "?",
             coverImage = data?.media?.coverImage?.extraLarge ?: "",
-            format = data?.media?.format?.name ?: "",
+            format = data?.media?.format?.toAni() ?: AniMediaFormat.UNKNOWN,
             episodeAmount = data?.media?.episodes ?: -1,
             personalRating = data?.score ?: (-1).toDouble(),
             personalProgress = data?.progress ?: -1,

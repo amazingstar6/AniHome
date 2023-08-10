@@ -3,7 +3,7 @@ package com.example.anilist.ui.navigation
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.anilist.R
-import com.example.anilist.data.repository.HomeTrendingTypes
+import com.example.anilist.data.models.HomeTrendingTypes
 
 object AniListRoute {
     const val MEDIA_OVERVIEW_ROUTE: String = "MediaOverviewRoute"

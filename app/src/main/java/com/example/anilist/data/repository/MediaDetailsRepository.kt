@@ -13,6 +13,7 @@ import com.example.anilist.MainActivity
 import com.example.anilist.RateReviewMutation
 import com.example.anilist.ToggleFavoriteCharacterMutation
 import com.example.anilist.data.models.AniCharacterRole
+import com.example.anilist.data.models.AniMediaFormat
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.CharacterMediaConnection
@@ -677,7 +678,7 @@ class MediaDetailsRepository @Inject constructor() {
             type = media?.type?.toAniHomeType()
                 ?: com.example.anilist.data.models.MediaType.UNKNOWN,
             coverImage = media?.coverImage?.extraLarge ?: "",
-            format = media?.format?.toCapitalizedString() ?: "",
+            format = media?.format?.toAni() ?: AniMediaFormat.UNKNOWN,
             season = media?.season?.toAniHomeSeason() ?: Season.UNKNOWN,
             seasonYear = media?.seasonYear ?: -1,
             episodeAmount = media?.episodes ?: -1,

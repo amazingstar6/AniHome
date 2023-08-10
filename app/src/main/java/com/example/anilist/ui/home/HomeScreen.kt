@@ -12,12 +12,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -39,7 +37,6 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -48,7 +45,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.RichTooltipBox
 import androidx.compose.material3.Scaffold
@@ -65,7 +61,6 @@ import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -100,7 +95,7 @@ import com.example.anilist.data.models.AniTag
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
 import com.example.anilist.data.models.Season
-import com.example.anilist.data.repository.HomeTrendingTypes
+import com.example.anilist.data.models.HomeTrendingTypes
 import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.mediadetails.LoadingCircle
@@ -113,6 +108,8 @@ import kotlinx.coroutines.launch
 import okhttp3.internal.toImmutableList
 import timber.log.Timber
 import java.util.Locale
+
+private const val CARD_HEIGHT = 240
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -218,7 +215,8 @@ fun HomeScreen(
         }
     }) {
         // checks if there are any values loaded yet
-        if (uiState.pagerTrendingNow.itemCount != 0 || uiState.pagerPopularThisSeason.itemCount != 0 || uiState.pagerUpcomingNextSeason.itemCount != 0 || uiState.pagerAllTimePopular.itemCount != 0 || uiState.pagerTop100Anime.itemCount != 0) {
+        //fixme
+        if (true/*uiState.pagerTrendingNow.itemCount != 0 || uiState.pagerPopularThisSeason.itemCount != 0 || uiState.pagerUpcomingNextSeason.itemCount != 0 || uiState.pagerAllTimePopular.itemCount != 0 || uiState.pagerTop100Anime.itemCount != 0*/) {
             Column(
                 modifier = Modifier.padding(top = it.calculateTopPadding())
 //                    .verticalScroll(rememberScrollState()),
@@ -307,15 +305,44 @@ fun HomeScreen(
 private fun LazyRowLazyPagingItems(
     pager: LazyPagingItems<Media>, onNavigateToMediaDetails: (Int) -> Unit
 ) {
-    LazyRow {
-        items(count = pager.itemCount) { index ->
-            val item = pager[index]
-            if (item != null) {
-                AnimeCard(
-                    title = item.title,
-                    coverImage = item.coverImage,
-                    onNavigateToDetails = { onNavigateToMediaDetails(item.id) },
+    when (pager.loadState.refresh) {
+        is LoadState.Error -> {
+            Column(
+                modifier = Modifier
+                    .height(CARD_HEIGHT.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Network error, please reload",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
                 )
+                TextButton(
+                    onClick = { pager.retry() },
+                    modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+                ) {
+                    Text(text = "Reload")
+                }
+
+            }
+        }
+
+        is LoadState.Loading -> LoadingCircle(modifier = Modifier.height(240.dp))
+        is LoadState.NotLoading -> {
+            LazyRow {
+                items(count = pager.itemCount) { index ->
+                    val item = pager[index]
+                    if (item != null) {
+                        AnimeCard(
+                            title = item.title,
+                            coverImage = item.coverImage,
+                            onNavigateToDetails = { onNavigateToMediaDetails(item.id) },
+                        )
+                    }
+                }
             }
         }
     }
@@ -638,7 +665,7 @@ private fun AniSearchBar(
                                     contentDescription = null
                                 )
                             },
-                            label = { Text(text = "Genres - Tags") },
+                            label = { Text(text = stringResource(R.string.genres_tags)) },
                             modifier = Modifier.padding(end = Dimens.PaddingNormal)
                         )
 
@@ -744,27 +771,27 @@ private fun AniSearchBar(
                         }
                     }
                 }
-                if (showGenreDialog) {
-                    AlertDialog(onDismissRequest = { showGenreDialog = false },
-                        dismissButton = {
-                            TextButton(onClick = { showGenreDialog = false }) {
-                                Text(text = "Dismiss")
-                            }
-                        },
-                        confirmButton = {
-                            TextButton(onClick = { showGenreDialog = false }) {
-                                Text(text = "Confirm")
-                            }
-                        },
-                        title = { Text(text = "Genre") },
-                        text = {
-                            LazyColumn {
-                                items(genres) { genre ->
-                                    Text(text = genre)
-                                }
-                            }
-                        })
-                }
+//                if (showGenreDialog) {
+//                    AlertDialog(onDismissRequest = { showGenreDialog = false },
+//                        dismissButton = {
+//                            TextButton(onClick = { showGenreDialog = false }) {
+//                                Text(text = "Dismiss")
+//                            }
+//                        },
+//                        confirmButton = {
+//                            TextButton(onClick = { showGenreDialog = false }) {
+//                                Text(text = "Confirm")
+//                            }
+//                        },
+//                        title = { Text(text = "Genre") },
+//                        text = {
+//                            LazyColumn {
+//                                items(genres) { genre ->
+//                                    Text(text = genre)
+//                                }
+//                            }
+//                        })
+//                }
                 if (showTagDialog) {
                     val unChangedTags by remember(key1 = showTagDialog) {
                         mutableStateOf(selectedTags.toImmutableList())
@@ -785,7 +812,7 @@ private fun AniSearchBar(
                                 }
                                 showTagDialog = false
                             }) {
-                                Text(text = "Dismiss")
+                                Text(text = stringResource(id = R.string.close))
                             }
                         },
                         confirmButton = {
@@ -793,10 +820,10 @@ private fun AniSearchBar(
                                 showTagDialog = false
                                 updateSearchParameterless(query)
                             }) {
-                                Text(text = "Confirm")
+                                Text(text = stringResource(id = R.string.save))
                             }
                         },
-                        title = { Text(text = "Tags") },
+                        title = { Text(text = stringResource(id = R.string.genres_tags)) },
                         text = {
                             if (tags.isNotEmpty() && genres.isNotEmpty()) {
                                 LazyColumn {
@@ -806,7 +833,7 @@ private fun AniSearchBar(
 
                                     stickyHeader {
                                         Text(
-                                            text = "Genres",
+                                            text = stringResource(id = R.string.genres),
                                             style = MaterialTheme.typography.titleMedium,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
@@ -836,16 +863,24 @@ private fun AniSearchBar(
 //                                    }
                                 }
                             } else {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(text = "Failed to load")
-                                    if (tags.isEmpty()) {
-                                        TextButton(onClick = { reloadTags() }) {
-                                            Text(text = "Reload tags")
-                                        }
-                                    }
+                                Column(
+                                    horizontalAlignment = Alignment.Start,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "Failed to load",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+                                    )
                                     if (genres.isEmpty()) {
                                         TextButton(onClick = { reloadGenres() }) {
-                                            Text(text = "Reload genres")
+                                            Text(text = stringResource(R.string.reload_genres))
+                                        }
+                                    }
+                                    if (tags.isEmpty()) {
+                                        TextButton(onClick = { reloadTags() }) {
+                                            Text(text = stringResource(R.string.reload_tags))
                                         }
                                     }
                                 }
@@ -1058,12 +1093,12 @@ private fun SearchResults(
         when (selectedChip) {
             SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
                 val pager = uiState.searchResultsMedia
-                Timber.d("Refresh loadstate is: " + pager.loadState.refresh.toString() + "\nappend load state is : ${pager.loadState.append}")
+                Timber.d("Refresh load-state is: " + pager.loadState.refresh.toString() + "\nappend load state is : ${pager.loadState.append}")
                 when (pager.loadState.refresh) {
                     is LoadState.Error -> {
+                        Timber.d("Search error: ${(pager.loadState.refresh as LoadState.Error).error.message}")
                         item {
-                            Timber.d("Search error: ${(pager.loadState.refresh as LoadState.Error).error.message}")
-                            Text(text = "Network error! Please try searching again")
+                            SearchResultNetworkError()
                         }
                     }
 
@@ -1090,7 +1125,7 @@ private fun SearchResults(
                             }
                         } else {
                             item {
-//                                Text(text = "no results") todo?
+//                                Text(text = "no results") todo? check for other search results as well
                             }
                         }
                     }
@@ -1098,70 +1133,172 @@ private fun SearchResults(
             }
 
             SearchFilter.CHARACTERS -> {
-                items(uiState.searchResultsCharacter.itemCount) { index ->
-                    val character = uiState.searchResultsCharacter[index]
-                    if (character != null) {
-                        SearchCardCharacter(
-                            onNavigateToCharacterDetails,
-                            character.id,
-                            character.coverImage,
-                            character.userPreferredName,
-                            character.favorites,
-                            character.isFavourite
-                        )
+                val pager = uiState.searchResultsCharacter
+                when (pager.loadState.refresh) {
+                    is LoadState.Error -> {
+                        item {
+                            SearchResultNetworkError()
+                        }
+                    }
+
+                    LoadState.Loading -> {
+                        item {
+                            LoadingCircle()
+                        }
+                    }
+
+                    is LoadState.NotLoading -> {
+                        items(pager.itemCount) { index ->
+                            val character = uiState.searchResultsCharacter[index]
+                            if (character != null) {
+                                SearchCardCharacter(
+                                    onNavigateToCharacterDetails,
+                                    character.id,
+                                    character.coverImage,
+                                    character.userPreferredName,
+                                    character.favorites,
+                                    character.isFavourite
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             SearchFilter.STAFF -> {
-                items(uiState.searchResultsStaff.itemCount) { index ->
-                    val staff = uiState.searchResultsStaff[index]
-                    if (staff != null) {
-                        SearchCardCharacter(
-                            onNavigateToStaffDetails,
-                            staff.id,
-                            staff.coverImage,
-                            staff.userPreferredName,
-                            staff.favourites,
-                            staff.isFavourite
-                        )
+                val pager = uiState.searchResultsStaff
+                when (pager.loadState.refresh) {
+                    is LoadState.Error -> {
+                        item {
+                            SearchResultNetworkError()
+                        }
+                    }
+
+                    LoadState.Loading -> {
+                        item {
+                            LoadingCircle()
+                        }
+                    }
+
+                    is LoadState.NotLoading -> {
+                        items(pager.itemCount) { index ->
+                            val staff = uiState.searchResultsStaff[index]
+                            if (staff != null) {
+                                SearchCardCharacter(
+                                    onNavigateToStaffDetails,
+                                    staff.id,
+                                    staff.coverImage,
+                                    staff.userPreferredName,
+                                    staff.favourites,
+                                    staff.isFavourite
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             SearchFilter.STUDIOS -> {
-                items(uiState.searchResultsStudio.itemCount) { index ->
-                    val studio = uiState.searchResultsStudio[index]
-                    if (studio != null) {
-                        SearchCardStudio(
-                            studio, navigateToStudioDetails, toggleFavourite
-                        )
+                val pager = uiState.searchResultsStudio
+                when (pager.loadState.refresh) {
+                    is LoadState.Error -> {
+                        item {
+                            SearchResultNetworkError()
+                        }
+                    }
+
+                    LoadState.Loading -> {
+                        item {
+                            LoadingCircle()
+                        }
+                    }
+
+                    is LoadState.NotLoading -> {
+                        items(uiState.searchResultsStudio.itemCount) { index ->
+                            val studio = uiState.searchResultsStudio[index]
+                            if (studio != null) {
+                                SearchCardStudio(
+                                    studio, navigateToStudioDetails, toggleFavourite
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             SearchFilter.THREADS -> {
-                items(uiState.searchResultsThread.itemCount) { index ->
-                    val thread = uiState.searchResultsThread[index]
-                    if (thread != null) {
-                        SearchCardForum(
-                            thread.id, thread.title, navigateToThreadDetails
-                        )
+
+                val pager = uiState.searchResultsThread
+                when (pager.loadState.refresh) {
+                    is LoadState.Error -> {
+                        item {
+                            SearchResultNetworkError()
+                        }
+                    }
+
+                    LoadState.Loading -> {
+                        item {
+                            LoadingCircle()
+                        }
+                    }
+
+                    is LoadState.NotLoading -> {
+                        items(uiState.searchResultsThread.itemCount) { index ->
+                            val thread = uiState.searchResultsThread[index]
+                            if (thread != null) {
+                                SearchCardForum(
+                                    thread.id, thread.title, navigateToThreadDetails
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             SearchFilter.USER -> {
-                items(uiState.searchResultsUser.itemCount) { index ->
-                    val user = uiState.searchResultsUser[index]
-                    if (user != null) {
-                        SearchCardUser(
-                            user.id, user.name, navigateToUserDetails
-                        )
+                val pager = uiState.searchResultsUser
+                when (pager.loadState.refresh) {
+                    is LoadState.Error -> {
+                        item {
+                            SearchResultNetworkError()
+                        }
+                    }
+
+                    LoadState.Loading -> {
+                        item {
+                            LoadingCircle()
+                        }
+                    }
+
+                    is LoadState.NotLoading -> {
+                        items(uiState.searchResultsUser.itemCount) { index ->
+                            val user = uiState.searchResultsUser[index]
+                            if (user != null) {
+                                SearchCardUser(
+                                    user.id, user.name, navigateToUserDetails
+                                )
+                            }
+                        }
                     }
                 }
+
+
             }
         }
+    }
+}
+
+@Composable
+fun SearchResultNetworkError() {
+    Box(contentAlignment = Alignment.TopCenter) {
+        Text(
+            text = "Network error! Please try searching again.",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(Dimens.PaddingNormal)
+        )
     }
 }
 

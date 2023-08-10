@@ -62,6 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
+import com.example.anilist.data.models.AniMediaFormat
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.PersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
@@ -552,7 +553,7 @@ private fun MediaCard(
                             maxLines = 2,
                         )
                         Text(
-                            text = media.format,
+                            text = media.format.toString(context = LocalContext.current),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
@@ -710,7 +711,7 @@ fun MyAnimePreview() {
             PersonalMediaStatus.CURRENT to listOf(
                 Media(
                     title = "鬼滅の刃",
-                    format = "TV",
+                    format = AniMediaFormat.TV,
                     chapters = 80,
                     volumes = 6,
                     personalRating = 6.0,
@@ -720,7 +721,7 @@ fun MyAnimePreview() {
                 ),
                 Media(
                     title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
-                    format = "TV",
+                    format = AniMediaFormat.TV,
                     chapters = 1012,
                     personalRating = 10.0,
                     personalProgress = 120,
@@ -730,7 +731,7 @@ fun MyAnimePreview() {
                 ),
                 Media(
                     title = "ONE PIECE",
-                    format = "TV",
+                    format = AniMediaFormat.TV,
                     episodeAmount = 101,
                     personalRating = 3.0,
                     personalProgress = 101,
@@ -755,7 +756,7 @@ fun MediaCardPreview() {
         increaseVolumeProgress = { _, _ -> },
         media =  Media(
             title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
-            format = "TV",
+            format = AniMediaFormat.TV,
             episodeAmount = 204,
             personalRating = 10.0,
             personalProgress = 120,

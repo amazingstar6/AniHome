@@ -97,6 +97,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
+import com.example.anilist.data.models.AniMediaFormat
 import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
@@ -374,8 +375,8 @@ fun OpenInBrowserAndShareToolTips(
 }
 
 @Composable
-fun LoadingCircle() {
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+fun LoadingCircle(modifier: Modifier = Modifier) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().then(modifier)) {
         CircularProgressIndicator(
             modifier = Modifier,
         )
@@ -713,7 +714,7 @@ fun QuickInfo(media: Media, isAnime: Boolean) {
     Column(modifier = Modifier.padding(start = 24.dp)) {
         IconWithText(
             R.drawable.anime_details_movie,
-            media.format,
+            media.format.toString(context = LocalContext.current),
             textColor = MaterialTheme.colorScheme.onSurface,
         )
         IconWithText(
@@ -1191,7 +1192,7 @@ fun OverviewPreview() {
                     title = "鬼滅の刃 刀鍛冶の里編",
                     type = MediaType.ANIME,
                     coverImage = "",
-                    format = "TV",
+                    format = AniMediaFormat.TV,
                     season = Season.SPRING,
                     seasonYear = 2023,
                     episodeAmount = 11,

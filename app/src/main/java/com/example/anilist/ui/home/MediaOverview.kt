@@ -19,10 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.anilist.R
-import com.example.anilist.data.repository.HomeTrendingTypes
+import com.example.anilist.data.models.HomeTrendingTypes
 import com.example.anilist.ui.Dimens
 import com.example.anilist.utils.AsyncImageRoundedCorners
 

@@ -1,6 +1,5 @@
 package com.example.anilist.data.repository
 
-import android.content.Context
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.GetAllTimePopularQuery
@@ -9,16 +8,15 @@ import com.example.anilist.GetPopularManhwaQuery
 import com.example.anilist.GetPopularThisSeasonQuery
 import com.example.anilist.GetTagsQuery
 import com.example.anilist.GetTop100AnimeQuery
-import com.example.anilist.GetTrendingMediaQuery
 import com.example.anilist.GetTrendingNowQuery
 import com.example.anilist.GetUpComingNextSeasonQuery
-import com.example.anilist.R
 import com.example.anilist.SearchCharactersQuery
 import com.example.anilist.SearchMediaQuery
 import com.example.anilist.SearchStaffQuery
 import com.example.anilist.SearchStudiosQuery
 import com.example.anilist.SearchThreadsQuery
 import com.example.anilist.SearchUsersQuery
+import com.example.anilist.data.models.AniMediaFormat
 import com.example.anilist.data.models.AniMediaStatus
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.AniStudio
@@ -27,6 +25,7 @@ import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.AniUser
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.FuzzyDate
+import com.example.anilist.data.models.HomeTrendingTypes
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.StaffDetail
@@ -49,29 +48,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import timber.log.Timber
-import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
-
-enum class HomeTrendingTypes {
-    TRENDING_NOW,
-    POPULAR_THIS_SEASON,
-    UPCOMING_NEXT_SEASON,
-    ALL_TIME_POPULAR,
-    TOP_100_ANIME,
-    POPULAR_MANHWA;
-
-    fun toString(context: Context): String {
-        return when (this) {
-            TRENDING_NOW -> context.getString(R.string.trending_now)
-            POPULAR_THIS_SEASON -> context.getString(R.string.popular_this_season)
-            UPCOMING_NEXT_SEASON -> context.getString(R.string.upcoming_next_season)
-            ALL_TIME_POPULAR -> context.getString(R.string.all_time_popular)
-            TOP_100_ANIME -> context.getString(R.string.top_100_anime)
-            POPULAR_MANHWA -> context.getString(R.string.popular_manhwa)
-        }
-    }
-}
 
 data class HomeMedia(
     var popularThisSeason: List<Media> = emptyList(),
@@ -80,8 +58,6 @@ data class HomeMedia(
     val allTimePopular: List<Media> = emptyList(),
     val top100Anime: List<Media> = emptyList(),
 )
-
-private const val TAG = "HomeRepository"
 
 @Singleton
 class HomeRepository @Inject constructor() {
@@ -107,7 +83,7 @@ class HomeRepository @Inject constructor() {
     fun popularManhwaPagingSource() =
         MediaPagingSource(this, HomeTrendingTypes.POPULAR_MANHWA, isAnime = false)
 
-    suspend fun getTrendingNow(isAnime: Boolean, page: Int, pageSize: Int): List<Media> {
+    suspend fun getTrendingNow(isAnime: Boolean, page: Int, pageSize: Int): AniResult<List<Media>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -119,21 +95,26 @@ class HomeRepository @Inject constructor() {
                 )
                     .execute()
             if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
             }
             val data = result.data
-            if (data != null) {
-                return data.Page?.media?.filterNotNull()
-                    ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+            return if (data != null) {
+                AniResult.Success(
+                    data.Page?.media?.filterNotNull()
+                        ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+                )
+            } else {
+                AniResult.Failure("Network error")
             }
         } catch (exception: ApolloException) {
             // handle exception here, these are mainly for network errors
-            return emptyList()
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
         }
-        return emptyList()
     }
 
-    suspend fun getPopularThisSeason(page: Int, pageSize: Int): List<Media> {
+    suspend fun getPopularThisSeason(page: Int, pageSize: Int): AniResult<List<Media>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -146,21 +127,26 @@ class HomeRepository @Inject constructor() {
                 )
                     .execute()
             if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
             }
             val data = result.data
-            if (data != null) {
-                return data.Page?.media?.filterNotNull()
-                    ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+            return if (data != null) {
+                AniResult.Success(
+                    data.Page?.media?.filterNotNull()
+                        ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+                )
+            } else {
+                AniResult.Failure("Network error")
             }
         } catch (exception: ApolloException) {
             // handle exception here, these are mainly for network errors
-            return emptyList()
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
         }
-        return emptyList()
     }
 
-    suspend fun getUpcomingNextSeason(page: Int, pageSize: Int): List<Media> {
+    suspend fun getUpcomingNextSeason(page: Int, pageSize: Int): AniResult<List<Media>> {
         try {
 //            Log.d(TAG, "Parameters are: $page, $pageSize, ${getNextSeason()}, ${getNextYear()}")
             val result =
@@ -174,19 +160,23 @@ class HomeRepository @Inject constructor() {
                 )
                     .execute()
             if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
             }
             val data = result.data
-//            Log.d(TAG, "Data for upcoming this season received is ${data?.Page?.media}")
-            if (data != null) {
-                return data.Page?.media?.filterNotNull()
-                    ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+            return if (data != null) {
+                AniResult.Success(
+                    data.Page?.media?.filterNotNull()
+                        ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+                )
+            } else {
+                AniResult.Failure("Network error")
             }
         } catch (exception: ApolloException) {
             // handle exception here, these are mainly for network errors
-            return emptyList()
+            return AniResult.Failure(exception.localizedMessage ?: "No exception given")
         }
-        return emptyList()
     }
 
     private fun getNextYear(): Int {
@@ -204,7 +194,11 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun getAllTimePopularMedia(isAnime: Boolean, page: Int, pageSize: Int): List<Media> {
+    suspend fun getAllTimePopularMedia(
+        isAnime: Boolean,
+        page: Int,
+        pageSize: Int
+    ): AniResult<List<Media>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -216,21 +210,26 @@ class HomeRepository @Inject constructor() {
                 )
                     .execute()
             if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
             }
             val data = result.data
-            if (data != null) {
-                return data.Page?.media?.filterNotNull()
-                    ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+            return if (data != null) {
+                AniResult.Success(
+                    data.Page?.media?.filterNotNull()
+                        ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+                )
+            } else {
+                AniResult.Failure("Network error")
             }
         } catch (exception: ApolloException) {
             // handle exception here, these are mainly for network errors
-            return emptyList()
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
         }
-        return emptyList()
     }
 
-    suspend fun getTop100Anime(isAnime: Boolean, page: Int, pageSize: Int): List<Media> {
+    suspend fun getTop100Anime(isAnime: Boolean, page: Int, pageSize: Int): AniResult<List<Media>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -241,21 +240,26 @@ class HomeRepository @Inject constructor() {
                     ),
                 ).execute()
             if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
             }
             val data = result.data
-            if (data != null) {
-                return data.Page?.media?.filterNotNull()
-                    ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+            return if (data != null) {
+                AniResult.Success(
+                    data.Page?.media?.filterNotNull()
+                        ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+                )
+            } else {
+                AniResult.Failure("Network error")
             }
         } catch (exception: ApolloException) {
             // handle exception here, these are mainly for network errors
-            return emptyList()
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
         }
-        return emptyList()
     }
 
-    suspend fun getPopularManhwa(page: Int, pageSize: Int): List<Media> {
+    suspend fun getPopularManhwa(page: Int, pageSize: Int): AniResult<List<Media>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -265,74 +269,22 @@ class HomeRepository @Inject constructor() {
                     ),
                 ).execute()
             if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
             }
             val data = result.data
-            if (data != null) {
-                return data.Page?.media?.filterNotNull()
+            return if (data != null) {
+                AniResult.Success(data.Page?.media?.filterNotNull()
                     ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
-            }
-        } catch (exception: ApolloException) {
-            // handle exception here, these are mainly for network errors
-            return emptyList()
-        }
-        return emptyList()
-    }
-
-    suspend fun getHomeMedia(
-        isAnime: Boolean,
-        page: Int,
-        pageSize: Int,
-        includeTrendingNow: Boolean = false,
-        includePopularThisSeason: Boolean = true,
-        includeUpcomingNextSeason: Boolean = true,
-        includeAllTimePopular: Boolean = true,
-        includeTop100Anime: Boolean = true,
-    ): Result<HomeMedia> {
-        try {
-            val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
-
-            val instant = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-            val month = instant.month
-
-            val season = getMediaSeasonFromMonth(month.number)
-            // we add four because one season is four months long
-            val nextSeason = getMediaSeasonFromMonth((month.number + 4) % 12)
-
-            val year = instant.year
-            val nextYear = if (nextSeason == MediaSeason.SPRING) year + 1 else year
-
-            val result =
-                Apollo.apolloClient.query(
-                    GetTrendingMediaQuery(
-                        page = page,
-                        pageSize = pageSize,
-                        type = param,
-                        currentSeason = season,
-                        nextSeason = nextSeason,
-                        currentYear = year,
-                        nextYear = nextYear,
-                        skipPopularThisSeason = Optional.present(includePopularThisSeason),
-                        skipTrendingNow = Optional.present(includeTrendingNow),
-                        skipUpcomingNextSeason = Optional.present(includeUpcomingNextSeason),
-                        skipAllTimePopular = Optional.present(includeAllTimePopular),
-                        skipTop100Anime = Optional.present(includeTop100Anime),
-                    ),
                 )
-                    .execute()
-            if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
-                return Result.success(HomeMedia())
-            }
-            val data = result.data
-            if (data != null) {
-                return Result.success(parseHomeMedia(data))
+            } else {
+                AniResult.Failure("Network error")
             }
         } catch (exception: ApolloException) {
             // handle exception here, these are mainly for network errors
-            return Result.failure(exception)
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
         }
-        return Result.success(HomeMedia())
     }
 
     private fun getMediaSeasonFromMonth(
@@ -359,52 +311,6 @@ class HomeRepository @Inject constructor() {
         }
     }
 
-    private fun parseHomeMedia(data: GetTrendingMediaQuery.Data): HomeMedia {
-        val popularThisSeason: MutableList<Media> = mutableListOf()
-        val trendingNow: MutableList<Media> = mutableListOf()
-        val upcomingNextSeason: MutableList<Media> = mutableListOf()
-        val allTimePopular: MutableList<Media> = mutableListOf()
-        val top100Anime: MutableList<Media> = mutableListOf()
-
-        for (media in data.popularThisSeason?.media.orEmpty()) {
-            if (media != null) {
-                popularThisSeason.add(parseMediaTitleCover(media.mediaTitleCover))
-            }
-        }
-
-        for (media in data.trendingNow?.media.orEmpty()) {
-            if (media != null) {
-                trendingNow.add(parseMediaTitleCover(media.mediaTitleCover))
-            }
-        }
-
-        for (media in data.upcomingNextSeason?.media.orEmpty()) {
-            if (media != null) {
-                upcomingNextSeason.add(parseMediaTitleCover(media.mediaTitleCover))
-            }
-        }
-
-        for (media in data.allTimePopular?.media.orEmpty()) {
-            if (media != null) {
-                allTimePopular.add(parseMediaTitleCover(media.mediaTitleCover))
-            }
-        }
-
-        for (media in data.top100Anime?.media.orEmpty()) {
-            if (media != null) {
-                top100Anime.add(parseMediaTitleCover(media.mediaTitleCover))
-            }
-        }
-
-        return HomeMedia(
-            popularThisSeason,
-            trendingNow,
-            upcomingNextSeason,
-            allTimePopular,
-            top100Anime,
-        )
-    }
-
     private fun parseMediaTitleCover(media: MediaTitleCover): Media {
         return Media(
             id = media.id,
@@ -420,7 +326,7 @@ class HomeRepository @Inject constructor() {
             title = media.title?.userPreferred ?: "",
             coverImage = media.coverImage?.extraLarge ?: "",
             type = media.type?.toAniHomeType() ?: com.example.anilist.data.models.MediaType.UNKNOWN,
-            format = media.format?.toCapitalizedString() ?: "",
+            format = media.format?.toAni() ?: AniMediaFormat.UNKNOWN,
             episodeAmount = media.episodes ?: -1,
             chapters = media.chapters ?: -1,
             volumes = media.volumes ?: -1,
@@ -484,22 +390,6 @@ class HomeRepository @Inject constructor() {
                             tags = if (searchState.tags.isNotEmpty()) Optional.present(searchState.tags) else Optional.absent()
                         )
 
-//                        SearchFilter.ANIME -> SearchMediaQuery(
-//                            page,
-//                            pageSize,
-//                            text,
-//                            type = Optional.present(MediaType.ANIME),
-//                            sort = Optional.present(listOf(MediaSort.fromAniCharacterSort(sort)))
-//                        )
-//
-//                        SearchFilter.MANGA -> SearchMediaQuery(
-//                            page,
-//                            pageSize,
-//                            text,
-//                            type = Optional.present(MediaType.MANGA),
-//                            sort = Optional.present(listOf(MediaSort.fromAniCharacterSort(sort)))
-//                        )
-
                         else -> { // it should not get here
                             Timber.wtf("Error #1")
                             SearchMediaQuery(page, pageSize, searchState.query)
@@ -518,15 +408,15 @@ class HomeRepository @Inject constructor() {
                     }
 
                     val resultList = mutableListOf<Media>()
-                    if (result.data != null) {
+                    return if (result.data != null) {
                         result.data?.Page?.media?.forEach {
                             if (it != null) {
                                 resultList.add(parseSearchMedia(it))
                             }
                         }
-                        return AniResult.Success(resultList)
+                        AniResult.Success(resultList)
                     } else {
-                        return AniResult.Failure("Network error")
+                        AniResult.Failure("Network error")
                     }
                 }
 
@@ -557,7 +447,7 @@ class HomeRepository @Inject constructor() {
         pageSize: Int,
         text: String,
         sort: AniCharacterSort
-    ): List<CharacterDetail> {
+    ): AniResult<List<CharacterDetail>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -571,23 +461,29 @@ class HomeRepository @Inject constructor() {
                     .execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
-                return emptyList()
+                return AniResult.Failure(buildString { result.errors?.forEach { appendLine(it.message) } })
             }
 
-            val resultList = mutableListOf<CharacterDetail>()
-            result.data?.Page?.characters?.forEach {
-                if (it != null) {
-                    resultList.add(parseSearchCharacters(it))
+            val data = result.data
+
+            return if (data != null) {
+                val resultList = mutableListOf<CharacterDetail>()
+                data.Page?.characters?.forEach {
+                    if (it != null) {
+                        resultList.add(parseSearchCharacters(it))
+                    }
                 }
+                AniResult.Success(resultList)
+            } else {
+                AniResult.Failure("Network error")
             }
-            return resultList
         } catch (exception: ApolloException) {
             // handle exception here, these are mainly for network errors
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
         }
-        return emptyList()
     }
 
-    suspend fun searchStaff(text: String, page: Int, pageSize: Int): List<StaffDetail> {
+    suspend fun searchStaff(text: String, page: Int, pageSize: Int): AniResult<List<StaffDetail>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -595,46 +491,57 @@ class HomeRepository @Inject constructor() {
                 )
                     .execute()
             if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
-                return emptyList()
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
             }
 
-            val resultList = mutableListOf<StaffDetail>()
-            result.data?.Page?.staff?.forEach {
-                if (it != null) {
-                    resultList.add(parseSearchStaff(it))
+            val data = result.data
+            return if (data != null) {
+                val resultList = mutableListOf<StaffDetail>()
+                result.data?.Page?.staff?.forEach {
+                    if (it != null) {
+                        resultList.add(parseSearchStaff(it))
+                    }
                 }
+                return AniResult.Success(resultList)
+            } else {
+                AniResult.Failure("Network error")
             }
-            return resultList
         } catch (exception: ApolloException) {
             // handle exception here, these are mainly for network errors
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
         }
-        return emptyList()
     }
 
-    suspend fun searchStudio(text: String, page: Int, pageSize: Int): List<AniStudio> {
+    suspend fun searchStudio(text: String, page: Int, pageSize: Int): AniResult<List<AniStudio>> {
         try {
             val result =
                 Apollo.apolloClient.query(
                     SearchStudiosQuery(text, page, pageSize),
-                )
-                    .execute()
+                ).execute()
             if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
-                return emptyList()
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
             }
 
-            val resultList = mutableListOf<AniStudio>()
-            result.data?.Page?.studios?.forEach {
-                if (it != null) {
-                    resultList.add(parseSearchStudio(it))
+            val data = result.data
+            return if (data != null) {
+                val resultList = mutableListOf<AniStudio>()
+                result.data?.Page?.studios?.forEach {
+                    if (it != null) {
+                        resultList.add(parseSearchStudio(it))
+                    }
                 }
+                AniResult.Success(resultList)
+            } else {
+                AniResult.Failure("Network error")
             }
-            return resultList
+
         } catch (exception: ApolloException) {
-            // handle exception here, these are mainly for network errors
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
         }
-        return emptyList()
     }
 
     private fun parseSearchStudio(studio: SearchStudiosQuery.Studio): AniStudio {
@@ -657,7 +564,7 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun searchForum(text: String, page: Int, pageSize: Int): List<AniThread> {
+    suspend fun searchForum(text: String, page: Int, pageSize: Int): AniResult<List<AniThread>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -665,21 +572,30 @@ class HomeRepository @Inject constructor() {
                 )
                     .execute()
             if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
-                return emptyList()
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
             }
 
-            val resultList = mutableListOf<AniThread>()
-            result.data?.Page?.threads?.forEach {
-                if (it != null) {
-                    resultList.add(parseForumSearch(it))
+            val data = result.data
+
+            return if (data != null) {
+                val resultList = mutableListOf<AniThread>()
+                result.data?.Page?.threads?.forEach {
+                    if (it != null) {
+                        resultList.add(parseForumSearch(it))
+                    }
                 }
+                AniResult.Success(resultList)
+            } else {
+                AniResult.Failure("Network error")
             }
-            return resultList
+
+
         } catch (exception: ApolloException) {
             // handle exception here, these are mainly for network errors
+            return AniResult.Failure(exception.message ?: "No exception message given")
         }
-        return emptyList()
     }
 
     private fun parseForumSearch(thread: SearchThreadsQuery.Thread): AniThread {
@@ -689,7 +605,7 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun searchUser(text: String, page: Int, pageSize: Int): List<AniUser> {
+    suspend fun searchUser(text: String, page: Int, pageSize: Int): AniResult<List<AniUser>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -697,21 +613,29 @@ class HomeRepository @Inject constructor() {
                 )
                     .execute()
             if (result.hasErrors()) {
-                // these errors are related to GraphQL errors
-                return emptyList()
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
             }
 
-            val resultList = mutableListOf<AniUser>()
-            result.data?.Page?.users?.forEach {
-                if (it != null) {
-                    resultList.add(parseSearchUser(it))
+            val data = result.data
+
+            return if (data != null) {
+                val resultList = mutableListOf<AniUser>()
+                result.data?.Page?.users?.forEach {
+                    if (it != null) {
+                        resultList.add(parseSearchUser(it))
+                    }
                 }
+                AniResult.Success(resultList)
+            } else {
+                AniResult.Failure("Network error")
             }
-            return resultList
+
+
         } catch (exception: ApolloException) {
-            // handle exception here, these are mainly for network errors
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
         }
-        return emptyList()
     }
 
     private fun parseSearchUser(user: SearchUsersQuery.User): AniUser {
@@ -772,42 +696,23 @@ class HomeRepository @Inject constructor() {
             return AniResult.Failure(e.localizedMessage ?: "No exception message given")
         }
     }
+}
 
-
-//    fun getTrendingAnime() = flow {
-//        try {
-//            val result = Apollo.apolloClient.query(GetTrendingMediaQuery()).execute()
-//            if (result.hasErrors()) {
-//                // these errors are related to GraphQL errors
-// //                emit(ResultData(ResultStatus.ERROR, result.errors.toString()))
-//            }
-//            val data = result.data
-//            if (data != null) {
-//                emit(
-//                    mapOf(HomeTrendingTypes.POPULAR_THIS_SEASON to parseMedia(data.trending?.popularThisSeason))
-//                )
-//            }
-//        } catch (exception: ApolloException) {
-//            // handle exception here,, these are mainly for network errors
-//            emit(ResultData(ResultStatus.ERROR, exception.message ?: "No error message"))
-//        }
-//    }
-//
-//    private fun parseMedia(medias: List<GetTrendingMediaQuery.PopularThisSeason?>?): List<Anime> {
-//        val mediaList: MutableList<Anime> = mutableListOf()
-//        for (media in medias.orEmpty()) {
-//            if (media.title?.userPreferred != null && media.coverImage?.extraLarge != null) {
-//                mediaList.add(
-//                    Anime(
-//                        id = media.id,
-//                        title = media.title.userPreferred,
-//                        coverImage = media.coverImage?.extraLarge
-//                    )
-//                )
-//            }
-//        }
-//        return mediaList
-//    }
+fun MediaFormat?.toAni(): AniMediaFormat {
+    return when (this) {
+        MediaFormat.TV -> AniMediaFormat.TV
+        MediaFormat.TV_SHORT -> AniMediaFormat.TV_SHORT
+        MediaFormat.MOVIE -> AniMediaFormat.MOVIE
+        MediaFormat.SPECIAL -> AniMediaFormat.SPECIAL
+        MediaFormat.OVA -> AniMediaFormat.OVA
+        MediaFormat.ONA -> AniMediaFormat.ONA
+        MediaFormat.MUSIC -> AniMediaFormat.MUSIC
+        MediaFormat.MANGA -> AniMediaFormat.MANGA
+        MediaFormat.NOVEL -> AniMediaFormat.NOVEL
+        MediaFormat.ONE_SHOT -> AniMediaFormat.ONE_SHOT
+        MediaFormat.UNKNOWN__ -> AniMediaFormat.UNKNOWN
+        null -> AniMediaFormat.UNKNOWN
+    }
 }
 
 private fun MediaStatus.Companion.fromAniMediaStatus(status: AniMediaStatus): MediaStatus {
@@ -834,21 +739,8 @@ private fun MediaSeason.Companion.fromAniSeason(season: Season): MediaSeason {
 private fun CharacterSort.Companion.fromAniCharacterSort(sort: AniCharacterSort): CharacterSort {
     return when (sort) {
         AniCharacterSort.DEFAULT -> CharacterSort.SEARCH_MATCH
-//        AniCharacterSort.RELEVANCE -> CharacterSort.RELEVANCE
-//        AniCharacterSort.ROLE -> CharacterSort.ROLE
-//        AniCharacterSort.ROLE_DESC -> CharacterSort.ROLE_DESC
         AniCharacterSort.FAVOURITES -> CharacterSort.FAVOURITES
         AniCharacterSort.FAVOURITES_DESC -> CharacterSort.FAVOURITES_DESC
-    }
-}
-
-fun MediaFormat?.toCapitalizedString(): String {
-    return if (this?.rawValue != "TV") {
-        this?.rawValue?.lowercase()
-            ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-            ?: "Unknown"
-    } else {
-        this.rawValue
     }
 }
 

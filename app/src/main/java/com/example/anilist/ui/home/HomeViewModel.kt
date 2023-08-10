@@ -180,24 +180,14 @@ class HomeViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(),
             initialValue = ""
         )
-//    private val _mediaSearch = MutableStateFlow("")
-//    private val _characterSearch = MutableStateFlow("")
-//    private val _threadSearch = MutableStateFlow("")
-//    private val _userSearch = MutableStateFlow("")
 
+    //fixme do we use this?
     private val _searchType = MutableStateFlow(SearchFilter.MEDIA)
     val searchType = _searchType.asStateFlow().stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(),
         initialValue = SearchFilter.MEDIA
     )
-
-//    private val _characterSortType = MutableStateFlow(AniCharacterSort.DEFAULT)
-//    val characterSortType = _characterSortType.asStateFlow().stateIn(
-//        viewModelScope,
-//        SharingStarted.WhileSubscribed(),
-//        initialValue = AniCharacterSort.DEFAULT
-//    )
 
     private val mediaSearchState = MutableStateFlow(
         MediaSearchState(
@@ -383,73 +373,11 @@ class HomeViewModel @Inject constructor(
         mediaSearchState.value = mediaSearchState.value.copy(searchType = searchType)
 
         _searchType.value = searchType
-        val query = search.value
-        when (searchType) {
-            SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
-                Timber.d("Updating media search to have type $searchType")
-//                _mediaSearch.value = query
-            }
-
-            SearchFilter.CHARACTERS -> {
-//                _characterSearch.value = query
-            }
-
-            SearchFilter.STAFF -> {
-//                _staffSearch.value = query
-            }
-
-            SearchFilter.STUDIOS -> {
-//                _studioSearch.value = query
-            }
-
-            SearchFilter.THREADS -> {
-//                _threadSearch.value = query
-            }
-
-            SearchFilter.USER -> {
-//                _userSearch.value = query
-            }
-        }
     }
-
-//    fun setCharacterSortType(type: AniCharacterSort) {
-//        _characterSortType.value = type
-//    }
 
     init {
         fetchTags()
         fetchGenres()
-        viewModelScope.launch {
-
-            search.collectLatest { query ->
-                Timber.i("Current search filter in init block view model is " + searchType.value)
-                when (searchType.value) {
-                    SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
-//                        _mediaSearch.emit(query)
-                    }
-
-                    SearchFilter.CHARACTERS -> {
-//                        _characterSearch.emit(query)
-                    }
-
-                    SearchFilter.STAFF -> {
-//                        _staffSearch.emit(query)
-                    }
-
-                    SearchFilter.STUDIOS -> {
-//                        _studioSearch.emit(query)
-                    }
-
-                    SearchFilter.THREADS -> {
-//                        _threadSearch.emit(query)
-                    }
-
-                    SearchFilter.USER -> {
-//                        _userSearch.emit(query)
-                    }
-                }
-            }
-        }
     }
 
     fun fetchGenres() {
@@ -502,11 +430,6 @@ data class MediaSearchState(
     val year: Int,
     val genres: List<String>,
     val tags: List<String>
-)
-
-data class CharacterSearchState(
-    val query: String,
-    val sort: AniCharacterSort
 )
 
 // fixme not being used

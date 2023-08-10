@@ -3,9 +3,11 @@ package com.example.anilist.ui.home
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.repository.HomeRepository
-import com.example.anilist.data.repository.HomeTrendingTypes
+import com.example.anilist.data.models.HomeTrendingTypes
+import timber.log.Timber
 import javax.inject.Inject
 import kotlin.math.min
 
@@ -20,10 +22,9 @@ class MediaPagingSource @Inject constructor(
 ) : PagingSource<Int, Media>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Media> {
         val start = params.key ?: STARTING_KEY
-//        val range = start.until(start + params.loadSize)
-        Log.d(TAG, "Current key in media paging source is ${params.key}")
+        Timber.d("Current key in media paging source is " + params.key)
         val pageSize = min(PAGE_SIZE, params.loadSize)
-        val data = when (type) {
+        val data: AniResult<List<Media>> = when (type) {
             HomeTrendingTypes.TRENDING_NOW -> homeRepository.getTrendingNow(
                 isAnime = isAnime,
                 page = start,
@@ -57,15 +58,20 @@ class MediaPagingSource @Inject constructor(
                 pageSize = pageSize
             )
         }
-        return LoadResult.Page(
-            data = data,
-            prevKey = when (start) {
-                STARTING_KEY -> null
+        return when (data) {
+            is AniResult.Failure -> {
+                LoadResult.Error(Exception(data.error))
+            }
+            is AniResult.Success -> LoadResult.Page(
+                data = data.data,
+                prevKey = when (start) {
+                    STARTING_KEY -> null
 //                else -> ensureValidKey(key = range.first - params.loadSize)
-                else -> start - 1
-            },
-            nextKey = if (data.isNotEmpty()) start + 1 else null
-        )
+                    else -> start - 1
+                },
+                nextKey = if (data.data.isNotEmpty()) start + 1 else null
+            )
+        }
     }
 
     // The refresh key is used for the initial load of the next PagingSource, after invalidation
