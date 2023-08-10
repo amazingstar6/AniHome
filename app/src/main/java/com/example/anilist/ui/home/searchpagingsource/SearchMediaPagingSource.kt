@@ -8,6 +8,7 @@ import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Season
 import com.example.anilist.data.repository.HomeRepository
 import com.example.anilist.ui.home.AniMediaSort
+import com.example.anilist.ui.home.MediaSearchState
 import com.example.anilist.ui.home.SearchFilter
 import timber.log.Timber
 
@@ -16,14 +17,7 @@ private const val TAG = "SearchPagingSource"
 
 class SearchMediaPagingSource(
     private val homeRepository: HomeRepository,
-    private val search: String,
-    private val mediaSearchType: SearchFilter,
-    private val sortType: AniMediaSort,
-    private val season: Season,
-    private val status: AniMediaStatus,
-    private val year: Int,
-    private val genres: List<String>,
-    private val tags: List<String>
+    private val searchState: MediaSearchState
 ) : PagingSource<Int, Media>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Media> {
         val start = params.key ?: STARTING_KEY
@@ -31,16 +25,9 @@ class SearchMediaPagingSource(
             homeRepository.searchMedia(
                 page = start,
                 pageSize = params.loadSize,
-                text = search,
-                type = mediaSearchType,
-                sort = sortType,
-                season = season,
-                status = status,
-                year = year,
-                genres = genres,
-                tags = tags
+                searchState = searchState
             )
-        Timber.d("Current search page being loaded is " + params.key + " with query " + search)
+        Timber.i("Media search is querying ${searchState.query} for ${searchState.searchType}")
         return when (data) {
             is AniResult.Failure -> LoadResult.Error(Exception(data.error))
             is AniResult.Success -> LoadResult.Page(

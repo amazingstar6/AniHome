@@ -33,9 +33,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -49,22 +52,6 @@ import javax.inject.Inject
 private const val TIME_OUT = 300L //milli seconds
 private const val PAGE_SIZE = 25
 const val PREFETCH_DISTANCE = 10
-
-data class MediaSearchState(
-    val query: String,
-    val searchType: SearchFilter,
-    val sort: AniMediaSort,
-    val currentSeason: Season,
-    val status: AniMediaStatus,
-    val year: Int,
-    val genres: List<String>,
-    val tags: List<String>
-)
-
-data class CharacterSearchState(
-    val query: String,
-    val sort: AniCharacterSort
-)
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -88,12 +75,20 @@ class HomeViewModel @Inject constructor(
     private var _genres: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
     val genres: StateFlow<List<String>> = _genres
 
+    private val _toastMessage = MutableSharedFlow<String>()
+    val toastMessage: SharedFlow<String> = _toastMessage.asSharedFlow()
+
+    private fun sendMessage(message: String) {
+        viewModelScope.launch {
+            _toastMessage.emit(message)
+        }
+    }
+
     fun setToAnime() {
         _isAnime.value = true
     }
 
     fun setToManga() {
-        Timber.d("Set to manga was called")
         _isAnime.value = false
     }
 
@@ -198,12 +193,7 @@ class HomeViewModel @Inject constructor(
         SharingStarted.WhileSubscribed(),
         initialValue = SearchFilter.MEDIA
     )
-    private val _mediaSortType = MutableStateFlow(AniMediaSort.POPULARITY)
-    val mediaSortType = _mediaSortType.asStateFlow().stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(),
-        initialValue = AniMediaSort.SEARCH_MATCH
-    )
+
     private val _characterSortType = MutableStateFlow(AniCharacterSort.DEFAULT)
     val characterSortType = _characterSortType.asStateFlow().stateIn(
         viewModelScope,
@@ -236,56 +226,13 @@ class HomeViewModel @Inject constructor(
                     enablePlaceholders = true
                 ),
                 pagingSourceFactory = {
-                    //todo convert parameters to searchstate data class
                     SearchMediaPagingSource(
                         homeRepository = homeRepository,
-                        search = searchState.query,
-                        mediaSearchType = searchState.searchType,
-                        sortType = searchState.sort,
-                        season = searchState.currentSeason,
-                        status = searchState.status,
-                        year = searchState.year,
-                        genres = searchState.genres,
-                        tags = searchState.tags
+                        searchState = searchState
                     )
                 }
             ).flow.cachedIn(viewModelScope)
         }
-//        combine(
-//            _mediaSearch,
-//            searchType,
-//            mediaSortType,
-//            season,
-//            status
-//        ) { query, searchType, sortType, currentSeason, status ->
-//            MediaSearchState(
-//                query = query,
-//                searchType = searchType,
-//                sort = sortType,
-//                currentSeason = currentSeason,
-//                status = status
-//            )
-//        }
-//            .debounce(300).flatMapLatest { searchState ->
-//                Timber.d("Media search is searching for " + searchState.query)
-//                Pager(
-//                    config = PagingConfig(
-//                        pageSize = PAGE_SIZE,
-//                        prefetchDistance = 5,
-//                        enablePlaceholders = true
-//                    ),
-//                    pagingSourceFactory = {
-//                        SearchMediaPagingSource(
-//                            homeRepository = homeRepository,
-//                            search = searchState.query,
-//                            mediaSearchType = searchState.searchType,
-//                            sortType = searchState.sort,
-//                            season = searchState.currentSeason,
-//                            status = searchState.status
-//                        )
-//                    }
-//                ).flow.cachedIn(viewModelScope)
-//            }
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val searchResultsCharacter: Flow<PagingData<CharacterDetail>> =
@@ -395,7 +342,7 @@ class HomeViewModel @Inject constructor(
     ) {
         _search.value = query
 
-        Timber.d("Updating search with tags $selectedTags")
+        Timber.d("Updating search with search type $searchType")
 
         mediaSearchState.value = mediaSearchState.value.copy(
             query = query,
@@ -414,7 +361,9 @@ class HomeViewModel @Inject constructor(
         val query = search.value
         when (searchType) {
             SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
+                Timber.d("Updating media search to have type $searchType")
                 _mediaSearch.value = query
+                mediaSearchState.value = mediaSearchState.value.copy(searchType = searchType)
             }
 
             SearchFilter.CHARACTERS -> {
@@ -439,34 +388,14 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun setMediaSortType(type: AniMediaSort) {
-        _mediaSortType.value = type
-    }
-
     fun setCharacterSortType(type: AniCharacterSort) {
         _characterSortType.value = type
     }
 
     init {
+        fetchTags()
+        fetchGenres()
         viewModelScope.launch {
-            when (val tagsData = homeRepository.getTags()) {
-                is AniResult.Success -> {
-                    _tags.value = tagsData.data;
-                }
-
-                is AniResult.Failure -> {
-                    //todo handle failure (e.g. toast)
-                }
-            }
-            when (val genreData = homeRepository.getGenres()) {
-                is AniResult.Success -> {
-                    _genres.value = genreData.data
-                }
-
-                is AniResult.Failure -> {
-                    //todo handle failure (e.g. toast)
-                }
-            }
 
             search.collectLatest { query ->
                 Timber.i("Current search filter in init block view model is " + searchType.value)
@@ -497,106 +426,65 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
-//        viewModelScope.launch {
-//            searchType.collectLatest { searchType ->
-//                Log.i(TAG, "New search filter is ${searchType} and query is ${search.value}")
-//                if (searchType == SearchFilter.MEDIA || searchType == SearchFilter.ANIME || searchType == SearchFilter.MANGA) {
-//                    _mediaSearch.emit(search.value)
-//                } else if (searchType == SearchFilter.CHARACTERS) {
-//                    _characterSearch.emit(search.value)
-//                }
-//            }
-//        }
     }
 
-//    private fun parseNotification(data: GetNotificationsQuery.Data?): Flow<List<Notification>> {
-//        val list = listOf(
-//            Notification(
-//                type = data?.Page?.notifications?.get(0)?.__typename ?: ""
-//            )
-//        )
-//        return list.asFlow()
-//    }
-
-    val notifications = notificationRepository.getNotifications().asLiveData()
-//    val notifications: LiveData<List<Notification>> get() = _notifications
-//    fun fetchNotifications() {
-//        viewModelScope.launch {
-//            val data = Apollo.executeQuery(Apollo.apolloClient.query(GetNotificationsQuery()))
-//
-//            if (data.status == ResultStatus.SUCCESSFUL) {
-//                _notifications.value = data.data.
-//            }
-//        }
-//    }
-
-//    fun setAccessCode(accessCode: String) {
-//        viewModelScope.launch {
-//            userPreferencesRepository.setAccessCode(accessCode)
-//        }
-//    }
-
-    private val _media = MutableLiveData<HomeMedia>()
-    val media: LiveData<HomeMedia> = _media
-    private val _popularAnime = MutableLiveData<List<Media>>()
-    private val _trendingAnime = MutableLiveData<List<Media>>()
-    private val _upcomingNextSeason = MutableLiveData<List<Media>>()
-    private val _allTimePopular = MutableLiveData<List<Media>>()
-    private val _top100 = MutableLiveData<List<Media>>()
-
-    init {
-        fetchMedia(
-            isAnime = true,
-            page = 1,
-            skipPopularThisSeason = false,
-            skipTrendingNow = false,
-            skipUpcomingNextSeason = false,
-            skipAllTimePopular = false,
-            skipTop100Anime = false,
-        )
-    }
-
-    // fixme remove 25 default
-    private fun fetchMedia(
-        isAnime: Boolean,
-        page: Int,
-        pageSize: Int = 25,
-        skipPopularThisSeason: Boolean = true,
-        skipTrendingNow: Boolean = true,
-        skipUpcomingNextSeason: Boolean = true,
-        skipAllTimePopular: Boolean = true,
-        skipTop100Anime: Boolean = true,
-    ) {
+    fun fetchGenres() {
         viewModelScope.launch {
-            val newMedia = homeRepository.getHomeMedia(
-                isAnime,
-                page,
-                pageSize,
-                skipTrendingNow,
-                skipPopularThisSeason,
-                skipUpcomingNextSeason,
-                skipAllTimePopular,
-                skipTop100Anime,
-            ).getOrDefault(HomeMedia())
-            if (!skipPopularThisSeason) _popularAnime.value =
-                _media.value?.popularThisSeason.orEmpty() + newMedia.popularThisSeason
-            if (!skipTrendingNow) _trendingAnime.value =
-                _media.value?.trendingNow.orEmpty() + newMedia.trendingNow
-            if (!skipUpcomingNextSeason) _upcomingNextSeason.value =
-                _media.value?.upcomingNextSeason.orEmpty() + newMedia.upcomingNextSeason
-            if (!skipAllTimePopular) _allTimePopular.value =
-                _media.value?.allTimePopular.orEmpty() + newMedia.allTimePopular
-            if (!skipTop100Anime) _top100.value =
-                _media.value?.top100Anime.orEmpty() + newMedia.top100Anime
+            when (val genreData = homeRepository.getGenres()) {
+                is AniResult.Success -> {
+                    _genres.value = genreData.data
+                }
+
+                is AniResult.Failure -> {
+                    sendMessage("Failed to load genres, please refresh")
+                }
+            }
+        }
+    }
+
+    fun fetchTags() {
+        viewModelScope.launch {
+            when (val tagsData = homeRepository.getTags()) {
+                is AniResult.Success -> {
+                    _tags.value = tagsData.data
+                }
+
+                is AniResult.Failure -> {
+                    sendMessage("Failed to load tags, please refresh")
+                }
+            }
         }
     }
 
 
+    val notifications = notificationRepository.getNotifications().asLiveData()
+
+    private val _media = MutableLiveData<HomeMedia>()
+    val media: LiveData<HomeMedia> = _media
+
+
     fun markAllNotificationsAsRead() {
-        // todo
+        //todo
     }
 }
 
+data class MediaSearchState(
+    val query: String,
+    val searchType: SearchFilter,
+    val sort: AniMediaSort,
+    val currentSeason: Season,
+    val status: AniMediaStatus,
+    val year: Int,
+    val genres: List<String>,
+    val tags: List<String>
+)
+
+data class CharacterSearchState(
+    val query: String,
+    val sort: AniCharacterSort
+)
+
+// fixme not being used
 sealed interface HomeUiState {
     object Loading : HomeUiState
     data class Success(val myMedia: HomeUiStateData) : HomeUiState

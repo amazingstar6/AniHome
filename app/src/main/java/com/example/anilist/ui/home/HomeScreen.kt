@@ -1,6 +1,7 @@
 package com.example.anilist.ui.home
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -145,12 +147,10 @@ fun HomeScreen(
     val isAnime by homeViewModel.isAnime.collectAsStateWithLifecycle()
     val search by homeViewModel.search.collectAsStateWithLifecycle()
     val searchType by homeViewModel.searchType.collectAsStateWithLifecycle()
-    val mediaSortType by homeViewModel.mediaSortType.collectAsStateWithLifecycle()
     val characterSortType by homeViewModel.characterSortType.collectAsStateWithLifecycle()
 
     val uiState2 by homeViewModel.uiState.collectAsStateWithLifecycle()
 //    val trendingTogethery by homeViewModel.trendingTogetherPager.collectAsLazyPagingItems()
-
 
     val tags by homeViewModel.tags.collectAsStateWithLifecycle()
     val genres by homeViewModel.genres.collectAsStateWithLifecycle()
@@ -161,6 +161,20 @@ fun HomeScreen(
     val focusRequester by remember { mutableStateOf(FocusRequester()) }
     val columnScrollState = rememberScrollState()
     val columnScrollScope = rememberCoroutineScope()
+
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        homeViewModel
+            .toastMessage
+            .collect { message ->
+                Toast.makeText(
+                    context,
+                    message,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+    }
 
     Scaffold(topBar = {
         AniSearchBar(
@@ -176,8 +190,6 @@ fun HomeScreen(
             onNavigateToSettings = onNavigateToSettings,
             focusRequester = focusRequester,
             selectedChip = searchType,
-            currentMediaSort = mediaSortType,
-            setCurrentMediaSort = homeViewModel::setMediaSortType,
             characterSort = characterSortType,
             setCharacterSort = homeViewModel::setCharacterSortType,
             setSelectedChipValue = homeViewModel::setMediaSearchType,
@@ -191,7 +203,10 @@ fun HomeScreen(
                     MediaDetailsRepository.LikeAbleType.STUDIO, it
                 )
                 uiState.searchResultsStudio.refresh()
-            })
+            },
+            reloadGenres = homeViewModel::fetchGenres,
+            reloadTags = homeViewModel::fetchTags
+        )
     }, floatingActionButton = {
         FloatingActionButton(
             onClick = { active = true; focusRequester.requestFocus() },
@@ -339,7 +354,7 @@ enum class AniMediaSort {
             SCORE -> context.getString(R.string.score)
             POPULARITY -> context.getString(R.string.popularity)
             TRENDING -> context.getString(R.string.trending)
-            EPISODES -> context.getString(R.string.episode_amount)
+            EPISODES -> context.getString(R.string.episode_amount) //fixme also is chapter amount?
             DURATION -> context.getString(R.string.duration)
             CHAPTERS -> context.getString(R.string.chapter_amount)
             VOLUMES -> context.getString(R.string.volume_amount)
@@ -421,9 +436,9 @@ private fun AniSearchBar(
     focusRequester: FocusRequester,
     selectedChip: SearchFilter,
     setSelectedChipValue: (SearchFilter) -> Unit,
-    currentMediaSort: AniMediaSort,
-    setCurrentMediaSort: (AniMediaSort) -> Unit,
     toggleFavourite: (Int) -> Unit,
+    reloadTags: () -> Unit,
+    reloadGenres: () -> Unit,
     onNavigateToMediaDetails: (Int) -> Unit,
     onNavigateToNotification: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -439,6 +454,10 @@ private fun AniSearchBar(
         targetValue = if (!active) Dimens.PaddingNormal else 0.dp, label = "increase padding" + ""
     )
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    var currentMediaSort by rememberSaveable {
+        mutableStateOf(AniMediaSort.POPULARITY)
+    }
 
     var selectedSeason by rememberSaveable { mutableStateOf(Season.UNKNOWN) }
     var selectedYear by rememberSaveable { mutableIntStateOf(-1) }
@@ -542,8 +561,8 @@ private fun AniSearchBar(
                 LazyRow(modifier = Modifier.padding(top = Dimens.PaddingSmall)) {
                     itemsIndexed(filterList) { index, filterName ->
                         FilterChip(selected = index == selectedChip.ordinal, onClick = {
-                            setSelectedChipValue(filterList[index])
-                            updateSearchParameterless(query)
+                            setSelectedChipValue(filterList[index]) //fixme
+//                            updateSearchParameterless(query)
                         }, label = { Text(text = filterName.toString()) }, leadingIcon = {
                             if (index == selectedChip.ordinal) {
                                 Icon(
@@ -693,7 +712,7 @@ private fun AniSearchBar(
                             AniMediaSort.values().forEachIndexed { _, mediaSort ->
                                 TextButton(
                                     onClick = {
-                                        setCurrentMediaSort(mediaSort)
+                                        currentMediaSort = mediaSort
                                         updateSearchParameterless(query)
                                         showSortingBottomSheet = false
                                     }, modifier = Modifier.fillMaxWidth(), shape = RectangleShape
@@ -746,12 +765,19 @@ private fun AniSearchBar(
                     val unChangedTags by remember(key1 = showTagDialog) {
                         mutableStateOf(selectedTags.toImmutableList())
                     }
+                    val unChangedGenres by remember(key1 = showTagDialog) {
+                        mutableStateOf(selectedGenres.toImmutableList())
+                    }
                     AlertDialog(onDismissRequest = { showTagDialog = false },
                         dismissButton = {
                             TextButton(onClick = {
                                 selectedTags.apply {
                                     clear()
                                     addAll(unChangedTags)
+                                }
+                                selectedGenres.apply {
+                                    clear()
+                                    addAll(unChangedGenres)
                                 }
                                 showTagDialog = false
                             }) {
@@ -768,7 +794,7 @@ private fun AniSearchBar(
                         },
                         title = { Text(text = "Tags") },
                         text = {
-                            if (tags.isNotEmpty()) {
+                            if (tags.isNotEmpty() && genres.isNotEmpty()) {
                                 LazyColumn {
                                     val alphabeticalListOfTagCategories =
                                         tags.map { it.category }.distinct().sorted()
@@ -806,8 +832,19 @@ private fun AniSearchBar(
 //                                    }
                                 }
                             } else {
-                                Text(text = "Failed to load")
-                                //todo reload button
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(text = "Failed to load")
+                                    if (tags.isEmpty()) {
+                                        TextButton(onClick = { reloadTags() }) {
+                                            Text(text = "Reload tags")
+                                        }
+                                    }
+                                    if (genres.isEmpty()) {
+                                        TextButton(onClick = { reloadGenres() }) {
+                                            Text(text = "Reload genres")
+                                        }
+                                    }
+                                }
                             }
                         })
                 }
@@ -1013,7 +1050,7 @@ private fun SearchResults(
     navigateToUserDetails: (Int) -> Unit,
     toggleFavourite: (Int) -> Unit
 ) {
-    LazyColumn {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
         when (selectedChip) {
             SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
                 val pager = uiState.searchResultsMedia
@@ -1021,13 +1058,14 @@ private fun SearchResults(
                 when (pager.loadState.refresh) {
                     is LoadState.Error -> {
                         item {
+                            Timber.d("Search error: ${(pager.loadState.refresh as LoadState.Error).error.message}")
                             Text(text = "Network error! Please try searching again")
                         }
                     }
 
                     is LoadState.Loading -> {
                         item {
-                            CircularProgressIndicator()
+                            LoadingCircle()
                         }
                     }
 

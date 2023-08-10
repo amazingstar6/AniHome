@@ -1,6 +1,7 @@
 package com.example.anilist.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.GetAllTimePopularQuery
@@ -40,6 +41,7 @@ import com.example.anilist.type.MediaType
 import com.example.anilist.ui.home.AniCharacterSort
 import com.example.anilist.ui.home.AniMediaSort
 import com.example.anilist.ui.home.MediaPagingSource
+import com.example.anilist.ui.home.MediaSearchState
 import com.example.anilist.ui.home.SearchFilter
 import com.example.anilist.utils.Apollo
 import kotlinx.datetime.Clock
@@ -442,51 +444,46 @@ class HomeRepository @Inject constructor() {
     suspend fun searchMedia(
         page: Int,
         pageSize: Int,
-        text: String,
-        type: SearchFilter,
-        sort: AniMediaSort,
-        season: Season,
-        status: AniMediaStatus,
-        year: Int,
-        genres: List<String>,
-        tags: List<String>
+        searchState: MediaSearchState
     ): AniResult<List<Media>> {
         try {
-            when (type) {
+            when (searchState.searchType) {
                 SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
-                    Timber.d("Season is $season")
-                    val query: SearchMediaQuery = when (type) {
+                    Timber.d("Season is ${searchState.currentSeason}")
+                    val query: SearchMediaQuery = when (searchState.searchType) {
                         SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> SearchMediaQuery(
                             page = page,
                             pageSize = pageSize,
-                            text,
+                            searchState.query,
                             sort = Optional.present(
-                                listOf(MediaSort.fromAniMediaSort(sort))
+                                listOf(MediaSort.fromAniMediaSort(searchState.sort))
                             ),
-                            type = when (type) {
+                            type = when (searchState.searchType) {
                                 SearchFilter.MEDIA -> Optional.absent()
                                 SearchFilter.ANIME -> Optional.present(MediaType.ANIME)
                                 SearchFilter.MANGA -> Optional.present(MediaType.MANGA)
                                 else -> Optional.absent() // cannot happen
                             },
                             season =
-                            if (season != Season.UNKNOWN && type != SearchFilter.MANGA) {
+                            if (searchState.currentSeason != Season.UNKNOWN && searchState.searchType != SearchFilter.MANGA) {
                                 Optional.present(
-                                    MediaSeason.fromAniSeason(season)
+                                    MediaSeason.fromAniSeason(searchState.currentSeason)
                                 )
                             } else {
                                 Optional.absent()
                             },
-                            airingStatus = if (status != AniMediaStatus.UNKNOWN && type != SearchFilter.MANGA) {
+                            airingStatus = if (searchState.status != AniMediaStatus.UNKNOWN && searchState.searchType != SearchFilter.MANGA) {
                                 Optional.present(
-                                    MediaStatus.fromAniMediaStatus(status)
+                                    MediaStatus.fromAniMediaStatus(searchState.status)
                                 )
                             } else {
                                 Optional.absent()
                             },
-                            year = if (year != -1) Optional.present(year) else Optional.absent(),
-                            genres = if (genres.isNotEmpty()) Optional.present(genres) else Optional.absent(),
-                            tags = if (tags.isNotEmpty()) Optional.present(tags) else Optional.absent()
+                            year = if (searchState.year != -1) Optional.present(searchState.year) else Optional.absent(),
+                            genres = if (searchState.genres.isNotEmpty()) Optional.present(
+                                searchState.genres
+                            ) else Optional.absent(),
+                            tags = if (searchState.tags.isNotEmpty()) Optional.present(searchState.tags) else Optional.absent()
                         )
 
 //                        SearchFilter.ANIME -> SearchMediaQuery(
@@ -505,8 +502,9 @@ class HomeRepository @Inject constructor() {
 //                            sort = Optional.present(listOf(MediaSort.fromAniCharacterSort(sort)))
 //                        )
 
-                        else -> {
-                            SearchMediaQuery(page, pageSize, text)
+                        else -> { // it should not get here
+                            Timber.wtf("Error #1")
+                            SearchMediaQuery(page, pageSize, searchState.query)
                         }
                     }
                     val result =
