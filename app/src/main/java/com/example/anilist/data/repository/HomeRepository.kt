@@ -275,8 +275,9 @@ class HomeRepository @Inject constructor() {
             }
             val data = result.data
             return if (data != null) {
-                AniResult.Success(data.Page?.media?.filterNotNull()
-                    ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
+                AniResult.Success(
+                    data.Page?.media?.filterNotNull()
+                        ?.map { parseMediaTitleCover(it.mediaTitleCover) }.orEmpty()
                 )
             } else {
                 AniResult.Failure("Network error")
@@ -358,7 +359,9 @@ class HomeRepository @Inject constructor() {
                         SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> SearchMediaQuery(
                             page = page,
                             pageSize = pageSize,
-                            searchState.query,
+                            search = if (searchState.query.isNotBlank()) Optional.present(
+                                searchState.query
+                            ) else Optional.absent(),
                             sort = Optional.present(
                                 listOf(MediaSort.fromAniMediaSort(searchState.mediaSort))
                             ),
@@ -387,12 +390,15 @@ class HomeRepository @Inject constructor() {
                             genres = if (searchState.genres.isNotEmpty()) Optional.present(
                                 searchState.genres
                             ) else Optional.absent(),
-                            tags = if (searchState.tags.isNotEmpty()) Optional.present(searchState.tags) else Optional.absent()
+                            tags = if (searchState.tags.isNotEmpty()) Optional.present(searchState.tags) else Optional.absent(),
+                            onList = Optional.present(searchState.onlyOnMyList)
                         )
 
                         else -> { // it should not get here
                             Timber.wtf("Error #1")
-                            SearchMediaQuery(page, pageSize, searchState.query)
+                            SearchMediaQuery(page, pageSize,if (searchState.query.isNotBlank()) Optional.present(
+                                searchState.query
+                            ) else Optional.absent())
                         }
                     }
                     val result =

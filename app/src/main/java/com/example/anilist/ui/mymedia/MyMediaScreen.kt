@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -212,14 +214,25 @@ private fun MyMedia(
                             )
                         }
                     }
-                    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.sort)) }) {
-                        IconButton(onClick = { /*TODO*/ }, modifier = Modifier.tooltipTrigger()) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.sort),
-                                contentDescription = stringResource(
-                                    id = R.string.sort
+                    Box {
+                        var showSortingDropDownMenu by remember { mutableStateOf(false) }
+                        PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.sort)) }) {
+                            IconButton(
+                                onClick = { showSortingDropDownMenu = true },
+                                modifier = Modifier.tooltipTrigger()
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.sort),
+                                    contentDescription = stringResource(
+                                        id = R.string.sort
+                                    )
                                 )
-                            )
+                            }
+                        }
+                        DropdownMenu(
+                            expanded = showSortingDropDownMenu,
+                            onDismissRequest = { showSortingDropDownMenu = false }) {
+                            DropdownMenuItem(text = { Text(text = "Sort") }, onClick = { /*TODO*/ })
                         }
                     }
                 })
@@ -754,7 +767,7 @@ fun MediaCardPreview() {
         navigateToDetails = {},
         increaseEpisodeProgress = { _, _ -> },
         increaseVolumeProgress = { _, _ -> },
-        media =  Media(
+        media = Media(
             title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
             format = AniMediaFormat.TV,
             episodeAmount = 204,

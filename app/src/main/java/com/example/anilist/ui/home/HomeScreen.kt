@@ -43,8 +43,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.RichTooltipBox
 import androidx.compose.material3.Scaffold
@@ -52,6 +54,7 @@ import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberRichTooltipState
@@ -81,6 +84,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
@@ -187,8 +191,6 @@ fun HomeScreen(
             onNavigateToSettings = onNavigateToSettings,
             focusRequester = focusRequester,
             selectedChip = searchType,
-//            characterSort = characterSortType,
-//            setCharacterSort = homeViewModel::setCharacterSortType,
             setSelectedChipValue = homeViewModel::setMediaSearchType,
             onNavigateToCharacterDetails = onNavigateToCharacterDetails,
             onNavigateToStaffDetails = onNavigateToStaffDetails,
@@ -202,7 +204,11 @@ fun HomeScreen(
                 uiState.searchResultsStudio.refresh()
             },
             reloadGenres = homeViewModel::fetchGenres,
-            reloadTags = homeViewModel::fetchTags
+            reloadTags = homeViewModel::fetchTags,
+            filterTagsAndGenres = { text ->
+//                tags.filter { tag -> tag.name.startsWith(text, ignoreCase = true) }
+//                genres
+            }
         )
     }, floatingActionButton = {
         FloatingActionButton(
@@ -457,7 +463,7 @@ private fun AniSearchBar(
 //    setCharacterSort: (AniCharacterSort) -> Unit,
     uiState: HomeUiStateData,
     query: String,
-    updateSearch: (text: String, filter: SearchFilter, mediaSort: AniMediaSort, season: Season, mediaStatus: AniMediaStatus, year: Int, selectedGenres: List<String>, selectedTags: List<String>) -> Unit,
+    updateSearch: (searchState: MediaSearchState) -> Unit,
     active: Boolean,
     setActive: (Boolean) -> Unit,
     focusRequester: FocusRequester,
@@ -475,7 +481,8 @@ private fun AniSearchBar(
     navigateToThreadDetails: (Int) -> Unit,
     navigateToStudioDetails: (Int) -> Unit,
     tags: List<AniTag>,
-    genres: List<String>
+    genres: List<String>,
+    filterTagsAndGenres: (String) -> Unit
 ) {
     val padding by animateDpAsState(
         targetValue = if (!active) Dimens.PaddingNormal else 0.dp, label = "increase padding" + ""
@@ -497,17 +504,24 @@ private fun AniSearchBar(
     val selectedTags: MutableList<String> by rememberSaveable {
         mutableStateOf(mutableListOf())  //fixme warning?
     }
+    var showOnlyOnMyList by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     val updateSearchParameterless: (String) -> Unit = {
         updateSearch(
-            it,
-            selectedChip,
-            currentMediaSort,
-            selectedSeason,
-            selectedStatus,
-            selectedYear,
-            selectedGenres.toImmutableList(),
-            selectedTags.toImmutableList()
+            MediaSearchState(
+                query = it,
+                searchType = selectedChip,
+                mediaSort = currentMediaSort,
+                characterSort = currentCharacterSort,
+                currentSeason = selectedSeason,
+                status = selectedStatus,
+                year = selectedYear,
+                genres = selectedGenres.toImmutableList(),
+                tags = selectedTags.toImmutableList(),
+                onlyOnMyList = showOnlyOnMyList
+            )
         )
     }
 
@@ -681,6 +695,8 @@ private fun AniSearchBar(
                             modifier = Modifier.padding(end = Dimens.PaddingNormal)
                         )
 
+
+
                         if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME) {
                             AssistChip(onClick = { showSeasonBottomSheet = true }, leadingIcon = {
                                 Icon(
@@ -720,6 +736,29 @@ private fun AniSearchBar(
                                 modifier = Modifier.padding(end = Dimens.PaddingNormal)
                             )
                         }
+
+                        // todo change to assist chip
+                        FilterChip(
+                            onClick = {
+                                showOnlyOnMyList = !showOnlyOnMyList
+                                updateSearchParameterless(query)
+                            },
+                            leadingIcon = {
+                                if (showOnlyOnMyList) Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Check"
+                                )
+                            },
+                            selected = showOnlyOnMyList,
+//                            {
+//                                Icon(
+//                                    painter = painterResource(id = R.drawable.anime_details_calendar),
+//                                    contentDescription = null
+//                                )
+//                            },
+                            label = { Text("Show only my list") },
+                            modifier = Modifier.padding(end = Dimens.PaddingNormal)
+                        )
 
                     } else if (selectedChip == SearchFilter.CHARACTERS) {
                         HorizontalDivider()
@@ -792,101 +831,20 @@ private fun AniSearchBar(
 //                            }
 //                        })
 //                }
-                if (showTagDialog) {
-                    val unChangedTags by remember(key1 = showTagDialog) {
-                        mutableStateOf(selectedTags.toImmutableList())
-                    }
-                    val unChangedGenres by remember(key1 = showTagDialog) {
-                        mutableStateOf(selectedGenres.toImmutableList())
-                    }
-                    AlertDialog(onDismissRequest = { showTagDialog = false },
-                        dismissButton = {
-                            TextButton(onClick = {
-                                selectedTags.apply {
-                                    clear()
-                                    addAll(unChangedTags)
-                                }
-                                selectedGenres.apply {
-                                    clear()
-                                    addAll(unChangedGenres)
-                                }
-                                showTagDialog = false
-                            }) {
-                                Text(text = stringResource(id = R.string.close))
-                            }
-                        },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                showTagDialog = false
-                                updateSearchParameterless(query)
-                            }) {
-                                Text(text = stringResource(id = R.string.save))
-                            }
-                        },
-                        title = { Text(text = stringResource(id = R.string.genres_tags)) },
-                        text = {
-                            if (tags.isNotEmpty() && genres.isNotEmpty()) {
-                                LazyColumn {
-                                    val alphabeticalListOfTagCategories =
-                                        tags.map { it.category }.distinct().sorted()
-                                    Timber.d(alphabeticalListOfTagCategories.toString())
-
-                                    stickyHeader {
-                                        Text(
-                                            text = stringResource(id = R.string.genres),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                    items(genres) { genre ->
-                                        GenreCheckBox(
-                                            selectedGenres = selectedGenres,
-                                            genre = genre
-                                        )
-                                    }
-
-                                    alphabeticalListOfTagCategories.forEach { category ->
-                                        stickyHeader {
-                                            Text(
-                                                text = category,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                        }
-                                        items(tags.filter { tag -> tag.category == category }) { aniTag ->
-                                            TagCheckBox(selectedTags = selectedTags, tag = aniTag)
-                                        }
-                                    }
-
-//                                    items(tags) { tag ->
-//                                        TagCheckBox(selectedTags, tag)
-//                                    }
-                                }
-                            } else {
-                                Column(
-                                    horizontalAlignment = Alignment.Start,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = "Failed to load",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
-                                    )
-                                    if (genres.isEmpty()) {
-                                        TextButton(onClick = { reloadGenres() }) {
-                                            Text(text = stringResource(R.string.reload_genres))
-                                        }
-                                    }
-                                    if (tags.isEmpty()) {
-                                        TextButton(onClick = { reloadTags() }) {
-                                            Text(text = stringResource(R.string.reload_tags))
-                                        }
-                                    }
-                                }
-                            }
-                        })
-                }
+                val setShowTagDialog: (Boolean) -> Unit = { showTagDialog = it }
+                TagDialog(
+                    showTagDialog,
+                    selectedTags,
+                    selectedGenres,
+                    setShowTagDialog,
+                    updateSearchParameterless,
+                    query,
+                    tags,
+                    genres,
+                    reloadGenres,
+                    reloadTags,
+                    filterTagsAndGenres
+                )
                 if (showYearDialog) {
                     val unchangedYear by remember(key1 = showYearDialog) {
                         mutableIntStateOf(selectedYear)
@@ -997,13 +955,235 @@ private fun AniSearchBar(
     }
 }
 
+@Composable
+@OptIn(
+    ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalLayoutApi::class
+)
+private fun TagDialog(
+    showTagDialog: Boolean,
+    selectedTags: MutableList<String>,
+    selectedGenres: MutableList<String>,
+    setShowTagDialog: (Boolean) -> Unit,
+    updateSearchParameterless: (String) -> Unit,
+    query: String,
+    tags: List<AniTag>,
+    genres: List<String>,
+    reloadGenres: () -> Unit,
+    reloadTags: () -> Unit,
+    filterTagsAndGenres: (String) -> Unit
+) {
+    if (showTagDialog) {
+        var filterTextFieldValue by remember { mutableStateOf("") }
+        val unChangedTags by remember(key1 = showTagDialog) {
+            mutableStateOf(selectedTags.toImmutableList())
+        }
+        val unChangedGenres by remember(key1 = showTagDialog) {
+            mutableStateOf(selectedGenres.toImmutableList())
+        }
+        val filteredTags by remember(key1 = filterTextFieldValue) {
+            mutableStateOf(tags.filter { tag ->
+                tag.name.startsWith(
+                    filterTextFieldValue,
+                    ignoreCase = true
+                )
+            })
+        }
+        val filteredGenres by remember(key1 = filterTextFieldValue) {
+            mutableStateOf(genres.filter { name ->
+                name.startsWith(
+                    filterTextFieldValue,
+                    ignoreCase = true
+                )
+            })
+        }
+
+        AlertDialog(
+            onDismissRequest = { setShowTagDialog(false) },
+            shape = RectangleShape,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false
+            ),
+            dismissButton = {
+                TextButton(onClick = {
+                    selectedTags.apply {
+                        clear()
+                        addAll(unChangedTags)
+                    }
+                    selectedGenres.apply {
+                        clear()
+                        addAll(unChangedGenres)
+                    }
+                    setShowTagDialog(false)
+                }) {
+                    Text(text = stringResource(id = R.string.close))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    setShowTagDialog(false)
+                    updateSearchParameterless(query)
+                }) {
+                    Text(text = stringResource(id = R.string.save))
+                }
+            },
+            title = { Text(text = stringResource(id = R.string.genres_tags)) },
+            text = {
+                if (tags.isNotEmpty() && genres.isNotEmpty()) {
+                    Column {
+                        OutlinedTextField(
+                            value = filterTextFieldValue, onValueChange = {
+                                filterTextFieldValue = it
+                                filterTagsAndGenres(it)
+                            }, modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Dimens.PaddingNormal)
+                        )
+                        FlowRow {
+//                            val chosenTags by remember(key1 = selectedTags, key2 = selectedGenres) {
+//                                mutableStateOf(selectedTags.apply { addAll(selectedGenres) }.toImmutableList())
+//                            }
+                            selectedTags.forEach {
+                                InputChip(
+                                    selected = false,
+                                    trailingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Clear,
+                                            contentDescription = "Clear"
+                                        )
+                                    },
+                                    onClick = { selectedTags.remove(it); /*selectedGenres.remove(it)*/ },
+                                    label = { Text(text = it) })
+                            }
+                        }
+                        TextButton(onClick = { selectedTags.clear(); selectedGenres.clear() }) {
+                            Text(text = "Clear filters")
+                        }
+                        LazyColumn {
+                            val alphabeticalListOfTagCategories =
+                                filteredTags.map { it.category }.distinct().sorted()
+                            Timber.d(alphabeticalListOfTagCategories.toString())
+
+                            if (filteredGenres.isNotEmpty()) {
+                                stickyHeader {
+                                    Surface(modifier = Modifier.fillMaxWidth()) {
+                                        Text(
+                                            text = stringResource(id = R.string.genres),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+                                        )
+                                    }
+                                }
+                                items(filteredGenres) { genre ->
+                                    GenreCheckBox(
+                                        selectedGenres = selectedGenres,
+                                        genre = genre
+                                    )
+                                }
+                            }
+
+                            alphabeticalListOfTagCategories.forEach { category ->
+                                stickyHeader {
+                                    Surface(modifier = Modifier.fillMaxWidth()) {
+                                        Text(
+                                            text = category,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+                                        )
+                                    }
+                                }
+                                items(filteredTags.filter { tag -> tag.category == category }) { aniTag ->
+                                    TagCheckBox(selectedTags = selectedTags, tag = aniTag)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    FailedToLoadTagsAndGenres(genres, reloadGenres, tags, reloadTags)
+                }
+            })
+    }
+}
+
+@Composable
+private fun FailedToLoadTagsAndGenres(
+    genres: List<String>,
+    reloadGenres: () -> Unit,
+    tags: List<AniTag>,
+    reloadTags: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.Start,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Failed to load",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+        )
+        if (genres.isEmpty()) {
+            TextButton(onClick = { reloadGenres() }) {
+                Text(text = stringResource(R.string.reload_genres))
+            }
+        }
+        if (tags.isEmpty()) {
+            TextButton(onClick = { reloadTags() }) {
+                Text(text = stringResource(R.string.reload_tags))
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun TagDialogPreview() {
+    TagDialog(
+        showTagDialog = true,
+        selectedTags = mutableListOf(),
+        selectedGenres = mutableListOf(),
+        setShowTagDialog = {},
+        updateSearchParameterless = {},
+        query = "Demon",
+        tags = mutableListOf(
+            AniTag(
+                id = 12321,
+                name = "Boy's love",
+                category = "Romance",
+                description = "Content involving male gay relationships",
+                isAdult = false
+            ), AniTag(
+                id = 12321,
+                name = "Yuri",
+                category = "Romance",
+                description = "Content involving lesbian relationships",
+                isAdult = false
+            ),
+            AniTag(
+                id = 1421,
+                name = "Drawing",
+                category = "Theme / Arts",
+                description = "Centers around the art of drawign",
+                isAdult = false
+            )
+        ),
+        genres = mutableListOf("Drama"),
+        reloadGenres = { },
+        reloadTags = { }) {
+
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TagCheckBox(
     selectedTags: MutableList<String>,
     tag: AniTag
 ) {
-    var checked by remember {
+    var checked by remember (key1 = selectedTags) {
         mutableStateOf(
             selectedTags.contains(
                 tag.name

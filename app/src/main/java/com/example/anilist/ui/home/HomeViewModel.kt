@@ -40,7 +40,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -199,7 +198,8 @@ class HomeViewModel @Inject constructor(
             year = -1,
             genres = emptyList(),
             tags = emptyList(),
-            characterSort = AniCharacterSort.FAVOURITES_DESC
+            characterSort = AniCharacterSort.FAVOURITES_DESC,
+            onlyOnMyList = false
         )
     )
 
@@ -344,29 +344,13 @@ class HomeViewModel @Inject constructor(
         }
 
     fun setSearch(
-        query: String,
-        searchType: SearchFilter,
-        mediaSort: AniMediaSort,
-        season: Season,
-        status: AniMediaStatus,
-        year: Int,
-        selectedGenres: List<String>,
-        selectedTags: List<String>
+        searchState: MediaSearchState
     ) {
-        _search.value = query
+        _search.value = searchState.query
 
         Timber.d("Updating search with search type $searchType")
 
-        mediaSearchState.value = mediaSearchState.value.copy(
-            query = query,
-            searchType = searchType,
-            mediaSort = mediaSort,
-            currentSeason = season,
-            status = status,
-            year = year,
-            genres = selectedGenres,
-            tags = selectedTags
-        )
+        mediaSearchState.value = searchState
     }
 
     fun setMediaSearchType(searchType: SearchFilter) {
@@ -429,7 +413,8 @@ data class MediaSearchState(
     val status: AniMediaStatus,
     val year: Int,
     val genres: List<String>,
-    val tags: List<String>
+    val tags: List<String>,
+    val onlyOnMyList: Boolean
 )
 
 // fixme not being used

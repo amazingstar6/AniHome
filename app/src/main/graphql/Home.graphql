@@ -104,9 +104,9 @@ fragment mediaTitleCover on Media {
     type
 }
 
-query SearchMedia($page: Int!, $pageSize: Int!, $search: String!, $type: MediaType, $sort: [MediaSort] = SEARCH_MATCH, $genres: [String], $tags: [String], $year: Int, $season: MediaSeason, $airingStatus: MediaStatus) {
+query SearchMedia($page: Int!, $pageSize: Int!, $search: String, $type: MediaType, $sort: [MediaSort] = SEARCH_MATCH, $genres: [String], $tags: [String], $year: Int, $season: MediaSeason, $airingStatus: MediaStatus, $onList: Boolean) {
     Page(page: $page, perPage: $pageSize) {
-        media(search: $search, type: $type, sort: $sort, genre_in: $genres, seasonYear: $year, season: $season, status: $airingStatus, tag_in: $tags) {
+        media(search: $search, type: $type, sort: $sort, genre_in: $genres, seasonYear: $year, season: $season, status: $airingStatus, tag_in: $tags, onList: $onList) {
             id
             startDate {
                 year
