@@ -9,6 +9,7 @@ import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.models.Tag
 
+//fixme move this to view model
 data class HomeUiStateData(
     val pagerTrendingNow: LazyPagingItems<Media>,
     val pagerPopularThisSeason: LazyPagingItems<Media>,

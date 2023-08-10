@@ -20,6 +20,7 @@ import com.example.anilist.data.models.Notification
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import timber.log.Timber
 
 private const val TAG = "Apollo"
 
@@ -92,6 +93,7 @@ class AuthorizationInterceptor(val token: String) : HttpInterceptor {
         request: HttpRequest,
         chain: HttpInterceptorChain
     ): HttpResponse {
+        Timber.d("WERE INTERCEPTING with token $token")
         return if (token != "") {
             chain.proceed(
                 request.newBuilder().addHeader("Authorization", "Bearer $token").build()

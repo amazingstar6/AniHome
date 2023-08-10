@@ -1,6 +1,5 @@
 package com.example.anilist.ui.home
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,8 +40,7 @@ import com.example.anilist.R
 import com.example.anilist.data.repository.Theme
 import com.example.anilist.data.repository.TitleFormat
 import com.example.anilist.ui.Dimens
-
-private const val TAG = "SettingsScreen"
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,9 +56,12 @@ fun SettingsScreen(
                 title = { Text(text = "Settings") },
                 navigationIcon = {
                     IconButton(onClick = navigateBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = stringResource(
-                            id = R.string.back
-                        ))
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = stringResource(
+                                id = R.string.back
+                            )
+                        )
                     }
                 })
         },
@@ -99,11 +101,18 @@ fun SettingsScreen(
                         ModalBottomSheet(onDismissRequest = { showModalBottomSheet = false }) {
                             Theme.values().forEach { theme ->
                                 TextButton(onClick = {
-                                    Log.d(TAG, "Saving theme in screen $theme")
+                                    Timber.d("Saving theme in screen $theme")
                                     settingsViewModel.saveTheme(theme = theme)
                                     showModalBottomSheet = false
                                 }, modifier = Modifier.fillMaxWidth()) {
-                                    Text(text = theme.toString())
+                                    Text(
+                                        text = theme.toString(),
+                                        color = if (theme == (settingsUiState as SettingsUiState.Success).settings.theme) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        }
+                                    )
                                 }
                             }
                         }
@@ -147,8 +156,8 @@ fun SettingsScreen(
                                             RadioButton(
                                                 selected = state == index,
                                                 onClick = {
-//                                                    state = index
-//                                                    settingsViewModel.saveTitle(title)
+                                                    state = index
+                                                    settingsViewModel.saveTitle(title)
                                                 },
                                                 modifier = Modifier.semantics {
                                                     contentDescription = title.toString()
@@ -161,15 +170,44 @@ fun SettingsScreen(
                             }
                         )
                     }
-                    Text(text = "Token: ${(settingsUiState as SettingsUiState.Success).settings.accessCode}")
-                    Text(text = "Token type: ${(settingsUiState as SettingsUiState.Success).settings.tokenType}")
-                    Text(text = "Expires in: ${(settingsUiState as SettingsUiState.Success).settings.expiresIn}")
-                    Text(text = "User id: ${(settingsUiState as SettingsUiState.Success).settings.userId}")
-                    TextButton(
-                        onClick = { settingsViewModel.logOut() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(text = "Log out")
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingNormal))
+
+                    if ((settingsUiState as SettingsUiState.Success).settings.accessCode != "") {
+                        Text(text = "User id: ${(settingsUiState as SettingsUiState.Success).settings.userId}")
+                        Text(text = "Token: ${(settingsUiState as SettingsUiState.Success).settings.accessCode}")
+//                        Text(text = "Token type: ${(settingsUiState as SettingsUiState.Success).settings.tokenType}")
+//                        Text(text = "Expires in: ${(settingsUiState as SettingsUiState.Success).settings.expiresIn}")
+                    }
+
+                    var showLogOutConfirmation by remember { mutableStateOf(false) }
+                    if ((settingsUiState as SettingsUiState.Success).settings.accessCode != "") {
+                        TextButton(
+                            onClick = { showLogOutConfirmation = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = stringResource(id = R.string.log_out))
+                        }
+                    }
+                    if (showLogOutConfirmation) {
+                        AlertDialog(
+                            onDismissRequest = { showLogOutConfirmation = false },
+                            dismissButton = {
+                                TextButton(onClick = { showLogOutConfirmation = false }) {
+                                    Text(text = stringResource(id = R.string.cancel))
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    settingsViewModel.logOut()
+                                    showLogOutConfirmation = false
+                                }) {
+                                    Text(text = stringResource(id = R.string.log_out))
+                                }
+                            },
+                            title = { Text(text = stringResource(R.string.log_out_question)) },
+                            text = { Text(text = stringResource(R.string.are_you_sure_you_want_to_log_out)) }
+                        )
                     }
                 }
             }

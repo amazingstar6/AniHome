@@ -108,6 +108,7 @@ class UserDataRepository @Inject constructor(
             preferences[PreferencesKeys.TOKEN_TYPE] = tokenType
             preferences[PreferencesKeys.EXPIRES_IN] = expiresIn
         }
+        Timber.d("Done saving access code")
     }
 
     suspend fun saveUserId(userId: Int) {

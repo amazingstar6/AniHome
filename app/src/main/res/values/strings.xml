@@ -123,6 +123,9 @@
     <string name="reload_tags">Reload tags</string>
     <string name="genres">Genres</string>
     <string name="genres_tags">Genres - Tags</string>
+    <string name="log_out">Log out</string>
+    <string name="log_out_question">Log out?</string>
+    <string name="are_you_sure_you_want_to_log_out">Are you sure you want to log out?</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>
