@@ -236,6 +236,7 @@ class HomeViewModel @Inject constructor(
                     enablePlaceholders = true
                 ),
                 pagingSourceFactory = {
+                    //todo convert parameters to searchstate data class
                     SearchMediaPagingSource(
                         homeRepository = homeRepository,
                         search = searchState.query,
@@ -243,7 +244,9 @@ class HomeViewModel @Inject constructor(
                         sortType = searchState.sort,
                         season = searchState.currentSeason,
                         status = searchState.status,
-                        year = searchState.year
+                        year = searchState.year,
+                        genres = searchState.genres,
+                        tags = searchState.tags
                     )
                 }
             ).flow.cachedIn(viewModelScope)
@@ -391,6 +394,8 @@ class HomeViewModel @Inject constructor(
         selectedTags: List<String>
     ) {
         _search.value = query
+
+        Timber.d("Updating search with tags $selectedTags")
 
         mediaSearchState.value = mediaSearchState.value.copy(
             query = query,

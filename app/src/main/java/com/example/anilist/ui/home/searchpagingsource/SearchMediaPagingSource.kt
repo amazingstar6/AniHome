@@ -21,7 +21,9 @@ class SearchMediaPagingSource(
     private val sortType: AniMediaSort,
     private val season: Season,
     private val status: AniMediaStatus,
-    private val year: Int
+    private val year: Int,
+    private val genres: List<String>,
+    private val tags: List<String>
 ) : PagingSource<Int, Media>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Media> {
         val start = params.key ?: STARTING_KEY
@@ -34,7 +36,9 @@ class SearchMediaPagingSource(
                 sort = sortType,
                 season = season,
                 status = status,
-                year = year
+                year = year,
+                genres = genres,
+                tags = tags
             )
         Timber.d("Current search page being loaded is " + params.key + " with query " + search)
         return when (data) {

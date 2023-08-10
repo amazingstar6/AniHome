@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -27,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Notifications
@@ -43,7 +46,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PlainTooltipBox
+import androidx.compose.material3.RichTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SegmentedButton
@@ -51,6 +56,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberRichTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.NonRestartableComposable
@@ -360,6 +366,47 @@ enum class AniCharacterSort {
 }
 
 @Composable
+fun GenreCheckBox(selectedGenres: MutableList<String>, genre: String) {
+    var checked by remember {
+        mutableStateOf(selectedGenres.contains(genre))
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                if (checked) {
+                    checked = false
+                    selectedGenres.remove(genre)
+                } else {
+                    checked = true
+                    selectedGenres.add(genre)
+                }
+            }) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = {
+                if (it) {
+                    checked = true
+                    selectedGenres.add(genre)
+                } else {
+                    checked = false
+                    selectedGenres.remove(genre)
+                }
+                Timber.d(
+                    "Checkbox change in tag: parameter is $it\n list of tags is $selectedGenres\n check status is $checked"
+                )
+            })
+        Text(
+            text = genre,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class
 )
@@ -393,11 +440,11 @@ private fun AniSearchBar(
     )
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    var selectedSeason by remember { mutableStateOf(Season.UNKNOWN) }
-    var selectedYear by remember { mutableIntStateOf(-1) }
-    var selectedStatus by remember { mutableStateOf(AniMediaStatus.UNKNOWN) }
-    var selectedGenres: List<String> by remember { mutableStateOf(emptyList()) }
-    val selectedTags: MutableList<String> by remember {
+    var selectedSeason by rememberSaveable { mutableStateOf(Season.UNKNOWN) }
+    var selectedYear by rememberSaveable { mutableIntStateOf(-1) }
+    var selectedStatus by rememberSaveable { mutableStateOf(AniMediaStatus.UNKNOWN) }
+    val selectedGenres: MutableList<String> by rememberSaveable { mutableStateOf(mutableListOf()) } //fixme warning?
+    val selectedTags: MutableList<String> by rememberSaveable {
         mutableStateOf(mutableListOf())  //fixme warning?
     }
 
@@ -409,8 +456,8 @@ private fun AniSearchBar(
             selectedSeason,
             selectedStatus,
             selectedYear,
-            selectedGenres,
-            selectedTags
+            selectedGenres.toImmutableList(),
+            selectedTags.toImmutableList()
         )
     }
 
@@ -547,17 +594,18 @@ private fun AniSearchBar(
                             },
                             modifier = Modifier.padding(end = Dimens.PaddingNormal)
                         )
-                        AssistChip(
-                            onClick = { showGenreDialog = true },
-                            leadingIcon = {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.outline_theater_comedy_24),
-                                    contentDescription = null
-                                )
-                            },
-                            label = { Text(text = "Genre") },
-                            modifier = Modifier.padding(end = Dimens.PaddingNormal)
-                        )
+
+//                        AssistChip(
+//                            onClick = { showGenreDialog = true },
+//                            leadingIcon = {
+//                                Icon(
+//                                    painter = painterResource(id = R.drawable.outline_theater_comedy_24),
+//                                    contentDescription = null
+//                                )
+//                            },
+//                            label = { Text(text = "Genre") },
+//                            modifier = Modifier.padding(end = Dimens.PaddingNormal)
+//                        )
 
                         AssistChip(
                             onClick = { showTagDialog = true },
@@ -567,7 +615,7 @@ private fun AniSearchBar(
                                     contentDescription = null
                                 )
                             },
-                            label = { Text(text = "Tags") },
+                            label = { Text(text = "Genres - Tags") },
                             modifier = Modifier.padding(end = Dimens.PaddingNormal)
                         )
 
@@ -711,7 +759,10 @@ private fun AniSearchBar(
                             }
                         },
                         confirmButton = {
-                            TextButton(onClick = { showTagDialog = false }) {
+                            TextButton(onClick = {
+                                showTagDialog = false
+                                updateSearchParameterless(query)
+                            }) {
                                 Text(text = "Confirm")
                             }
                         },
@@ -722,6 +773,20 @@ private fun AniSearchBar(
                                     val alphabeticalListOfTagCategories =
                                         tags.map { it.category }.distinct().sorted()
                                     Timber.d(alphabeticalListOfTagCategories.toString())
+
+                                    stickyHeader {
+                                        Text(
+                                            text = "Genres",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                    items(genres) { genre ->
+                                        GenreCheckBox(
+                                            selectedGenres = selectedGenres,
+                                            genre = genre
+                                        )
+                                    }
 
                                     alphabeticalListOfTagCategories.forEach { category ->
                                         stickyHeader {
@@ -856,19 +921,38 @@ private fun AniSearchBar(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TagCheckBox(
     selectedTags: MutableList<String>,
     tag: AniTag
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        var checked by remember {
-            mutableStateOf(
-                selectedTags.contains(
-                    tag.name
-                )
+    var checked by remember {
+        mutableStateOf(
+            selectedTags.contains(
+                tag.name
             )
-        }
+        )
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                if (checked) {
+                    checked = false
+                    selectedTags.remove(tag.name)
+                } else {
+                    checked = true
+                    selectedTags.add(tag.name)
+                }
+            }) {
+
+//        var showTagDescription by remember {
+//            mutableStateOf(
+//                false
+//            )
+//        }
         Checkbox(
             checked = checked,
             onCheckedChange = {
@@ -883,7 +967,37 @@ private fun TagCheckBox(
                     "Checkbox change in tag: parameter is $it\n list of tags is $selectedTags\n check status is $checked"
                 )
             })
-        Text(text = tag.name)
+        Text(
+            text = tag.name,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+
+        val tooltipState = rememberRichTooltipState(isPersistent = true)
+        val scope = rememberCoroutineScope()
+        RichTooltipBox(
+            title = { Text(text = tag.name) },
+            action = null,
+//                {
+//                    TextButton(
+//                        onClick = {
+//                            scope.launch {
+//                                tooltipState.dismiss()
+//                            }
+//                        }
+//                    ) { Text(text = "Close") }
+//                },
+            text = { Text(text = tag.description) },
+            tooltipState = tooltipState
+        ) {
+            IconButton(onClick = { scope.launch { tooltipState.show() } }) {
+                Icon(
+                    imageVector = Icons.Filled.Info,
+                    contentDescription = stringResource(R.string.tag_info)
+                )
+            }
+        }
     }
 }
 
