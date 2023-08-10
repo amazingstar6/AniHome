@@ -7,6 +7,7 @@ import com.example.anilist.data.models.AniUser
 import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.models.Tag
 
 data class HomeUiStateData(
     val pagerTrendingNow: LazyPagingItems<Media>,

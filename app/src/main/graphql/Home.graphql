@@ -236,3 +236,17 @@ query SearchUsers($search: String!, $page: Int!, $pageSize: Int!) {
         }
     }
 }
+
+query GetTags {
+    MediaTagCollection {
+        id
+        name
+        category
+        description
+        isAdult
+    }
+}
+
+query GetGenres {
+    GenreCollection
+}

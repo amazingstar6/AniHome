@@ -4,8 +4,10 @@ import android.content.Context
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.GetAllTimePopularQuery
+import com.example.anilist.GetGenresQuery
 import com.example.anilist.GetPopularManhwaQuery
 import com.example.anilist.GetPopularThisSeasonQuery
+import com.example.anilist.GetTagsQuery
 import com.example.anilist.GetTop100AnimeQuery
 import com.example.anilist.GetTrendingMediaQuery
 import com.example.anilist.GetTrendingNowQuery
@@ -20,6 +22,7 @@ import com.example.anilist.SearchUsersQuery
 import com.example.anilist.data.models.AniMediaStatus
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.AniStudio
+import com.example.anilist.data.models.AniTag
 import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.AniUser
 import com.example.anilist.data.models.CharacterDetail
@@ -726,6 +729,48 @@ class HomeRepository @Inject constructor() {
 
     private fun getCurrentYear(): Int {
         return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year
+    }
+
+    suspend fun getTags(): AniResult<List<AniTag>> {
+        try {
+            val result = Apollo.apolloClient.query(GetTagsQuery()).execute()
+            if (result.hasErrors()) {
+                return AniResult.Failure(buildString { result.errors?.forEach { appendLine(it.message) } })
+            }
+            val data = result.data
+            return if (data == null) {
+                AniResult.Failure("Network error")
+            } else {
+                AniResult.Success(data.MediaTagCollection?.filterNotNull()?.map {
+                    AniTag(
+                        id = it.id,
+                        name = it.name,
+                        category = it.category ?: "",
+                        description = it.description ?: "",
+                        isAdult = it.isAdult ?: false
+                    )
+                }.orEmpty())
+            }
+        } catch (e: ApolloException) {
+            return AniResult.Failure(e.localizedMessage ?: "No exception message given")
+        }
+    }
+
+    suspend fun getGenres(): AniResult<List<String>> {
+        try {
+            val result = Apollo.apolloClient.query(GetGenresQuery()).execute()
+            if (result.hasErrors()) {
+                return AniResult.Failure(buildString { result.errors?.forEach { appendLine(it.message) } })
+            }
+            val data = result.data
+            return if (data == null) {
+                AniResult.Failure("Network error")
+            } else {
+                AniResult.Success(data.GenreCollection?.filterNotNull().orEmpty())
+            }
+        } catch (e: ApolloException) {
+            return AniResult.Failure(e.localizedMessage ?: "No exception message given")
+        }
     }
 
 

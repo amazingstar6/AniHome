@@ -142,6 +142,9 @@ fun HomeScreen(
 //    val trendingTogethery by homeViewModel.trendingTogetherPager.collectAsLazyPagingItems()
 
 
+    val tags = homeViewModel.tags.collectAsStateWithLifecycle()
+    val genres = homeViewModel.genres.collectAsStateWithLifecycle()
+
     var active by rememberSaveable {
         mutableStateOf(false)
     }
@@ -639,7 +642,16 @@ private fun AniSearchBar(
                 }
                 if (showGenreDialog) {
                     AlertDialog(onDismissRequest = { showGenreDialog = false },
-                        confirmButton = { showGenreDialog = false },
+                        dismissButton = {
+                            TextButton(onClick = { showGenreDialog = false }) {
+                                Text(text = "Dismiss")
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showGenreDialog = false }) {
+                                Text(text = "Confirm")
+                            }
+                        },
                         title = { Text(text = "Genre") },
                         text = {
 

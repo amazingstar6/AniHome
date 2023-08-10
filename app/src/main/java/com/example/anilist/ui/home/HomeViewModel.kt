@@ -10,7 +10,9 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.example.anilist.data.models.AniMediaStatus
+import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.AniStudio
+import com.example.anilist.data.models.AniTag
 import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.AniUser
 import com.example.anilist.data.models.CharacterDetail
@@ -77,6 +79,12 @@ class HomeViewModel @Inject constructor(
 
     private var _isAnime = MutableStateFlow(true)
     val isAnime: StateFlow<Boolean> = _isAnime
+
+    private var _tags: MutableStateFlow<List<AniTag>> = MutableStateFlow(emptyList())
+    val tags: StateFlow<List<AniTag>> = _tags
+
+    private var _genres: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
+    val genres: StateFlow<List<String>> = _genres
 
     fun setToAnime() {
         _isAnime.value = true
@@ -428,6 +436,23 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            when (val tagsData = homeRepository.getTags()) {
+                is AniResult.Success -> {
+                    _tags.value = tagsData.data;
+                }
+                is AniResult.Failure -> {
+                    //todo handle failure (e.g. toast)
+                }
+            }
+            when (val genreData = homeRepository.getGenres()) {
+                is AniResult.Success -> {
+                    _genres.value = genreData.data
+                }
+                is AniResult.Failure -> {
+                    //todo handle failure (e.g. toast)
+                }
+            }
+
             search.collectLatest { query ->
                 Timber.i("Current search filter in init block view model is " + searchType.value)
                 when (searchType.value) {
