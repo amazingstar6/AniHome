@@ -4,6 +4,12 @@ query GetUnReadNotificationCount {
     }
 }
 
+query ResetUnreadNotificationCount($reset: Boolean) {
+    Notification(resetNotificationCount: $reset) {
+        __typename
+    }
+}
+
 query getNotifications($page: Int!, $perPage: Int!) {
     Page(page: $page, perPage: $perPage) {
         notifications {
@@ -26,17 +32,29 @@ query getNotifications($page: Int!, $perPage: Int!) {
                 context
                 createdAt
                 type
-                userId
+                user {
+                    id
+                    avatar {
+                        large
+                    }
+                    name
+                }
             }
             ... on ActivityMessageNotification {
                 activityId
                 context
                 createdAt
                 message {
-                    message
+                    message(asHtml: true)
                 }
                 type
                 userId
+                user {
+                    name
+                    avatar {
+                        large
+                    }
+                }
             }
             ... on ActivityMentionNotification {
                 activityId
@@ -44,6 +62,12 @@ query getNotifications($page: Int!, $perPage: Int!) {
                 createdAt
                 type
                 userId
+                user {
+                    name
+                    avatar {
+                        large
+                    }
+                }
                 activity {
                     ...activityFragment
                 }
@@ -77,115 +101,121 @@ query getNotifications($page: Int!, $perPage: Int!) {
                 createdAt
                 type
                 userId
-            }
-            ... on ActivityReplyLikeNotification {
-                activity {
-                    ...activityFragment
-                }
-                userId
-                activityId
-                context
-                createdAt
-                type
-            }
-            ... on ThreadCommentMentionNotification {
-                comment {
-                    comment(asHtml: true)
-                }
-                commentId
-                context
-                userId
-                type
-                thread {
-                    title
-                }
-            }
-            ... on ThreadCommentReplyNotification {
-                comment {
-                    comment(asHtml: true)
-                }
-                createdAt
-                context
-                commentId
-                thread {
-                    title
-                }
-                type
-                userId
-            }
-            ... on ThreadCommentSubscribedNotification {
-                commentId
-                context
-                createdAt
-                type
-                userId
                 user {
-                    id
+                    name
                     avatar {
                         large
                     }
                 }
-                comment {
-                    comment(asHtml: true)
-                }
-                thread {
-                    title
-                }
             }
-            ... on ThreadCommentLikeNotification {
-                userId
-                type
-                createdAt
-                context
-                commentId
-                comment {
-                    comment(asHtml: true)
-                }
-                thread {
-                    title
-                }
-            }
-            ... on ThreadLikeNotification {
-                userId
-                type
-                threadId
-                createdAt
-                context
-                thread {
-                    title
-                }
-                comment {
-                    comment(asHtml: true)
-                }
-            }
-            ... on RelatedMediaAdditionNotification {
-                context
-                createdAt
-                type
-                mediaId
-            }
-            ... on MediaDataChangeNotification {
-                context
-                createdAt
-                mediaId
-                reason
-                type
-            }
-            ... on MediaMergeNotification {
-                context
-                createdAt
-                type
-                reason
-                mediaId
-                deletedMediaTitles
-            }
-            ... on MediaDeletionNotification {
-                context
-                createdAt
-                deletedMediaTitle
-                type
-                reason
-            }
+#            ... on ActivityReplyLikeNotification {
+#                activity {
+#                    ...activityFragment
+#                }
+#                userId
+#                activityId
+#                context
+#                createdAt
+#                type
+#            }
+#            ... on ThreadCommentMentionNotification {
+#                comment {
+#                    comment(asHtml: true)
+#                }
+#                commentId
+#                context
+#                userId
+#                type
+#                thread {
+#                    title
+#                }
+#            }
+#            ... on ThreadCommentReplyNotification {
+#                comment {
+#                    comment(asHtml: true)
+#                }
+#                createdAt
+#                context
+#                commentId
+#                thread {
+#                    title
+#                }
+#                type
+#                userId
+#            }
+#            ... on ThreadCommentSubscribedNotification {
+#                commentId
+#                context
+#                createdAt
+#                type
+#                userId
+#                user {
+#                    id
+#                    avatar {
+#                        large
+#                    }
+#                }
+#                comment {
+#                    comment(asHtml: true)
+#                }
+#                thread {
+#                    title
+#                }
+#            }
+#            ... on ThreadCommentLikeNotification {
+#                userId
+#                type
+#                createdAt
+#                context
+#                commentId
+#                comment {
+#                    comment(asHtml: true)
+#                }
+#                thread {
+#                    title
+#                }
+#            }
+#            ... on ThreadLikeNotification {
+#                userId
+#                type
+#                threadId
+#                createdAt
+#                context
+#                thread {
+#                    title
+#                }
+#                comment {
+#                    comment(asHtml: true)
+#                }
+#            }
+#            ... on RelatedMediaAdditionNotification {
+#                context
+#                createdAt
+#                type
+#                mediaId
+#            }
+#            ... on MediaDataChangeNotification {
+#                context
+#                createdAt
+#                mediaId
+#                reason
+#                type
+#            }
+#            ... on MediaMergeNotification {
+#                context
+#                createdAt
+#                type
+#                reason
+#                mediaId
+#                deletedMediaTitles
+#            }
+#            ... on MediaDeletionNotification {
+#                context
+#                createdAt
+#                deletedMediaTitle
+#                type
+#                reason
+#            }
         }
     }
 }

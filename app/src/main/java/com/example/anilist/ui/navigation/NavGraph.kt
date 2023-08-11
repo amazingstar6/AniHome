@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.anilist.ui.ActivityDetailScreen
 import com.example.anilist.ui.PleaseLogin
 import com.example.anilist.ui.feed.FeedScreen
 import com.example.anilist.ui.forum.ForumScreen
@@ -29,6 +30,7 @@ import com.example.anilist.ui.mediadetails.StaffDetailScreen
 import com.example.anilist.ui.mediadetails.StudioDetailScreen
 import com.example.anilist.ui.mediadetails.UserDetailScreen
 import com.example.anilist.ui.mymedia.MyMediaScreen
+import timber.log.Timber
 
 private const val TAG = "AniNavGraph"
 
@@ -179,8 +181,20 @@ fun AniNavHost(
             setBottomBarState(false)
             NotificationScreen(
                 onNavigateBack = { navController.popBackStack() },
+                navigateToMediaDetails = navigationActions::navigateToMediaDetails,
+                onNavigateToActivity = navigationActions::navigateToActivity,
+                onNavigateToUser = navigationActions::navigateToUser
             )
         }
+        composable(
+            route = AniListRoute.ACTIVITY + "/{activityId}",
+            arguments = listOf(navArgument("activityId") { type = NavType.IntType }),
+            content = { navBackStackEntry ->
+                ActivityDetailScreen(
+                    activityId = navBackStackEntry.arguments?.getInt("activityId") ?: -1,
+                    navigateBack = navigationActions::navigateBack
+                )
+            })
         composable(
             AniListRoute.SETTINGS,
         ) {
@@ -189,7 +203,7 @@ fun AniNavHost(
         }
         composable(AniListRoute.ANIME_ROUTE) {
             setBottomBarState(true)
-            Log.d(TAG, "Access code is $accessCode")
+            Timber.d("Access code is " + accessCode)
             if (accessCode != "") {
                 MyMediaScreen(
                     navigateToDetails = { id ->

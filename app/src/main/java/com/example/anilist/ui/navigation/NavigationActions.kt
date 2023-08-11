@@ -6,6 +6,7 @@ import com.example.anilist.R
 import com.example.anilist.data.models.HomeTrendingTypes
 
 object AniListRoute {
+    const val ACTIVITY: String = "Activity"
     const val MEDIA_OVERVIEW_ROUTE: String = "MediaOverviewRoute"
     const val CHARACTER_DETAIL_ROUTE: String = "CharacterDetail"
     const val STAFF_DETAIL_ROUTE: String = "StaffDetail"
@@ -100,6 +101,12 @@ class AniListNavigationActions(private val navController: NavController) {
     fun navigateToOverview(homeTrendingTypes: HomeTrendingTypes) {
         navController.navigate(
             route = AniListRoute.MEDIA_OVERVIEW_ROUTE + "/${homeTrendingTypes.ordinal}"
+        )
+    }
+
+    fun navigateToActivity(activityId: Int) {
+        navController.navigate(
+            route = AniListRoute.ACTIVITY + "/$activityId"
         )
     }
 }
