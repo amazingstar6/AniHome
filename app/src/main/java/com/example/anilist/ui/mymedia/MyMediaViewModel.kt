@@ -1,24 +1,32 @@
 package com.example.anilist.ui.mymedia
 
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.anilist.MainActivity
+import com.example.anilist.data.models.AniMediaListSort
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.PersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
+import com.example.anilist.data.repository.UserDataRepository
 import com.example.anilist.data.repository.mymedia.MyMediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MyMediaViewModel @Inject constructor(
     private val myMediaRepository: MyMediaRepository,
+    private val userDataRepository: UserDataRepository
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<MyMediaUiState> =
@@ -31,6 +39,25 @@ class MyMediaViewModel @Inject constructor(
     private fun sendMessage(message: String) {
         viewModelScope.launch {
             _toastMessage.emit(message)
+        }
+    }
+
+    private val _sort: MutableStateFlow<AniMediaListSort> = MutableStateFlow(AniMediaListSort.UPDATED_TIME_DESC)
+
+    val sort: StateFlow<AniMediaListSort> = _sort
+
+    fun setSort(sort: AniMediaListSort) {
+//        _sort.value = sort
+        viewModelScope.launch {
+            userDataRepository.saveMediaListSort(sort)
+        }
+    }
+
+    init {
+        viewModelScope.launch {
+            userDataRepository.userPreferencesFlow.collectLatest {
+                _sort.value = it.mediaListSort
+            }
         }
     }
 

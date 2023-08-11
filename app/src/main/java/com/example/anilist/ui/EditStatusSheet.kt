@@ -404,7 +404,9 @@ fun DropDownMenuStatus(
                 .menuAnchor()
                 .fillMaxWidth(),
             readOnly = true,
-            value = selectedOptionText.getString(isAnime),
+            value = selectedOptionText.toString(
+                isAnime = isAnime, context = LocalContext.current
+            ),
             onValueChange = {},
             label = { Text("Status") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -417,7 +419,7 @@ fun DropDownMenuStatus(
             PersonalMediaStatus.values().forEach { selectionOption ->
                 if (selectionOption != PersonalMediaStatus.UNKNOWN) {
                     DropdownMenuItem(
-                        text = { Text(selectionOption.getString(isAnime)) },
+                        text = { Text(selectionOption.toString(isAnime = isAnime, context = LocalContext.current)) },
                         onClick = {
                             setSelectedOptionText(selectionOption)
                             expanded = false

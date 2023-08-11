@@ -40,13 +40,17 @@ data class Media(
 
     val startedAt: FuzzyDate? = null,
     val completedAt: FuzzyDate? = null,
+    val createdAt: FuzzyDate? = null,
     val personalStatus: PersonalMediaStatus = PersonalMediaStatus.UNKNOWN,
 
     val rawScore: Double = -1.0,
     val studios: List<AniStudio> = emptyList(),
 
     // epoch timestamp in seconds
-    val updatedAt: Int = -1
+    val updatedAt: Int = -1,
+
+    //todo not used
+    val priority: Int = -1
 )
 
 enum class MediaType {

@@ -27,6 +27,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.anilist.data.models.AniMediaListSort
 import com.example.anilist.data.repository.Theme
 import com.example.anilist.ui.mediadetails.LoadingCircle
 import com.example.anilist.ui.navigation.AniListBottomNavigationBar
@@ -48,6 +49,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         var accessCode = ""
         var userId = -1
+        var mediaListSort = AniMediaListSort.UPDATED_TIME_DESC
     }
 
 
@@ -97,6 +99,7 @@ class MainActivity : ComponentActivity() {
                         uiState = it
                         if (it is MainActivityUiState.Success) {
                             userId = it.userData.userId
+                            mediaListSort = it.userData.mediaListSort
                         }
                     }
                     .collect()

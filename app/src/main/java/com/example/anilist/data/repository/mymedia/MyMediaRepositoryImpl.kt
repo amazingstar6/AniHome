@@ -21,6 +21,7 @@ import com.example.anilist.type.MediaType
 import com.example.anilist.data.models.PersonalMediaStatus
 import com.example.anilist.data.repository.toAni
 import com.example.anilist.utils.Apollo
+import com.example.anilist.utils.Utils
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,7 +29,7 @@ import javax.inject.Singleton
 private const val TAG = "MyMediaRepository"
 
 @Singleton
-class MyMediaRepositoryImpl @Inject constructor(): MyMediaRepository {
+class MyMediaRepositoryImpl @Inject constructor() : MyMediaRepository {
     override suspend fun getMyMedia(
         isAnime: Boolean,
         useNetworkFirst: Boolean
@@ -36,7 +37,8 @@ class MyMediaRepositoryImpl @Inject constructor(): MyMediaRepository {
         try {
             val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
             val client =
-                if (useNetworkFirst) Apollo.apolloClient.newBuilder().fetchPolicy(FetchPolicy.NetworkFirst)
+                if (useNetworkFirst) Apollo.apolloClient.newBuilder()
+                    .fetchPolicy(FetchPolicy.NetworkFirst)
                     .build() else Apollo.apolloClient
             val result =
                 client.query(GetMyMediaQuery(param, MainActivity.userId))
@@ -66,7 +68,7 @@ class MyMediaRepositoryImpl @Inject constructor(): MyMediaRepository {
         }
     }
 
-   override suspend fun updateProgress(
+    override suspend fun updateProgress(
         statusUpdate: StatusUpdate,
     ): AniResult<Media> {
         Timber.d("changing status of entry list id " + statusUpdate.entryListId)
@@ -263,7 +265,9 @@ class MyMediaRepositoryImpl @Inject constructor(): MyMediaRepository {
             },
             rawScore = data?.score ?: -1.0,
             personalStatus = data?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN,
-            updatedAt = data?.updatedAt ?: -1
+            updatedAt = data?.updatedAt ?: -1,
+            createdAt = data?.createdAt?.toLong()?.let { Utils.convertEpochToFuzzyDate(it) },
+            priority = data?.priority ?: -1
         )
     }
 }

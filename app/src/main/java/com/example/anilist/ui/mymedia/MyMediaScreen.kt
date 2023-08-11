@@ -21,8 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -65,6 +63,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.AniMediaFormat
+import com.example.anilist.data.models.AniMediaListSort
+import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.PersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
@@ -87,6 +87,14 @@ fun MyMediaScreen(
     val uiState by myMediaViewModel.uiState.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
+
+    val sort by myMediaViewModel.sort.collectAsStateWithLifecycle()
+    var isDescending by remember { mutableStateOf(sort.isDescending()) }
+    val setSort: (AniMediaListSort, Boolean) -> Unit = { newSort, desc ->
+        myMediaViewModel.setSort(if (desc) AniMediaListSort.valueOf(newSort.name + "_DESC") else newSort)
+    }
+    val setIsDescending: (Boolean) -> Unit = { isDescending = it }
+
 
     LaunchedEffect(Unit) {
         myMediaViewModel
@@ -121,7 +129,11 @@ fun MyMediaScreen(
                 },
                 deleteListEntry = {
                     myMediaViewModel.deleteEntry(it)
-                }
+                },
+                sort = sort,
+                setSort = setSort,
+                isDescending = isDescending,
+                setIsDescending = setIsDescending
             )
         }
 
@@ -142,6 +154,10 @@ fun MyMediaScreen(
 private fun MyMedia(
     isAnime: Boolean,
     myMedia: Map<PersonalMediaStatus, List<Media>>,
+    sort: AniMediaListSort,
+    setSort: (AniMediaListSort, Boolean) -> Unit,
+    isDescending: Boolean,
+    setIsDescending: (Boolean) -> Unit,
     navigateToDetails: (Int) -> Unit,
     saveStatus: (StatusUpdate) -> Unit,
     reloadMyMedia: () -> Unit,
@@ -189,9 +205,14 @@ private fun MyMedia(
         showRatingDialog = true
         currentMedia = it
     }
+    var showSortingSheet by remember { mutableStateOf(false) }
 
     var filter by rememberSaveable { mutableStateOf(PersonalMediaStatus.UNKNOWN) }
     val setFilter: (PersonalMediaStatus) -> Unit = { filter = it }
+
+//    var sort by rememberSaveable {
+//        mutableStateOf(AniMediaListSort.UPDATED_TIME_DESC)
+//    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -214,35 +235,41 @@ private fun MyMedia(
                             )
                         }
                     }
-                    Box {
-                        var showSortingDropDownMenu by remember { mutableStateOf(false) }
-                        PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.sort)) }) {
-                            IconButton(
-                                onClick = { showSortingDropDownMenu = true },
-                                modifier = Modifier.tooltipTrigger()
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.sort),
-                                    contentDescription = stringResource(
-                                        id = R.string.sort
-                                    )
+                    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.sort)) }) {
+                        IconButton(
+                            onClick = { showSortingSheet = true },
+                            modifier = Modifier.tooltipTrigger()
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.sort),
+                                contentDescription = stringResource(
+                                    id = R.string.sort
                                 )
-                            }
-                        }
-                        DropdownMenu(
-                            expanded = showSortingDropDownMenu,
-                            onDismissRequest = { showSortingDropDownMenu = false }) {
-                            DropdownMenuItem(text = { Text(text = "Sort") }, onClick = { /*TODO*/ })
+                            )
                         }
                     }
+//                        DropdownMenu(
+//                            expanded = showSortingDropDownMenu,
+//                            onDismissRequest = { showSortingDropDownMenu = false }) {
+//                            DropdownMenuItem(text = { Text(text = "Sort") }, onClick = { /*TODO*/ })
+//                        }
                 })
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                text = { Text(stringResource(id = R.string.filter)) },
+                text = {
+                    Text(
+                        if (filter == PersonalMediaStatus.UNKNOWN) stringResource(id = R.string.filter) else filter.toString(
+                            isAnime = isAnime,
+                            context = LocalContext.current
+                        )
+                    )
+                },
                 icon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.my_media_filter),
+                        painter = painterResource(
+                            id = filter.getIconResource()
+                        ),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
@@ -265,6 +292,7 @@ private fun MyMedia(
                 MyMediaLazyList(
                     it,
                     filter,
+                    sort = sort,
                     myMedia,
                     navigateToDetails,
                     increaseEpisodeProgress = { entryId, newProgress ->
@@ -340,6 +368,15 @@ private fun MyMedia(
                     isAnime
                 )
             }
+            if (showSortingSheet) {
+                SortingBottomSheet(
+                    setShowSortingSheet = { showSortingSheet = it },
+                    isDescending = isDescending,
+                    setIsDescending = setIsDescending,
+                    setSort = setSort,
+                    sort = sort
+                )
+            }
         }
     }
 }
@@ -349,6 +386,7 @@ private fun MyMedia(
 private fun MyMediaLazyList(
     it: PaddingValues,
     filter: PersonalMediaStatus,
+    sort: AniMediaListSort,
     myMedia: Map<PersonalMediaStatus, List<Media>>?,
     navigateToDetails: (Int) -> Unit,
     increaseEpisodeProgress: (entryId: Int, newProgress: Int) -> Unit,
@@ -357,9 +395,56 @@ private fun MyMediaLazyList(
     openRatingDialog: (Media) -> Unit,
     isAnime: Boolean,
 ) {
+    val sortedMediaList: Map<PersonalMediaStatus, List<Media>>? by remember(key1 = sort) {
+        mutableStateOf(myMedia?.mapValues { (_, mediaList) ->
+            when (sort) {
+                AniMediaListSort.MEDIA_ID -> mediaList.sortedBy { media -> media.id }
+                AniMediaListSort.MEDIA_ID_DESC -> mediaList.sortedByDescending { media -> media.id }
+                AniMediaListSort.SCORE -> mediaList.sortedBy { media -> media.rawScore }
+                AniMediaListSort.SCORE_DESC -> mediaList.sortedByDescending { media -> media.rawScore }
+                AniMediaListSort.UPDATED_TIME -> mediaList.sortedBy { media -> media.updatedAt }
+                AniMediaListSort.UPDATED_TIME_DESC -> mediaList.sortedByDescending { media -> media.updatedAt }
+                AniMediaListSort.PROGRESS -> mediaList.sortedBy { media -> media.personalProgress }
+                AniMediaListSort.PROGRESS_DESC -> mediaList.sortedByDescending { media -> media.personalProgress }
+                AniMediaListSort.PROGRESS_VOLUMES -> mediaList.sortedBy { media -> media.personalVolumeProgress }
+                AniMediaListSort.PROGRESS_VOLUMES_DESC -> mediaList.sortedByDescending { media -> media.personalVolumeProgress }
+                AniMediaListSort.REPEAT -> mediaList.sortedBy { media -> media.rewatches }
+                AniMediaListSort.REPEAT_DESC -> mediaList.sortedByDescending { media -> media.rewatches }
+                AniMediaListSort.PRIORITY -> mediaList.sortedBy { media -> media.priority }
+                AniMediaListSort.PRIORITY_DESC -> mediaList.sortedByDescending { media -> media.priority }
+                AniMediaListSort.STARTED_ON -> mediaList.sortedBy { media ->
+                    sortDate(media.startedAt)
+                }
+
+                AniMediaListSort.STARTED_ON_DESC -> mediaList.sortedByDescending { media ->
+                    sortDate(media.startedAt)
+                }
+
+                AniMediaListSort.FINISHED_ON -> mediaList.sortedBy { media ->
+                    sortDate(media.completedAt)
+                }
+
+                AniMediaListSort.FINISHED_ON_DESC -> mediaList.sortedByDescending { media ->
+                    sortDate(media.completedAt)
+                }
+
+                AniMediaListSort.ADDED_TIME -> mediaList.sortedBy { media ->
+                    sortDate(media.createdAt)
+                }
+
+                AniMediaListSort.ADDED_TIME_DESC -> mediaList.sortedByDescending { media ->
+                    sortDate(media.createdAt)
+                }
+
+                AniMediaListSort.MEDIA_TITLE -> mediaList.sortedBy { media -> media.title }
+                AniMediaListSort.MEDIA_TITLE_DESC -> mediaList.sortedByDescending { media -> media.title }
+            }
+        }
+        )
+    }
     LazyColumn(modifier = Modifier.padding(top = it.calculateTopPadding())) {
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.CURRENT) {
-            val mediaList = myMedia?.get(PersonalMediaStatus.CURRENT).orEmpty()
+            val mediaList = sortedMediaList?.get(PersonalMediaStatus.CURRENT).orEmpty()
             if (mediaList.isNotEmpty()) {
                 stickyHeader {
                     MyMediaHeadline(
@@ -368,7 +453,10 @@ private fun MyMediaLazyList(
                         )
                     )
                 }
-                items(myMedia?.get(PersonalMediaStatus.CURRENT).orEmpty()) { media ->
+                items(
+                    sortedMediaList?.get(PersonalMediaStatus.CURRENT).orEmpty(),
+                    key = { it.id }
+                ) { media ->
                     MediaCard(
                         navigateToDetails,
                         increaseEpisodeProgress,
@@ -382,7 +470,7 @@ private fun MyMediaLazyList(
             }
         }
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.REPEATING) {
-            val mediaList = myMedia?.get(PersonalMediaStatus.REPEATING).orEmpty()
+            val mediaList = sortedMediaList?.get(PersonalMediaStatus.REPEATING).orEmpty()
             if (mediaList.isNotEmpty()) {
                 stickyHeader {
                     MyMediaHeadline(
@@ -391,7 +479,7 @@ private fun MyMediaLazyList(
                         )
                     )
                 }
-                items(mediaList) { media ->
+                items(mediaList, key = { it.id }) { media ->
                     MediaCard(
                         navigateToDetails,
                         increaseEpisodeProgress,
@@ -405,7 +493,7 @@ private fun MyMediaLazyList(
             }
         }
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.PLANNING) {
-            val mediaList = myMedia?.get(PersonalMediaStatus.PLANNING).orEmpty()
+            val mediaList = sortedMediaList?.get(PersonalMediaStatus.PLANNING).orEmpty()
             if (mediaList.isNotEmpty()) {
                 stickyHeader {
                     MyMediaHeadline(
@@ -414,7 +502,7 @@ private fun MyMediaLazyList(
                         )
                     )
                 }
-                items(mediaList) { media ->
+                items(mediaList,                     key = { it.id }) { media ->
                     MediaCard(
                         navigateToDetails,
                         increaseEpisodeProgress,
@@ -428,10 +516,10 @@ private fun MyMediaLazyList(
             }
         }
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.COMPLETED) {
-            val mediaList = myMedia?.get(PersonalMediaStatus.COMPLETED).orEmpty()
+            val mediaList = sortedMediaList?.get(PersonalMediaStatus.COMPLETED).orEmpty()
             if (mediaList.isNotEmpty()) {
                 stickyHeader { MyMediaHeadline(text = stringResource(R.string.completed)) }
-                items(mediaList) { media ->
+                items(mediaList,                     key = { it.id }) { media ->
                     MediaCard(
                         navigateToDetails,
                         increaseEpisodeProgress,
@@ -445,10 +533,13 @@ private fun MyMediaLazyList(
             }
         }
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.DROPPED) {
-            val mediaList = myMedia?.get(PersonalMediaStatus.COMPLETED).orEmpty()
+            val mediaList = sortedMediaList?.get(PersonalMediaStatus.COMPLETED).orEmpty()
             if (mediaList.isNotEmpty()) {
                 stickyHeader { MyMediaHeadline(text = stringResource(R.string.dropped)) }
-                items(myMedia?.get(PersonalMediaStatus.DROPPED).orEmpty()) { media ->
+                items(
+                    sortedMediaList?.get(PersonalMediaStatus.DROPPED).orEmpty(),
+                    key = { it.id }
+                ) { media ->
                     MediaCard(
                         navigateToDetails,
                         increaseEpisodeProgress,
@@ -462,12 +553,15 @@ private fun MyMediaLazyList(
             }
         }
         if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.PAUSED) {
-            val mediaList = myMedia?.get(PersonalMediaStatus.PAUSED).orEmpty()
+            val mediaList = sortedMediaList?.get(PersonalMediaStatus.PAUSED).orEmpty()
             if (mediaList.isNotEmpty()) {
                 stickyHeader {
                     MyMediaHeadline(text = stringResource(R.string.paused))
                 }
-                items(myMedia?.get(PersonalMediaStatus.PAUSED).orEmpty()) { media ->
+                items(
+                    sortedMediaList?.get(PersonalMediaStatus.PAUSED).orEmpty(),
+                    key = { it.id }
+                ) { media ->
                     MediaCard(
                         navigateToDetails,
                         increaseEpisodeProgress,
@@ -482,6 +576,9 @@ private fun MyMediaLazyList(
         }
     }
 }
+
+private fun sortDate(date: FuzzyDate?) =
+    (date?.year?.times(10000) ?: 0) + (date?.month?.times(100) ?: 0) + (date?.day ?: 0)
 
 @Composable
 private fun MyMediaHeadline(text: String) {
@@ -531,7 +628,8 @@ private fun MediaCard(
         ) {
             Row {
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current).data(media.coverImage)
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(media.coverImage)
                         .crossfade(true).build(),
                     contentDescription = "",
                     placeholder = painterResource(id = R.drawable.no_image),
@@ -756,8 +854,13 @@ fun MyAnimePreview() {
         ),
         navigateToDetails = {},
         saveStatus = { },
-        reloadMyMedia = { }
-    ) {}
+        reloadMyMedia = { },
+        deleteListEntry = {},
+        sort = AniMediaListSort.UPDATED_TIME_DESC,
+        setSort = { _, _ -> },
+        isDescending = true,
+        setIsDescending = {}
+    )
 }
 
 @Preview(showBackground = true)

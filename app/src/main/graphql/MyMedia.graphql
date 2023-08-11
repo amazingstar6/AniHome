@@ -77,6 +77,7 @@ fragment MyMedia on MediaList {
     }
     updatedAt
     createdAt
+    priority
 }
 
 mutation DeleteEntry($id: Int!) {

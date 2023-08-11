@@ -3,6 +3,7 @@ package com.example.anilist.utils
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.paging.PagingState
+import com.example.anilist.data.models.FuzzyDate
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -53,6 +54,18 @@ class Utils {
 //            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
 //            return currentTime.format(formatter)
 //        }
+
+        fun convertEpochToFuzzyDate(epochSeconds: Long): FuzzyDate {
+            val time =
+                Instant.fromEpochSeconds(
+                    epochSeconds,
+                ).toLocalDateTime(TimeZone.UTC)
+            return FuzzyDate(
+                time.year,
+                time.monthNumber,
+                time.dayOfMonth
+            )
+        }
 
         fun Color.toHexString(): String {
             val red = (this.red * 255).toInt()

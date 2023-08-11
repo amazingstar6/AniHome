@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.example.anilist.data.models.AniMediaListSort
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -41,7 +42,8 @@ data class UserSettings(
     val tokenType: String,
     val expiresIn: String,
     val titleFormat: TitleFormat,
-    val theme: Theme
+    val theme: Theme,
+    val mediaListSort: AniMediaListSort
 )
 
 @Singleton
@@ -60,6 +62,7 @@ class UserDataRepository @Inject constructor(
         val EXPIRES_IN = stringPreferencesKey("EXPIRES_IN")
         val TITLE_FORMAT = stringPreferencesKey("TITLE_FORMAT")
         val THEME = stringPreferencesKey("THEME")
+        val MEDIA_LIST_SORT = stringPreferencesKey("MEDIA_LIST_SORT")
     }
 
     val userPreferencesFlow: Flow<UserSettings> = dataStore.data
@@ -77,18 +80,20 @@ class UserDataRepository @Inject constructor(
             val tokenType = preferences[PreferencesKeys.TOKEN_TYPE] ?: ""
             val titleFormat =
                 TitleFormat.valueOf(
-                    preferences[PreferencesKeys.TITLE_FORMAT] ?: TitleFormat.USER_PREFERRED.name
+                    preferences[PreferencesKeys.TITLE_FORMAT] ?: TitleFormat.ROMAJI.name
                 )
             val theme =
                 Theme.valueOf(preferences[PreferencesKeys.THEME] ?: Theme.SYSTEM_DEFAULT.name)
             val userId = preferences[PreferencesKeys.USER_ID] ?: -1
+            val mediaListSort = preferences[PreferencesKeys.MEDIA_LIST_SORT] ?: AniMediaListSort.UPDATED_TIME_DESC.name
             UserSettings(
                 accessCode = accessCode,
                 tokenType = tokenType,
                 expiresIn = expiresIn,
                 titleFormat = titleFormat,
                 theme = theme,
-                userId = userId
+                userId = userId,
+                mediaListSort = AniMediaListSort.valueOf(mediaListSort)
             )
         }
 
@@ -129,6 +134,12 @@ class UserDataRepository @Inject constructor(
             preferences[PreferencesKeys.TOKEN_TYPE] = ""
             preferences[PreferencesKeys.EXPIRES_IN] = ""
             preferences[PreferencesKeys.USER_ID] = -1
+        }
+    }
+
+    suspend fun saveMediaListSort(sort: AniMediaListSort) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.MEDIA_LIST_SORT] = sort.name
         }
     }
 }
