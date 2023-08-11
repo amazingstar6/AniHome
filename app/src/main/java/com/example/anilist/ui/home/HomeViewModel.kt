@@ -1,9 +1,6 @@
 package com.example.anilist.ui.home
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -19,9 +16,7 @@ import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.StaffDetail
-import com.example.anilist.data.repository.homerepository.HomeMedia
 import com.example.anilist.data.repository.homerepository.HomeRepositoryImpl
-import com.example.anilist.data.repository.NotificationRepository
 import com.example.anilist.data.repository.TrendingTogether
 import com.example.anilist.ui.home.searchpagingsource.SearchCharactersPagingSource
 import com.example.anilist.ui.home.searchpagingsource.SearchMediaPagingSource
@@ -54,7 +49,6 @@ const val PREFETCH_DISTANCE = 10
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    notificationRepository: NotificationRepository,
     private val homeRepository: HomeRepositoryImpl,
 ) :
     ViewModel() {
@@ -390,17 +384,6 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-
-    val notifications = notificationRepository.getNotifications().asLiveData()
-
-    private val _media = MutableLiveData<HomeMedia>()
-    val media: LiveData<HomeMedia> = _media
-
-
-    fun markAllNotificationsAsRead() {
-        //todo
     }
 }
 

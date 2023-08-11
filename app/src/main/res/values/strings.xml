@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Anilist</string>
+    <string name="app_name">AniHome</string>
     <string name="home">Home</string>
     <string name="anime">Anime</string>
     <string name="feed">Feed</string>
@@ -149,6 +149,11 @@
     <string name="updated_time_desc">Updated time desc</string>
     <string name="media_title">Media title</string>
     <string name="media_title_desc">Media title desc</string>
+    <string name="airing">Airing</string>
+    <string name="activity">Activity</string>
+    <string name="follows">Follows</string>
+    <string name="media">Media</string>
+    <string name="clear_cache">Clear cache</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>

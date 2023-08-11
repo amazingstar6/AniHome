@@ -18,7 +18,7 @@ import com.example.anilist.ui.forum.ForumScreen
 import com.example.anilist.ui.home.HomeScreen
 import com.example.anilist.ui.home.HomeViewModel
 import com.example.anilist.ui.home.MediaOverview
-import com.example.anilist.ui.home.NotificationScreen
+import com.example.anilist.ui.home.notifications.NotificationScreen
 import com.example.anilist.ui.home.SettingsScreen
 import com.example.anilist.ui.mediadetails.CharacterDetailScreen
 import com.example.anilist.ui.mediadetails.CoverLarge
