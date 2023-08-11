@@ -4,13 +4,13 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.StaffDetail
-import com.example.anilist.data.repository.HomeRepository
+import com.example.anilist.data.repository.homerepository.HomeRepositoryImpl
 import timber.log.Timber
 
 private const val STARTING_KEY = 1
 
 class SearchStaffPagingSource(
-    private val homeRepository: HomeRepository,
+    private val homeRepository: HomeRepositoryImpl,
     private val search: String
 ) : PagingSource<Int, StaffDetail>() {
     override fun getRefreshKey(state: PagingState<Int, StaffDetail>): Int? {

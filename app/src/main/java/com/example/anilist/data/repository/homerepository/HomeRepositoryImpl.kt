@@ -1,4 +1,4 @@
-package com.example.anilist.data.repository
+package com.example.anilist.data.repository.homerepository
 
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
@@ -29,6 +29,9 @@ import com.example.anilist.data.models.HomeTrendingTypes
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.repository.TrendingTogetherPagingSource
+import com.example.anilist.data.repository.toAniHomeSeason
+import com.example.anilist.data.repository.toAniHomeType
 import com.example.anilist.fragment.MediaTitleCover
 import com.example.anilist.type.CharacterSort
 import com.example.anilist.type.MediaFormat
@@ -60,30 +63,30 @@ data class HomeMedia(
 )
 
 @Singleton
-class HomeRepository @Inject constructor() {
+class HomeRepositoryImpl @Inject constructor() : HomeRepository {
 
     fun trendingTogetherPagingSource(isAnime: Boolean) =
         TrendingTogetherPagingSource(this, isAnime = isAnime)
 
-    fun trendingNowPagingSource(isAnime: Boolean) =
+    override fun trendingNowPagingSource(isAnime: Boolean) =
         MediaPagingSource(this, HomeTrendingTypes.TRENDING_NOW, isAnime = isAnime)
 
-    fun popularThisSeasonPagingSource() =
+    override fun popularThisSeasonPagingSource() =
         MediaPagingSource(this, HomeTrendingTypes.POPULAR_THIS_SEASON, isAnime = true)
 
-    fun upcomingNextSeasonPagingSource() =
+    override fun upcomingNextSeasonPagingSource() =
         MediaPagingSource(this, HomeTrendingTypes.UPCOMING_NEXT_SEASON, isAnime = true)
 
-    fun allTimePopularPagingSource(isAnime: Boolean) =
+    override fun allTimePopularPagingSource(isAnime: Boolean) =
         MediaPagingSource(this, HomeTrendingTypes.ALL_TIME_POPULAR, isAnime = isAnime)
 
-    fun top100AnimePagingSource(isAnime: Boolean) =
+    override fun top100AnimePagingSource(isAnime: Boolean) =
         MediaPagingSource(this, HomeTrendingTypes.TOP_100_ANIME, isAnime = isAnime)
 
-    fun popularManhwaPagingSource() =
+    override fun popularManhwaPagingSource() =
         MediaPagingSource(this, HomeTrendingTypes.POPULAR_MANHWA, isAnime = false)
 
-    suspend fun getTrendingNow(isAnime: Boolean, page: Int, pageSize: Int): AniResult<List<Media>> {
+    override suspend fun getTrendingNow(isAnime: Boolean, page: Int, pageSize: Int): AniResult<List<Media>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -114,7 +117,7 @@ class HomeRepository @Inject constructor() {
         }
     }
 
-    suspend fun getPopularThisSeason(page: Int, pageSize: Int): AniResult<List<Media>> {
+    override suspend fun getPopularThisSeason(page: Int, pageSize: Int): AniResult<List<Media>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -146,7 +149,7 @@ class HomeRepository @Inject constructor() {
         }
     }
 
-    suspend fun getUpcomingNextSeason(page: Int, pageSize: Int): AniResult<List<Media>> {
+    override suspend fun getUpcomingNextSeason(page: Int, pageSize: Int): AniResult<List<Media>> {
         try {
 //            Log.d(TAG, "Parameters are: $page, $pageSize, ${getNextSeason()}, ${getNextYear()}")
             val result =
@@ -194,7 +197,7 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun getAllTimePopularMedia(
+    override suspend fun getAllTimePopularMedia(
         isAnime: Boolean,
         page: Int,
         pageSize: Int
@@ -229,7 +232,7 @@ class HomeRepository @Inject constructor() {
         }
     }
 
-    suspend fun getTop100Anime(isAnime: Boolean, page: Int, pageSize: Int): AniResult<List<Media>> {
+    override suspend fun getTop100Anime(isAnime: Boolean, page: Int, pageSize: Int): AniResult<List<Media>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -259,7 +262,7 @@ class HomeRepository @Inject constructor() {
         }
     }
 
-    suspend fun getPopularManhwa(page: Int, pageSize: Int): AniResult<List<Media>> {
+    override suspend fun getPopularManhwa(page: Int, pageSize: Int): AniResult<List<Media>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -347,7 +350,7 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun searchMedia(
+    override suspend fun searchMedia(
         page: Int,
         pageSize: Int,
         searchState: MediaSearchState
@@ -448,7 +451,7 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun searchCharacters(
+    override suspend fun searchCharacters(
         page: Int,
         pageSize: Int,
         text: String,
@@ -489,7 +492,7 @@ class HomeRepository @Inject constructor() {
         }
     }
 
-    suspend fun searchStaff(text: String, page: Int, pageSize: Int): AniResult<List<StaffDetail>> {
+    override suspend fun searchStaff(text: String, page: Int, pageSize: Int): AniResult<List<StaffDetail>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -520,7 +523,7 @@ class HomeRepository @Inject constructor() {
         }
     }
 
-    suspend fun searchStudio(text: String, page: Int, pageSize: Int): AniResult<List<AniStudio>> {
+    override suspend fun searchStudio(text: String, page: Int, pageSize: Int): AniResult<List<AniStudio>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -570,7 +573,7 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun searchForum(text: String, page: Int, pageSize: Int): AniResult<List<AniThread>> {
+    override suspend fun searchForum(text: String, page: Int, pageSize: Int): AniResult<List<AniThread>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -611,7 +614,7 @@ class HomeRepository @Inject constructor() {
         )
     }
 
-    suspend fun searchUser(text: String, page: Int, pageSize: Int): AniResult<List<AniUser>> {
+    override suspend fun searchUser(text: String, page: Int, pageSize: Int): AniResult<List<AniUser>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -661,7 +664,7 @@ class HomeRepository @Inject constructor() {
         return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year
     }
 
-    suspend fun getTags(): AniResult<List<AniTag>> {
+    override suspend fun getTags(): AniResult<List<AniTag>> {
         try {
             val result = Apollo.apolloClient.query(GetTagsQuery()).execute()
             if (result.hasErrors()) {
@@ -686,7 +689,7 @@ class HomeRepository @Inject constructor() {
         }
     }
 
-    suspend fun getGenres(): AniResult<List<String>> {
+    override suspend fun getGenres(): AniResult<List<String>> {
         try {
             val result = Apollo.apolloClient.query(GetGenresQuery()).execute()
             if (result.hasErrors()) {

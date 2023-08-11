@@ -48,7 +48,7 @@ fun Reviews(
     onNavigateToReviewDetails: (Int) -> Unit
 ) {
     if (reviews.itemCount != 0) {
-        LazyColumn {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(reviews.itemCount) { index ->
                 val review = reviews[index]
                 if (review != null) {

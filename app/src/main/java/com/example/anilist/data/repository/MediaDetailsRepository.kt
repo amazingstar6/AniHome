@@ -43,6 +43,7 @@ import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaType
 import com.example.anilist.type.ReviewRating
 import com.example.anilist.data.models.PersonalMediaStatus
+import com.example.anilist.data.repository.homerepository.toAni
 import com.example.anilist.utils.Apollo
 import timber.log.Timber
 import javax.inject.Inject

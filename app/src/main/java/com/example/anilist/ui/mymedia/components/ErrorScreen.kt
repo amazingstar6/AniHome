@@ -1,4 +1,4 @@
-package com.example.anilist.ui.mymedia
+package com.example.anilist.ui.mymedia.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

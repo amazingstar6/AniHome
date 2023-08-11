@@ -4,14 +4,14 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.CharacterDetail
-import com.example.anilist.data.repository.HomeRepository
+import com.example.anilist.data.repository.homerepository.HomeRepositoryImpl
 import com.example.anilist.ui.home.AniCharacterSort
 import timber.log.Timber
 
 private const val STARTING_KEY = 1
 
 class SearchCharactersPagingSource(
-    private val homeRepository: HomeRepository,
+    private val homeRepository: HomeRepositoryImpl,
     private val search: String,
     private val sortType: AniCharacterSort
 ) : PagingSource<Int, CharacterDetail>() {

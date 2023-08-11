@@ -19,7 +19,7 @@ import com.example.anilist.type.FuzzyDateInput
 import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaType
 import com.example.anilist.data.models.PersonalMediaStatus
-import com.example.anilist.data.repository.toAni
+import com.example.anilist.data.repository.homerepository.toAni
 import com.example.anilist.utils.Apollo
 import com.example.anilist.utils.Utils
 import timber.log.Timber

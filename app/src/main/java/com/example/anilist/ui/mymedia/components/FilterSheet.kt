@@ -1,4 +1,4 @@
-package com.example.anilist.ui.mymedia
+package com.example.anilist.ui.mymedia.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.anilist.R
 import com.example.anilist.data.models.PersonalMediaStatus

@@ -71,6 +71,11 @@ import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.EditStatusModalSheet
 import com.example.anilist.ui.mediadetails.LoadingCircle
+import com.example.anilist.ui.mymedia.components.ErrorScreen
+import com.example.anilist.ui.mymedia.components.FilterSheet
+import com.example.anilist.ui.mymedia.components.NoMediaScreen
+import com.example.anilist.ui.mymedia.components.RatingDialog
+import com.example.anilist.ui.mymedia.components.SortingBottomSheet
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -443,137 +448,163 @@ private fun MyMediaLazyList(
         )
     }
     LazyColumn(modifier = Modifier.padding(top = it.calculateTopPadding())) {
-        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.CURRENT) {
-            val mediaList = sortedMediaList?.get(PersonalMediaStatus.CURRENT).orEmpty()
-            if (mediaList.isNotEmpty()) {
-                stickyHeader {
-                    MyMediaHeadline(
-                        if (isAnime) stringResource(id = R.string.watching) else stringResource(
-                            id = R.string.reading
+        PersonalMediaStatus.values().forEach { status ->
+            if (filter == PersonalMediaStatus.UNKNOWN || filter == status) {
+                val mediaList = sortedMediaList?.get(status).orEmpty()
+                if (mediaList.isNotEmpty()) {
+                    stickyHeader {
+                        MyMediaHeadline(
+                            status.toString(LocalContext.current, isAnime)
                         )
-                    )
-                }
-                items(
-                    sortedMediaList?.get(PersonalMediaStatus.CURRENT).orEmpty(),
-                    key = { it.id }
-                ) { media ->
-                    MediaCard(
-                        navigateToDetails,
-                        increaseEpisodeProgress,
-                        increaseVolumeProgress,
-                        media,
-                        { showEditSheet(media) },
-                        isAnime = isAnime,
-                        openRatingDialog = { openRatingDialog(media) }
-                    )
-                }
-            }
-        }
-        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.REPEATING) {
-            val mediaList = sortedMediaList?.get(PersonalMediaStatus.REPEATING).orEmpty()
-            if (mediaList.isNotEmpty()) {
-                stickyHeader {
-                    MyMediaHeadline(
-                        text = if (isAnime) stringResource(id = R.string.rewatching) else stringResource(
-                            id = R.string.rereading
+                    }
+                    items(
+                        mediaList,
+                        key = { it.id }
+                    ) { media ->
+                        MediaCard(
+                            navigateToDetails,
+                            increaseEpisodeProgress,
+                            increaseVolumeProgress,
+                            media,
+                            { showEditSheet(media) },
+                            isAnime = isAnime,
+                            openRatingDialog = { openRatingDialog(media) }
                         )
-                    )
-                }
-                items(mediaList, key = { it.id }) { media ->
-                    MediaCard(
-                        navigateToDetails,
-                        increaseEpisodeProgress,
-                        increaseVolumeProgress,
-                        media,
-                        { showEditSheet(media) },
-                        isAnime = isAnime,
-                        openRatingDialog = { openRatingDialog(media) }
-                    )
+                    }
                 }
             }
         }
-        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.PLANNING) {
-            val mediaList = sortedMediaList?.get(PersonalMediaStatus.PLANNING).orEmpty()
-            if (mediaList.isNotEmpty()) {
-                stickyHeader {
-                    MyMediaHeadline(
-                        text = if (isAnime) stringResource(R.string.plan_to_watch) else stringResource(
-                            R.string.plan_to_read
-                        )
-                    )
-                }
-                items(mediaList,                     key = { it.id }) { media ->
-                    MediaCard(
-                        navigateToDetails,
-                        increaseEpisodeProgress,
-                        increaseVolumeProgress,
-                        media,
-                        { showEditSheet(media) },
-                        isAnime = isAnime,
-                        openRatingDialog = { openRatingDialog(media) }
-                    )
-                }
-            }
-        }
-        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.COMPLETED) {
-            val mediaList = sortedMediaList?.get(PersonalMediaStatus.COMPLETED).orEmpty()
-            if (mediaList.isNotEmpty()) {
-                stickyHeader { MyMediaHeadline(text = stringResource(R.string.completed)) }
-                items(mediaList,                     key = { it.id }) { media ->
-                    MediaCard(
-                        navigateToDetails,
-                        increaseEpisodeProgress,
-                        increaseVolumeProgress,
-                        media,
-                        { showEditSheet(media) },
-                        isAnime = isAnime,
-                        openRatingDialog = { openRatingDialog(media) }
-                    )
-                }
-            }
-        }
-        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.DROPPED) {
-            val mediaList = sortedMediaList?.get(PersonalMediaStatus.COMPLETED).orEmpty()
-            if (mediaList.isNotEmpty()) {
-                stickyHeader { MyMediaHeadline(text = stringResource(R.string.dropped)) }
-                items(
-                    sortedMediaList?.get(PersonalMediaStatus.DROPPED).orEmpty(),
-                    key = { it.id }
-                ) { media ->
-                    MediaCard(
-                        navigateToDetails,
-                        increaseEpisodeProgress,
-                        increaseVolumeProgress,
-                        media,
-                        { showEditSheet(media) },
-                        isAnime = isAnime,
-                        openRatingDialog = { openRatingDialog(media) }
-                    )
-                }
-            }
-        }
-        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.PAUSED) {
-            val mediaList = sortedMediaList?.get(PersonalMediaStatus.PAUSED).orEmpty()
-            if (mediaList.isNotEmpty()) {
-                stickyHeader {
-                    MyMediaHeadline(text = stringResource(R.string.paused))
-                }
-                items(
-                    sortedMediaList?.get(PersonalMediaStatus.PAUSED).orEmpty(),
-                    key = { it.id }
-                ) { media ->
-                    MediaCard(
-                        navigateToDetails,
-                        increaseEpisodeProgress,
-                        increaseVolumeProgress,
-                        media,
-                        { showEditSheet(media) },
-                        isAnime = isAnime,
-                        openRatingDialog = { openRatingDialog(media) }
-                    )
-                }
-            }
-        }
+//        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.CURRENT) {
+//            val mediaList = sortedMediaList?.get(PersonalMediaStatus.CURRENT).orEmpty()
+//            if (mediaList.isNotEmpty()) {
+//                stickyHeader {
+//                    MyMediaHeadline(
+//                        if (isAnime) stringResource(id = R.string.watching) else stringResource(
+//                            id = R.string.reading
+//                        )
+//                    )
+//                }
+//                items(
+//                    sortedMediaList?.get(PersonalMediaStatus.CURRENT).orEmpty(),
+//                    key = { it.id }
+//                ) { media ->
+//                    MediaCard(
+//                        navigateToDetails,
+//                        increaseEpisodeProgress,
+//                        increaseVolumeProgress,
+//                        media,
+//                        { showEditSheet(media) },
+//                        isAnime = isAnime,
+//                        openRatingDialog = { openRatingDialog(media) }
+//                    )
+//                }
+//            }
+//        }
+//        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.REPEATING) {
+//            val mediaList = sortedMediaList?.get(PersonalMediaStatus.REPEATING).orEmpty()
+//            if (mediaList.isNotEmpty()) {
+//                stickyHeader {
+//                    MyMediaHeadline(
+//                        text = if (isAnime) stringResource(id = R.string.rewatching) else stringResource(
+//                            id = R.string.rereading
+//                        )
+//                    )
+//                }
+//                items(mediaList, key = { it.id }) { media ->
+//                    MediaCard(
+//                        navigateToDetails,
+//                        increaseEpisodeProgress,
+//                        increaseVolumeProgress,
+//                        media,
+//                        { showEditSheet(media) },
+//                        isAnime = isAnime,
+//                        openRatingDialog = { openRatingDialog(media) }
+//                    )
+//                }
+//            }
+//        }
+//        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.PLANNING) {
+//            val mediaList = sortedMediaList?.get(PersonalMediaStatus.PLANNING).orEmpty()
+//            if (mediaList.isNotEmpty()) {
+//                stickyHeader {
+//                    MyMediaHeadline(
+//                        text = if (isAnime) stringResource(R.string.plan_to_watch) else stringResource(
+//                            R.string.plan_to_read
+//                        )
+//                    )
+//                }
+//                items(mediaList, key = { it.id }) { media ->
+//                    MediaCard(
+//                        navigateToDetails,
+//                        increaseEpisodeProgress,
+//                        increaseVolumeProgress,
+//                        media,
+//                        { showEditSheet(media) },
+//                        isAnime = isAnime,
+//                        openRatingDialog = { openRatingDialog(media) }
+//                    )
+//                }
+//            }
+//        }
+//        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.COMPLETED) {
+//            val mediaList = sortedMediaList?.get(PersonalMediaStatus.COMPLETED).orEmpty()
+//            if (mediaList.isNotEmpty()) {
+//                stickyHeader { MyMediaHeadline(text = stringResource(R.string.completed)) }
+//                items(mediaList, key = { it.id }) { media ->
+//                    MediaCard(
+//                        navigateToDetails,
+//                        increaseEpisodeProgress,
+//                        increaseVolumeProgress,
+//                        media,
+//                        { showEditSheet(media) },
+//                        isAnime = isAnime,
+//                        openRatingDialog = { openRatingDialog(media) }
+//                    )
+//                }
+//            }
+//        }
+//        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.DROPPED) {
+//            val mediaList = sortedMediaList?.get(PersonalMediaStatus.COMPLETED).orEmpty()
+//            if (mediaList.isNotEmpty()) {
+//                stickyHeader { MyMediaHeadline(text = stringResource(R.string.dropped)) }
+//                items(
+//                    sortedMediaList?.get(PersonalMediaStatus.DROPPED).orEmpty(),
+//                    key = { it.id }
+//                ) { media ->
+//                    MediaCard(
+//                        navigateToDetails,
+//                        increaseEpisodeProgress,
+//                        increaseVolumeProgress,
+//                        media,
+//                        { showEditSheet(media) },
+//                        isAnime = isAnime,
+//                        openRatingDialog = { openRatingDialog(media) }
+//                    )
+//                }
+//            }
+//        }
+//        if (filter == PersonalMediaStatus.UNKNOWN || filter == PersonalMediaStatus.PAUSED) {
+//            val mediaList = sortedMediaList?.get(PersonalMediaStatus.PAUSED).orEmpty()
+//            if (mediaList.isNotEmpty()) {
+//                stickyHeader {
+//                    MyMediaHeadline(text = stringResource(R.string.paused))
+//                }
+//                items(
+//                    sortedMediaList?.get(PersonalMediaStatus.PAUSED).orEmpty(),
+//                    key = { it.id }
+//                ) { media ->
+//                    MediaCard(
+//                        navigateToDetails,
+//                        increaseEpisodeProgress,
+//                        increaseVolumeProgress,
+//                        media,
+//                        { showEditSheet(media) },
+//                        isAnime = isAnime,
+//                        openRatingDialog = { openRatingDialog(media) }
+//                    )
+//                }
+//            }
+//        }
     }
 }
 

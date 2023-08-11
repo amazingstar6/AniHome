@@ -19,8 +19,8 @@ import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.StaffDetail
-import com.example.anilist.data.repository.HomeMedia
-import com.example.anilist.data.repository.HomeRepository
+import com.example.anilist.data.repository.homerepository.HomeMedia
+import com.example.anilist.data.repository.homerepository.HomeRepositoryImpl
 import com.example.anilist.data.repository.NotificationRepository
 import com.example.anilist.data.repository.TrendingTogether
 import com.example.anilist.ui.home.searchpagingsource.SearchCharactersPagingSource
@@ -55,7 +55,7 @@ const val PREFETCH_DISTANCE = 10
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     notificationRepository: NotificationRepository,
-    private val homeRepository: HomeRepository,
+    private val homeRepository: HomeRepositoryImpl,
 ) :
     ViewModel() {
 

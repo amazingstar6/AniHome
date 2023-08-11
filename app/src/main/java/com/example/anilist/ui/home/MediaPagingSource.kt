@@ -1,11 +1,10 @@
 package com.example.anilist.ui.home
 
-import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.repository.HomeRepository
+import com.example.anilist.data.repository.homerepository.HomeRepositoryImpl
 import com.example.anilist.data.models.HomeTrendingTypes
 import timber.log.Timber
 import javax.inject.Inject
@@ -16,7 +15,7 @@ private const val PAGE_SIZE = 25
 private const val TAG = "MediaPagingSource"
 
 class MediaPagingSource @Inject constructor(
-    private val homeRepository: HomeRepository,
+    private val homeRepository: HomeRepositoryImpl,
     private val type: HomeTrendingTypes,
     private val isAnime: Boolean
 ) : PagingSource<Int, Media>() {
