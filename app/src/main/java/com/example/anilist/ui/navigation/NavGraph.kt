@@ -1,7 +1,6 @@
 package com.example.anilist.ui.navigation
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -12,9 +11,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.anilist.ui.ActivityDetailScreen
+import com.example.anilist.ui.details.activitydetail.ActivityDetailScreen
 import com.example.anilist.ui.PleaseLogin
-import com.example.anilist.ui.ThreadCommentScreen
+import com.example.anilist.ui.details.threadcommentdetail.ThreadCommentScreen
 import com.example.anilist.ui.feed.FeedScreen
 import com.example.anilist.ui.forum.ForumScreen
 import com.example.anilist.ui.home.HomeScreen
@@ -22,14 +21,14 @@ import com.example.anilist.ui.home.HomeViewModel
 import com.example.anilist.ui.home.MediaOverview
 import com.example.anilist.ui.home.notifications.NotificationScreen
 import com.example.anilist.ui.home.SettingsScreen
-import com.example.anilist.ui.mediadetails.CharacterDetailScreen
-import com.example.anilist.ui.mediadetails.CoverLarge
-import com.example.anilist.ui.mediadetails.ForumDetailScreen
-import com.example.anilist.ui.mediadetails.MediaDetail
-import com.example.anilist.ui.mediadetails.ReviewDetailScreen
-import com.example.anilist.ui.mediadetails.StaffDetailScreen
-import com.example.anilist.ui.mediadetails.StudioDetailScreen
-import com.example.anilist.ui.mediadetails.UserDetailScreen
+import com.example.anilist.ui.details.characterdetail.CharacterDetailScreen
+import com.example.anilist.ui.details.CoverLarge
+import com.example.anilist.ui.details.forumdetail.ForumDetailScreen
+import com.example.anilist.ui.details.mediadetails.MediaDetail
+import com.example.anilist.ui.details.reviewdetail.ReviewDetailScreen
+import com.example.anilist.ui.details.staffdetail.StaffDetailScreen
+import com.example.anilist.ui.details.studiodetail.StudioDetailScreen
+import com.example.anilist.ui.details.userdetail.UserDetailScreen
 import com.example.anilist.ui.mymedia.MyMediaScreen
 import timber.log.Timber
 

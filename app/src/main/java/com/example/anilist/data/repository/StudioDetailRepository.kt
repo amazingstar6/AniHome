@@ -6,6 +6,7 @@ import com.example.anilist.GetStudioDetailsQuery
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.Media
 import com.example.anilist.utils.Apollo
+import timber.log.Timber
 import javax.inject.Inject
 
 private const val TAG = "StudioDetailRepository"
@@ -24,7 +25,6 @@ class StudioDetailRepository @Inject constructor() {
     }
 
     suspend fun fetchMedia(studioId: Int, page: Int, pageSize: Int): List<Media> {
-        Log.d(TAG, "Hello, $studioId, $page, $pageSize")
         val data = Apollo.apolloClient.query(
             GetMediaOfStudioQuery(
                 studioId = studioId,
@@ -32,7 +32,6 @@ class StudioDetailRepository @Inject constructor() {
                 pageSize = pageSize
             )
         ).execute().data
-        Log.d(TAG, "${data?.Studio?.media?.edges}")
         return data?.Studio?.media?.edges?.filterNotNull()?.map {
             Media(
                 id = it.node?.id ?: -1,
@@ -40,5 +39,9 @@ class StudioDetailRepository @Inject constructor() {
                 coverImage = it.node?.coverImage?.extraLarge ?: ""
             )
         }.orEmpty()
+    }
+
+    fun toggleFavourite(type: MediaDetailsRepository.LikeAbleType, id: Int): Any {
+        TODO("Not yet implemented")
     }
 }

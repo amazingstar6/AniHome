@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
@@ -40,7 +39,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.TopAppBarState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -77,7 +75,7 @@ import com.example.anilist.utils.Utils
 import com.example.anilist.data.models.Notification
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.PleaseLogin
-import com.example.anilist.ui.mediadetails.LoadingCircle
+import com.example.anilist.utils.LoadingCircle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

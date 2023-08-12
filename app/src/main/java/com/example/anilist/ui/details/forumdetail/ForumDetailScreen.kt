@@ -1,4 +1,4 @@
-package com.example.anilist.ui.mediadetails
+package com.example.anilist.ui.details.forumdetail
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

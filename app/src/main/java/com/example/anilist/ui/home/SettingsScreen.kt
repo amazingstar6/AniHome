@@ -91,6 +91,7 @@ fun SettingsScreen(
                     Section("Display")
                     Column(modifier = Modifier
                         .fillMaxWidth()
+                        .padding(bottom = Dimens.PaddingSmall)
                         .clickable {
                             showModalBottomSheet = true
                         }) {
@@ -261,7 +262,7 @@ private fun Section(text: String) {
         text = text,
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(vertical = Dimens.PaddingSmall),
+        modifier = Modifier.padding(bottom = Dimens.PaddingSmall),
     )
 }
 

@@ -1,4 +1,4 @@
-package com.example.anilist.ui
+package com.example.anilist.ui.details.activitydetail
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

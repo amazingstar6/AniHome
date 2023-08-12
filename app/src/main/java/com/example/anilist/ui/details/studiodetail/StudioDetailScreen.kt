@@ -1,4 +1,4 @@
-package com.example.anilist.ui.mediadetails
+package com.example.anilist.ui.details.studiodetail
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +33,7 @@ import com.example.anilist.R
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.Dimens
+import com.example.anilist.ui.details.mediadetails.MediaDetailsViewModel
 import com.example.anilist.utils.AsyncImageRoundedCorners
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,11 +42,11 @@ fun StudioDetailScreen(
     id: Int,
     navigateToMedia: (Int) -> Unit,
     navigateBack: () -> Unit,
-    mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel()
+    studioDetailViewModel: StudioDetailViewModel = hiltViewModel()
 ) {
-    val studio by mediaDetailsViewModel.studio.collectAsState()
-    val mediaList = mediaDetailsViewModel.mediaOfStudio.collectAsLazyPagingItems()
-    mediaDetailsViewModel.getStudioDetails(id)
+    val studio by studioDetailViewModel.studio.collectAsState()
+    val mediaList = studioDetailViewModel.mediaOfStudio.collectAsLazyPagingItems()
+    studioDetailViewModel.getStudioDetails(id)
     Scaffold(topBar = {
         TopAppBar(title = { Text(text = studio.name) }, navigationIcon = {
             IconButton(onClick = navigateBack) {
@@ -57,7 +58,7 @@ fun StudioDetailScreen(
         }, actions = {
             PlainTooltipBox(tooltip = { Text(text = "Add to favourites") }) {
                 IconButton(onClick = {
-                    mediaDetailsViewModel.toggleFavourite(
+                    studioDetailViewModel.toggleFavourite(
                         MediaDetailsRepository.LikeAbleType.STUDIO,
                         studio.id
                     )

@@ -1,6 +1,14 @@
 package com.example.anilist.ui.mymedia
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -16,7 +24,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -30,11 +40,13 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PlainTooltipBox
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -60,9 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import coil.imageLoader
 import coil.request.ImageRequest
-import coil.size.ViewSizeResolver
 import com.example.anilist.R
 import com.example.anilist.data.models.AniMediaFormat
 import com.example.anilist.data.models.AniMediaListSort
@@ -72,12 +83,13 @@ import com.example.anilist.data.models.PersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.EditStatusModalSheet
-import com.example.anilist.ui.mediadetails.LoadingCircle
+import com.example.anilist.utils.LoadingCircle
 import com.example.anilist.ui.mymedia.components.ErrorScreen
 import com.example.anilist.ui.mymedia.components.FilterSheet
 import com.example.anilist.ui.mymedia.components.NoMediaScreen
 import com.example.anilist.ui.mymedia.components.RatingDialog
 import com.example.anilist.ui.mymedia.components.SortingBottomSheet
+import com.example.anilist.utils.isScrollingUp
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -217,12 +229,14 @@ private fun MyMedia(
     var filter by rememberSaveable { mutableStateOf(PersonalMediaStatus.UNKNOWN) }
     val setFilter: (PersonalMediaStatus) -> Unit = { filter = it }
 
-//    var sort by rememberSaveable {
-//        mutableStateOf(AniMediaListSort.UPDATED_TIME_DESC)
-//    }
+    val topAppBarScrollBehaviour = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val lazyListState = rememberLazyListState()
+    val isFabVisible = lazyListState.isScrollingUp()
     Scaffold(
+        modifier = Modifier.nestedScroll(topAppBarScrollBehaviour.nestedScrollConnection),
         topBar = {
             TopAppBar(
+                scrollBehavior = topAppBarScrollBehaviour,
                 title = {
                     Text(
                         text = if (isAnime) stringResource(R.string.my_anime_list) else stringResource(
@@ -255,40 +269,43 @@ private fun MyMedia(
                             )
                         }
                     }
-//                        DropdownMenu(
-//                            expanded = showSortingDropDownMenu,
-//                            onDismissRequest = { showSortingDropDownMenu = false }) {
-//                            DropdownMenuItem(text = { Text(text = "Sort") }, onClick = { /*TODO*/ })
-//                        }
                 })
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                text = {
-                    Text(
-                        if (filter == PersonalMediaStatus.UNKNOWN) stringResource(id = R.string.filter) else filter.toString(
-                            isAnime = isAnime,
-                            context = LocalContext.current
+            AnimatedVisibility(
+                visible = isFabVisible,
+                enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(
+                    tween(100)
+                ),
+                exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(tween(300))
+            ) {
+                ExtendedFloatingActionButton(
+                    text = {
+                        Text(
+                            if (filter == PersonalMediaStatus.UNKNOWN) stringResource(id = R.string.filter) else filter.toString(
+                                isAnime = isAnime,
+                                context = LocalContext.current
+                            )
                         )
-                    )
-                },
-                icon = {
-                    Icon(
-                        painter = painterResource(
-                            id = filter.getIconResource()
-                        ),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                    )
-                },
-                onClick = {
-                    showFilterSheet()
-                },
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier
-                    .padding(Dimens.PaddingNormal),
-            )
+                    },
+                    icon = {
+                        Icon(
+                            painter = painterResource(
+                                id = filter.getIconResource()
+                            ),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    },
+                    onClick = {
+                        showFilterSheet()
+                    },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier
+                        .padding(Dimens.PaddingNormal),
+                )
+            }
         },
     ) {
         Box(
@@ -344,7 +361,8 @@ private fun MyMedia(
                     },
                     showEditSheet = showEditSheet,
                     isAnime = isAnime,
-                    openRatingDialog = openRatingDialog
+                    openRatingDialog = openRatingDialog,
+                    lazyListState = lazyListState
                 )
             } else {
                 NoMediaScreen(isAnime = isAnime)
@@ -401,8 +419,12 @@ private fun MyMediaLazyList(
     showEditSheet: (Media) -> Unit,
     openRatingDialog: (Media) -> Unit,
     isAnime: Boolean,
+    lazyListState: LazyListState
 ) {
-    val sortedMediaList: Map<PersonalMediaStatus, List<Media>>? by remember(key1 = sort) {
+    val sortedMediaList: Map<PersonalMediaStatus, List<Media>>? by remember(
+        key1 = sort,
+        key2 = myMedia
+    ) {
         mutableStateOf(myMedia?.mapValues { (_, mediaList) ->
             when (sort) {
                 AniMediaListSort.MEDIA_ID -> mediaList.sortedBy { media -> media.id }
@@ -449,7 +471,7 @@ private fun MyMediaLazyList(
         }
         )
     }
-    LazyColumn(modifier = Modifier.padding(top = it.calculateTopPadding())) {
+    LazyColumn(state = lazyListState, modifier = Modifier.padding(top = it.calculateTopPadding())) {
         PersonalMediaStatus.values().forEach { status ->
             if (filter == PersonalMediaStatus.UNKNOWN || filter == status) {
                 val mediaList = sortedMediaList?.get(status).orEmpty()
@@ -814,8 +836,13 @@ private fun MediaCard(
         }
         val progress =
             (media.personalProgress / (if (isAnime) media.episodeAmount.toFloat() else media.chapters.toFloat()))
+        val animatedProgress by animateFloatAsState(
+            targetValue = progress,
+            animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+            label = "Media progress bar"
+        )
         LinearProgressIndicator(
-            progress = progress,
+            progress = animatedProgress,
             strokeCap = StrokeCap.Square,
             modifier = Modifier
                 .fillMaxWidth()
@@ -823,6 +850,7 @@ private fun MediaCard(
                 .align(
                     Alignment.BottomCenter
                 )
+                .animateContentSize()
         )
     }
 }
@@ -935,3 +963,5 @@ fun IncreaseProgressPreview() {
         label = stringResource(id = R.string.plus_one_episode)
     )
 }
+
+

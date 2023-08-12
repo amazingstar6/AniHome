@@ -30,8 +30,8 @@ import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.TrendingTogetherPagingSource
-import com.example.anilist.data.repository.toAniHomeSeason
-import com.example.anilist.data.repository.toAniHomeType
+import com.example.anilist.data.toAniHomeSeason
+import com.example.anilist.data.toAniHomeType
 import com.example.anilist.fragment.MediaTitleCover
 import com.example.anilist.type.CharacterSort
 import com.example.anilist.type.MediaFormat

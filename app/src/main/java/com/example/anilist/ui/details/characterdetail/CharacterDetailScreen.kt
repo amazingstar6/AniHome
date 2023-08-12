@@ -1,19 +1,11 @@
-package com.example.anilist.ui.mediadetails
+package com.example.anilist.ui.details.characterdetail
 
-import android.content.Intent
-import android.util.Log
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -21,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -38,12 +29,10 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -53,7 +42,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -62,27 +50,23 @@ import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.CharacterMediaConnection
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.repository.MediaDetailsRepository
-import com.example.anilist.utils.quantityStringResource
 import com.example.anilist.ui.Dimens
+import com.example.anilist.ui.details.mediadetails.IconWithText
 import com.example.anilist.utils.FormattedHtmlWebView
-import com.google.accompanist.web.WebView
-import com.google.accompanist.web.rememberWebViewStateWithHTMLData
+import com.example.anilist.utils.quantityStringResource
 import org.jsoup.Jsoup
-
-
-private const val TAG = "CharacterDetailScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterDetailScreen(
     id: Int,
-    mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
+    characterDetailViewModel: CharacterDetailViewModel = hiltViewModel(),
     onNavigateToStaff: (Int) -> Unit,
     onNavigateToMedia: (Int) -> Unit,
     onNavigateBack: () -> Unit,
 ) {
-    val character by mediaDetailsViewModel.character.observeAsState()
-    mediaDetailsViewModel.fetchCharacter(id)
+    val character by characterDetailViewModel.character.observeAsState()
+    characterDetailViewModel.fetchCharacter(id)
     Scaffold(topBar = {
         TopAppBar(title = {
             AnimatedVisibility(visible = character?.userPreferredName != null, enter = fadeIn()) {
@@ -110,7 +94,7 @@ fun CharacterDetailScreen(
                     bottom = Dimens.PaddingNormal,
                 ),
                 toggleFavorite = {
-                    mediaDetailsViewModel.toggleFavourite(
+                    characterDetailViewModel.toggleFavourite(
                         MediaDetailsRepository.LikeAbleType.CHARACTER,
                         id
                     )
@@ -317,7 +301,6 @@ fun Description(description: String) {
 
 @Composable
 fun htmlToAnnotatedString(htmlString: String, isSpoilerVisible: Boolean): AnnotatedString {
-    Log.d(TAG, "original text is $htmlString")
     val replacedSpans = htmlString.replace(
         """
         <p><span class='markdown_spoiler'><span>
@@ -331,20 +314,16 @@ fun htmlToAnnotatedString(htmlString: String, isSpoilerVisible: Boolean): Annota
         </span>
     """.trimIndent().trim(), ignoreCase = true
     )
-    Log.d(TAG, "replace text is: $replacedSpans")
     val doc = Jsoup.parse(replacedSpans)
 //    this returns only the spoilers
 //    val elements = doc.body().allElements.not("*:not(span.markdown_spoiler:has(span))")
     val elements = doc.body().allElements
 //    val processedBody = processElements(elements, StringBuilder())
-    Log.d(TAG, elements.toString())
     val annotatedString = buildAnnotatedString {
         elements.forEach { element ->
-            Log.d(TAG, "Current element tag being processed is ${element.tagName()}")
             when (element.tagName()) {
                 "p" -> append(element.text() + "\n")
                 "span" -> {
-                    Log.d(TAG, "The span tag contains this text: ${element.text()}")
                     val classNames = element.classNames()
                     val spoiler = classNames.contains("markdown_spoiler")
                     if (!spoiler || isSpoilerVisible) {
@@ -450,14 +429,12 @@ fun AvatarAndName(
 
                     )
             }
-            Log.i(TAG, "Current favourite status is $isFavorite")
             IconWithText(
                 icon = if (isFavorite) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart,
                 text = favorites.toString(),
                 textColor = MaterialTheme.colorScheme.onSurface,
                 iconTint = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.clickable {
-                    Log.i(TAG, "Clicked on favourite")
                     toggleFavourite()
                 },
             )

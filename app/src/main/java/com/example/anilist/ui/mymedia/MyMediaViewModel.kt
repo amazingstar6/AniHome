@@ -128,7 +128,7 @@ class MyMediaViewModel @Inject constructor(
                                 }
                             }
 
-                            // sorting the list afterwards in case any media got moved around from status
+                            // sorting every list afterwards in case any media got moved around from status
                             mapCopy.forEach {
                                 it.value.sortByDescending { media ->
                                     media.updatedAt

@@ -1,4 +1,4 @@
-package com.example.anilist.ui.mediadetails
+package com.example.anilist.ui.details.staffdetail
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -18,35 +18,39 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.anilist.R
 import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.CharacterMediaConnection
 import com.example.anilist.data.models.StaffDetail
-import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.Dimens
+import com.example.anilist.ui.details.characterdetail.AvatarAndName
+import com.example.anilist.ui.details.characterdetail.Description
+import com.example.anilist.ui.details.characterdetail.Headline
+import com.example.anilist.ui.details.characterdetail.ImageWithTitleAndSubTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StaffDetailScreen(
     id: Int,
-    mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
+    staffDetailViewModel: StaffDetailViewModel = hiltViewModel(),
     onNavigateToCharacter: (Int) -> Unit,
     onNavigateToMedia: (Int) -> Unit,
     onNavigateBack: () -> Unit,
 ) {
-    val staff by mediaDetailsViewModel.staff.observeAsState()
-    mediaDetailsViewModel.fetchStaff(id)
+    val staff by staffDetailViewModel.staff.collectAsStateWithLifecycle()
+    staffDetailViewModel.fetchStaff(id)
 
     Scaffold(topBar = {
         TopAppBar(title = {
-            AnimatedVisibility(visible = staff?.userPreferredName != null, enter = fadeIn()) {
+            AnimatedVisibility(visible = staff is StaffDetailUiState.Success, enter = fadeIn()) {
                 Text(
-                    text = staff?.userPreferredName ?: stringResource(R.string.question_mark),
+                    text = (staff as? StaffDetailUiState.Success)?.staff?.userPreferredName
+                        ?: stringResource(R.string.question_mark),
                 )
             }
         }, navigationIcon = {
@@ -58,9 +62,9 @@ fun StaffDetailScreen(
             }
         })
     }) {
-        AnimatedVisibility(visible = staff != null) {
-            StaffDetail(
-                staff = staff ?: StaffDetail(),
+        AnimatedVisibility(visible = staff is StaffDetailUiState.Success) {
+            StaffScreen(
+                staff = (staff as? StaffDetailUiState.Success)?.staff ?: StaffDetail(),
                 onNavigateToCharacter = onNavigateToCharacter,
                 onNavigateToMedia = onNavigateToMedia,
                 modifier = Modifier.padding(
@@ -68,8 +72,7 @@ fun StaffDetailScreen(
                     bottom = Dimens.PaddingNormal,
                 ),
                 toggleFavourite = {
-                    mediaDetailsViewModel.toggleFavourite(
-                        MediaDetailsRepository.LikeAbleType.STAFF,
+                    staffDetailViewModel.toggleFavourite(
                         id,
                     )
                 },
@@ -79,7 +82,7 @@ fun StaffDetailScreen(
 }
 
 @Composable
-private fun StaffDetail(
+private fun StaffScreen(
     staff: StaffDetail,
     onNavigateToCharacter: (Int) -> Unit,
     onNavigateToMedia: (Int) -> Unit,
@@ -148,7 +151,10 @@ fun AnimeStaffRole(media: List<CharacterMediaConnection>, onNavigateToMedia: (In
 }
 
 @Composable
-fun VoiceCharacters(characterWithVoiceActors: List<CharacterWithVoiceActor>, onNavigateToCharacter: (Int) -> Unit) {
+fun VoiceCharacters(
+    characterWithVoiceActors: List<CharacterWithVoiceActor>,
+    onNavigateToCharacter: (Int) -> Unit
+) {
     LazyRow {
         items(characterWithVoiceActors) { character ->
             ImageWithTitleAndSubTitle(

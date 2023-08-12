@@ -106,9 +106,9 @@ import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.HomeTrendingTypes
 import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.Dimens
-import com.example.anilist.ui.mediadetails.LoadingCircle
-import com.example.anilist.ui.mediadetails.MediaDetailsViewModel
-import com.example.anilist.ui.mediadetails.QuickInfo
+import com.example.anilist.utils.LoadingCircle
+import com.example.anilist.ui.details.mediadetails.MediaDetailsViewModel
+import com.example.anilist.ui.details.mediadetails.QuickInfo
 import com.example.anilist.utils.AsyncImageRoundedCorners
 import com.example.anilist.utils.Utils
 import kotlinx.coroutines.flow.distinctUntilChanged

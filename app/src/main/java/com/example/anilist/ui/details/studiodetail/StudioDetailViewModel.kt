@@ -1,6 +1,5 @@
-package com.example.anilist.ui.mediadetails
+package com.example.anilist.ui.details.studiodetail
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -10,6 +9,7 @@ import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.data.repository.StudioDetailRepository
 import com.example.anilist.data.repository.StudioMediaPagingSource
+import com.example.anilist.ui.details.mediadetails.MediaDetailUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,13 +26,19 @@ class StudioDetailViewModel @Inject constructor(
     val studio: StateFlow<AniStudio> = _studio
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val mediaOfStudio = _studio.flatMapLatest {studio ->
+    val mediaOfStudio = _studio.flatMapLatest { studio ->
         Pager(
             config = PagingConfig(pageSize = 25, prefetchDistance = 5, enablePlaceholders = false),
             pagingSourceFactory = {
                 StudioMediaPagingSource(studioDetailRepository, studio.id)
             }
         ).flow.cachedIn(viewModelScope)
+    }
+
+    fun toggleFavourite(type: MediaDetailsRepository.LikeAbleType, id: Int) {
+        viewModelScope.launch {
+            val isFavourite = studioDetailRepository.toggleFavourite(type, id)
+        }
     }
 
     fun getStudioDetails(id: Int) {

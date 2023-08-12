@@ -1,4 +1,4 @@
-package com.example.anilist.ui.mediadetails
+package com.example.anilist.ui.details.reviewdetail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +13,6 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,13 +30,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.anilist.R
 import com.example.anilist.utils.Utils
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.ui.Dimens
+import com.example.anilist.ui.details.mediadetails.components.Avatar
+import com.example.anilist.ui.details.mediadetails.components.UpDownVote
+import com.example.anilist.utils.LoadingCircle
+import com.example.anilist.ui.details.mediadetails.MediaDetailsViewModel
+import com.example.anilist.ui.details.mediadetails.OpenInBrowserAndShareToolTips
 import com.example.anilist.utils.FormattedHtmlWebView
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,12 +48,12 @@ import com.example.anilist.utils.FormattedHtmlWebView
 fun ReviewDetailScreen(
     reviewId: Int,
     onNavigateBack: () -> Unit,
-    mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
+    reviewDetailViewModel: ReviewDetailViewModel = hiltViewModel(),
 ) {
-    val review by mediaDetailsViewModel.review.observeAsState()
-    mediaDetailsViewModel.fetchReview(reviewId)
+    val review by reviewDetailViewModel.review.observeAsState()
+    reviewDetailViewModel.fetchReview(reviewId)
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
         TopAppBar(
             scrollBehavior = scrollBehavior,
@@ -80,7 +83,7 @@ fun ReviewDetailScreen(
         if (review != null) {
             ReviewDetail(
                 review ?: Review(),
-                vote = { mediaDetailsViewModel.rateReview(review?.id ?: -1, it) },
+                vote = { reviewDetailViewModel.rateReview(review?.id ?: -1, it) },
                 modifier = Modifier.padding(top = it.calculateTopPadding())
             )
         } else {

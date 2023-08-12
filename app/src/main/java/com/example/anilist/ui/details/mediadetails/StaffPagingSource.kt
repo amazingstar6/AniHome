@@ -1,8 +1,8 @@
-package com.example.anilist.ui.mediadetails
+package com.example.anilist.ui.details.mediadetails
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.example.anilist.data.models.Review
+import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Staff
 import com.example.anilist.data.repository.MediaDetailsRepository
 
@@ -11,15 +11,23 @@ private const val STARTING_KEY = 1
 class StaffPagingSource(
     private val mediaId: Int,
     private val mediaDetailsRepository: MediaDetailsRepository
-): PagingSource<Int, Staff>() {
+) : PagingSource<Int, Staff>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Staff> {
         val start = params.key ?: STARTING_KEY
-        val data = mediaDetailsRepository.fetchStaffList(mediaId, start, params.loadSize)
-        return LoadResult.Page(
-            data = data,
-            prevKey = if (start == STARTING_KEY) null else start - 1,
-            nextKey = if (data.isNotEmpty()) start + 1 else null
-        )
+        return when (val data = mediaDetailsRepository.fetchStaffList(mediaId, start, params.loadSize)) {
+            is AniResult.Success -> {
+                LoadResult.Page(
+                    data = data.data,
+                    prevKey = if (start == STARTING_KEY) null else start - 1,
+                    nextKey = if (data.data.isNotEmpty()) start + 1 else null
+                )
+            }
+
+            is AniResult.Failure -> {
+                LoadResult.Error(Exception(data.error))
+            }
+        }
+
     }
 
     override fun getRefreshKey(state: PagingState<Int, Staff>): Int? {

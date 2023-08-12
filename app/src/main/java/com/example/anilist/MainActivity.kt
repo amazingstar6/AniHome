@@ -16,7 +16,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,7 +28,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.anilist.data.models.AniMediaListSort
 import com.example.anilist.data.repository.Theme
-import com.example.anilist.ui.mediadetails.LoadingCircle
+import com.example.anilist.utils.LoadingCircle
 import com.example.anilist.ui.navigation.AniListBottomNavigationBar
 import com.example.anilist.ui.navigation.AniListNavigationActions
 import com.example.anilist.ui.navigation.AniListNavigationRail

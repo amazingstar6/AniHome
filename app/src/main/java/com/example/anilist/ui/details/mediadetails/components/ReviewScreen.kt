@@ -1,4 +1,4 @@
-package com.example.anilist.ui.mediadetails
+package com.example.anilist.ui.details.mediadetails.components
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
@@ -34,7 +34,7 @@ import com.example.anilist.utils.Utils
 import com.example.anilist.data.models.Review
 import com.example.anilist.data.models.ReviewRatingStatus
 import com.example.anilist.ui.Dimens
-import com.example.anilist.utils.FormattedHtmlWebView
+import com.example.anilist.ui.details.reviewdetail.AvatarNameDate
 import de.charlex.compose.HtmlText
 
 

@@ -1,74 +1,37 @@
-package com.example.anilist.ui.mediadetails
+package com.example.anilist.ui.details.mediadetails.components
 
-import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerDefaults
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.PlainTooltipBox
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,315 +41,37 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.graphics.toColorInt
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.AniMediaFormat
-import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.Link
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaDetailInfoList
 import com.example.anilist.data.models.MediaType
 import com.example.anilist.data.models.Relation
 import com.example.anilist.data.models.Season
-import com.example.anilist.data.models.Stats
 import com.example.anilist.data.models.Tag
-import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.Dimens
-import com.example.anilist.ui.EditStatusModalSheet
+import com.example.anilist.ui.details.mediadetails.IconWithText
+import com.example.anilist.ui.details.mediadetails.QuickInfo
 import com.example.anilist.ui.theme.AnilistTheme
 import com.example.anilist.utils.FormattedHtmlWebView
-import com.example.anilist.utils.quantityStringResource
-import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-
-private const val TAG = "MediaDetailScreen"
-
-enum class DetailTabs {
-    Overview,
-    Characters,
-    Staff,
-    Reviews,
-    Stats,
-}
-
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-@Composable
-fun MediaDetail(
-    mediaId: Int,
-    modifier: Modifier = Modifier,
-    mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit,
-    onNavigateToDetails: (Int) -> Unit,
-    onNavigateToReviewDetails: (Int) -> Unit,
-    navigateToStaff: (Int) -> Unit,
-    navigateToCharacter: (Int) -> Unit,
-    onNavigateToStaff: (Int) -> Unit,
-    onNavigateToLargeCover: (String) -> Unit,
-    navigateToStudioDetails: (Int) -> Unit
-) {
-    val media by mediaDetailsViewModel.media.observeAsState()
-
-    val isAnime = media?.type == MediaType.ANIME
-    var editStatusBottomSheetIsVisible by remember { mutableStateOf(false) }
-    val editSheetState =
-        rememberModalBottomSheetState(skipPartiallyExpanded = false, confirmValueChange = {
-            it != SheetValue.Hidden
-        })
-    val modalSheetScope = rememberCoroutineScope()
-    val showEditSheet: () -> Unit = {
-        editStatusBottomSheetIsVisible = true
-        modalSheetScope.launch { editSheetState.show() }
-    }
-    val hideEditSheet: () -> Unit = {
-        editStatusBottomSheetIsVisible = false
-        modalSheetScope.launch { editSheetState.hide() }
-    }
-
-    val fetchMedia = {
-        mediaDetailsViewModel.fetchMedia(
-            mediaId = mediaId
-        )
-    }
-
-//    fetchMedia()
-
-    val reviews = mediaDetailsViewModel.reviews.collectAsLazyPagingItems()
-    val staff = mediaDetailsViewModel.staffList.collectAsLazyPagingItems()
-
-    Scaffold(modifier = modifier, topBar = {
-        TopAppBar(title = {
-            Text(
-                text = media?.title ?: "",
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }, navigationIcon = {
-            IconButton(onClick = onNavigateBack) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = stringResource(id = R.string.back),
-                )
-            }
-        }, actions = {
-            val context = LocalContext.current
-            val uriHandler = LocalUriHandler.current
-            val uri = "https://anilist.co/${if (isAnime) "anime" else "manga"}/$mediaId"
-            PlainTooltipBox(tooltip = {
-                Text(
-                    text = "Favourite",
-                )
-            }) {
-                IconButton(
-                    onClick = {
-                        mediaDetailsViewModel.toggleFavourite(
-                            if (isAnime) MediaDetailsRepository.LikeAbleType.ANIME else MediaDetailsRepository.LikeAbleType.MANGA,
-                            mediaId,
-                        )
-                    },
-                    modifier = Modifier.tooltipTrigger(),
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            id = if (media?.isFavourite == true) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart,
-                        ),
-                        contentDescription = "Add to favourites",
-                    )
-                }
-            }
-            OpenInBrowserAndShareToolTips(uriHandler, uri, context)
-        })
-    }, floatingActionButton = {
-        FloatingActionButton(
-            onClick = {
-                showEditSheet()
-            },
-        ) {
-            Icon(imageVector = Icons.Outlined.Edit, contentDescription = "edit")
-        }
-    }) {
-        Box {
-            Column {
-                val pagerState =
-                    rememberPagerState(initialPage = 0, pageCount = { DetailTabs.values().size })
-                val pagerScope = rememberCoroutineScope()
-//                val nestedScrollConnection = PagerDefaults.pageNestedScrollConnection(Orientation.Horizontal)
-
-                AniDetailTabs(
-                    modifier = Modifier.padding(top = it.calculateTopPadding()),
-                    titles = DetailTabs.values().map { it.name },
-                    tabSelected = pagerState.currentPage,
-                    onTabSelected = {
-                        pagerScope.launch {
-                            pagerState.animateScrollToPage(it.ordinal)
-                        }
-//                        index = it
-                    }
-                )
-                HorizontalPager(
-                    state = pagerState,
-//                    flingBehavior = PagerDefaults.flingBehavior(
-//                        state = pagerState,
-//                    ),
-                    flingBehavior = PagerDefaults.flingBehavior(
-                        state = pagerState,
-                        snapAnimationSpec = spring(stiffness = Spring.StiffnessVeryLow)
-                    )
-//                    pageNestedScrollConnection = nestedScrollConnection
-                ) { currentPage ->
-                    when (currentPage) {
-                        0 -> {
-                            if (media == null) {
-                                LoadingCircle()
-                            } else {
-                                Overview(
-                                    media,
-                                    onNavigateToDetails,
-                                    onNavigateToLargeCover,
-                                    navigateToStudioDetails
-                                )
-                            }
-                        }
-
-                        1 -> {
-                            Characters(
-                                isAnime = isAnime,
-                                media?.characterWithVoiceActors.orEmpty()
-                                    .map { it.voiceActorLanguage }
-                                    .distinct(),
-                                media?.characterWithVoiceActors.orEmpty(),
-                                navigateToCharacter = navigateToCharacter,
-                                navigateToStaff = navigateToStaff,
-                            )
-                        }
-
-                        2 -> {
-                            StaffScreen(staff, onNavigateToStaff)
-                        }
-
-                        3 -> {
-                            //fixme
-                            val dataIsLoaded: Boolean =
-                                reviews.loadState.source.refresh is LoadState.NotLoading
-                            if (!dataIsLoaded) {
-                                LoadingCircle()
-                            } else {
-                                Reviews(
-                                    reviews,
-                                    vote = { rating, reviewId ->
-                                        mediaDetailsViewModel.rateReview(reviewId, rating)
-                                        fetchMedia() //fixme don't reload pls
-                                    },
-                                    onNavigateToReviewDetails
-                                )
-                            }
-                        }
-
-                        4 -> {
-                            if (media == null) {
-                                LoadingCircle()
-                            } else {
-                                Stats(media?.stats ?: Stats())
-                            }
-                        }
-                    }
-                }
-                if (editStatusBottomSheetIsVisible) {
-                    Log.d(TAG, "Current media is $media")
-                    EditStatusModalSheet(
-                        editSheetState = editSheetState,
-                        hideEditSheet = hideEditSheet,
-                        unchangedMedia = media ?: Media(),
-                        saveStatus = {
-                            mediaDetailsViewModel.updateProgress(
-                                it,
-                                mediaId
-                            )
-                        },
-                        isAnime = isAnime,
-                        deleteListEntry = { mediaDetailsViewModel.deleteEntry(it) }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-fun OpenInBrowserAndShareToolTips(
-    uriHandler: UriHandler,
-    uri: String,
-    context: Context
-) {
-    PlainTooltipBox(tooltip = {
-        Text(
-            text = "Open in browser",
-        )
-    }) {
-        IconButton(
-            onClick = { uriHandler.openUri(uri) },
-            modifier = Modifier.tooltipTrigger(),
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
-                contentDescription = "open in browser",
-            )
-        }
-    }
-    PlainTooltipBox(tooltip = { Text(stringResource(id = R.string.share)) }) {
-        IconButton(onClick = {
-            val sendIntent: Intent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, uri)
-                putExtra(Intent.EXTRA_TITLE, "Share AniList.co URL")
-                type = "text/plain"
-            }
-
-            val shareIntent = Intent.createChooser(sendIntent, "Share AniList.co URL")
-            startActivity(context, shareIntent, null)
-        }, modifier = Modifier.tooltipTrigger()) {
-            Icon(
-                imageVector = Icons.Default.Share,
-                contentDescription = stringResource(
-                    id = R.string.share,
-                ),
-            )
-        }
-    }
-}
-
-@Composable
-fun LoadingCircle(modifier: Modifier = Modifier) {
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().then(modifier)) {
-        CircularProgressIndicator(
-            modifier = Modifier,
-        )
-    }
-}
 
 @OptIn(ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-private fun Overview(
+fun Overview(
     media: Media?,
     onNavigateToDetails: (Int) -> Unit,
     onNavigateToLargeCover: (String) -> Unit,
@@ -500,137 +185,6 @@ private fun OverviewTrailer(
     }
 }
 
-@Composable
-private fun AniDetailTabs(
-    modifier: Modifier = Modifier,
-    titles: List<String>,
-    tabSelected: Int,
-    onTabSelected: (DetailTabs) -> Unit,
-) {
-    ScrollableTabRow(selectedTabIndex = tabSelected, modifier = modifier, tabs = {
-        titles.forEachIndexed { index, title ->
-            val selected = index == tabSelected
-            Tab(
-                selected = selected,
-                onClick = { onTabSelected(DetailTabs.values()[index]) },
-                text = { Text(text = title) },
-            )
-        }
-    })
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun Characters(
-    isAnime: Boolean,
-    languages: List<String>,
-    characterWithVoiceActors: List<CharacterWithVoiceActor>,
-    navigateToCharacter: (Int) -> Unit,
-    navigateToStaff: (Int) -> Unit,
-) {
-    if (characterWithVoiceActors.isNotEmpty()) {
-        var selected by remember { mutableIntStateOf(0) }
-        Column(modifier = Modifier.fillMaxHeight()) {
-            val lazyGridState = rememberLazyGridState()
-            val coroutineScope = rememberCoroutineScope()
-            if (isAnime) {
-                LazyRow(
-                    modifier = Modifier.padding(
-//                    horizontal = Dimens.PaddingNormal,
-                        vertical = Dimens.PaddingSmall
-                    )
-                ) {
-                    itemsIndexed(languages) { index, language ->
-                        FilterChip(
-                            selected = selected == index,
-                            onClick = {
-                                coroutineScope.launch {
-                                    lazyGridState.animateScrollToItem(0)
-                                }
-                                selected = index
-                            },
-                            label = { Text(text = language) },
-                            modifier = Modifier.padding(start = Dimens.PaddingNormal),
-                        )
-                    }
-                }
-            }
-            LazyVerticalGrid(
-                state = lazyGridState,
-                columns = GridCells.Adaptive(120.dp),
-                modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
-            ) {
-                items(characterWithVoiceActors.filter { it.voiceActorLanguage == languages[selected] }) { character ->
-                    Column(modifier = Modifier.padding(bottom = Dimens.PaddingLarge)) {
-                        Column(
-                            modifier = Modifier
-                                .clickable { navigateToCharacter(character.id) }
-                                .padding(12.dp)
-                                .align(Alignment.CenterHorizontally),
-
-                            ) {
-                            ProfilePicture(character.coverImage, character.name)
-                            Text(
-                                text = character.name,
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                textAlign = TextAlign.Center,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .padding(top = 6.dp, bottom = 6.dp)
-                                    .width(120.dp)
-//                                    .fillMaxWidth(),
-                            )
-                        }
-                        if (isAnime) {
-                            Column(
-                                modifier = Modifier
-                                    .clickable { navigateToStaff(character.voiceActorId) }
-                                    .padding(12.dp)
-                                    .align(Alignment.CenterHorizontally),
-
-                                ) {
-                                ProfilePicture(character.voiceActorCoverImage, character.voiceActorName)
-                                Text(
-                                    text = character.voiceActorName,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier
-                                        .padding(top = 6.dp, bottom = 6.dp)
-                                        .fillMaxWidth(),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    } else {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Text(
-                text = stringResource(R.string.no_characters),
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProfilePicture(coverImage: String, name: String) {
-    AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(coverImage)
-            .crossfade(true).build(),
-        contentDescription = "Profile image of $name",
-        contentScale = ContentScale.Crop,
-        modifier = Modifier.Companion
-            .size(150.dp)
-            .clip(RoundedCornerShape(12.dp)),
-    )
-}
-
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -710,60 +264,6 @@ private fun OverviewAnimeCoverDetails(
 }
 
 @Composable
-fun QuickInfo(media: Media, isAnime: Boolean) {
-    Column(modifier = Modifier.padding(start = 24.dp)) {
-        IconWithText(
-            R.drawable.anime_details_movie,
-            media.format.toString(context = LocalContext.current),
-            textColor = MaterialTheme.colorScheme.onSurface,
-        )
-        IconWithText(
-            R.drawable.anime_details_calendar,
-            text = if (isAnime) {
-                "${media.season.getString(LocalContext.current)}${if (media.seasonYear != -1) " " + media.seasonYear else ""}"
-            } else {
-                if (media.startedAt != null) {
-                    "${media.startedAt.year}-${media.startedAt.month}-${media.startedAt.day}"
-                } else {
-                    stringResource(id = R.string.question_mark)
-                }
-            },
-            textColor = MaterialTheme.colorScheme.onSurface,
-        )
-        IconWithText(
-            R.drawable.anime_details_timer,
-            if (isAnime) {
-                if (media.episodeAmount != -1) {
-                    quantityStringResource(
-                        id = R.plurals.episode,
-                        quantity = media.episodeAmount,
-                        media.episodeAmount,
-                    )
-                } else stringResource(id = R.string.question_mark)
-            } else {
-                if (media.chapters != -1) {
-                    quantityStringResource(
-                        id = R.plurals.chapter,
-                        quantity = media.chapters,
-                        media.chapters,
-                    )
-                } else {
-                    "?"
-                }
-            },
-            textColor = MaterialTheme.colorScheme.onSurface,
-        )
-        IconWithText(
-            R.drawable.anime_details_heart,
-            text = if (media.averageScore != -1) "${media.averageScore}% Average score" else stringResource(
-                id = R.string.question_mark
-            ),
-            textColor = MaterialTheme.colorScheme.onSurface,
-        )
-    }
-}
-
-@Composable
 private fun OverviewDescription(description: String) {
 
 //    val color = MaterialTheme.colorScheme.onSurface.toArgb()
@@ -785,7 +285,6 @@ private fun OverviewDescription(description: String) {
 //    })
     }
 }
-
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -895,19 +394,6 @@ private fun OverViewTags(
             }
         }
     }
-}
-
-@Composable
-fun ShowHideSpoiler(showSpoilers: Boolean, toggleSpoilers: () -> Unit) {
-    IconWithText(
-        icon = if (showSpoilers) R.drawable.anime_detail_not_visible else R.drawable.anime_detail_visible,
-        text = if (showSpoilers) "Hide spoilers" else "Show spoilers",
-        iconTint = MaterialTheme.colorScheme.error,
-        textColor = MaterialTheme.colorScheme.error,
-        modifier = Modifier
-            .clickable { toggleSpoilers() }
-            .padding(end = Dimens.PaddingNormal),
-    )
 }
 
 @Composable
@@ -1033,13 +519,15 @@ private fun OverViewInfo(anime1: Media, navigateToStudioDetails: (Int) -> Unit) 
                 InfoData(anime1.infoList.nsfw.toString())
             }
             if (anime1.infoList.synonyms.isNotEmpty()) {
-                InfoData(buildString { anime1.infoList.synonyms.forEachIndexed { index, synonym ->
-                    if (index != anime1.infoList.synonyms.lastIndex) {
-                        append("$synonym, ")
-                    } else {
-                        append(synonym)
+                InfoData(buildString {
+                    anime1.infoList.synonyms.forEachIndexed { index, synonym ->
+                        if (index != anime1.infoList.synonyms.lastIndex) {
+                            append("$synonym, ")
+                        } else {
+                            append(synonym)
+                        }
                     }
-                }  })
+                })
             }
 //            if (anime1.infoList.containsKey("format")) {
 //                InfoData(anime1.infoList["format"]!!)
@@ -1109,62 +597,6 @@ private fun HeadLine(text: String) {
         style = MaterialTheme.typography.headlineMedium,
         color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier.padding(bottom = 4.dp, top = 8.dp, start = Dimens.PaddingNormal),
-    )
-}
-
-@Composable
-fun IconWithText(
-    icon: Int,
-    text: String,
-    modifier: Modifier = Modifier,
-    iconTint: Color = MaterialTheme.colorScheme.onSurface,
-    textColor: Color,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .padding(vertical = 4.dp)
-            .then(modifier),
-    ) {
-        Icon(
-            painter = painterResource(id = icon),
-            contentDescription = text,
-            tint = iconTint,
-        )
-        Text(
-            text,
-            modifier = Modifier.padding(horizontal = 6.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = textColor,
-        )
-    }
-}
-
-@Preview(
-    device = "id:pixel_6_pro",
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL,
-    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE,
-    group = "Characters",
-)
-@Composable
-fun CharactersPreview() {
-    Characters(
-        isAnime = false,
-        listOf("Japanese", "Portuguese", "English", "French"),
-        characterWithVoiceActors = listOf(
-            CharacterWithVoiceActor(
-                id = 1212321,
-                voiceActorId = 21312,
-                name = "tanjirou",
-                coverImage = "",
-                voiceActorName = "花江夏樹",
-                voiceActorCoverImage = "",
-                voiceActorLanguage = "Japanese",
-            ),
-        ),
-        navigateToCharacter = { },
-        navigateToStaff = { },
     )
 }
 
@@ -1257,5 +689,18 @@ fun OverviewPreview() {
 fun OverviewDescriptionPreview() {
     OverviewDescription(
         "Gold Roger was known as the Pirate King, the strongest and most infamous being to have sailed the Grand Line. The capture and death of Roger by the World Government brought a change throughout the world. His last words before his death revealed the location of the greatest treasure in the world, One Piece. It was this revelation that brought about the Grand Age of Pirates, men who dreamed of finding One Piece (which promises an unlimited amount of riches and fame), and quite possibly the most coveted of titles for the person who found it, the title of the Pirate King.<br><br>\\nEnter Monkey D. Luffy, a 17-year-old boy that defies your standard definition of a pirate. Rather than the popular persona of a wicked, hardened, toothless pirate who ransacks villages for fun, Luffy’s reason for being a pirate is one of pure wonder; the thought of an exciting adventure and meeting new and intriguing people, along with finding One Piece, are his reasons of becoming a pirate. Following in the footsteps of his childhood hero, Luffy and his crew travel across the Grand Line, experiencing crazy adventures, unveiling dark mysteries and battling strong enemies, all in order to reach One Piece.<br><br>\\n<b>*This includes following special episodes:<\\/b><br>\\n- Chopperman to the Rescue! Protect the TV Station by the Shore! (Episode 336)<br>\\n- The Strongest Tag-Team! Luffy and Toriko's Hard Struggle! (Episode 492)<br>\\n- Team Formation! Save Chopper (Episode 542)<br>\\n- History's Strongest Collaboration vs. Glutton of the Sea (Episode 590)<br>\\n- 20th Anniversary! Special Romance Dawn (Episode 907)"
+    )
+}
+
+@Composable
+fun ShowHideSpoiler(showSpoilers: Boolean, toggleSpoilers: () -> Unit) {
+    IconWithText(
+        icon = if (showSpoilers) R.drawable.anime_detail_not_visible else R.drawable.anime_detail_visible,
+        text = if (showSpoilers) "Hide spoilers" else "Show spoilers",
+        iconTint = MaterialTheme.colorScheme.error,
+        textColor = MaterialTheme.colorScheme.error,
+        modifier = Modifier
+            .clickable { toggleSpoilers() }
+            .padding(end = Dimens.PaddingNormal),
     )
 }
