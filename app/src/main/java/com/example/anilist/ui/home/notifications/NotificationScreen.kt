@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
@@ -26,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -33,13 +36,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.apollographql.apollo3.api.not
 import com.example.anilist.MainActivity
 import com.example.anilist.R
 import com.example.anilist.data.models.AniNotificationType
@@ -55,7 +58,9 @@ fun NotificationScreen(
     onNavigateBack: () -> Unit,
     navigateToMediaDetails: (Int) -> Unit,
     onNavigateToActivity: (Int) -> Unit,
-    onNavigateToUser: (Int) -> Unit
+    onNavigateToUser: (Int) -> Unit,
+    onNavigateToThread: (Int) -> Unit,
+    onNavigateToThreadComment: (Int) -> Unit
 ) {
     val notifications = notificationsViewModel.notifications.collectAsLazyPagingItems()
     Notifications(
@@ -64,7 +69,9 @@ fun NotificationScreen(
         onNavigateBack = onNavigateBack,
         navigateToMediaDetails = navigateToMediaDetails,
         onNavigateToUser = onNavigateToUser,
-        onNavigateToActivity = onNavigateToActivity
+        onNavigateToActivity = onNavigateToActivity,
+        onNavigateToThread = onNavigateToThread,
+        onNavigateToThreadComment = onNavigateToThreadComment
     )
 }
 
@@ -76,9 +83,11 @@ private fun Notifications(
     onNavigateBack: () -> Unit,
     navigateToMediaDetails: (Int) -> Unit,
     onNavigateToUser: (Int) -> Unit,
-    onNavigateToActivity: (Int) -> Unit
+    onNavigateToActivity: (Int) -> Unit,
+    onNavigateToThread: (Int) -> Unit, // todo pass comment id as well
+    onNavigateToThreadComment: (Int) -> Unit
 ) {
-    var currentIndex by remember {
+    var currentFilter by remember {
         mutableStateOf(NotificationFilterList.ALL)
     }
     val notificationFilterList = NotificationFilterList.values()
@@ -106,10 +115,10 @@ private fun Notifications(
                     Column(modifier = Modifier.padding(top = padding.calculateTopPadding())) {
                         FlowRow(modifier = Modifier.padding(Dimens.PaddingNormal)) {
                             notificationFilterList.forEachIndexed { _, filter ->
-                                val selected = filter == currentIndex
+                                val selected = filter == currentFilter
                                 FilterChip(
                                     selected = selected,
-                                    onClick = { currentIndex = filter },
+                                    onClick = { currentFilter = filter },
                                     leadingIcon = {
                                         if (selected) {
                                             Icon(
@@ -163,68 +172,161 @@ private fun Notifications(
 //                        },
                             ) { index ->
                                 val notification = notifications[index]
-                                if (notification != null) {
+                                if (notification != null && notification.type.isInFilter(
+                                        currentFilter
+                                    )
+                                ) {
                                     when (notification.type) {
+
                                         AniNotificationType.AiringNotification -> {
                                             NotificationComponent(
                                                 { navigateToMediaDetails(notification.animeId) },
                                                 notification,
-                                                context = "Episode ${notification.airedEpisode} of ${notification.title} aired"
+                                                context = "Episode ${notification.airedEpisode} of ${notification.mediaTitle} aired."
                                             )
                                         }
+
                                         AniNotificationType.FollowingNotification -> {
                                             NotificationComponent(
                                                 onClick = { onNavigateToActivity(notification.activityId) },
                                                 notification = notification,
-                                                context = "${notification.userName} followed you"
+                                                context = "${notification.userName}${notification.context}"
                                             )
                                         }
 
                                         AniNotificationType.ActivityMessageNotification -> {
                                             NotificationComponent(
                                                 onClick = { onNavigateToActivity(notification.activityId) },
-                                                notification =notification ,
-                                                context = "Activity message from ${notification.userName}: ${notification.message}"
+                                                notification = notification,
+                                                context = "${notification.userName}${notification.context}"
                                             )
                                         }
+
                                         AniNotificationType.ActivityMentionNotification -> {
                                             NotificationComponent(
                                                 onClick = { onNavigateToActivity(notification.activityId) },
                                                 notification = notification,
-                                                context = "${notification.userName} mentioned you in an activity or reply"
+                                                context = "${notification.userName}${notification.context}"
                                             )
                                         }
+
                                         AniNotificationType.ActivityReplyNotification -> {
                                             NotificationComponent(
                                                 onClick = { onNavigateToActivity(notification.activityId) },
                                                 notification = notification,
-                                                context = "${notification.userName} replied to your activity"
+                                                context = "${notification.userName}${notification.context}"
                                             )
                                         }
+
                                         AniNotificationType.ActivityReplySubscribedNotification -> {
                                             NotificationComponent(
                                                 onClick = { onNavigateToActivity(notification.activityId) },
                                                 notification = notification,
-                                                context = "${notification.userName} replied to your reply on an activity"
+                                                context = "${notification.userName}${notification.context}"
                                             )
                                         }
+
                                         AniNotificationType.ActivityLikeNotification -> {
                                             NotificationComponent(
                                                 onClick = { onNavigateToActivity(notification.activityId) },
                                                 notification = notification,
-                                                context = "${notification.userName} liked your activity"
+                                                context = "${notification.userName}${notification.context}"
                                             )
                                         }
-                                        AniNotificationType.ActivityReplyLikeNotification -> {}
-                                        AniNotificationType.ThreadCommentMentionNotification -> {}
-                                        AniNotificationType.ThreadCommentReplyNotification -> {}
-                                        AniNotificationType.ThreadCommentSubscribedNotification -> {}
-                                        AniNotificationType.ThreadCommentLikeNotification -> {}
-                                        AniNotificationType.ThreadLikeNotification -> {}
-                                        AniNotificationType.RelatedMediaAdditionNotification -> {}
-                                        AniNotificationType.MediaDataChangeNotification -> {}
-                                        AniNotificationType.MediaMergeNotification -> {}
-                                        AniNotificationType.MediaDeletionNotification -> {}
+
+                                        AniNotificationType.ActivityReplyLikeNotification -> {
+                                            NotificationComponent(
+                                                onClick = { onNavigateToActivity(notification.activityId) },
+                                                notification = notification,
+                                                context = "${notification.userName}${notification.context}"
+                                            )
+                                        }
+
+                                        AniNotificationType.ThreadCommentMentionNotification -> {
+                                            NotificationComponent(
+                                                onClick = { onNavigateToThreadComment(notification.threadCommentId) },
+                                                notification = notification,
+                                                context = "${notification.userName}${notification.context}"
+                                            )
+                                        }
+
+                                        AniNotificationType.ThreadCommentReplyNotification -> {
+                                            NotificationComponent(
+                                                onClick = { onNavigateToThreadComment(notification.threadCommentId) },
+                                                notification = notification,
+                                                context = "${notification.userName}${notification.context}"
+                                            )
+                                        }
+
+                                        AniNotificationType.ThreadCommentSubscribedNotification -> {
+                                            NotificationComponent(
+                                                onClick = { onNavigateToThreadComment(notification.threadCommentId) },
+                                                notification = notification,
+                                                context = "${notification.userName}${notification.context}"
+                                            )
+                                        }
+
+                                        AniNotificationType.ThreadCommentLikeNotification -> {
+                                            NotificationComponent(
+                                                onClick = { onNavigateToThreadComment(notification.threadCommentId) },
+                                                notification = notification,
+                                                context = "${notification.userName}${notification.context}"
+                                            )
+                                        }
+
+                                        AniNotificationType.ThreadLikeNotification -> { //todo what is being liked?
+                                            NotificationComponent(
+                                                onClick = { onNavigateToThread(notification.threadId) },
+                                                notification = notification,
+                                                context = "${notification.userName}${notification.context}" // todo is it always your thread?
+                                            )
+                                        }
+
+                                        AniNotificationType.RelatedMediaAdditionNotification -> {
+                                            NotificationComponent(
+                                                { navigateToMediaDetails(notification.mediaId) },
+                                                notification,
+                                                context = "${notification.mediaTitle}${notification.context}"
+                                            )
+                                        }
+
+                                        AniNotificationType.MediaDataChangeNotification -> {
+                                            NotificationComponent(
+                                                { navigateToMediaDetails(notification.mediaId) },
+                                                notification,
+                                                context = "${notification.mediaTitle}${notification.context}${notification.mediaChangeReason}"
+                                            )
+                                        }
+
+                                        //todo what does context say
+                                        AniNotificationType.MediaMergeNotification -> {
+                                            NotificationComponent(
+                                                onClick = { navigateToMediaDetails(notification.mediaId) },
+                                                notification = notification,
+                                                context = "One of the media on your list: ${
+                                                    buildString {
+                                                        notification.deletedMediaTitles.forEachIndexed { index, title ->
+                                                            if (index == notification.deletedMediaTitles.lastIndex) {
+                                                                append(
+                                                                    title
+                                                                )
+                                                            } else {
+                                                                append("$title, ")
+                                                            }
+                                                        }
+                                                    }
+                                                } was merged into ${notification.mediaTitle}${notification.mediaChangeReason.ifBlank { "" }}"
+                                            )
+                                        }
+
+                                        AniNotificationType.MediaDeletionNotification -> {
+                                            NotificationComponent(
+                                                { /*cannot navigate to delete title*/ },
+                                                notification,
+                                                context = "${notification.deletedMediaTitle}${notification.context}${notification.mediaChangeReason}"
+                                            )
+                                        }
+
                                         AniNotificationType.UNKNOWN -> {}
                                     }
                                 }
@@ -245,57 +347,48 @@ private fun NotificationComponent(
     notification: Notification,
     context: String
 ) {
-    Column(modifier = Modifier.clickable {
-        onClick()
-    }) {
-        Row {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(notification.image)
-                    .crossfade(true)
-                    .build(),
-                placeholder = painterResource(id = R.drawable.no_image),
-                fallback = painterResource(id = R.drawable.no_image),
-                contentDescription = "notification cover",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .padding(Dimens.PaddingNormal)
-                    .clip(MaterialTheme.shapes.medium),
+    Row(
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Dimens.PaddingSmall)
+            .clickable { onClick() }) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(notification.image)
+                .crossfade(true)
+                .build(),
+            placeholder = painterResource(id = R.drawable.no_image),
+            fallback = painterResource(id = R.drawable.no_image),
+            contentDescription = "notification cover",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .height(140.dp)
+                .width(110.dp)
+                .padding(Dimens.PaddingNormal)
+                .clip(MaterialTheme.shapes.medium),
+        )
+        Column(modifier = Modifier.padding(vertical = Dimens.PaddingNormal)) {
+            Text(
+                text = Utils.getRelativeTime(notification.createdAt.toLong()),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Column(modifier = Modifier.padding(Dimens.PaddingNormal)) {
-                Text(
-                    text = Utils.getRelativeTime(notification.createdAt.toLong()),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = context,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text("Type is: ${notification.type}")
-                Text("Context given is ${notification.context}")
-            }
+            Text(
+                text = context,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+//            Text("Type is: ${notification.type}")
+//            Text("Context given is ${notification.context}")
         }
     }
 }
 
-@Preview(showBackground = true)
-@Preview(locale = "nl")
+@Preview
 @Composable
-fun NotificationScreenPreview() {
-//    Notifications(
-//        notifications = listOf(
-//            Notification(
-//                type = "Airing",
-//                airedEpisode = 2,
-//                title = "时光代理人 第二季",
-//                createdAt = 1689303604,
-//                image = "",
-//            ),
-//        ),
-//        markAllAsRead = { },
-//    ) { }
+fun NotificationComponentPreview() {
+    NotificationComponent(onClick = { }, notification = Notification(), context = "Context")
 }
 
 enum class NotificationFilterList {

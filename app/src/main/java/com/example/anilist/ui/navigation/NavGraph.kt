@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.anilist.ui.ActivityDetailScreen
 import com.example.anilist.ui.PleaseLogin
+import com.example.anilist.ui.ThreadCommentScreen
 import com.example.anilist.ui.feed.FeedScreen
 import com.example.anilist.ui.forum.ForumScreen
 import com.example.anilist.ui.home.HomeScreen
@@ -183,7 +184,9 @@ fun AniNavHost(
                 onNavigateBack = { navController.popBackStack() },
                 navigateToMediaDetails = navigationActions::navigateToMediaDetails,
                 onNavigateToActivity = navigationActions::navigateToActivity,
-                onNavigateToUser = navigationActions::navigateToUser
+                onNavigateToUser = navigationActions::navigateToUser,
+                onNavigateToThread = navigationActions::navigateToThread,
+                onNavigateToThreadComment = navigationActions::navigateToThreadComment
             )
         }
         composable(
@@ -196,6 +199,15 @@ fun AniNavHost(
                 )
             })
         composable(
+            route = AniListRoute.THREAD_COMMENT + "/{commentId}",
+            arguments = listOf(navArgument("commentId") { type = NavType.IntType }),
+            content = { navBackStackEntry ->
+                ThreadCommentScreen(
+                    commentId = navBackStackEntry.arguments?.getInt("commentId") ?: -1,
+                    navigateBack = navigationActions::navigateBack
+                )
+            })
+        composable(
             AniListRoute.SETTINGS,
         ) {
             setBottomBarState(false)
@@ -203,7 +215,7 @@ fun AniNavHost(
         }
         composable(AniListRoute.ANIME_ROUTE) {
             setBottomBarState(true)
-            Timber.d("Access code is " + accessCode)
+            Timber.d("Access code is $accessCode")
             if (accessCode != "") {
                 MyMediaScreen(
                     navigateToDetails = { id ->
@@ -238,3 +250,4 @@ fun AniNavHost(
         }
     }
 }
+

@@ -6,6 +6,7 @@ import com.example.anilist.R
 import com.example.anilist.data.models.HomeTrendingTypes
 
 object AniListRoute {
+    const val THREAD_COMMENT: String = "ThreadComment"
     const val ACTIVITY: String = "Activity"
     const val MEDIA_OVERVIEW_ROUTE: String = "MediaOverviewRoute"
     const val CHARACTER_DETAIL_ROUTE: String = "CharacterDetail"
@@ -107,6 +108,12 @@ class AniListNavigationActions(private val navController: NavController) {
     fun navigateToActivity(activityId: Int) {
         navController.navigate(
             route = AniListRoute.ACTIVITY + "/$activityId"
+        )
+    }
+
+    fun navigateToThreadComment(commentId: Int) {
+        navController.navigate(
+            route = AniListRoute.THREAD_COMMENT + "/$commentId"
         )
     }
 }

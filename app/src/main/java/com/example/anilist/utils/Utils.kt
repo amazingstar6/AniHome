@@ -81,5 +81,9 @@ class Utils {
         fun nextYear(): Int {
             return currentYear() + 1
         }
+
+        fun Int?.orMinusOne(): Int {
+            return this ?: -1
+        }
     }
 }
