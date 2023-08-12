@@ -60,7 +60,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import coil.imageLoader
 import coil.request.ImageRequest
+import coil.size.ViewSizeResolver
 import com.example.anilist.R
 import com.example.anilist.data.models.AniMediaFormat
 import com.example.anilist.data.models.AniMediaListSort
@@ -642,6 +644,14 @@ private fun MediaCard(
     isAnime: Boolean,
 ) {
     val haptic = LocalHapticFeedback.current
+
+//    val context = LocalContext.current
+//    val request = ImageRequest.Builder(context)
+//        .data(media.coverImage)
+//        // Optional, but setting a ViewSizeResolver will conserve memory by limiting the size the image should be preloaded into memory at.
+//        .build()
+//    context.imageLoader.enqueue(request)
+
     Box(modifier = Modifier.padding(vertical = Dimens.PaddingSmall)) {
         ElevatedCard(
             shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),

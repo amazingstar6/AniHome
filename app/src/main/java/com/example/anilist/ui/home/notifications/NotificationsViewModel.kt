@@ -1,17 +1,21 @@
 package com.example.anilist.ui.home.notifications
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Notification
 import com.example.anilist.data.repository.NotificationsPagingSource
 import com.example.anilist.data.repository.NotificationsRepository
-import com.example.anilist.data.repository.homerepository.HomeMedia
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val PAGE_SIZE = 50
@@ -20,41 +24,56 @@ private const val PAGE_SIZE = 50
 class NotificationsViewModel @Inject constructor(private val notificationsRepository: NotificationsRepository) :
     ViewModel() {
 
-//    private val _notifications = MutableStateFlow(NotificationsUiState.Loading)
+    val notifications = Pager(config = PagingConfig(
+        pageSize = PAGE_SIZE, prefetchDistance = 5, enablePlaceholders = true
+    ), pagingSourceFactory = {
+        NotificationsPagingSource(
+            notificationsRepository
+        )
+    }).flow.cachedIn(viewModelScope)
 
-    //    val notifications: StateFlow<NotificationsUiState> = _notifications
-//    @OptIn(ExperimentalCoroutinesApi::class)
-//    val notifications: StateFlow<NotificationsUiState> =
-//        notificationsRepository.getNotifications().mapLatest {
-//            when (it) {
-//                is AniResult.Failure -> NotificationsUiState.Error(it.error)
-//                is AniResult.Success -> NotificationsUiState.Success(it.data)
-//            }
-//        }.stateIn(
-//            viewModelScope,
-//            SharingStarted.WhileSubscribed(),
-//            NotificationsUiState.Loading
-//        )
+    private val _notificationUnReadCount = MutableStateFlow(-1)
+    val notificationUnReadCount: StateFlow<Int> = _notificationUnReadCount
 
-    val notifications = Pager(
-        config = PagingConfig(
-            pageSize = PAGE_SIZE,
-            prefetchDistance = 5,
-            enablePlaceholders = true
-        ),
-        pagingSourceFactory = {
-            NotificationsPagingSource(
-                notificationsRepository
-            )
+    private val _toastMessage = MutableSharedFlow<String>()
+    val toastMessage: SharedFlow<String> = _toastMessage.asSharedFlow()
+
+    private fun sendMessage(message: String) {
+        viewModelScope.launch {
+            _toastMessage.emit(message)
         }
-    ).flow.cachedIn(viewModelScope)
+    }
 
+    init {
+        viewModelScope.launch {
+            fetchNotificationUnReadCount()
+        }
+    }
 
-    private val _media = MutableLiveData<HomeMedia>()
-    val media: LiveData<HomeMedia> = _media
+    private suspend fun fetchNotificationUnReadCount() {
+        when (val result = notificationsRepository.getUnReadNotificationCount()) {
+            is AniResult.Success -> {
+                _notificationUnReadCount.value = result.data
+            }
+
+            is AniResult.Failure -> {
+                sendMessage("Failed to load notifications unread count")
+            }
+        }
+    }
 
     fun markAllNotificationsAsRead() {
-        //todo
+        viewModelScope.launch {
+            when (val result = notificationsRepository.markAllAsRead()) {
+                is AniResult.Success -> {
+                    _notificationUnReadCount.value = result.data
+                }
+
+                is AniResult.Failure -> {
+                    sendMessage("Failed to mark notifications as read")
+                }
+            }
+        }
     }
 
 }

@@ -2,6 +2,7 @@ package com.example.anilist.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -16,6 +17,7 @@ import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.Season
 import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.repository.NotificationsRepository
 import com.example.anilist.data.repository.homerepository.HomeRepositoryImpl
 import com.example.anilist.data.repository.TrendingTogether
 import com.example.anilist.ui.home.searchpagingsource.SearchCharactersPagingSource
@@ -50,6 +52,7 @@ const val PREFETCH_DISTANCE = 10
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val homeRepository: HomeRepositoryImpl,
+    private val notificationsRepository: NotificationsRepository
 ) :
     ViewModel() {
 
@@ -181,6 +184,9 @@ class HomeViewModel @Inject constructor(
         SharingStarted.WhileSubscribed(),
         initialValue = SearchFilter.MEDIA
     )
+
+    private val _unReadNotificationCount = MutableStateFlow(-1)
+    val unReadNotificationCount: StateFlow<Int> = _unReadNotificationCount
 
     private val mediaSearchState = MutableStateFlow(
         MediaSearchState(
@@ -356,6 +362,20 @@ class HomeViewModel @Inject constructor(
     init {
         fetchTags()
         fetchGenres()
+    }
+
+    fun fetchUnReadNotifications() {
+        viewModelScope.launch {
+            when (val result = notificationsRepository.getUnReadNotificationCount()) {
+                is AniResult.Success -> {
+                    _unReadNotificationCount.value = result.data
+                }
+
+                is AniResult.Failure -> {
+                    sendMessage("Failed to load notifications unread count")
+                }
+            }
+        }
     }
 
     fun fetchGenres() {

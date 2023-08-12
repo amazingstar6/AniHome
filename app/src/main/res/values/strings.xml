@@ -154,6 +154,7 @@
     <string name="follows">Follows</string>
     <string name="media">Media</string>
     <string name="clear_cache">Clear cache</string>
+    <string name="notifications">Notifications</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>

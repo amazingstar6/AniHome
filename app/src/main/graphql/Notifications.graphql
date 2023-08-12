@@ -4,15 +4,18 @@ query GetUnReadNotificationCount {
     }
 }
 
-query ResetUnreadNotificationCount($reset: Boolean) {
-    Notification(resetNotificationCount: $reset) {
+query MarkAllAsRead {
+    Notification(resetNotificationCount: true) {
         __typename
+    }
+    Viewer {
+        unreadNotificationCount
     }
 }
 
 query getNotifications($page: Int!, $perPage: Int!) {
     Page(page: $page, perPage: $perPage) {
-        notifications {
+        notifications(resetNotificationCount: false) {
             ... on AiringNotification {
                 type
                 animeId
@@ -78,9 +81,9 @@ query getNotifications($page: Int!, $perPage: Int!) {
                 createdAt
                 type
                 userId
-#                activity {
-#                    ...activityFragment
-#                }
+                #                activity {
+                #                    ...activityFragment
+                #                }
             }
             ... on ActivityReplySubscribedNotification {
                 activityId
@@ -88,14 +91,14 @@ query getNotifications($page: Int!, $perPage: Int!) {
                 createdAt
                 userId
                 type
-#                activity {
-#                    ...activityFragment
-#                }
+                #                activity {
+                #                    ...activityFragment
+                #                }
             }
             ... on ActivityLikeNotification {
-#                activity {
-#                    ...activityFragment
-#                }
+                #                activity {
+                #                    ...activityFragment
+                #                }
                 activityId
                 context
                 createdAt
@@ -109,9 +112,9 @@ query getNotifications($page: Int!, $perPage: Int!) {
                 }
             }
             ... on ActivityReplyLikeNotification {
-#                activity {
-#                    ...activityFragment
-#                }
+                #                activity {
+                #                    ...activityFragment
+                #                }
                 userId
                 user {
                     name
@@ -272,6 +275,9 @@ query getNotifications($page: Int!, $perPage: Int!) {
             }
         }
     }
+    #    Viewer {
+    #        unreadNotificationCount
+    #    }
 }
 
 fragment activityFragment on ActivityUnion {

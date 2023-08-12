@@ -3,12 +3,14 @@ package com.example.anilist.data.repository
 import com.apollographql.apollo3.cache.normalized.FetchPolicy
 import com.apollographql.apollo3.cache.normalized.fetchPolicy
 import com.apollographql.apollo3.exception.ApolloException
-import com.example.anilist.utils.Apollo
 import com.example.anilist.GetNotificationsQuery
+import com.example.anilist.GetUnReadNotificationCountQuery
+import com.example.anilist.MarkAllAsReadQuery
 import com.example.anilist.data.models.AniNotificationType
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Notification
 import com.example.anilist.type.NotificationType
+import com.example.anilist.utils.Apollo
 import com.example.anilist.utils.Utils.Companion.orMinusOne
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,7 +41,58 @@ class NotificationsRepository @Inject constructor() {
             // handle exception here,, these are mainly for network errors
             return AniResult.Failure(exception.message ?: "No error message")
         }
+    }
 
+    suspend fun getUnReadNotificationCount(): AniResult<Int> {
+        try {
+            val result =
+                Apollo.apolloClient.newBuilder().fetchPolicy(FetchPolicy.NetworkFirst).build()
+                    .query(GetUnReadNotificationCountQuery())
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
+            }
+            val data = result.data
+            return if (data?.Viewer?.unreadNotificationCount == null) {
+                AniResult.Failure("Network error")
+            } else {
+                AniResult.Success(
+                    data.Viewer.unreadNotificationCount,
+                )
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here,, these are mainly for network errors
+            return AniResult.Failure(exception.message ?: "No error message")
+        }
+    }
+
+    suspend fun markAllAsRead(): AniResult<Int> {
+        try {
+            val result =
+                Apollo.apolloClient.newBuilder().fetchPolicy(FetchPolicy.NetworkFirst).build()
+                    .query(MarkAllAsReadQuery())
+                    .execute()
+            if (result.hasErrors()) {
+                // these errors are related to GraphQL errors
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
+            }
+            val data = result.data
+            return if (data?.Viewer?.unreadNotificationCount == null) {
+                AniResult.Failure("Network error")
+            } else {
+                AniResult.Success(
+                    data.Viewer.unreadNotificationCount,
+                )
+            }
+        } catch (exception: ApolloException) {
+            // handle exception here,, these are mainly for network errors
+            return AniResult.Failure(exception.message ?: "No error message")
+        }
     }
 
     private fun parseNotification(data: GetNotificationsQuery.Data?): List<Notification> {

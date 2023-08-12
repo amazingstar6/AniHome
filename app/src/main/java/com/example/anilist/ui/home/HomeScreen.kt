@@ -36,6 +36,8 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -81,6 +83,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -148,7 +152,10 @@ fun HomeScreen(
     val isAnime by homeViewModel.isAnime.collectAsStateWithLifecycle()
     val search by homeViewModel.search.collectAsStateWithLifecycle()
     val searchType by homeViewModel.searchType.collectAsStateWithLifecycle()
-//    val characterSortType by homeViewModel.characterSortType.collectAsStateWithLifecycle()
+
+    // fixme don't fetch this after every destroyed composition
+    LaunchedEffect(key1 = Unit) { homeViewModel.fetchUnReadNotifications() }
+    val unReadNotificationCount by homeViewModel.unReadNotificationCount.collectAsStateWithLifecycle()
 
     val uiState2 by homeViewModel.uiState.collectAsStateWithLifecycle()
 //    val trendingTogethery by homeViewModel.trendingTogetherPager.collectAsLazyPagingItems()
@@ -185,6 +192,7 @@ fun HomeScreen(
             query = search,
             updateSearch = homeViewModel::setSearch,
             active = active,
+            unReadNotificationCount = unReadNotificationCount,
             setActive = { active = it },
             onNavigateToMediaDetails = onNavigateToMediaDetails,
             onNavigateToNotification = onNavigateToNotification,
@@ -465,6 +473,7 @@ private fun AniSearchBar(
     query: String,
     updateSearch: (searchState: MediaSearchState) -> Unit,
     active: Boolean,
+    unReadNotificationCount: Int,
     setActive: (Boolean) -> Unit,
     focusRequester: FocusRequester,
     selectedChip: SearchFilter,
@@ -568,11 +577,30 @@ private fun AniSearchBar(
         },
         trailingIcon = {
             if (!active) {
-                IconButton(onClick = onNavigateToNotification) {
-                    Icon(
-                        imageVector = Icons.Outlined.Notifications,
-                        contentDescription = "notifications"
-                    )
+                PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.notifications)) }) {
+                    BadgedBox(badge = {
+                        if (unReadNotificationCount != 0 && unReadNotificationCount != -1) {
+                            Badge {
+                                Text(
+                                    unReadNotificationCount.toString(),
+                                    modifier = Modifier.semantics {
+                                        contentDescription =
+                                            "$unReadNotificationCount new notifications"
+                                    }
+                                )
+                            }
+                        }
+                    }) {
+//                        IconButton(onClick = onNavigateToNotification, modifier = Modifier.tooltipTrigger()) {
+                        Icon(
+                            imageVector = Icons.Outlined.Notifications,
+                            contentDescription = "notifications",
+                            modifier = Modifier
+                                .clickable { onNavigateToNotification() }
+                                .tooltipTrigger()
+                        )
+//                        }
+                    }
                 }
             } else if (query == "") {
                 Icon(
@@ -1183,7 +1211,7 @@ private fun TagCheckBox(
     selectedTags: MutableList<String>,
     tag: AniTag
 ) {
-    var checked by remember (key1 = selectedTags) {
+    var checked by remember(key1 = selectedTags) {
         mutableStateOf(
             selectedTags.contains(
                 tag.name
