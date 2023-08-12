@@ -33,7 +33,6 @@ import com.example.anilist.R
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.Dimens
-import com.example.anilist.ui.details.mediadetails.MediaDetailsViewModel
 import com.example.anilist.utils.AsyncImageRoundedCorners
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -140,5 +139,5 @@ private fun MediaCard(media: Media, navigateToMedia: (Int) -> Unit) {
 @Preview
 @Composable
 fun StudioDetailPreview() {
-    MediaCard(media = Media(title = "鬼滅の刃"), navigateToMedia = { })
+    MediaCard(media = Media(title = "鬼滅の刃",), navigateToMedia = { })
 }

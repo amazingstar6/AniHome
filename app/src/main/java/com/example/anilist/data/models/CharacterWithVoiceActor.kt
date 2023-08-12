@@ -12,6 +12,7 @@ data class CharacterWithVoiceActor(
     val voiceActorCoverImage: String = "",
     val voiceActorLanguage: String = "",
     val role: AniCharacterRole = AniCharacterRole.UNKNOWN,
+    val roleNotes: String = ""
 )
 
 enum class AniCharacterRole {

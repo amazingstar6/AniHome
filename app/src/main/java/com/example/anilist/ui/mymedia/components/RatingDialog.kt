@@ -66,7 +66,7 @@ fun RatingDialogPreview() {
     RatingDialog(
         setShowRatingDialog = {},
         saveStatus = {},
-        currentMedia = Media(rawScore = 25.0),
+        currentMedia = Media(rawScore = 25.0,),
         setCurrentMedia = {}
     )
 }

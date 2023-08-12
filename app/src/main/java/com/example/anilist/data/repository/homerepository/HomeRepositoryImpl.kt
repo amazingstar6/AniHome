@@ -318,25 +318,25 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
     private fun parseMediaTitleCover(media: MediaTitleCover): Media {
         return Media(
             id = media.id,
+            type = media.type?.toAniHomeType() ?: com.example.anilist.data.models.MediaType.UNKNOWN,
             title = media.title?.userPreferred ?: "",
             coverImage = media.coverImage?.extraLarge ?: "",
-            type = media.type?.toAniHomeType() ?: com.example.anilist.data.models.MediaType.UNKNOWN
         )
     }
 
     private fun parseSearchMedia(media: SearchMediaQuery.Medium): Media {
         return Media(
             id = media.id,
+            type = media.type?.toAniHomeType() ?: com.example.anilist.data.models.MediaType.UNKNOWN,
             title = media.title?.userPreferred ?: "",
             coverImage = media.coverImage?.extraLarge ?: "",
-            type = media.type?.toAniHomeType() ?: com.example.anilist.data.models.MediaType.UNKNOWN,
             format = media.format?.toAni() ?: AniMediaFormat.UNKNOWN,
-            episodeAmount = media.episodes ?: -1,
-            chapters = media.chapters ?: -1,
-            volumes = media.volumes ?: -1,
-            averageScore = media.averageScore ?: -1,
             season = media.season?.toAniHomeSeason() ?: Season.UNKNOWN,
             seasonYear = media.seasonYear ?: -1,
+            episodeAmount = media.episodes ?: -1,
+            averageScore = media.averageScore ?: -1,
+            volumes = media.volumes ?: -1,
+            chapters = media.chapters ?: -1,
             startDate = if (media.startDate?.year != null && media.startDate.month != null && media.startDate.day != null) FuzzyDate(
                 media.startDate.year,
                 media.startDate.month,
@@ -346,7 +346,7 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
                 media.endDate.year,
                 media.endDate.month,
                 media.endDate.day
-            ) else null
+            ) else null,
         )
     }
 

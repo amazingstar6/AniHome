@@ -7,10 +7,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.CharacterDetail
+import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StaffDetail
 import com.example.anilist.data.models.StatusUpdate
@@ -23,9 +26,13 @@ import com.example.anilist.ui.home.PREFETCH_DISTANCE
 import com.example.anilist.ui.navigation.AniListRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -46,7 +53,10 @@ class MediaDetailsViewModel @Inject constructor(
         MutableStateFlow(MediaDetailUiState.Loading)
 
     val media: StateFlow<MediaDetailUiState> = _media
+
     private val _mediaId = MutableStateFlow(-1)
+
+    val selectedCharacterLanguage = MutableStateFlow(0)
 
     init {
         savedStateHandle.get<Int>(AniListRoute.MEDIA_DETAIL_ID_KEY)?.let {
@@ -67,8 +77,30 @@ class MediaDetailsViewModel @Inject constructor(
         ).flow.cachedIn(viewModelScope)
     }
 
-    private val _staff = MutableLiveData<StaffDetail>()
-    val staff: LiveData<StaffDetail> = _staff
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val characterList: Flow<PagingData<CharacterWithVoiceActor>> =
+        _mediaId.combine(selectedCharacterLanguage){id, languageId -> id to languageId }.flatMapLatest { pair ->
+            Pager(
+                config = PagingConfig(
+                    pageSize = 25,
+                    prefetchDistance = PREFETCH_DISTANCE,
+                    enablePlaceholders = false
+                ),
+                pagingSourceFactory = {
+                    CharacterPagingSource(
+                        mediaId = pair.first,
+                        mediaDetailsRepository = mediaDetailsRepository
+                    )
+                }
+            ).flow.map { pagingData ->
+                pagingData.filter {
+                    it.voiceActorLanguage == (media.value as? MediaDetailUiState.Success)?.data?.languages?.get(
+                        selectedCharacterLanguage.value
+                    )
+                }
+            }
+                .cachedIn(viewModelScope)
+        }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val reviews = _mediaId.flatMapLatest { mediaId ->
@@ -169,6 +201,10 @@ class MediaDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             myMediaRepository.deleteEntry(id)
         }
+    }
+
+    fun setCharacterLanguage(language: Int) {
+        selectedCharacterLanguage.value = language
     }
 }
 

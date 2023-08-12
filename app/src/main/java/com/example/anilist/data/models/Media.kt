@@ -29,6 +29,7 @@ data class Media(
     val volumes: Int = -1,
     val personalVolumeProgress: Int = -1,
     val chapters: Int = -1,
+    //todo unused
     val characterWithVoiceActors: List<CharacterWithVoiceActor> = emptyList(),
     val stats: Stats = Stats(),
     val startDate: FuzzyDate? = null,
@@ -50,7 +51,10 @@ data class Media(
     val updatedAt: Int = -1,
 
     //todo not used
-    val priority: Int = -1
+    val priority: Int = -1,
+
+
+    val languages: List<String> = emptyList()
 )
 
 enum class MediaType {

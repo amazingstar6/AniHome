@@ -1,12 +1,10 @@
 package com.example.anilist.data.repository
 
-import android.util.Log
 import com.example.anilist.GetMediaOfStudioQuery
 import com.example.anilist.GetStudioDetailsQuery
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.Media
 import com.example.anilist.utils.Apollo
-import timber.log.Timber
 import javax.inject.Inject
 
 private const val TAG = "StudioDetailRepository"
@@ -36,7 +34,7 @@ class StudioDetailRepository @Inject constructor() {
             Media(
                 id = it.node?.id ?: -1,
                 title = it.node?.title?.userPreferred ?: "",
-                coverImage = it.node?.coverImage?.extraLarge ?: ""
+                coverImage = it.node?.coverImage?.extraLarge ?: "",
             )
         }.orEmpty()
     }

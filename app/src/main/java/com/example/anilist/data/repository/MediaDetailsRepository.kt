@@ -2,6 +2,7 @@ package com.example.anilist.data.repository
 
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
+import com.example.anilist.GetCharactersOfMediaQuery
 import com.example.anilist.GetMediaDetailQuery
 import com.example.anilist.GetReviewsOfMediaQuery
 import com.example.anilist.GetStaffInfoQuery
@@ -104,6 +105,33 @@ class MediaDetailsRepository @Inject constructor() {
             val data = result.data?.Media
             return if (data != null) {
                 AniResult.Success(parseStaffList(data))
+            } else {
+                AniResult.Failure("Network error")
+            }
+        } catch (exception: ApolloException) {
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
+        }
+    }
+
+    suspend fun fetchCharacterList(
+        mediaId: Int,
+        page: Int,
+        pageSize: Int
+    ): AniResult<List<CharacterWithVoiceActor>> {
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    GetCharactersOfMediaQuery(id = mediaId, page = page, perPage = pageSize),
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
+            }
+            val data = result.data?.Media
+            return if (data != null) {
+                AniResult.Success(parseCharacters(data))
             } else {
                 AniResult.Failure("Network error")
             }
@@ -405,16 +433,15 @@ class MediaDetailsRepository @Inject constructor() {
         }
         return Media(
             id = media?.id ?: -1,
-            title = media?.title?.native ?: "Unknown",
+            listEntryId = data?.MediaList?.id ?: -1,
             type = media?.type?.toAniHomeType()
                 ?: com.example.anilist.data.models.MediaType.UNKNOWN,
+            title = media?.title?.native ?: "Unknown",
             coverImage = media?.coverImage?.extraLarge ?: "",
             format = media?.format?.toAni() ?: AniMediaFormat.UNKNOWN,
             season = media?.season?.toAniHomeSeason() ?: Season.UNKNOWN,
             seasonYear = media?.seasonYear ?: -1,
             episodeAmount = media?.episodes ?: -1,
-            volumes = media?.volumes ?: -1,
-            chapters = media?.chapters ?: -1,
             averageScore = media?.averageScore ?: 0,
             genres = genres,
             description = media?.description ?: "No description",
@@ -445,27 +472,39 @@ class MediaDetailsRepository @Inject constructor() {
             ),
             tags = tags,
             trailerImage = media?.trailer?.thumbnail ?: "",
-            // todo add dailymotion
             trailerLink =
             if (media?.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${media.trailer.id}" else if (media?.trailer?.site == "dailymotion") "" else "",
+            // todo add dailymotion
             externalLinks = externalLinks,
+            personalProgress = data?.MediaList?.progress ?: -1,
+            isPrivate = data?.MediaList?.private ?: false,
+//            characterWithVoiceActors = parseCharacters(media),
+            languages = data?.Media?.characters?.edges?.let {
+                val resultList = mutableListOf<String>()
+                it.forEach {edge ->
+                    edge?.voiceActorRoles?.forEach {voiceActorRole ->
+                        voiceActorRole?.voiceActor?.languageV2?.let {language ->
+                            resultList.add(language)
+                        }
+                    }
+                }
+                resultList.distinct()
+            }.orEmpty(),
+            note = data?.MediaList?.notes ?: "",
+            rewatches = data?.MediaList?.repeat ?: -1,
+            volumes = media?.volumes ?: -1,
+            personalVolumeProgress = data?.MediaList?.progressVolumes ?: -1,
+            chapters = media?.chapters ?: -1,
             stats = parseStats(media),
-            characterWithVoiceActors = parseCharacters(media),
             favourites = media?.favourites ?: -1,
             isFavourite = media?.isFavourite ?: false,
             isFavouriteBlocked = media?.isFavouriteBlocked ?: false,
-            personalStatus = data?.MediaList?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN,
-            studios = data?.Media?.studios?.nodes?.filterNotNull()
-                ?.map { AniStudio(id = it.id, name = it.name) }.orEmpty(),
-            personalProgress = data?.MediaList?.progress ?: -1,
-            personalVolumeProgress = data?.MediaList?.progressVolumes ?: -1,
-            rewatches = data?.MediaList?.repeat ?: -1,
-            rawScore = data?.MediaList?.score ?: -1.0,
             startedAt = getFuzzyDate(data?.MediaList?.startedAt?.fuzzyDate),
             completedAt = getFuzzyDate(data?.MediaList?.completedAt?.fuzzyDate),
-            isPrivate = data?.MediaList?.private ?: false,
-            note = data?.MediaList?.notes ?: "",
-            listEntryId = data?.MediaList?.id ?: -1
+            personalStatus = data?.MediaList?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN,
+            rawScore = data?.MediaList?.score ?: -1.0,
+            studios = data?.Media?.studios?.nodes?.filterNotNull()
+                ?.map { AniStudio(id = it.id, name = it.name) }.orEmpty(),
         )
     }
 
@@ -482,11 +521,11 @@ class MediaDetailsRepository @Inject constructor() {
             null
         }
 
-    private fun parseCharacters(anime: GetMediaDetailQuery.Media?): List<CharacterWithVoiceActor> {
+    private fun parseCharacters(media: GetCharactersOfMediaQuery.Media?): List<CharacterWithVoiceActor> {
         val characterWithVoiceActors: MutableList<CharacterWithVoiceActor> = mutableListOf()
-        if (anime?.type == MediaType.ANIME) {
+        if (media?.type == MediaType.ANIME) {
             val languages: MutableList<String> = mutableListOf()
-            for (character in anime.characters?.edges.orEmpty()) {
+            for (character in media.characters?.edges.orEmpty()) {
                 for (voiceActor in character?.voiceActorRoles.orEmpty()) {
                     if (languages.contains(voiceActor?.voiceActor?.languageV2) &&
                         voiceActor?.voiceActor?.languageV2 != null
@@ -503,14 +542,15 @@ class MediaDetailsRepository @Inject constructor() {
                                 voiceActorName = voiceActor.voiceActor?.name?.userPreferred ?: "",
                                 voiceActorCoverImage = voiceActor.voiceActor?.image?.large ?: "",
                                 voiceActorLanguage = voiceActor.voiceActor?.languageV2 ?: "",
-                                role = character.role.toAniRole()
+                                role = character.role.toAniRole(),
+                                roleNotes = voiceActor.roleNotes.orEmpty()
                             ),
                         )
                     }
                 }
             }
-        } else if (anime?.type == MediaType.MANGA) {
-            for (character in anime.characters?.edges.orEmpty()) {
+        } else if (media?.type == MediaType.MANGA) {
+            for (character in media.characters?.edges.orEmpty()) {
                 characterWithVoiceActors.add(
                     CharacterWithVoiceActor(
                         id = character?.node?.id ?: 0,

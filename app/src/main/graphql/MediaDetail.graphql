@@ -213,6 +213,41 @@ query getMediaDetail($id: Int!, $userId: Int!, $skipMediaList: Boolean = false) 
     }
 }
 
+query GetCharactersOfMedia($id: Int!, $page: Int!, $perPage: Int!) {
+    Media(id: $id) {
+        type
+        characters(sort: FAVOURITES_DESC, page: $page, perPage: $perPage) {
+            edges {
+                node {
+                    id
+                    name {
+                        native
+                    }
+                    image {
+                        large
+                    }
+                }
+                role
+                name
+                voiceActorRoles {
+                    voiceActor {
+                        id
+                        name {
+                            userPreferred
+                        }
+                        image {
+                            large
+                        }
+                        languageV2
+                    }
+                    roleNotes
+                    dubGroup
+                }
+            }
+        }
+    }
+}
+
 query GetReviewsOfMedia($id: Int!, $page:Int! $perPage:Int!) {
     Media(id: $id) {
         reviews(page: $page, perPage: $perPage) {

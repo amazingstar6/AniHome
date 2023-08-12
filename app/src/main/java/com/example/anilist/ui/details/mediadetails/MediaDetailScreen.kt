@@ -2,7 +2,6 @@ package com.example.anilist.ui.details.mediadetails
 
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Spring
@@ -47,8 +46,6 @@ import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -56,7 +53,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.anilist.R
-import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
 import com.example.anilist.data.repository.MediaDetailsRepository
@@ -128,6 +124,12 @@ fun MediaDetail(
 
     val reviews = mediaDetailsViewModel.reviews.collectAsLazyPagingItems()
     val staff = mediaDetailsViewModel.staffList.collectAsLazyPagingItems()
+
+    val selectedLanguage by mediaDetailsViewModel.selectedCharacterLanguage.collectAsStateWithLifecycle()
+//    val languages: List<String> =
+//        mediaDetailsViewModel.characterList.map { it.map { it.voiceActorLanguage } }
+    val characters = mediaDetailsViewModel.characterList.collectAsLazyPagingItems()
+    val setSelectedLanguage: (Int) -> Unit = { mediaDetailsViewModel.setCharacterLanguage(it) }
 
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(title = {
@@ -239,10 +241,11 @@ fun MediaDetail(
                                 1 -> {
                                     Characters(
                                         isAnime = isAnime,
-                                        (media as MediaDetailUiState.Success).data.characterWithVoiceActors
-                                            .map { it.voiceActorLanguage }
-                                            .distinct(),
-                                        (media as MediaDetailUiState.Success).data.characterWithVoiceActors,
+                                        languages = (media as MediaDetailUiState.Success).data.languages,
+                                        selectedLanguage = selectedLanguage,
+                                        setSelectedLanguage = setSelectedLanguage,
+//                                        (media as MediaDetailUiState.Success).data.characterWithVoiceActors,
+                                        characterWithVoiceActors = characters,
                                         navigateToCharacter = navigateToCharacter,
                                         navigateToStaff = navigateToStaff,
                                     )
@@ -444,33 +447,5 @@ fun IconWithText(
             color = textColor,
         )
     }
-}
-
-@Preview(
-    device = "id:pixel_6_pro",
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL,
-    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE,
-    group = "Characters",
-)
-@Composable
-fun CharactersPreview() {
-    Characters(
-        isAnime = false,
-        listOf("Japanese", "Portuguese", "English", "French"),
-        characterWithVoiceActors = listOf(
-            CharacterWithVoiceActor(
-                id = 1212321,
-                voiceActorId = 21312,
-                name = "tanjirou",
-                coverImage = "",
-                voiceActorName = "花江夏樹",
-                voiceActorCoverImage = "",
-                voiceActorLanguage = "Japanese",
-            ),
-        ),
-        navigateToCharacter = { },
-        navigateToStaff = { },
-    )
 }
 

@@ -239,12 +239,12 @@ class MyMediaRepositoryImpl @Inject constructor() : MyMediaRepository {
             episodeAmount = data?.media?.episodes ?: -1,
             personalRating = data?.score ?: (-1).toDouble(),
             personalProgress = data?.progress ?: -1,
-            personalVolumeProgress = data?.progressVolumes ?: -1,
-            rewatches = data?.repeat ?: -1,
-            chapters = data?.media?.chapters ?: -1,
-            volumes = data?.media?.volumes ?: -1,
-            note = data?.notes ?: "",
             isPrivate = data?.private ?: false,
+            note = data?.notes ?: "",
+            rewatches = data?.repeat ?: -1,
+            volumes = data?.media?.volumes ?: -1,
+            personalVolumeProgress = data?.progressVolumes ?: -1,
+            chapters = data?.media?.chapters ?: -1,
             startedAt = if (data?.startedAt?.year != null && data.startedAt.month != null && data.startedAt.day != null) {
                 FuzzyDate(
                     data.startedAt.year,
@@ -263,11 +263,11 @@ class MyMediaRepositoryImpl @Inject constructor() : MyMediaRepository {
             } else {
                 null
             },
-            rawScore = data?.score ?: -1.0,
-            personalStatus = data?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN,
-            updatedAt = data?.updatedAt ?: -1,
             createdAt = data?.createdAt?.toLong()?.let { Utils.convertEpochToFuzzyDate(it) },
-            priority = data?.priority ?: -1
+            personalStatus = data?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN,
+            rawScore = data?.score ?: -1.0,
+            updatedAt = data?.updatedAt ?: -1,
+            priority = data?.priority ?: -1,
         )
     }
 }

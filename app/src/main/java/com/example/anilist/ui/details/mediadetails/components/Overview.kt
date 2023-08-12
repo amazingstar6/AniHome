@@ -621,8 +621,8 @@ fun OverviewPreview() {
                 onNavigateToLargeCover = {},
                 onNavigateToDetails = {},
                 media = Media(
-                    title = "鬼滅の刃 刀鍛冶の里編",
                     type = MediaType.ANIME,
+                    title = "鬼滅の刃 刀鍛冶の里編",
                     coverImage = "",
                     format = AniMediaFormat.TV,
                     season = Season.SPRING,
