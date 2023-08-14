@@ -23,12 +23,12 @@ import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniTag
 import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.AniUser
-import com.example.anilist.data.models.CharacterDetail
+import com.example.anilist.data.models.AniCharacterDetail
 import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.HomeTrendingTypes
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.Season
-import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.models.AniSeason
+import com.example.anilist.data.models.AniStaffDetail
 import com.example.anilist.data.repository.TrendingTogetherPagingSource
 import com.example.anilist.data.toAniHomeSeason
 import com.example.anilist.data.toAniHomeType
@@ -331,7 +331,7 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
             title = media.title?.userPreferred ?: "",
             coverImage = media.coverImage?.extraLarge ?: "",
             format = media.format?.toAni() ?: AniMediaFormat.UNKNOWN,
-            season = media.season?.toAniHomeSeason() ?: Season.UNKNOWN,
+            season = media.season?.toAniHomeSeason() ?: AniSeason.UNKNOWN,
             seasonYear = media.seasonYear ?: -1,
             episodeAmount = media.episodes ?: -1,
             averageScore = media.averageScore ?: -1,
@@ -375,7 +375,7 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
                                 else -> Optional.absent() // cannot happen
                             },
                             season =
-                            if (searchState.currentSeason != Season.UNKNOWN && searchState.searchType != SearchFilter.MANGA) {
+                            if (searchState.currentSeason != AniSeason.UNKNOWN && searchState.searchType != SearchFilter.MANGA) {
                                 Optional.present(
                                     MediaSeason.fromAniSeason(searchState.currentSeason)
                                 )
@@ -440,8 +440,8 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
         }
     }
 
-    private fun parseSearchCharacters(character: SearchCharactersQuery.Character): CharacterDetail {
-        return CharacterDetail(
+    private fun parseSearchCharacters(character: SearchCharactersQuery.Character): AniCharacterDetail {
+        return AniCharacterDetail(
             id = character.id,
             userPreferredName = character.name?.userPreferred ?: "",
             coverImage = character.image?.large ?: "",
@@ -456,7 +456,7 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
         pageSize: Int,
         text: String,
         sort: AniCharacterSort
-    ): AniResult<List<CharacterDetail>> {
+    ): AniResult<List<AniCharacterDetail>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -476,7 +476,7 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
             val data = result.data
 
             return if (data != null) {
-                val resultList = mutableListOf<CharacterDetail>()
+                val resultList = mutableListOf<AniCharacterDetail>()
                 data.Page?.characters?.forEach {
                     if (it != null) {
                         resultList.add(parseSearchCharacters(it))
@@ -492,7 +492,7 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
         }
     }
 
-    override suspend fun searchStaff(text: String, page: Int, pageSize: Int): AniResult<List<StaffDetail>> {
+    override suspend fun searchStaff(text: String, page: Int, pageSize: Int): AniResult<List<AniStaffDetail>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -507,7 +507,7 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
 
             val data = result.data
             return if (data != null) {
-                val resultList = mutableListOf<StaffDetail>()
+                val resultList = mutableListOf<AniStaffDetail>()
                 result.data?.Page?.staff?.forEach {
                     if (it != null) {
                         resultList.add(parseSearchStaff(it))
@@ -562,8 +562,8 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
         )
     }
 
-    private fun parseSearchStaff(staff: SearchStaffQuery.Staff): StaffDetail {
-        return StaffDetail(
+    private fun parseSearchStaff(staff: SearchStaffQuery.Staff): AniStaffDetail {
+        return AniStaffDetail(
             id = staff.id,
             userPreferredName = staff.name?.userPreferred ?: "",
             coverImage = staff.image?.large ?: "",
@@ -735,13 +735,13 @@ private fun MediaStatus.Companion.fromAniMediaStatus(status: AniMediaStatus): Me
     }
 }
 
-private fun MediaSeason.Companion.fromAniSeason(season: Season): MediaSeason {
+private fun MediaSeason.Companion.fromAniSeason(season: AniSeason): MediaSeason {
     return when (season) {
-        Season.UNKNOWN -> MediaSeason.UNKNOWN__
-        Season.SPRING -> MediaSeason.SPRING
-        Season.SUMMER -> MediaSeason.SUMMER
-        Season.FALL -> MediaSeason.FALL
-        Season.WINTER -> MediaSeason.WINTER
+        AniSeason.UNKNOWN -> MediaSeason.UNKNOWN__
+        AniSeason.SPRING -> MediaSeason.SPRING
+        AniSeason.SUMMER -> MediaSeason.SUMMER
+        AniSeason.FALL -> MediaSeason.FALL
+        AniSeason.WINTER -> MediaSeason.WINTER
     }
 }
 

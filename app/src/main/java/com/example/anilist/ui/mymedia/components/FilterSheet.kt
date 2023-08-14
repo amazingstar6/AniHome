@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.anilist.R
-import com.example.anilist.data.models.PersonalMediaStatus
+import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.ui.Dimens
 
 @Composable
@@ -29,8 +29,8 @@ import com.example.anilist.ui.Dimens
 fun FilterSheet(
     filterSheetState: SheetState,
     hideFilterSheet: () -> Unit,
-    filter: PersonalMediaStatus,
-    setFilter: (PersonalMediaStatus) -> Unit,
+    filter: AniPersonalMediaStatus,
+    setFilter: (AniPersonalMediaStatus) -> Unit,
     isAnime: Boolean
 ) {
     ModalBottomSheet(
@@ -52,7 +52,7 @@ fun FilterSheet(
 //                )
 //            }
 //        })
-        PersonalMediaStatus.values().forEach { status ->
+        AniPersonalMediaStatus.values().forEach { status ->
             ModalSheetTextButton(
                 filterFunction = setFilter,
                 hideFilterSheet = hideFilterSheet,
@@ -125,10 +125,10 @@ fun FilterSheet(
 
 @Composable
 fun ModalSheetTextButton(
-    filterFunction: (PersonalMediaStatus) -> Unit,
+    filterFunction: (AniPersonalMediaStatus) -> Unit,
     hideFilterSheet: () -> Unit,
-    filter: PersonalMediaStatus,
-    thisFilter: PersonalMediaStatus,
+    filter: AniPersonalMediaStatus,
+    thisFilter: AniPersonalMediaStatus,
     icon: Int,
     name: String
 ) {
@@ -159,8 +159,8 @@ fun FilterComponentPreview() {
     ModalSheetTextButton(
         filterFunction = {},
         hideFilterSheet = { },
-        filter = PersonalMediaStatus.PLANNING,
-        thisFilter = PersonalMediaStatus.REPEATING,
+        filter = AniPersonalMediaStatus.PLANNING,
+        thisFilter = AniPersonalMediaStatus.REPEATING,
         name = "Repeating",
         icon = R.drawable.outline_replay_24
     )
@@ -176,7 +176,7 @@ fun FilterModalSheetPreview() {
     FilterSheet(
         filterSheetState = state,
         hideFilterSheet = { },
-        filter = PersonalMediaStatus.CURRENT,
+        filter = AniPersonalMediaStatus.CURRENT,
         setFilter = {},
         isAnime = true
     )

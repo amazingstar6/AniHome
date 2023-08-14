@@ -3,7 +3,7 @@ package com.example.anilist.ui.details.mediadetails
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.anilist.data.models.AniResult
-import com.example.anilist.data.models.Staff
+import com.example.anilist.data.models.AniStaff
 import com.example.anilist.data.repository.MediaDetailsRepository
 
 private const val STARTING_KEY = 1
@@ -11,8 +11,8 @@ private const val STARTING_KEY = 1
 class StaffPagingSource(
     private val mediaId: Int,
     private val mediaDetailsRepository: MediaDetailsRepository
-) : PagingSource<Int, Staff>() {
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Staff> {
+) : PagingSource<Int, AniStaff>() {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, AniStaff> {
         val start = params.key ?: STARTING_KEY
         return when (val data = mediaDetailsRepository.fetchStaffList(mediaId, start, params.loadSize)) {
             is AniResult.Success -> {
@@ -30,7 +30,7 @@ class StaffPagingSource(
 
     }
 
-    override fun getRefreshKey(state: PagingState<Int, Staff>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, AniStaff>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
             // anchor position is the last index that successfully fetched data
             val anchorPage = state.closestPageToPosition(anchorPosition)

@@ -1,7 +1,9 @@
 package com.example.anilist.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -24,6 +26,7 @@ import com.example.anilist.R
 import com.example.anilist.data.models.HomeTrendingTypes
 import com.example.anilist.ui.Dimens
 import com.example.anilist.utils.AsyncImageRoundedCorners
+import com.example.anilist.utils.shimmerBrush
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,26 +60,30 @@ fun MediaOverview(
     }) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(120.dp),
+            contentPadding = PaddingValues(horizontal = Dimens.PaddingSmall),
             modifier = Modifier.padding(top = it.calculateTopPadding())
         ) {
             items(pager.itemCount) { index ->
                 val media = pager[index]
-                if (media != null) {
-                    Column(modifier = Modifier.clickable {
-                        navigateToDetails(media.id)
-                    }) {
+//                if (media != null) {
+                    Column(modifier = Modifier
+                        .clickable {
+                            navigateToDetails(media?.id ?: -1)
+                        }
+//                        .background(shimmerBrush(media != null))
+                    ) {
                         AsyncImageRoundedCorners(
-                            coverImage = media.coverImage,
-                            contentDescription = "Cover of ${media.title}"
+                            coverImage = media?.coverImage ?: "",
+                            contentDescription = "Cover of ${media?.title ?: ""}"
                         )
                         Text(
-                            text = media.title,
+                            text = media?.title ?: "",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(start = Dimens.PaddingSmall, end = Dimens.PaddingSmall, bottom = Dimens.PaddingNormal)
                         )
                     }
-                }
+//                }
             }
         }
 

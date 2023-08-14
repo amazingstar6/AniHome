@@ -1,7 +1,5 @@
 package com.example.anilist.ui.details.mediadetails
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,15 +9,12 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
 import com.example.anilist.data.models.AniResult
-import com.example.anilist.data.models.AniStudio
-import com.example.anilist.data.models.CharacterDetail
 import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.models.AniReviewRatingStatus
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.data.repository.MediaDetailsRepository
-import com.example.anilist.data.repository.StudioDetailRepository
-import com.example.anilist.data.repository.StudioMediaPagingSource
+import com.example.anilist.data.repository.ReviewDetailRepository
 import com.example.anilist.data.repository.mymedia.MyMediaRepositoryImpl
 import com.example.anilist.ui.details.reviewdetail.ReviewPagingSource
 import com.example.anilist.ui.home.PREFETCH_DISTANCE
@@ -27,9 +22,10 @@ import com.example.anilist.ui.navigation.AniListRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -41,11 +37,13 @@ import javax.inject.Inject
 //    val Anime: Anime? = null,
 // )
 
+
+//todo refactor repositories?
 @HiltViewModel
 class MediaDetailsViewModel @Inject constructor(
     private val mediaDetailsRepository: MediaDetailsRepository,
     private val myMediaRepository: MyMediaRepositoryImpl,
-    private val studioDetailRepository: StudioDetailRepository,
+    private val reviewDetailRepository: ReviewDetailRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -57,6 +55,15 @@ class MediaDetailsViewModel @Inject constructor(
     private val _mediaId = MutableStateFlow(-1)
 
     val selectedCharacterLanguage = MutableStateFlow(0)
+
+    private val _toast = MutableSharedFlow<String>()
+    val toast = _toast.asSharedFlow()
+
+    private fun sendMessage(text: String) {
+        viewModelScope.launch {
+            _toast.emit(text)
+        }
+    }
 
     init {
         savedStateHandle.get<Int>(AniListRoute.MEDIA_DETAIL_ID_KEY)?.let {
@@ -79,31 +86,33 @@ class MediaDetailsViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val characterList: Flow<PagingData<CharacterWithVoiceActor>> =
-        _mediaId.combine(selectedCharacterLanguage){id, languageId -> id to languageId }.flatMapLatest { pair ->
-            Pager(
-                config = PagingConfig(
-                    pageSize = 25,
-                    prefetchDistance = PREFETCH_DISTANCE,
-                    enablePlaceholders = false
-                ),
-                pagingSourceFactory = {
-                    CharacterPagingSource(
-                        mediaId = pair.first,
-                        mediaDetailsRepository = mediaDetailsRepository
-                    )
+        _mediaId.combine(selectedCharacterLanguage) { id, languageId -> id to languageId }
+            .flatMapLatest { pair ->
+                Pager(
+                    config = PagingConfig(
+                        pageSize = 25,
+                        prefetchDistance = PREFETCH_DISTANCE,
+                        enablePlaceholders = false
+                    ),
+                    pagingSourceFactory = {
+                        CharacterPagingSource(
+                            mediaId = pair.first,
+                            mediaDetailsRepository = mediaDetailsRepository
+                        )
+                    }
+                ).flow.map { pagingData ->
+                    pagingData.filter {
+                        it.voiceActorLanguage == (media.value as? MediaDetailUiState.Success)?.data?.languages?.getOrElse(
+                            selectedCharacterLanguage.value, { "Japanese"  }
+                        )
+                    }
                 }
-            ).flow.map { pagingData ->
-                pagingData.filter {
-                    it.voiceActorLanguage == (media.value as? MediaDetailUiState.Success)?.data?.languages?.get(
-                        selectedCharacterLanguage.value
-                    )
-                }
+                    .cachedIn(viewModelScope)
             }
-                .cachedIn(viewModelScope)
-        }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val reviews = _mediaId.flatMapLatest { mediaId ->
+        Timber.d("Paging reviews?")
         Pager(
             config = PagingConfig(pageSize = 25, prefetchDistance = 5, enablePlaceholders = false),
             pagingSourceFactory = {
@@ -113,30 +122,7 @@ class MediaDetailsViewModel @Inject constructor(
     }
 
 
-    private val _character = MutableLiveData<CharacterDetail>()
-    val character: LiveData<CharacterDetail> = _character
-
-    private val _studio: MutableStateFlow<AniStudio> = MutableStateFlow(AniStudio())
-    val studio: StateFlow<AniStudio> = _studio
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val mediaOfStudio = _studio.flatMapLatest { studio ->
-        Pager(
-            config = PagingConfig(pageSize = 25, prefetchDistance = 5, enablePlaceholders = false),
-            pagingSourceFactory = {
-                StudioMediaPagingSource(studioDetailRepository, studio.id)
-            }
-        ).flow.cachedIn(viewModelScope)
-    }
-
-    fun getStudioDetails(id: Int) {
-        viewModelScope.launch {
-            _studio.value = studioDetailRepository.getStudioDetails(id)
-        }
-    }
-
-
-    fun fetchMedia(mediaId: Int) {
+    private fun fetchMedia(mediaId: Int) {
         Timber.d("Saved state handle has ${savedStateHandle.get<Int>(AniListRoute.MEDIA_DETAIL_ID_KEY)}")
         viewModelScope.launch {
             when (val data = mediaDetailsRepository.fetchMedia(mediaId)) {
@@ -168,7 +154,7 @@ class MediaDetailsViewModel @Inject constructor(
                 MediaDetailsRepository.LikeAbleType.ANIME, MediaDetailsRepository.LikeAbleType.MANGA -> {
                     when (isFavourite) {
                         is AniResult.Failure -> {
-                            //todo
+                            sendMessage(isFavourite.error)
                         }
 
                         is AniResult.Success -> {
@@ -188,12 +174,22 @@ class MediaDetailsViewModel @Inject constructor(
         }
     }
 
-    fun updateProgress(statusUpdate: StatusUpdate, mediaId: Int) {
+    fun updateProgress(statusUpdate: StatusUpdate) {
         viewModelScope.launch {
-            myMediaRepository.updateProgress(
+            when (val data = myMediaRepository.updateProgress(
                 statusUpdate,
-            )
-            fetchMedia(mediaId)
+            )) {
+                is AniResult.Success -> {
+                    _media.value = MediaDetailUiState.Success((_media.value as MediaDetailUiState.Success).data.copy(
+                        mediaListEntry = data.data.mediaListEntry
+                    ))
+//                    _media.value = MediaDetailUiState.Success(data.data)
+                }
+                is AniResult.Failure -> {
+                    sendMessage(data.error)
+//                    sendMessage("Failed updating progress, please try again")
+                }
+            }
         }
     }
 
@@ -205,6 +201,13 @@ class MediaDetailsViewModel @Inject constructor(
 
     fun setCharacterLanguage(language: Int) {
         selectedCharacterLanguage.value = language
+    }
+
+    fun rateReview(reviewId: Int, rating: AniReviewRatingStatus) {
+        Timber.d("Rating review $reviewId with $rating")
+        viewModelScope.launch {
+            reviewDetailRepository.rateReview(id = reviewId, rating = rating)
+        }
     }
 }
 

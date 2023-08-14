@@ -8,7 +8,7 @@ import com.example.anilist.GetUnReadNotificationCountQuery
 import com.example.anilist.MarkAllAsReadQuery
 import com.example.anilist.data.models.AniNotificationType
 import com.example.anilist.data.models.AniResult
-import com.example.anilist.data.models.Notification
+import com.example.anilist.data.models.AniNotification
 import com.example.anilist.type.NotificationType
 import com.example.anilist.utils.Apollo
 import com.example.anilist.utils.Utils.Companion.orMinusOne
@@ -17,7 +17,7 @@ import javax.inject.Singleton
 
 @Singleton
 class NotificationsRepository @Inject constructor() {
-    suspend fun getNotifications(page: Int, pageSize: Int): AniResult<List<Notification>> {
+    suspend fun getNotifications(page: Int, pageSize: Int): AniResult<List<AniNotification>> {
         try {
             val result =
                 Apollo.apolloClient.newBuilder().fetchPolicy(FetchPolicy.NetworkFirst).build()
@@ -95,12 +95,12 @@ class NotificationsRepository @Inject constructor() {
         }
     }
 
-    private fun parseNotification(data: GetNotificationsQuery.Data?): List<Notification> {
-        val list = mutableListOf<Notification>()
+    private fun parseNotification(data: GetNotificationsQuery.Data?): List<AniNotification> {
+        val list = mutableListOf<AniNotification>()
         for (notification in data?.Page?.notifications.orEmpty()) {
             notification?.onAiringNotification?.let { onAiringNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onAiringNotification.type?.toAni() ?: AniNotificationType.UNKNOWN,
                         context = buildString { onAiringNotification.contexts?.forEach { append(" $it") } },
                         image = onAiringNotification.media?.coverImage?.extraLarge
@@ -114,7 +114,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onFollowingNotification?.let { onFollowingNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onFollowingNotification.type.toAni(),
                         context = onFollowingNotification.context.orEmpty(),
                         createdAt = onFollowingNotification.createdAt ?: -1,
@@ -126,7 +126,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onActivityMessageNotification?.let { onActivityMessageNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onActivityMessageNotification.type.toAni(),
                         createdAt = onActivityMessageNotification.createdAt ?: -1,
                         userId = onActivityMessageNotification.userId,
@@ -140,7 +140,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onActivityMentionNotification?.let { onActivityMentionNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onActivityMentionNotification.type.toAni(),
                         createdAt = onActivityMentionNotification.createdAt ?: -1,
                         userId = onActivityMentionNotification.userId,
@@ -153,7 +153,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onActivityReplyNotification?.let { onActivityReplyNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onActivityReplyNotification.type.toAni(),
                         createdAt = onActivityReplyNotification.createdAt ?: -1,
                         context = onActivityReplyNotification.context.orEmpty(),
@@ -163,7 +163,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onActivityReplySubscribedNotification?.let { onActivityReplySubscribedNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onActivityReplySubscribedNotification.type.toAni(),
                         createdAt = onActivityReplySubscribedNotification.createdAt ?: -1,
                         context = onActivityReplySubscribedNotification.context.orEmpty(),
@@ -174,7 +174,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onActivityLikeNotification?.let { onActivityLikeNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onActivityLikeNotification.type.toAni(),
                         createdAt = onActivityLikeNotification.createdAt ?: -1,
                         image = onActivityLikeNotification.user?.avatar?.large ?: "",
@@ -187,7 +187,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onActivityReplyLikeNotification?.let { onActivityReplyLikeNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onActivityReplyLikeNotification.type.toAni(),
                         createdAt = onActivityReplyLikeNotification.createdAt ?: -1,
                         image = onActivityReplyLikeNotification.user?.avatar?.large ?: "",
@@ -200,7 +200,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onThreadCommentMentionNotification?.let { onThreadCommentMentionNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onThreadCommentMentionNotification.type.toAni(),
                         createdAt = onThreadCommentMentionNotification.createdAt ?: -1,
                         image = onThreadCommentMentionNotification.user?.avatar?.large ?: "",
@@ -215,7 +215,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onThreadCommentReplyNotification?.let { onThreadCommentReplyNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onThreadCommentReplyNotification.type.toAni(),
                         createdAt = onThreadCommentReplyNotification.createdAt ?: -1,
                         image = onThreadCommentReplyNotification.user?.avatar?.large ?: "",
@@ -229,7 +229,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onThreadCommentSubscribedNotification?.let { onThreadCommentSubscribedNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onThreadCommentSubscribedNotification.type.toAni(),
                         createdAt = onThreadCommentSubscribedNotification.createdAt.orMinusOne(),
                         context = onThreadCommentSubscribedNotification.context.orEmpty(),
@@ -243,7 +243,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onThreadCommentLikeNotification?.let { onThreadCommentLikeNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onThreadCommentLikeNotification.type.toAni(),
                         createdAt = onThreadCommentLikeNotification.createdAt ?: -1,
                         context = onThreadCommentLikeNotification.context.orEmpty(),
@@ -257,7 +257,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onThreadLikeNotification?.let { onThreadLikeNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onThreadLikeNotification.type.toAni(),
                         createdAt = onThreadLikeNotification.createdAt ?: -1,
                         context = onThreadLikeNotification.context.orEmpty(),
@@ -268,7 +268,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onRelatedMediaAdditionNotification?.let { onRelatedMediaAdditionNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onRelatedMediaAdditionNotification.type.toAni(),
                         createdAt = onRelatedMediaAdditionNotification.createdAt ?: -1,
                         context = onRelatedMediaAdditionNotification.context.orEmpty(),
@@ -282,7 +282,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onMediaDataChangeNotification?.let { onMediaDataChangeNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onMediaDataChangeNotification.type.toAni(),
                         context = onMediaDataChangeNotification.context.orEmpty(),
                         createdAt = onMediaDataChangeNotification.createdAt ?: -1,
@@ -296,7 +296,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onMediaMergeNotification?.let { onMediaMergeNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onMediaMergeNotification.type.toAni(),
                         context = onMediaMergeNotification.context.orEmpty(),
                         createdAt = onMediaMergeNotification.createdAt.orMinusOne(),
@@ -311,7 +311,7 @@ class NotificationsRepository @Inject constructor() {
             }
             notification?.onMediaDeletionNotification?.let { onMediaDeletionNotification ->
                 list.add(
-                    Notification(
+                    AniNotification(
                         type = onMediaDeletionNotification.type.toAni(),
                         context = onMediaDeletionNotification.context.orEmpty(),
                         createdAt = onMediaDeletionNotification.createdAt.orMinusOne(),

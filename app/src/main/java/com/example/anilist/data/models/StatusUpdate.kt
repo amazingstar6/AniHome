@@ -1,8 +1,12 @@
 package com.example.anilist.data.models
 
+/**
+ * Entry list id is necessary for updating, media Id should be there for creating
+ */
 data class StatusUpdate(
     val entryListId: Int,
-    val status: PersonalMediaStatus?,
+    val mediaId: Int,
+    val status: AniPersonalMediaStatus?,
     val scoreRaw: Int?,
     val progress: Int?,
     val progressVolumes: Int?,

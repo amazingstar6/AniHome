@@ -72,7 +72,7 @@ import com.example.anilist.MainActivity
 import com.example.anilist.R
 import com.example.anilist.data.models.AniNotificationType
 import com.example.anilist.utils.Utils
-import com.example.anilist.data.models.Notification
+import com.example.anilist.data.models.AniNotification
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.PleaseLogin
 import com.example.anilist.utils.LoadingCircle
@@ -121,7 +121,7 @@ fun NotificationScreen(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 private fun Notifications(
-    notifications: LazyPagingItems<Notification>,
+    notifications: LazyPagingItems<AniNotification>,
     unReadNotificationsCount: Int,
     markAllAsRead: () -> Unit,
     onNavigateBack: () -> Unit,
@@ -460,7 +460,7 @@ fun ScrollUpFabPreview() {
 @Composable
 private fun NotificationComponent(
     onClick: () -> Unit,
-    notification: Notification,
+    notification: AniNotification,
     context: String,
     isUnRead: Boolean
 ) {
@@ -537,7 +537,7 @@ private fun NotificationComponent(
 fun NotificationComponentPreview() {
     NotificationComponent(
         onClick = { },
-        notification = Notification(),
+        notification = AniNotification(),
         context = "Context",
         isUnRead = true
     )

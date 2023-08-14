@@ -5,8 +5,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.anilist.data.models.AniResult
-import com.example.anilist.data.models.Review
-import com.example.anilist.data.models.ReviewRatingStatus
+import com.example.anilist.data.models.AniReview
+import com.example.anilist.data.models.AniReviewRatingStatus
 import com.example.anilist.data.repository.ReviewDetailRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -17,8 +17,8 @@ class ReviewDetailViewModel @Inject constructor(
     private val reviewDetailRepository: ReviewDetailRepository
 ): ViewModel() {
 
-    private val _review = MutableLiveData<Review>()
-    val review: LiveData<Review> = _review
+    private val _review = MutableLiveData<AniReview>()
+    val review: LiveData<AniReview> = _review
 
     fun fetchReview(reviewId: Int) {
         viewModelScope.launch {
@@ -31,9 +31,16 @@ class ReviewDetailViewModel @Inject constructor(
         }
     }
 
-    fun rateReview(id: Int, rating: ReviewRatingStatus) {
+    fun rateReview(id: Int, rating: AniReviewRatingStatus) {
         viewModelScope.launch {
-            reviewDetailRepository.rateReview(id, rating)
+            when (val data = reviewDetailRepository.rateReview(id, rating)) {
+                is AniResult.Success -> {
+                    _review.value = _review.value?.copy(userRating = data.data)
+                }
+                is AniResult.Failure -> {
+                    //todo send toast
+                }
+            }
         }
     }
 }

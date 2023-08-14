@@ -20,11 +20,12 @@ object AniListRoute {
     const val NOTIFICATION_ROUTE: String = "Notification"
     const val HOME_ROUTE = "Home"
     const val MEDIA_DETAIL_ROUTE = "Detail"
-    const val MEDIA_DETAIL_ID_KEY = "mediaId"
     const val ANIME_ROUTE = "Anime"
     const val MANGA_ROUTE = "Manga"
     const val FEED_ROUTE = "Feed"
     const val FORUM_ROUTE = "Forum"
+    const val MEDIA_DETAIL_ID_KEY = "mediaId"
+    const val STAFF_DETAIL_ID_KEY = "staffId"
 }
 
 data class AnilistTopLevelDestination(
@@ -37,12 +38,16 @@ data class AnilistTopLevelDestination(
 class AniListNavigationActions(private val navController: NavController) {
     fun navigateTo(destination: AnilistTopLevelDestination) {
         navController.navigate(destination.route) {
+            // Pop up to the start destination of the graph to
+            // avoid building up a large stack of destinations
+            // on the back stack as users select items
             popUpTo(navController.graph.findStartDestination().id) {
                 saveState = true
             }
-
+            // Avoid multiple copies of the same destination when
+            // reselecting the same item
             launchSingleTop = true
-
+            // Restore state when reselecting a previously selected item
             restoreState = true
         }
     }

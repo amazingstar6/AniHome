@@ -2,7 +2,6 @@ package com.example.anilist.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -13,10 +12,10 @@ import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniTag
 import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.AniUser
-import com.example.anilist.data.models.CharacterDetail
+import com.example.anilist.data.models.AniCharacterDetail
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.Season
-import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.models.AniSeason
+import com.example.anilist.data.models.AniStaffDetail
 import com.example.anilist.data.repository.NotificationsRepository
 import com.example.anilist.data.repository.homerepository.HomeRepositoryImpl
 import com.example.anilist.data.repository.TrendingTogether
@@ -108,7 +107,7 @@ class HomeViewModel @Inject constructor(
                 config = PagingConfig(
                     pageSize = PAGE_SIZE,
                     prefetchDistance = PREFETCH_DISTANCE,
-                    enablePlaceholders = false
+                    enablePlaceholders = true
                 ),
                 pagingSourceFactory = { homeRepository.trendingNowPagingSource(isAnime = isAnime.value) }
             ).flow.cachedIn(viewModelScope)
@@ -193,7 +192,7 @@ class HomeViewModel @Inject constructor(
             query = "",
             searchType = SearchFilter.MEDIA,
             mediaSort = AniMediaSort.POPULARITY,
-            currentSeason = Season.UNKNOWN,
+            currentSeason = AniSeason.UNKNOWN,
             status = AniMediaStatus.UNKNOWN,
             year = -1,
             genres = emptyList(),
@@ -230,7 +229,7 @@ class HomeViewModel @Inject constructor(
         }
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-    val searchResultsCharacter: Flow<PagingData<CharacterDetail>> =
+    val searchResultsCharacter: Flow<PagingData<AniCharacterDetail>> =
         mediaSearchState
             .debounce(300).flatMapLatest { searchState ->
                 if (searchState.searchType == SearchFilter.CHARACTERS) {
@@ -255,7 +254,7 @@ class HomeViewModel @Inject constructor(
             }
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-    val searchResultsStaff: Flow<PagingData<StaffDetail>> =
+    val searchResultsStaff: Flow<PagingData<AniStaffDetail>> =
         mediaSearchState.debounce(300).flatMapLatest { state ->
             if (state.searchType == SearchFilter.STAFF) {
                 Pager(
@@ -412,7 +411,7 @@ data class MediaSearchState(
     val searchType: SearchFilter,
     val mediaSort: AniMediaSort,
     val characterSort: AniCharacterSort,
-    val currentSeason: Season,
+    val currentSeason: AniSeason,
     val status: AniMediaStatus,
     val year: Int,
     val genres: List<String>,

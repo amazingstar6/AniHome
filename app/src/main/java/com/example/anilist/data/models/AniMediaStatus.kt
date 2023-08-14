@@ -11,7 +11,7 @@ enum class AniMediaStatus {
     HIATUS,
     UNKNOWN;
 
-    fun getString(context: Context): String {
+    fun toString(context: Context): String {
         return when (this) {
             FINISHED -> context.getString(R.string.finished)
             RELEASING -> context.getString(R.string.releasing)

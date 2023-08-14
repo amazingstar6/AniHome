@@ -1,6 +1,5 @@
 package com.example.anilist.ui.details.mediadetails.components
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -30,21 +29,20 @@ import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
-import com.example.anilist.utils.Utils
-import com.example.anilist.data.models.Review
-import com.example.anilist.data.models.ReviewRatingStatus
+import com.example.anilist.data.models.AniReview
+import com.example.anilist.data.models.AniReviewRatingStatus
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.details.reviewdetail.AvatarNameDate
+import com.example.anilist.utils.Utils
 import de.charlex.compose.HtmlText
+import timber.log.Timber
 
-
-private const val TAG = "ReviewScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Reviews(
-    reviews: LazyPagingItems<Review>,
-    vote: (rating: ReviewRatingStatus, reviewId: Int) -> Unit,
+    reviews: LazyPagingItems<AniReview>,
+    vote: (rating: AniReviewRatingStatus, reviewId: Int) -> Unit,
     onNavigateToReviewDetails: (Int) -> Unit
 ) {
     if (reviews.itemCount != 0) {
@@ -90,29 +88,27 @@ fun Reviews(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Log.d(TAG, "This review has user rating ${review.userRating}")
+                        Timber.d("This review ${review.title} has user rating " + review.userRating)
                         UpDownVote(
                             review.upvotes,
-                            if (review.userRating == ReviewRatingStatus.UP_VOTE) R.drawable.media_detail_thumbs_up_filled else R.drawable.media_detail_thumbs_up_outlined,
+                            if (review.userRating == AniReviewRatingStatus.UP_VOTE) R.drawable.media_detail_thumbs_up_filled else R.drawable.media_detail_thumbs_up_outlined,
                             "upvote",
                             vote = {
                                 vote(
-                                    if (review.userRating == ReviewRatingStatus.UP_VOTE) ReviewRatingStatus.NO_VOTE else ReviewRatingStatus.UP_VOTE,
+                                    if (review.userRating == AniReviewRatingStatus.UP_VOTE) AniReviewRatingStatus.NO_VOTE else AniReviewRatingStatus.UP_VOTE,
                                     review.id
-                                        ?: -1
                                 )
                             }
                         )
                         UpDownVote(
                             review.totalVotes - review.upvotes,
-                            iconId = if (review.userRating == ReviewRatingStatus.DOWN_VOTE) R.drawable.media_detail_thumbs_down_filled else R.drawable.media_detail_thumb_down_outlined,
+                            iconId = if (review.userRating == AniReviewRatingStatus.DOWN_VOTE) R.drawable.media_detail_thumbs_down_filled else R.drawable.media_detail_thumb_down_outlined,
                             contentDescription = "downvote",
                             modifier = Modifier.weight(1f),
                             vote = {
                                 vote(
-                                    if (review.userRating == ReviewRatingStatus.DOWN_VOTE) ReviewRatingStatus.NO_VOTE else ReviewRatingStatus.DOWN_VOTE,
+                                    if (review.userRating == AniReviewRatingStatus.DOWN_VOTE) AniReviewRatingStatus.NO_VOTE else AniReviewRatingStatus.DOWN_VOTE,
                                     review.id
-                                        ?: -1
                                 )
                             }
                         )

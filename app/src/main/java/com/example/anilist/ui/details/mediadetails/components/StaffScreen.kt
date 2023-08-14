@@ -20,12 +20,12 @@ import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
-import com.example.anilist.data.models.Staff
+import com.example.anilist.data.models.AniStaff
 import com.example.anilist.ui.Dimens
 
 @Composable
 fun StaffScreen(
-    staffList: LazyPagingItems<Staff>,
+    staffList: LazyPagingItems<AniStaff>,
     onNavigateToStaff: (Int) -> Unit,
 ) {
     val state = rememberLazyGridState()

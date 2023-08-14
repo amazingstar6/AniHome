@@ -7,6 +7,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -21,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -34,6 +38,7 @@ import com.example.anilist.ui.navigation.AniListNavigationActions
 import com.example.anilist.ui.navigation.AniListNavigationRail
 import com.example.anilist.ui.navigation.AniListRoute
 import com.example.anilist.ui.navigation.AniNavHost
+import com.example.anilist.ui.navigation.TOP_LEVEL_DESTINATIONS
 import com.example.anilist.ui.theme.AnilistTheme
 import com.example.anilist.utils.Apollo
 import dagger.hilt.android.AndroidEntryPoint
@@ -134,8 +139,14 @@ class MainActivity : ComponentActivity() {
                     var showBottomBar by remember {
                         mutableStateOf(true)
                     }
+                    val bottomBarIsVisible =navController.currentBackStackEntryAsState().value?.destination?.route in TOP_LEVEL_DESTINATIONS.map { it.route }
                     Scaffold(bottomBar = {
-                        if (windowSize.widthSizeClass == WindowWidthSizeClass.Compact) {
+                        AnimatedVisibility(
+                            windowSize.widthSizeClass == WindowWidthSizeClass.Compact
+                                    && bottomBarIsVisible,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
                             AniListBottomNavigationBar(
                                 selectedDestination = selectedDestination,
                                 navigateToTopLevelDestination = navigationAction::navigateTo,
@@ -150,7 +161,6 @@ class MainActivity : ComponentActivity() {
                             }
 
                             is MainActivityUiState.Success -> {
-                                Timber.d("Access code when starting up is " + (uiState as MainActivityUiState.Success).userData.accessCode)
                                 accessCode =
                                     (uiState as MainActivityUiState.Success).userData.accessCode
                                 Apollo.setAccessCode(accessCode)
@@ -168,7 +178,8 @@ class MainActivity : ComponentActivity() {
                                         accessCode = accessCode,
                                         navController = navController,
                                         navigationActions = navigationAction,
-                                        modifier = Modifier.padding(bottom = it.calculateBottomPadding()),
+                                        // fixme navigation bar has a height of 80.dp https://m3.material.io/components/navigation-bar/specs
+                                        modifier = Modifier.padding(bottom = if (bottomBarIsVisible) 80.dp else 0.dp/*it.calculateBottomPadding()*/),
                                         setBottomBarState = { newValue ->
                                             showBottomBar = newValue
                                         },

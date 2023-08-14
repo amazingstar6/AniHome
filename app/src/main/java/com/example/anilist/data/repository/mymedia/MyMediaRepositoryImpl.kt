@@ -10,30 +10,30 @@ import com.example.anilist.GetMyMediaQuery
 import com.example.anilist.MainActivity
 import com.example.anilist.UpdateStatusMutation
 import com.example.anilist.data.models.AniMediaFormat
+import com.example.anilist.data.models.AniMediaListEntry
 import com.example.anilist.data.models.AniResult
-import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
+import com.example.anilist.data.repository.getFuzzyDate
+import com.example.anilist.data.repository.homerepository.toAni
 import com.example.anilist.fragment.MyMedia
 import com.example.anilist.type.FuzzyDateInput
 import com.example.anilist.type.MediaListStatus
 import com.example.anilist.type.MediaType
-import com.example.anilist.data.models.PersonalMediaStatus
-import com.example.anilist.data.repository.homerepository.toAni
 import com.example.anilist.utils.Apollo
 import com.example.anilist.utils.Utils
+import com.example.anilist.utils.Utils.Companion.orMinusOne
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
-
-private const val TAG = "MyMediaRepository"
 
 @Singleton
 class MyMediaRepositoryImpl @Inject constructor() : MyMediaRepository {
     override suspend fun getMyMedia(
         isAnime: Boolean,
         useNetworkFirst: Boolean
-    ): AniResult<Pair<Map<PersonalMediaStatus, List<Media>>, Boolean>> {
+    ): AniResult<Pair<Map<AniPersonalMediaStatus, List<Media>>, Boolean>> {
         try {
             val param = if (isAnime) MediaType.ANIME else MediaType.MANGA
             val client =
@@ -49,13 +49,15 @@ class MyMediaRepositoryImpl @Inject constructor() : MyMediaRepository {
             }
             val data = result.data
             return if (data != null) {
-                val resultMap = mutableMapOf<PersonalMediaStatus, List<Media>>()
+                val resultMap = mutableMapOf<AniPersonalMediaStatus, List<Media>>()
                 for (statusList in data.MediaListCollection?.lists.orEmpty()) {
                     val list = mutableListOf<Media>()
                     for (entries in statusList?.entries.orEmpty()) {
-                        list.add(parseMedia(entries?.myMedia))
+                        if (entries?.myMedia != null) {
+                            list.add(parseMyMediaFragment(entries.myMedia))
+                        }
                     }
-                    resultMap[statusList?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN] =
+                    resultMap[statusList?.status?.toAniStatus() ?: AniPersonalMediaStatus.UNKNOWN] =
                         list
                 }
                 AniResult.Success(resultMap to result.isFromCache)
@@ -71,23 +73,24 @@ class MyMediaRepositoryImpl @Inject constructor() : MyMediaRepository {
     override suspend fun updateProgress(
         statusUpdate: StatusUpdate,
     ): AniResult<Media> {
-        Timber.d("changing status of entry list id " + statusUpdate.entryListId)
+        Timber.d("changing status of entry list id ${statusUpdate.entryListId} and with media id ${statusUpdate.mediaId}")
         try {
             val status = when (statusUpdate.status) {
-                PersonalMediaStatus.CURRENT -> Optional.present(MediaListStatus.CURRENT)
-                PersonalMediaStatus.PLANNING -> Optional.present(MediaListStatus.PLANNING)
-                PersonalMediaStatus.COMPLETED -> Optional.present(MediaListStatus.COMPLETED)
-                PersonalMediaStatus.DROPPED -> Optional.present(MediaListStatus.DROPPED)
-                PersonalMediaStatus.PAUSED -> Optional.present(MediaListStatus.PAUSED)
-                PersonalMediaStatus.REPEATING -> Optional.present(MediaListStatus.REPEATING)
-                PersonalMediaStatus.UNKNOWN -> Optional.present(MediaListStatus.UNKNOWN__)
+                AniPersonalMediaStatus.CURRENT -> Optional.present(MediaListStatus.CURRENT)
+                AniPersonalMediaStatus.PLANNING -> Optional.present(MediaListStatus.PLANNING)
+                AniPersonalMediaStatus.COMPLETED -> Optional.present(MediaListStatus.COMPLETED)
+                AniPersonalMediaStatus.DROPPED -> Optional.present(MediaListStatus.DROPPED)
+                AniPersonalMediaStatus.PAUSED -> Optional.present(MediaListStatus.PAUSED)
+                AniPersonalMediaStatus.REPEATING -> Optional.present(MediaListStatus.REPEATING)
+                AniPersonalMediaStatus.UNKNOWN -> Optional.present(MediaListStatus.UNKNOWN__)
                 null -> Optional.Absent
             }
 
             val result =
                 Apollo.apolloClient.mutation(
                     UpdateStatusMutation(
-                        id = statusUpdate.entryListId,
+                        id = if (statusUpdate.entryListId != -1) Optional.present(statusUpdate.entryListId) else Optional.absent(),
+                        mediaId = if (statusUpdate.mediaId != -1) Optional.present(statusUpdate.mediaId) else Optional.absent(),
                         status = status,
                         scoreRaw = if (statusUpdate.scoreRaw == null) {
                             Optional.Absent
@@ -184,22 +187,27 @@ class MyMediaRepositoryImpl @Inject constructor() : MyMediaRepository {
                         },
                     ),
                 ).execute()
+
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
                 return AniResult.Failure(buildString { result.errors?.forEach { appendLine(it.message) } })
             }
 
-            return if (result.data != null) {
+            if (result.isFromCache) {
+                Timber.d("Result update media status is from cache ???")
+            }
+
+            return if (result.data?.SaveMediaListEntry?.myMedia != null) {
                 AniResult.Success(
-                    parseMedia(result.data?.SaveMediaListEntry?.myMedia)
+                    parseMyMediaFragment(result.data?.SaveMediaListEntry?.myMedia!!)
                 )
             } else {
-                Timber.d(TAG, statusUpdate.toString())
-                Timber.d(TAG, result.exception?.message ?: "No message")
+                Timber.d(statusUpdate.toString())
+                Timber.d(result.exception?.message ?: "No message")
                 AniResult.Failure("Failed updating progress, please try again")
             }
         } catch (exception: ApolloException) {
-            // handle exception here,, these are mainly for network errors
+            // handle exception here, these are mainly for network errors
             return AniResult.Failure(exception.message ?: "No exception message given")
         }
     }
@@ -224,62 +232,80 @@ class MyMediaRepositoryImpl @Inject constructor() : MyMediaRepository {
             return result.data?.DeleteMediaListEntry?.deleted ?: false
         } catch (exception: ApolloException) {
             // handle exception here,, these are mainly for network errors
-            Timber.d(TAG, exception.message ?: "No exception message")
+            Timber.d(exception.message ?: "No exception message")
             return false
         }
     }
 
-    private fun parseMedia(data: MyMedia?): Media {
+    private fun parseMyMediaFragment(data: MyMedia): Media {
         return Media(
-            id = data?.media?.id ?: -1,
-            listEntryId = data?.id ?: -1,
-            title = data?.media?.title?.userPreferred ?: "?",
-            coverImage = data?.media?.coverImage?.extraLarge ?: "",
-            format = data?.media?.format?.toAni() ?: AniMediaFormat.UNKNOWN,
-            episodeAmount = data?.media?.episodes ?: -1,
-            personalRating = data?.score ?: (-1).toDouble(),
-            personalProgress = data?.progress ?: -1,
-            isPrivate = data?.private ?: false,
-            note = data?.notes ?: "",
-            rewatches = data?.repeat ?: -1,
-            volumes = data?.media?.volumes ?: -1,
-            personalVolumeProgress = data?.progressVolumes ?: -1,
-            chapters = data?.media?.chapters ?: -1,
-            startedAt = if (data?.startedAt?.year != null && data.startedAt.month != null && data.startedAt.day != null) {
-                FuzzyDate(
-                    data.startedAt.year,
-                    data.startedAt.month,
-                    data.startedAt.day,
-                )
-            } else {
-                null
-            },
-            completedAt = if (data?.completedAt?.year != null && data.completedAt.month != null && data.completedAt.day != null) {
-                FuzzyDate(
-                    data.completedAt.year,
-                    data.completedAt.month,
-                    data.completedAt.day,
-                )
-            } else {
-                null
-            },
-            createdAt = data?.createdAt?.toLong()?.let { Utils.convertEpochToFuzzyDate(it) },
-            personalStatus = data?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN,
-            rawScore = data?.score ?: -1.0,
-            updatedAt = data?.updatedAt ?: -1,
-            priority = data?.priority ?: -1,
+            id = data.media?.id ?: -1,
+            mediaListEntry = AniMediaListEntry(
+                listEntryId = data.id,
+                userId = data.userId,
+                mediaId = data.mediaId,
+                status = data.status?.toAniStatus() ?: AniPersonalMediaStatus.UNKNOWN,
+                score = data.score ?: -1.0,
+                progress = data.progress.orMinusOne(),
+                progressVolumes = data.progressVolumes.orMinusOne(),
+                repeat = data.repeat.orMinusOne(),
+                private = data.private ?: false,
+                notes = data.notes.orEmpty(),
+                hiddenFromStatusLists = data.hiddenFromStatusLists ?: false,
+                customLists = data.customLists.toString(),
+                advancedScores = data.advancedScores.toString(),
+                startedAt = getFuzzyDate(data.startedAt?.fuzzyDate),
+                completedAt = getFuzzyDate(data.completedAt?.fuzzyDate),
+                updatedAt = data.updatedAt?.toLong()?.let { Utils.convertEpochToFuzzyDate(it) }
+            ),
+//            listEntryId = data?.id ?: -1,
+            title = data.media?.title?.userPreferred ?: "?",
+            coverImage = data.media?.coverImage?.extraLarge ?: "",
+            format = data.media?.format?.toAni() ?: AniMediaFormat.UNKNOWN,
+            episodeAmount = data.media?.episodes ?: -1,
+//            personalRating = data?.score ?: (-1).toDouble(),
+//            personalProgress = data?.progress ?: -1,
+//            isPrivate = data?.private ?: false,
+//            note = data?.notes ?: "",
+//            rewatches = data?.repeat ?: -1,
+            volumes = data.media?.volumes ?: -1,
+//            personalVolumeProgress = data?.progressVolumes ?: -1,
+            chapters = data.media?.chapters ?: -1,
+//            startedAt = if (data?.startedAt?.year != null && data.startedAt.month != null && data.startedAt.day != null) {
+//                FuzzyDate(
+//                    data.startedAt.year,
+//                    data.startedAt.month,
+//                    data.startedAt.day,
+//                )
+//            } else {
+//                null
+//            },
+//            completedAt = if (data?.completedAt?.year != null && data.completedAt.month != null && data.completedAt.day != null) {
+//                FuzzyDate(
+//                    data.completedAt.year,
+//                    data.completedAt.month,
+//                    data.completedAt.day,
+//                )
+//            } else {
+//                null
+//            },
+//            createdAt = data?.createdAt?.toLong()?.let { Utils.convertEpochToFuzzyDate(it) },
+//            personalStatus = data?.status?.toAniStatus() ?: PersonalMediaStatus.UNKNOWN,
+//            rawScore = data?.score ?: -1.0,
+//            updatedAt = data?.updatedAt ?: -1,
+            priority = data.priority ?: -1,
         )
     }
 }
 
-fun MediaListStatus.toAniStatus(): PersonalMediaStatus {
+fun MediaListStatus?.toAniStatus(): AniPersonalMediaStatus {
     return when (this) {
-        MediaListStatus.CURRENT -> PersonalMediaStatus.CURRENT
-        MediaListStatus.PLANNING -> PersonalMediaStatus.PLANNING
-        MediaListStatus.COMPLETED -> PersonalMediaStatus.COMPLETED
-        MediaListStatus.DROPPED -> PersonalMediaStatus.DROPPED
-        MediaListStatus.PAUSED -> PersonalMediaStatus.PAUSED
-        MediaListStatus.REPEATING -> PersonalMediaStatus.REPEATING
-        MediaListStatus.UNKNOWN__ -> PersonalMediaStatus.UNKNOWN
+        MediaListStatus.CURRENT -> AniPersonalMediaStatus.CURRENT
+        MediaListStatus.PLANNING -> AniPersonalMediaStatus.PLANNING
+        MediaListStatus.COMPLETED -> AniPersonalMediaStatus.COMPLETED
+        MediaListStatus.DROPPED -> AniPersonalMediaStatus.DROPPED
+        MediaListStatus.PAUSED -> AniPersonalMediaStatus.PAUSED
+        MediaListStatus.REPEATING -> AniPersonalMediaStatus.REPEATING
+        MediaListStatus.UNKNOWN__, null -> AniPersonalMediaStatus.UNKNOWN
     }
 }

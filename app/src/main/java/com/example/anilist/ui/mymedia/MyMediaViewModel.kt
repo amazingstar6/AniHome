@@ -1,14 +1,11 @@
 package com.example.anilist.ui.mymedia
 
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.anilist.MainActivity
 import com.example.anilist.data.models.AniMediaListSort
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.PersonalMediaStatus
+import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.data.repository.UserDataRepository
 import com.example.anilist.data.repository.mymedia.MyMediaRepository
@@ -61,7 +58,7 @@ class MyMediaViewModel @Inject constructor(
         }
     }
 
-    // todo remove useNetworkFirst parameter?
+    //todo remove useNetworkFirst parameter?
     fun fetchMyMedia(isAnime: Boolean, useNetworkFirst: Boolean) {
         viewModelScope.launch {
             when (val data = myMediaRepository.getMyMedia(isAnime, useNetworkFirst)) {
@@ -85,9 +82,11 @@ class MyMediaViewModel @Inject constructor(
 
     /**
      * Updates the progress and changes the media list only for that updated media and sorts it by updated at descending again.
+     * @param isComplete if progress is equal to the amount of chapters/episodes
      */
     fun updateProgress(
-        statusUpdate: StatusUpdate
+        statusUpdate: StatusUpdate,
+        isComplete: Boolean
     ) {
         viewModelScope.launch {
             val newMedia = myMediaRepository.updateProgress(
@@ -102,27 +101,32 @@ class MyMediaViewModel @Inject constructor(
                             val mapCopy = currentList.myMedia.mapValues { it.value.toMutableList() }
                                 .toMutableMap()
 
+                            var mediaStatus = statusUpdate.status
+                            if (isComplete) {
+                                mediaStatus = AniPersonalMediaStatus.COMPLETED
+                            }
+
                             // first we move the status if we need to
-                            if (statusUpdate.status != null) {
+                            if (mediaStatus != null) {
                                 // first we remove the current entry from the wrong list
                                 mapCopy.forEach {
                                     val indexToRemove =
-                                        it.value.indexOfFirst { value -> value.listEntryId == statusUpdate.entryListId }
+                                        it.value.indexOfFirst { value -> value.mediaListEntry.listEntryId == statusUpdate.entryListId }
                                     if (indexToRemove != -1) {
                                         it.value.removeAt(indexToRemove)
                                     }
                                 }
                                 // then we add the new media
-                                if (mapCopy[statusUpdate.status] != null) {
-                                    mapCopy[statusUpdate.status]!!.add(newMedia.data)
+                                if (mapCopy[mediaStatus] != null) {
+                                    mapCopy[mediaStatus]!!.add(newMedia.data)
                                 } else {
-                                    mapCopy[statusUpdate.status] = mutableListOf(newMedia.data)
+                                    mapCopy[mediaStatus] = mutableListOf(newMedia.data)
                                 }
                             }
 
                             mapCopy.forEach {
                                 val indexToReplace =
-                                    it.value.indexOfFirst { value -> value.listEntryId == statusUpdate.entryListId }
+                                    it.value.indexOfFirst { value -> value.mediaListEntry.listEntryId == statusUpdate.entryListId }
                                 if (indexToReplace != -1) {
                                     it.value[indexToReplace] = newMedia.data
                                 }
@@ -131,7 +135,7 @@ class MyMediaViewModel @Inject constructor(
                             // sorting every list afterwards in case any media got moved around from status
                             mapCopy.forEach {
                                 it.value.sortByDescending { media ->
-                                    media.updatedAt
+                                    sortDate(media.mediaListEntry.updatedAt)
                                 }
                             }
                             _uiState.value = MyMediaUiState.Success(mapCopy)
@@ -164,12 +168,12 @@ class MyMediaViewModel @Inject constructor(
                         val mapCopy = currentList.myMedia.mapValues { it.value.toMutableList() }
                         mapCopy.forEach {
                             val indexToRemove =
-                                it.value.indexOfFirst { value -> value.listEntryId == entryListId }
+                                it.value.indexOfFirst { value -> value.mediaListEntry.listEntryId == entryListId }
                             if (indexToRemove != -1) {
                                 it.value.removeAt(indexToRemove)
                             }
                             it.value.sortByDescending { media ->
-                                media.updatedAt
+                                sortDate(media.mediaListEntry.updatedAt)
                             }
                         }
                         _uiState.value = MyMediaUiState.Success(mapCopy)
@@ -184,6 +188,6 @@ class MyMediaViewModel @Inject constructor(
 
 sealed interface MyMediaUiState {
     object Loading : MyMediaUiState
-    data class Success(val myMedia: Map<PersonalMediaStatus, List<Media>>) : MyMediaUiState
+    data class Success(val myMedia: Map<AniPersonalMediaStatus, List<Media>>) : MyMediaUiState
     data class Error(val message: String) : MyMediaUiState
 }

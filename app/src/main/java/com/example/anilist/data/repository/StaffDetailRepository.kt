@@ -2,20 +2,23 @@ package com.example.anilist.data.repository
 
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
+import com.example.anilist.GetMediaOfStaffQuery
 import com.example.anilist.GetStaffDetailQuery
 import com.example.anilist.ToggleFavoriteCharacterMutation
 import com.example.anilist.data.models.AniCharacterRole
 import com.example.anilist.data.models.AniResult
-import com.example.anilist.data.models.CharacterMediaConnection
+import com.example.anilist.data.models.AniCharacterMediaConnection
 import com.example.anilist.data.models.CharacterWithVoiceActor
-import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.models.MediaType
+import com.example.anilist.data.models.AniStaffDetail
+import com.example.anilist.data.toAniHomeType
 import com.example.anilist.data.toAniRole
 import com.example.anilist.fragment.StaffMedia
 import com.example.anilist.utils.Apollo
 import javax.inject.Inject
 
 class StaffDetailRepository @Inject constructor() {
-    suspend fun fetchStaffDetail(id: Int): AniResult<StaffDetail> {
+    suspend fun fetchStaffDetail(id: Int): AniResult<AniStaffDetail> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -63,18 +66,31 @@ class StaffDetailRepository @Inject constructor() {
         }
     }
 
-    private fun parseStaff(staff: GetStaffDetailQuery.Staff): StaffDetail {
-        return StaffDetail(
+    private fun parseStaff(staff: GetStaffDetailQuery.Staff): AniStaffDetail {
+        // excluding user preferred name
+        val namesList = mutableListOf<String>()
+        staff.name?.full?.let {
+            namesList.add(it)
+        }
+        staff.name?.native?.let {
+            namesList.add(it)
+        }
+        namesList.addAll(staff.name?.alternative?.filterNotNull().orEmpty())
+        staff.name?.userPreferred?.let {
+            namesList.remove(it)
+        }
+        return AniStaffDetail(
             id = staff.id,
             coverImage = staff.image?.large ?: "",
             userPreferredName = staff.name?.userPreferred ?: "",
-            alternativeNames = staff.name?.alternative?.filterNotNull().orEmpty(),
+            alternativeNames = namesList.distinct(),
             favourites = staff.favourites ?: -1,
             language = staff.languageV2 ?: "",
             description = staff.description ?: "",
             isFavourite = staff.isFavourite,
             isFavouriteBlocked = staff.isFavouriteBlocked,
             voicedCharacters = parseVoicedCharactersForStaff(staff.characters),
+            // todo remove these; unused
             animeStaffRole = parseMediaForStaff(staff.anime?.staffMedia),
             mangaStaffRole = parseMediaForStaff(staff.manga?.staffMedia),
         )
@@ -98,19 +114,43 @@ class StaffDetailRepository @Inject constructor() {
         return result
     }
 
+    suspend fun fetchStaffMedia(staffId: Int, page: Int, pageSize: Int): AniResult<List<AniCharacterMediaConnection>> {
+        try {
+            val result =
+                Apollo.apolloClient.query(
+                    GetMediaOfStaffQuery(staffId = staffId, page = page, pageSize = pageSize),
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
+            }
+            val data = result.data?.Staff
+            return if (data != null) {
+                AniResult.Success(parseMediaForStaff(data.staffMedia?.staffMedia))
+            } else {
+                AniResult.Failure("Network error")
+            }
+        } catch (exception: ApolloException) {
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
+        }
+    }
+
     /**
      * We need to extract coverImage, title, characterRole and id into the object
      */
-    private fun parseMediaForStaff(staffMedia: StaffMedia?): List<CharacterMediaConnection> {
-        val result = mutableListOf<CharacterMediaConnection>()
+    private fun parseMediaForStaff(staffMedia: StaffMedia?): List<AniCharacterMediaConnection> {
+        val result = mutableListOf<AniCharacterMediaConnection>()
         for (media in staffMedia?.edges.orEmpty()) {
             if (media != null) {
                 result.add(
-                    CharacterMediaConnection(
+                    AniCharacterMediaConnection(
                         id = media.node?.id ?: -1,
                         title = media.node?.title?.userPreferred ?: "",
                         characterRole = media.staffRole ?: "",
                         coverImage = media.node?.coverImage?.extraLarge ?: "",
+                        type = media.node?.type?.toAniHomeType() ?: MediaType.UNKNOWN
                     ),
                 )
             }

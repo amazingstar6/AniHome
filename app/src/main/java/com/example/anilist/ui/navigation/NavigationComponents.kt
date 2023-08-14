@@ -25,11 +25,11 @@ fun AniListBottomNavigationBar(
     navigateToTopLevelDestination: (AnilistTopLevelDestination) -> Unit,
     visible: Boolean,
 ) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = slideInVertically(initialOffsetY = { it }),
-        exit = slideOutVertically(targetOffsetY = { it }),
-    ) {
+//    AnimatedVisibility(
+//        visible = visible,
+//        enter = slideInVertically(initialOffsetY = { it }),
+//        exit = slideOutVertically(targetOffsetY = { it }),
+//    ) {
         NavigationBar {
             TOP_LEVEL_DESTINATIONS.forEach { destination ->
                 NavigationBarItem(
@@ -57,7 +57,7 @@ fun AniListBottomNavigationBar(
                 )
             }
         }
-    }
+//    }
 }
 
 @Composable

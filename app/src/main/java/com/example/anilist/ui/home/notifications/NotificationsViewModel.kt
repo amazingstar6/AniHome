@@ -6,7 +6,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.example.anilist.data.models.AniResult
-import com.example.anilist.data.models.Notification
+import com.example.anilist.data.models.AniNotification
 import com.example.anilist.data.repository.NotificationsPagingSource
 import com.example.anilist.data.repository.NotificationsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -80,6 +80,6 @@ class NotificationsViewModel @Inject constructor(private val notificationsReposi
 
 sealed interface NotificationsUiState {
     object Loading : NotificationsUiState
-    data class Success(val notifications: List<Notification>) : NotificationsUiState
+    data class Success(val notifications: List<AniNotification>) : NotificationsUiState
     data class Error(val message: String) : NotificationsUiState
 }

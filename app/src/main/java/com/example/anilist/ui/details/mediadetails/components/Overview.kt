@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,14 +19,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ChipColors
 import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +40,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
@@ -53,16 +52,19 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.AniMediaFormat
-import com.example.anilist.data.models.Link
+import com.example.anilist.data.models.AniMediaStatus
+import com.example.anilist.data.models.AniLink
+import com.example.anilist.data.models.AniLinkType
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaDetailInfoList
 import com.example.anilist.data.models.MediaType
-import com.example.anilist.data.models.Relation
-import com.example.anilist.data.models.Season
+import com.example.anilist.data.models.AniMediaRelation
+import com.example.anilist.data.models.AniSeason
 import com.example.anilist.data.models.Tag
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.details.mediadetails.IconWithText
 import com.example.anilist.ui.details.mediadetails.QuickInfo
+import com.example.anilist.ui.details.mediadetails.formatFuzzyDateToYearMonthDayString
 import com.example.anilist.ui.theme.AnilistTheme
 import com.example.anilist.utils.FormattedHtmlWebView
 import java.net.URLEncoder
@@ -79,7 +81,8 @@ fun Overview(
 ) {
     Column(
         modifier = Modifier
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 100.dp),
         //            .padding(20.dp)
     ) {
         val anime: Media = media ?: Media()
@@ -87,21 +90,7 @@ fun Overview(
         OverviewDescription(anime.description)
         OverviewRelations(anime.relations, onNavigateToDetails)
         OverViewInfo(anime, navigateToStudioDetails)
-
-        if (anime.studios.isNotEmpty()) {
-            HeadLine("Studios")
-            FlowRow(modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)) {
-                anime.studios.forEach {
-                    TextButton(onClick = { navigateToStudioDetails(it.id) }) {
-                        Text(
-                            text = it.name,
-//                            style = MaterialTheme.typography.bodyMedium,
-//                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-        }
+        OverViewStudios(anime, navigateToStudioDetails)
         var showSpoilers by remember {
             mutableStateOf(false)
         }
@@ -114,8 +103,33 @@ fun Overview(
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun OverViewStudios(
+    anime: Media,
+    navigateToStudioDetails: (Int) -> Unit
+) {
+    if (anime.studios.isNotEmpty()) {
+        HeadLine("Studios")
+        FlowRow(modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)) {
+            anime.studios.forEach {
+                OutlinedButton(
+                    onClick = { navigateToStudioDetails(it.id) },
+                    modifier = Modifier.padding(end = Dimens.PaddingSmall)
+                ) {
+                    Text(
+                        text = it.name,
+//                            style = MaterialTheme.typography.bodyMedium,
+//                            color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun OverviewRelations(
-    relations: List<Relation>,
+    relations: List<AniMediaRelation>,
     onNavigateToDetails: (Int) -> Unit,
 ) {
     if (relations.isNotEmpty()) {
@@ -230,11 +244,11 @@ private fun OverviewAnimeCoverDetails(
     FlowRow(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier
-            .padding(top = 12.dp, start = Dimens.PaddingNormal, end = Dimens.PaddingNormal)
+            .padding(start = Dimens.PaddingNormal, end = Dimens.PaddingNormal)
             .fillMaxWidth(),
     ) {
         for (genre in genres) {
-            FilledTonalButton(
+            ElevatedButton(
                 onClick = { },
                 modifier = Modifier.padding(bottom = 6.dp, end = 12.dp),
             ) {
@@ -287,37 +301,60 @@ private fun OverviewDescription(description: String) {
 }
 
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
 private fun OverviewExternalLinks(
     anime1: Media,
     openUri: (String) -> Unit,
 ) {
     if (anime1.externalLinks.isNotEmpty()) {
+        val info by remember { mutableStateOf(anime1.externalLinks.filter { it.type == AniLinkType.INFO }) }
+        val streaming by remember { mutableStateOf(anime1.externalLinks.filter { it.type == AniLinkType.STREAMING }) }
+        val social by remember { mutableStateOf(anime1.externalLinks.filter { it.type == AniLinkType.SOCIAL }) }
+
         HeadLine("External links")
-        FlowRow(modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)) {
-            for (link in anime1.externalLinks) {
-                OutlinedButton(
-                    onClick = { openUri(link.url) },
-                    modifier = Modifier.padding(end = 8.dp, bottom = 4.dp),
+        if (info.isNotEmpty()) {
+            SmallHeadLine("Info")
+            LinkFlowRow(info, openUri)
+        }
+        if (streaming.isNotEmpty()) {
+            SmallHeadLine("Streaming")
+            LinkFlowRow(streaming, openUri)
+        }
+        if (social.isNotEmpty()) {
+            SmallHeadLine("Social")
+            LinkFlowRow(social, openUri)
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun LinkFlowRow(
+    externalLinks: List<AniLink>,
+    openUri: (String) -> Unit
+) {
+    FlowRow(modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)) {
+        for (link in externalLinks) {
+            OutlinedButton(
+                onClick = { openUri(link.url) },
+                modifier = Modifier.padding(end = 8.dp, bottom = 4.dp),
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (link.icon.isNotBlank()) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(link.icon)
-                                    .crossfade(true).build(),
-                                contentDescription = link.site,
-                                colorFilter = ColorFilter.tint(
-                                    Color(link.color.toColorInt()),
-                                ),
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        Text(text = link.site)
+                    if (link.icon.isNotBlank()) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(link.icon)
+                                .crossfade(true).build(),
+                            contentDescription = link.site,
+                            colorFilter = ColorFilter.tint(
+                                Color(link.color.toColorInt()),
+                            ),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
+                    Text(text = "${link.site} ${if (link.language != "") "(${link.language})" else ""}")
                 }
             }
         }
@@ -347,226 +384,143 @@ private fun OverViewTags(
     ) {
         for (tag in tags) {
             if (!tag.isMediaSpoiler) {
-                ElevatedButton(
+                SuggestionChip(
                     onClick = { },
-                    modifier = Modifier.padding(end = 12.dp, bottom = 4.dp),
-                ) {
-                    Text(
-                        buildAnnotatedString {
-                            withStyle(
-                                style = SpanStyle(color = MaterialTheme.colorScheme.secondary),
-                            ) {
-                                append("${tag.rank}% ")
-                            }
-                            withStyle(style = SpanStyle()) {
-                                append(tag.name)
-                            }
-                        },
-                    )
+                    modifier = Modifier.padding(end = Dimens.PaddingNormal), label = {
+                        Text(
+                            buildAnnotatedString {
+                                withStyle(
+                                    style = SpanStyle(color = MaterialTheme.colorScheme.primary),
+                                ) {
+                                    append("${tag.rank}% ")
+                                }
+                                withStyle(style = SpanStyle()) {
+                                    append(tag.name)
+                                }
+                            },
+                        )
 //                        Text(text = tag.name, style = MaterialTheme.typography.labelMedium)
-                }
+                    })
             } else if (showSpoilers) {
-                ElevatedButton(
+                SuggestionChip(
                     onClick = { },
                     modifier = Modifier.padding(end = 12.dp, bottom = 4.dp),
-                    colors = ButtonDefaults.elevatedButtonColors(
+                    colors = ChipColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        labelColor = MaterialTheme.colorScheme.onErrorContainer,
                         disabledContainerColor = MaterialTheme.colorScheme.onErrorContainer,
-                        disabledContentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    ),
-                ) {
-                    Text(
-                        buildAnnotatedString {
-                            withStyle(
-                                style = SpanStyle(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                ),
-                            ) {
-                                append("${tag.rank}% ")
-                            }
-                            withStyle(style = SpanStyle()) {
-                                append(tag.name)
-                            }
-                        },
-                    )
-                }
+                        disabledLabelColor = MaterialTheme.colorScheme.onErrorContainer,
+                        leadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        trailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        disabledLeadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        disabledTrailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ), label = {
+                        Text(
+                            buildAnnotatedString {
+                                withStyle(
+                                    style = SpanStyle(
+                                        color = MaterialTheme.colorScheme.error,
+                                    ),
+                                ) {
+                                    append("${tag.rank}% ")
+                                }
+                                withStyle(style = SpanStyle()) {
+                                    append(tag.name)
+                                }
+                            },
+                        )
+                    })
             }
         }
     }
 }
 
 @Composable
-private fun OverViewInfo(anime1: Media, navigateToStudioDetails: (Int) -> Unit) {
+private fun OverViewInfo(media: Media, navigateToStudioDetails: (Int) -> Unit) {
     HeadLine("Info")
-    Row {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(horizontal = Dimens.PaddingNormal),
-            verticalArrangement = Arrangement.Bottom,
-        ) {
-            if (anime1.infoList.format != "") {
-                InfoName("Format")
-            }
-            if (anime1.infoList.status != "") {
-                InfoName("Status")
-            }
-            if (anime1.infoList.startDate != "") {
-                InfoName("Start date")
-            }
-            if (anime1.infoList.endDate != "") {
-                InfoName(text = "End date")
-            }
-            InfoName("Episodes")
-            if (anime1.infoList.duration != -1) {
-                InfoName("Duration")
-            }
-            if (anime1.infoList.country != "") {
-                InfoName("Country")
-            }
-            if (anime1.infoList.source != "") {
-                InfoName("Source")
-            }
-            if (anime1.infoList.hashtag.isNotEmpty()) {
-                InfoName("Hashtag")
-            }
-            if (anime1.infoList.licensed != null) {
-                InfoName("Licensed")
-            }
-            if (anime1.infoList.updatedAt.isNotEmpty()) {
-                InfoName("Updated at")
-            }
-            if (anime1.infoList.nsfw != null) {
-                InfoName("NSFW")
-            }
-            if (anime1.infoList.synonyms.isNotEmpty()) {
-                InfoName("Synonyms")
-            }
-//            if (anime1.infoList.containsKey("format")) {
-//                InfoName("Format")
-//            }
-//            if (anime1.infoList.containsKey("status")) {
-//                InfoName("Status")
-//            }
-//            if (anime1.infoList.containsKey("startDate")) {
-//                InfoName("Start date")
-//            }
-//            if (anime1.infoList.containsKey("endDate")) {
-//                InfoName(text = "End date")
-//            }
-//            InfoName("Episodes")
-//            if (anime1.infoList.containsKey("duration")) {
-//                InfoName("Duration")
-//            }
-//            if (anime1.infoList.containsKey("country")) {
-//                InfoName("Country")
-//            }
-//            if (anime1.infoList.containsKey("source")) {
-//                InfoName("Source")
-//            }
-//            if (anime1.infoList.containsKey("hashtag")) {
-//                InfoName("Hashtag")
-//            }
-//            if (anime1.infoList.containsKey("licensed")) {
-//                InfoName("Licensed")
-//            }
-//            if (anime1.infoList.containsKey("updatedAt")) {
-//                InfoName("Updated at")
-//            }
-//            if (anime1.infoList.containsKey("nsfw")) {
-//                InfoName("NSFW")
-//            }
-//            if (anime1.infoList.containsKey("synonyms")) {
-//                InfoName("Synonyms")
-//            }
+    Column(
+        modifier = Modifier
+            .padding(horizontal = Dimens.PaddingNormal),
+    ) {
+        if (media.infoList.format != "") {
+            InfoDataItem("Format", media.infoList.format)
         }
-        Column {
-            if (anime1.infoList.format != "") {
-                InfoData(anime1.infoList.format)
+        if (media.infoList.status != AniMediaStatus.UNKNOWN) {
+            InfoDataItem("Status", media.infoList.status.toString(LocalContext.current))
+        }
+        if (media.startDate != null) {
+            InfoDataItem(
+                "Start date",
+                formatFuzzyDateToYearMonthDayString(startDate = media.startDate)
+            )
+        }
+        if (media.endDate != null) {
+            InfoDataItem(
+                "End date",
+                formatFuzzyDateToYearMonthDayString(startDate = media.endDate)
+            )
+        }
+        InfoDataItem(
+            if (media.type == MediaType.ANIME) "Episodes" else "Chapters",
+            if (media.type == MediaType.ANIME) {
+                if (media.episodeAmount == -1) stringResource(id = R.string.question_mark) else media.episodeAmount.toString()
+            } else {
+                if (media.chapters == -1) stringResource(id = R.string.question_mark) else media.chapters.toString()
             }
-            if (anime1.infoList.status != "") {
-                InfoData(anime1.infoList.status)
-            }
-            if (anime1.infoList.startDate != "") {
-                InfoData(anime1.infoList.startDate)
-            }
-            if (anime1.infoList.endDate != "") {
-                InfoData(anime1.infoList.endDate)
-            }
-            if (anime1.episodeAmount != -1) {
-                InfoData(anime1.episodeAmount.toString())
-            }
-            if (anime1.infoList.duration != -1) {
-                InfoData(anime1.infoList.duration.toString())
-            }
-            if (anime1.infoList.country != "") {
-                InfoData(anime1.infoList.country)
-            }
-            if (anime1.infoList.source != "") {
-                InfoData(anime1.infoList.source)
-            }
-            if (anime1.infoList.hashtag.isNotEmpty()) {
-                InfoData(anime1.infoList.hashtag)
-            }
-            if (anime1.infoList.licensed != null) {
-                InfoData(anime1.infoList.licensed.toString())
-            }
-            if (anime1.infoList.updatedAt.isNotEmpty()) {
-                InfoData(anime1.infoList.updatedAt)
-            }
-            if (anime1.infoList.nsfw != null) {
-                InfoData(anime1.infoList.nsfw.toString())
-            }
-            if (anime1.infoList.synonyms.isNotEmpty()) {
-                InfoData(buildString {
-                    anime1.infoList.synonyms.forEachIndexed { index, synonym ->
-                        if (index != anime1.infoList.synonyms.lastIndex) {
-                            append("$synonym, ")
-                        } else {
-                            append(synonym)
-                        }
+        )
+        if (media.infoList.duration != -1) {
+            InfoDataItem("Duration", media.infoList.duration.toString())
+        }
+        if (media.infoList.country != "") {
+            InfoDataItem("Country", media.infoList.country)
+        }
+        if (media.infoList.source != "") {
+            InfoDataItem("Source", media.infoList.source)
+        }
+        if (media.infoList.hashtag.isNotEmpty()) {
+            InfoDataItem("Hashtag", media.infoList.hashtag)
+        }
+        if (media.infoList.licensed != null) {
+            InfoDataItem("Licensed", media.infoList.licensed.toString())
+        }
+        if (media.infoList.updatedAt.isNotEmpty()) {
+            InfoDataItem("Updated at", media.infoList.updatedAt)
+        }
+        if (media.infoList.nsfw != null) {
+            InfoDataItem("NSFW", media.infoList.nsfw.toString())
+        }
+        if (media.infoList.synonyms.isNotEmpty()) {
+            InfoDataItem("Synonyms", buildString {
+                media.infoList.synonyms.forEachIndexed { index, synonym ->
+                    if (index != media.infoList.synonyms.lastIndex) {
+                        append("$synonym, ")
+                    } else {
+                        append(synonym)
                     }
-                })
-            }
-//            if (anime1.infoList.containsKey("format")) {
-//                InfoData(anime1.infoList["format"]!!)
-//            }
-//            if (anime1.infoList.containsKey("status")) {
-//                InfoData(anime1.infoList["status"]!!)
-//            }
-//            if (anime1.infoList.containsKey("startDate")) {
-//                InfoData(anime1.infoList["startDate"]!!)
-//            }
-//            if (anime1.infoList.containsKey("endDate")) {
-//                InfoData(anime1.infoList["endDate"]!!)
-//            }
-//            InfoData(anime1.episodeAmount.toString())
-//            if (anime1.infoList.containsKey("duration")) {
-//                InfoData(anime1.infoList["duration"]!!)
-//            }
-//            if (anime1.infoList.containsKey("country")) {
-//                InfoData(anime1.infoList["country"]!!)
-//            }
-//            if (anime1.infoList.containsKey("source")) {
-//                InfoData(anime1.infoList["source"]!!)
-//            }
-//            if (anime1.infoList.containsKey("hashtag")) {
-//                InfoData(anime1.infoList["hashtag"]!!)
-//            }
-//            if (anime1.infoList.containsKey("licensed")) {
-//                InfoData(anime1.infoList["licensed"]!!)
-//            }
-//            if (anime1.infoList.containsKey("updatedAt")) {
-//                InfoData(anime1.infoList["updatedAt"]!!)
-//            }
-//            if (anime1.infoList.containsKey("nsfw")) {
-//                InfoData(anime1.infoList["nsfw"]!!)
-//            }
-//            if (anime1.infoList.containsKey("synonyms")) {
-//                InfoData(anime1.infoList["synonyms"]!!)
-//            }
+                }
+            })
         }
+    }
+}
+
+@Composable
+fun InfoDataItem(infoName: String, infoData: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = Modifier
+            .padding(bottom = Dimens.PaddingSmall)
+            .then(modifier)
+    ) {
+        Text(
+            text = infoName,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(120.dp)
+        )
+        Text(
+            text = infoData,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 
@@ -600,6 +554,16 @@ private fun HeadLine(text: String) {
     )
 }
 
+@Composable
+private fun SmallHeadLine(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.headlineSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(bottom = 4.dp, top = 8.dp, start = Dimens.PaddingNormal),
+    )
+}
+
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Preview(
     name = "Light mode",
@@ -625,7 +589,7 @@ fun OverviewPreview() {
                     title = "鬼滅の刃 刀鍛冶の里編",
                     coverImage = "",
                     format = AniMediaFormat.TV,
-                    season = Season.SPRING,
+                    season = AniSeason.SPRING,
                     seasonYear = 2023,
                     episodeAmount = 11,
                     averageScore = 83,
@@ -636,9 +600,7 @@ fun OverviewPreview() {
                     relations = emptyList(),
                     infoList = MediaDetailInfoList(
                         format = "TV",
-                        status = "Finished",
-                        startDate = "04-09-2023",
-                        endDate = "06-18-2023",
+                        status = AniMediaStatus.FINISHED,
                         duration = 24,
                         country = "Japan",
                         source = "Manga",
@@ -671,12 +633,13 @@ fun OverviewPreview() {
                     trailerImage = "",
                     trailerLink = "https://www.youtube.com/watch?v=a9tq0aS5Zu8",
                     externalLinks = listOf(
-                        Link(
+                        AniLink(
                             "https://kimetsu.com/anime/katanakajinosatohen/",
                             "Official Site",
                             "Japanese",
                             "",
                             "",
+                            type = AniLinkType.SOCIAL
                         ),
                     ),
                 ), navigateToStudioDetails = {})

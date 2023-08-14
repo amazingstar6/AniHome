@@ -3,6 +3,7 @@ package com.example.anilist.ui.details.mediadetails
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -32,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,9 +54,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.anilist.MainActivity
 import com.example.anilist.R
+import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
+import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.EditStatusModalSheet
 import com.example.anilist.ui.details.mediadetails.components.Characters
@@ -114,14 +119,18 @@ fun MediaDetail(
         modalSheetScope.launch { editSheetState.hide() }
     }
 
-    val fetchMedia = {
-        mediaDetailsViewModel.fetchMedia(
-            mediaId = mediaId
-        )
-    }
+    val context = LocalContext.current
+    LaunchedEffect(key1 = Unit, block = {
+        launch {
+            mediaDetailsViewModel.toast.collect {
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            }
+        }
+    })
 
 //    fetchMedia()
 
+    //fixme reviews reload (network) on navigating back
     val reviews = mediaDetailsViewModel.reviews.collectAsLazyPagingItems()
     val staff = mediaDetailsViewModel.staffList.collectAsLazyPagingItems()
 
@@ -179,12 +188,14 @@ fun MediaDetail(
             OpenInBrowserAndShareToolTips(uriHandler, uri, context)
         })
     }, floatingActionButton = {
-        FloatingActionButton(
-            onClick = {
-                showEditSheet()
-            },
-        ) {
-            Icon(imageVector = Icons.Outlined.Edit, contentDescription = "edit")
+        if (MainActivity.accessCode != "") {
+            FloatingActionButton(
+                onClick = {
+                    showEditSheet()
+                },
+            ) {
+                Icon(imageVector = Icons.Outlined.Edit, contentDescription = "edit")
+            }
         }
     }) {
         when (media) {
@@ -224,7 +235,7 @@ fun MediaDetail(
 //                    ),
                             flingBehavior = PagerDefaults.flingBehavior(
                                 state = pagerState,
-                                snapAnimationSpec = spring(stiffness = Spring.StiffnessVeryLow)
+                                snapAnimationSpec = spring(stiffness = Spring.StiffnessHigh)
                             )
 //                    pageNestedScrollConnection = nestedScrollConnection
                         ) { currentPage ->
@@ -265,9 +276,8 @@ fun MediaDetail(
                                         Reviews(
                                             reviews,
                                             vote = { rating, reviewId ->
-                                                //fixme add rate review to view model
-//                                                mediaDetailsViewModel.rateReview(reviewId, rating)
-                                                fetchMedia() //fixme don't reload pls
+                                                mediaDetailsViewModel.rateReview(reviewId, rating)
+                                                reviews.refresh() //fixme don't reload pls
                                             },
                                             onNavigateToReviewDetails
                                         )
@@ -285,11 +295,11 @@ fun MediaDetail(
                             EditStatusModalSheet(
                                 editSheetState = editSheetState,
                                 hideEditSheet = hideEditSheet,
-                                unchangedMedia = (media as MediaDetailUiState.Success).data,
-                                saveStatus = {
+                                unChangeListEntry = (media as MediaDetailUiState.Success).data.mediaListEntry, //FIXME!!!
+                                media = (media as? MediaDetailUiState.Success)?.data ?: Media(),
+                                saveStatus = { status, isComplete ->
                                     mediaDetailsViewModel.updateProgress(
-                                        it,
-                                        mediaId
+                                        if (isComplete) status.copy(status = AniPersonalMediaStatus.COMPLETED) else status
                                     )
                                 },
                                 isAnime = isAnime,
@@ -379,8 +389,8 @@ fun QuickInfo(media: Media, isAnime: Boolean) {
             text = if (isAnime) {
                 "${media.season.getString(LocalContext.current)}${if (media.seasonYear != -1) " " + media.seasonYear else ""}"
             } else {
-                if (media.startedAt != null) {
-                    "${media.startedAt.year}-${media.startedAt.month}-${media.startedAt.day}"
+                if (media.startDate != null) {
+                    formatFuzzyDateToYearMonthDayString(media.startDate)
                 } else {
                     stringResource(id = R.string.question_mark)
                 }
@@ -419,6 +429,12 @@ fun QuickInfo(media: Media, isAnime: Boolean) {
         )
     }
 }
+
+fun formatFuzzyDateToYearMonthDayString(startDate: FuzzyDate) = "${
+    startDate.day.toString().padStart(2, '0')
+}-${
+    startDate.month.toString().padStart(2, '0')
+}-${startDate.year.toString().padStart(2, '0')}"
 
 
 @Composable

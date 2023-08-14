@@ -18,7 +18,8 @@ query getMyMedia($type: MediaType!, $userId: Int!) {
 
 
 mutation UpdateStatus(
-    $id: Int!,
+    $id: Int,
+    $mediaId: Int,
     $status: MediaListStatus,
     $scoreRaw: Int,
     $progress: Int,
@@ -34,7 +35,7 @@ mutation UpdateStatus(
     $completedAt: FuzzyDateInput
 ) {
     SaveMediaListEntry(
-        id: $id, status: $status, scoreRaw: $scoreRaw, progress: $progress, progressVolumes: $progressVolumes,
+        id: $id, mediaId: $mediaId, status: $status, scoreRaw: $scoreRaw, progress: $progress, progressVolumes: $progressVolumes,
         repeat: $repeat, priority: $priority, private: $private, notes: $notes, hiddenFromStatusLists: $hiddenFromStatusLists, customLists: $customLists,
         advancedScores: $advancedScores, startedAt: $startedAt, completedAt: $completedAt
     ) {
@@ -44,6 +45,8 @@ mutation UpdateStatus(
 
 fragment MyMedia on MediaList {
     id
+    userId
+    mediaId
     media {
         id
         title {
@@ -60,20 +63,18 @@ fragment MyMedia on MediaList {
     status
     score(format: POINT_100)
     progress
+    hiddenFromStatusLists
+    customLists
     progressVolumes
     repeat
     notes
     private
     advancedScores
     startedAt {
-        year
-        month
-        day
+        ...FuzzyDate
     }
     completedAt {
-        year
-        month
-        day
+        ...FuzzyDate
     }
     updatedAt
     createdAt

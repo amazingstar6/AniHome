@@ -2,8 +2,14 @@ package com.example.anilist.ui.navigation
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideIn
+import androidx.compose.animation.slideOut
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -49,7 +55,10 @@ fun AniNavHost(
         navController = navController,
         startDestination = AniListRoute.HOME_ROUTE,
     ) {
-        composable(AniListRoute.HOME_ROUTE) {
+        composable(
+            AniListRoute.HOME_ROUTE,
+//            popEnterTransition = { scaleIn() }
+        ) {
             setBottomBarState(true)
             HomeScreen(
                 homeViewModel = homeViewModel,
@@ -72,7 +81,9 @@ fun AniNavHost(
             route = AniListRoute.MEDIA_OVERVIEW_ROUTE + "/{trendingType}",
             arguments = listOf(navArgument("trendingType") {
                 type = NavType.IntType
-            })
+            }),
+            enterTransition = { slideIn(initialOffset = { IntOffset(x = it.width, y = 0) }) },
+            exitTransition = { slideOut(targetOffset = { IntOffset(x = it.width, y = 0) }) }
         ) { navBackStackEntry ->
             val ordinalNumber = navBackStackEntry.arguments?.getInt("trendingType") ?: -1
             setBottomBarState(false)
@@ -85,6 +96,8 @@ fun AniNavHost(
         }
         composable(
             "${AniListRoute.MEDIA_DETAIL_ROUTE}/{${AniListRoute.MEDIA_DETAIL_ID_KEY}}",
+            enterTransition = { slideIn(initialOffset = { IntOffset(x = it.width / 2, y = 0) }) + fadeIn() },
+            exitTransition = { slideOut(targetOffset = { IntOffset(x = it.width / 2, y = 0) }) + fadeOut() },
             arguments = listOf(
                 navArgument(AniListRoute.MEDIA_DETAIL_ID_KEY) {
                     type = NavType.IntType
@@ -117,11 +130,13 @@ fun AniNavHost(
             },
         )
         composable(
-            route = AniListRoute.STAFF_DETAIL_ROUTE + "/{staffId}",
-            arguments = listOf(navArgument("staffId") { type = NavType.IntType }),
+            route = AniListRoute.STAFF_DETAIL_ROUTE + "/{${AniListRoute.STAFF_DETAIL_ID_KEY}}",
+            arguments = listOf(navArgument(AniListRoute.STAFF_DETAIL_ID_KEY) {
+                type = NavType.IntType
+            }),
             content = { backStackEntry ->
                 StaffDetailScreen(
-                    id = backStackEntry.arguments?.getInt("staffId") ?: -1,
+                    id = backStackEntry.arguments?.getInt(AniListRoute.STAFF_DETAIL_ID_KEY) ?: -1,
                     onNavigateToCharacter = navigationActions::navigateToCharacter,
                     onNavigateToMedia = navigationActions::navigateToMediaDetails,
                     onNavigateBack = navigationActions::navigateBack,

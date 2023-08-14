@@ -39,6 +39,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -46,10 +47,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
-import com.example.anilist.data.models.CharacterDetail
-import com.example.anilist.data.models.CharacterMediaConnection
-import com.example.anilist.data.models.StaffDetail
-import com.example.anilist.data.repository.MediaDetailsRepository
+import com.example.anilist.data.models.AniCharacterDetail
+import com.example.anilist.data.models.AniCharacterMediaConnection
+import com.example.anilist.data.models.AniStaffDetail
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.details.mediadetails.IconWithText
 import com.example.anilist.utils.FormattedHtmlWebView
@@ -85,7 +85,7 @@ fun CharacterDetailScreen(
     }) {
         AnimatedVisibility(visible = character != null) {
             CharacterDetail(
-                character = character ?: CharacterDetail(),
+                character = character ?: AniCharacterDetail(),
                 isFavorite = character?.isFavourite ?: false,
                 onNavigateToStaff = onNavigateToStaff,
                 onNavigateToMedia = onNavigateToMedia,
@@ -95,7 +95,6 @@ fun CharacterDetailScreen(
                 ),
                 toggleFavorite = {
                     characterDetailViewModel.toggleFavourite(
-                        MediaDetailsRepository.LikeAbleType.CHARACTER,
                         id
                     )
                 },
@@ -106,7 +105,7 @@ fun CharacterDetailScreen(
 
 @Composable
 private fun CharacterDetail(
-    character: CharacterDetail,
+    character: AniCharacterDetail,
     isFavorite: Boolean,
     onNavigateToStaff: (Int) -> Unit,
     onNavigateToMedia: (Int) -> Unit,
@@ -144,7 +143,7 @@ private fun CharacterDetail(
 
 @Composable
 fun RelatedMedia(
-    relatedMedia: List<CharacterMediaConnection>,
+    relatedMedia: List<AniCharacterMediaConnection>,
     onNavigateToMedia: (Int) -> Unit,
 ) {
     LazyRow {
@@ -161,7 +160,7 @@ fun RelatedMedia(
 }
 
 @Composable
-fun VoiceActors(voiceActors: List<StaffDetail>, onNavigateToStaff: (Int) -> Unit) {
+fun VoiceActors(voiceActors: List<AniStaffDetail>, onNavigateToStaff: (Int) -> Unit) {
     LazyRow {
         items(voiceActors) { staff ->
             ImageWithTitleAndSubTitle(
@@ -182,11 +181,15 @@ fun ImageWithTitleAndSubTitle(
     subTitle: String,
     id: Int,
     onClick: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+//    startPadding: Dp = Dimens.PaddingNormal //todo remove start padding for every lazy using this composable
 ) {
     Column(
         Modifier
             .padding(start = Dimens.PaddingNormal)
-            .clickable { onClick(id) },
+            .clickable { onClick(id) }
+            .height(300.dp)
+            .then(modifier),
     ) {
         CoverImage(
             coverImage = coverImage,
@@ -199,12 +202,15 @@ fun ImageWithTitleAndSubTitle(
             modifier = Modifier
                 .padding(vertical = Dimens.PaddingSmall)
                 .width(120.dp),
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 2
         )
         Text(
             text = subTitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.width(120.dp)
+            modifier = Modifier.width(120.dp),
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -295,7 +301,7 @@ fun Description(description: String) {
 //            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
 //        )
 //        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = description)
+//        Text(text = description)
     }
 }
 
@@ -468,7 +474,7 @@ private fun CoverImage(
 @Composable
 fun CharacterDetailPreview() {
     CharacterDetail(
-        character = CharacterDetail(
+        character = AniCharacterDetail(
             id = 12312,
             userPreferredName = "虎杖悠仁",
             description = "<p><strong>Height:</strong> 156cm (5'1&quot;)</p>\n<p>The protagonist of Satsuriku no Tenshi. Rachel is a 13-year-old girl that awakes in a building with no recollection of why she is there.</p>\n<p><span class='markdown_spoiler'><span>It is eventually revealed that she is actually the B1 floor master. The other floor masters say that she is ruthless, selfish, and manipulative, and willing to do anything to get what she wants, although it's a misnomer to call her an an evil or malicious person, as she doesn't inherently understand human morality and doesn't have actual cruel impulses.</span></span></p>\n<p>Ray is initially presented as extremely calm and collected, however she has issues with empathy and difficulty expressing or understanding emotions. While she has shown fear, anger, compassion, and happiness, these moments are rare and fleeting. She does not, however, fake emotions, and will not pretend to have feelings that aren't present. Ray is fixated on the idea of the existence of God. </p>\n<p><span class='markdown_spoiler'><span>Her desperation in needing a God she believes made her so delusional that she saw Zack as her God. Only until Zack helped her accept her actions that she finally came to terms with her warped view and realized that her true wish was simply to be wished in life and death. Afterwards, Ray started to act like a normal person, particularly in regards to Zack who she developed a close bond with over time. Ray becomes more expressive as the series goes on.</span></span></p>\n<p>(Source: Satsuriku no Tenshi Wiki, edited)</p>",

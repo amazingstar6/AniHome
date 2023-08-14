@@ -1,216 +1,235 @@
-query getMediaDetail($id: Int!, $userId: Int!, $skipMediaList: Boolean = false) {
-    MediaList(mediaId: $id, userId: $userId)@skip(if: $skipMediaList) {
+query getMediaDetail($id: Int!) {
+#    MediaList(mediaId: $id, userId: $userId)@skip(if: $skipMediaList) {
+#        id
+#        status
+#        progress
+#        progressVolumes
+#        repeat
+#        score
+#        startedAt {
+#            ...FuzzyDate
+#        }
+#        completedAt {
+#            ...FuzzyDate
+#        }
+#        private
+#        notes
+#    }
+    Media(id: $id) {
+        ...MediaDetailFragment
+    }
+}
+
+fragment MediaDetailFragment on Media {
+    id
+    idMal
+    type
+    title {
+        romaji
+        english
+        native
+    }
+    format
+    status
+    description(asHtml: true)
+    startDate {
+        ...FuzzyDate
+    }
+    endDate {
+        ...FuzzyDate
+    }
+    season
+    seasonYear
+    episodes
+    duration
+    chapters
+    volumes
+    countryOfOrigin
+    isLicensed
+    source
+    hashtag
+    trailer {
         id
-        status
+        site
+        thumbnail
+    }
+    # updatedAt is represented in the Unix timestamp
+    updatedAt
+    coverImage {
+        extraLarge
+        color
+    }
+    bannerImage
+    genres
+    synonyms
+    isAdult
+    averageScore
+    meanScore
+    # number of users with the media on their list
+    popularity
+    # Locked media may not be added to lists or favorited. This may be due to the entry pending for deletion or other reasons.
+    isLocked
+    # amount of related activity in the past hour
+    trending
+    isFavourite
+    isFavouriteBlocked
+    favourites
+    studios {
+        nodes {
+            id
+            name
+        }
+    }
+    tags {
+        id
+        name
+        rank
+        isMediaSpoiler
+        userId
+    }
+    relations {
+        edges {
+            relationType
+            node {
+                id
+                title {
+                    native
+                }
+                coverImage {
+                    extraLarge
+                }
+            }
+        }
+    }
+    characters(sort: RELEVANCE) {
+        edges {
+            node {
+                id
+                name {
+                    native
+                }
+                image {
+                    large
+                }
+            }
+            role
+            name
+            voiceActorRoles {
+                voiceActor {
+                    id
+                    name {
+                        userPreferred
+                    }
+                    image {
+                        large
+                    }
+                    languageV2
+                }
+                roleNotes
+                dubGroup
+            }
+        }
+    }
+    nextAiringEpisode {
+        id
+        airingAt
+        timeUntilAiring
+        episode
+        mediaId
+    }
+    airingSchedule {
+        nodes {
+            id
+        }
+    }
+    trends {
+        nodes {
+            mediaId
+        }
+    }
+    externalLinks {
+        id
+        url
+        site
+        siteId
+        type
+        language
+        color
+        icon
+        notes
+        isDisabled
+    }
+    streamingEpisodes {
+        title
+        thumbnail
+        url
+        site
+    }
+    rankings {
+        rank
+        type
+        year
+        season
+        allTime
+        context
+    }
+    stats {
+        scoreDistribution {
+            score
+            amount
+        }
+        statusDistribution {
+            status
+            amount
+        }
+    }
+    mediaListEntry {
+        id
+        userId
+        mediaId
         progress
-        progressVolumes
+        private
+        hiddenFromStatusLists
+        customLists
+        updatedAt
+        advancedScores
+        notes
         repeat
-        score
+        progressVolumes
         startedAt {
             ...FuzzyDate
         }
         completedAt {
             ...FuzzyDate
         }
-        private
-        notes
-    }
-    Media(id: $id) {
-        id
-        idMal
-        type
-        title {
-            romaji
-            english
-            native
-        }
-        format
         status
-        description(asHtml: true)
-        startDate {
-            year
-            month
-            day
-        }
-        endDate {
-            year
-            month
-            day
-        }
-        season
-        seasonYear
-        episodes
-        duration
-        chapters
-        volumes
-        countryOfOrigin
-        isLicensed
-        source
-        hashtag
-        trailer {
-            id
-            site
-            thumbnail
-        }
-        # updatedAt is represented in the Unix timestamp
-        updatedAt
-        coverImage {
-            extraLarge
-            color
-        }
-        bannerImage
-        genres
-        synonyms
-        isAdult
-        averageScore
-        meanScore
-        # number of users with the media on their list
-        popularity
-        # Locked media may not be added to lists or favorited. This may be due to the entry pending for deletion or other reasons.
-        isLocked
-        # amount of related activity in the past hour
-        trending
-        isFavourite
-        isFavouriteBlocked
-        favourites
-        studios {
-            nodes {
-                id
-                name
-            }
-        }
-        tags {
-            id
-            name
-            rank
-            isMediaSpoiler
-            userId
-        }
-        relations {
-            edges {
-                relationType
-                node {
-                    id
-                    title {
-                        native
-                    }
-                    coverImage {
-                        extraLarge
-                    }
-                }
-            }
-        }
-        characters(sort: RELEVANCE) {
-            edges {
-                node {
-                    id
-                    name {
-                        native
-                    }
-                    image {
-                        large
-                    }
-                }
-                role
-                name
-                voiceActorRoles {
-                    voiceActor {
-                        id
-                        name {
-                            userPreferred
-                        }
-                        image {
-                            large
-                        }
-                        languageV2
-                    }
-                    roleNotes
-                    dubGroup
-                }
-            }
-        }
-        nextAiringEpisode {
-            id
-            airingAt
-            timeUntilAiring
-            episode
-            mediaId
-        }
-        airingSchedule {
-            nodes {
-                id
-            }
-        }
-        trends {
-            nodes {
-                mediaId
-            }
-        }
-        externalLinks {
-            id
-            url
-            site
-            siteId
-            type
-            language
-            color
-            icon
-            notes
-            isDisabled
-        }
-        streamingEpisodes {
-            title
-            thumbnail
-            url
-            site
-        }
-        rankings {
-            rank
-            type
-            year
-            season
-            allTime
-            context
-        }
-        stats {
-            scoreDistribution {
-                score
-                amount
-            }
-            statusDistribution {
-                status
-                amount
-            }
-        }
-        mediaListEntry {
-            id
-        }
-        reviews {
-            nodes {
-                id
-            }
-        }
-        recommendations {
-            nodes {
-                id
-            }
-        }
-        stats {
-            scoreDistribution {
-                score
-                amount
-            }
-            statusDistribution {
-                status
-                amount
-            }
-        }
-        siteUrl
-        autoCreateForumThread
-        isRecommendationBlocked
-        isReviewBlocked
-        modNotes
+        score
     }
+    reviews {
+        nodes {
+            id
+        }
+    }
+    recommendations {
+        nodes {
+            id
+        }
+    }
+    stats {
+        scoreDistribution {
+            score
+            amount
+        }
+        statusDistribution {
+            status
+            amount
+        }
+    }
+    siteUrl
+    autoCreateForumThread
+    isRecommendationBlocked
+    isReviewBlocked
+    modNotes
 }
 
 query GetCharactersOfMedia($id: Int!, $page: Int!, $perPage: Int!) {
@@ -250,7 +269,7 @@ query GetCharactersOfMedia($id: Int!, $page: Int!, $perPage: Int!) {
 
 query GetReviewsOfMedia($id: Int!, $page:Int! $perPage:Int!) {
     Media(id: $id) {
-        reviews(page: $page, perPage: $perPage) {
+        reviews(page: $page, perPage: $perPage, sort: RATING_DESC) {
             nodes {
                 id
                 userId
@@ -345,6 +364,11 @@ query GetStaffDetail($id: Int!) {
         }
         name {
             userPreferred
+            first
+            middle
+            last
+            full
+            native
             alternative
         }
         languageV2
@@ -381,7 +405,7 @@ query GetStaffDetail($id: Int!) {
             }
         }
         ## FIXME THIS IS ALSO PAGED
-        anime:staffMedia(type: ANIME) {
+        anime:staffMedia {
             ...StaffMedia
         }
 
@@ -391,9 +415,18 @@ query GetStaffDetail($id: Int!) {
     }
 }
 
+query GetMediaOfStaff($staffId: Int!, $page: Int!, $pageSize: Int!) {
+    Staff(id: $staffId) {
+        staffMedia(page: $page, perPage: $pageSize) {
+            ...StaffMedia
+        }
+    }
+}
+
 fragment StaffMedia on MediaConnection {
     edges {
         node {
+            type
             id
             coverImage {
                 extraLarge

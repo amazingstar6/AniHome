@@ -38,7 +38,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
@@ -55,9 +54,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.anilist.R
+import com.example.anilist.data.models.AniMediaListEntry
 import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.PersonalMediaStatus
+import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -71,14 +71,14 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class)
 fun EditStatusModalSheet(
     editSheetState: SheetState,
-    unchangedMedia: Media,
+    media: Media,
+    unChangeListEntry: AniMediaListEntry,
     isAnime: Boolean,
     hideEditSheet: () -> Unit,
-    saveStatus: (StatusUpdate) -> Unit,
+    saveStatus: (StatusUpdate, Boolean) -> Unit,
     deleteListEntry: (id: Int) -> Unit
 ) {
-    var currentMedia1 by remember { mutableStateOf(unchangedMedia) }
-//    val unChangedMedia = currentMedia
+    var currentListEntry by remember { mutableStateOf(unChangeListEntry) }
     var showCloseConfirmation by remember {
         mutableStateOf(false)
     }
@@ -86,7 +86,7 @@ fun EditStatusModalSheet(
         onDismissRequest = { hideEditSheet() }) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             /*do we need this? fixme */
-            var selectedOptionText by remember { mutableStateOf(unchangedMedia.personalStatus) }
+//            var selectedOptionText by remember { mutableStateOf(unChangeListEntry.status) }
             AnimatedVisibility(showCloseConfirmation) {
                 AlertDialog(
                     title = { Text(text = "Discard pending changes?") },
@@ -114,17 +114,17 @@ fun EditStatusModalSheet(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = currentMedia1.title,
+                        text = media.title,
                     )
                 },
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (unchangedMedia == currentMedia1) {
-                                Timber.d("Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1")
+                            if (unChangeListEntry == currentListEntry) {
+                                Timber.d("Unchanged media: $unChangeListEntry\ncurrentMedia: $currentListEntry")
                                 hideEditSheet()
                             } else {
-                                Timber.d("Unchanged media: $unchangedMedia\ncurrentMedia: $currentMedia1")
+                                Timber.d("Unchanged media: $unChangeListEntry\ncurrentMedia: $currentListEntry")
                                 showCloseConfirmation = true
                             }
                         },
@@ -141,21 +141,23 @@ fun EditStatusModalSheet(
                         saveStatus(
                             // todo fill these
                             StatusUpdate(
-                                entryListId = currentMedia1.listEntryId,
-                                status = selectedOptionText,
-                                scoreRaw = currentMedia1.rawScore.toInt(),
-                                progress = currentMedia1.personalProgress,
-                                progressVolumes = if (!isAnime) currentMedia1.personalVolumeProgress else null,
-                                repeat = currentMedia1.rewatches,
+                                entryListId = currentListEntry.listEntryId,
+                                status = currentListEntry.status,
+                                scoreRaw = currentListEntry.score.toInt(),
+                                progress = currentListEntry.progress,
+                                progressVolumes = if (!isAnime) currentListEntry.progressVolumes else null,
+                                repeat = currentListEntry.repeat,
                                 priority = null,
-                                privateToUser = currentMedia1.isPrivate,
-                                notes = currentMedia1.note,
+                                privateToUser = currentListEntry.private,
+                                notes = currentListEntry.notes,
                                 hiddenFromStatusList = null,
                                 customLists = null,
                                 advancedScores = null,
-                                startedAt = currentMedia1.startedAt,
-                                completedAt = currentMedia1.completedAt,
+                                startedAt = currentListEntry.startedAt,
+                                completedAt = currentListEntry.completedAt,
+                                mediaId = media.id
                             ),
+                            false
                         )
                         hideEditSheet()
 //                        reloadMyMedia()
@@ -166,26 +168,31 @@ fun EditStatusModalSheet(
             )
 
             DropDownMenuStatus(
-                selectedOptionText,
+                currentListEntry.status,
                 isAnime = isAnime
-            ) { selectedOptionText = it }
+            ) { currentListEntry = currentListEntry.copy(status = it) }
 
             NumberTextField(
-                suffix = if (isAnime) currentMedia1.episodeAmount.toString() else currentMedia1.chapters.toString(),
+                suffix = if (isAnime) media.episodeAmount.toString() else media.chapters.toString(),
                 label = if (isAnime) "Episodes" else "Chapters",
-                initialValue = currentMedia1.personalProgress,
+                initialValue = currentListEntry.progress,
                 setValue = {
-                    currentMedia1 = currentMedia1.copy(personalProgress = it)
+                    currentListEntry = currentListEntry.copy(progress = it)
+                    if ((if (isAnime) media.episodeAmount else media.chapters)
+                        == currentListEntry.progress
+                    ) {
+                        currentListEntry = currentListEntry.copy(status = AniPersonalMediaStatus.COMPLETED)
+                    }
                 },
                 maxCount = if (isAnime) {
-                    if (currentMedia1.episodeAmount != -1) {
-                        currentMedia1.episodeAmount
+                    if (media.episodeAmount != -1) {
+                        media.episodeAmount
                     } else {
                         Int.MAX_VALUE
                     }
                 } else {
-                    if (currentMedia1.chapters != -1) {
-                        currentMedia1.chapters
+                    if (media.chapters != -1) {
+                        media.chapters
                     } else {
                         Int.MAX_VALUE
                     }
@@ -193,35 +200,35 @@ fun EditStatusModalSheet(
             )
             if (!isAnime) {
                 NumberTextField(
-                    suffix = currentMedia1.volumes.toString(),
+                    suffix = media.volumes.toString(),
                     label = "Volumes",
-                    initialValue = currentMedia1.personalVolumeProgress,
+                    initialValue = currentListEntry.progressVolumes,
                     setValue = {
-                        currentMedia1 = currentMedia1.copy(personalProgress = it)
+                        currentListEntry = currentListEntry.copy(progress = it)
                     },
-                    maxCount = currentMedia1.volumes,
+                    maxCount = media.volumes,
                 )
             }
             NumberTextField(
                 suffix = "",
                 label = if (isAnime) "Total rewatches" else "Total rereads",
-                initialValue = currentMedia1.rewatches,
-                setValue = { currentMedia1 = currentMedia1.copy(rewatches = it) },
+                initialValue = currentListEntry.repeat,
+                setValue = { currentListEntry = currentListEntry.copy(repeat = it) },
                 maxCount = Int.MAX_VALUE,
             )
             SliderTextField(
-                currentMedia1.rawScore,
-                setRawScore = { currentMedia1 = currentMedia1.copy(rawScore = it) })
+                currentListEntry.score,
+                setRawScore = { currentListEntry = currentListEntry.copy(score = it) })
 
             DatePickerDialogue(
                 "Start date",
-                initialValue = currentMedia1.startedAt,
-                setValue = { currentMedia1 = currentMedia1.copy(startedAt = it) },
+                initialValue = currentListEntry.startedAt,
+                setValue = { currentListEntry = currentListEntry.copy(startedAt = it) },
             )
             DatePickerDialogue(
                 "Finish date",
-                initialValue = currentMedia1.completedAt,
-                setValue = { currentMedia1 = currentMedia1.copy(completedAt = it) },
+                initialValue = currentListEntry.completedAt,
+                setValue = { currentListEntry = currentListEntry.copy(completedAt = it) },
             )
 
             Row(
@@ -231,11 +238,12 @@ fun EditStatusModalSheet(
                     .fillMaxWidth()
                     .padding(horizontal = Dimens.PaddingNormal)
                     .clickable {
-                        currentMedia1 = currentMedia1.copy(isPrivate = !currentMedia1.isPrivate)
+                        currentListEntry =
+                            currentListEntry.copy(private = !currentListEntry.private)
                     }
             ) {
-                Checkbox(checked = currentMedia1.isPrivate, onCheckedChange = {
-                    currentMedia1 = currentMedia1.copy(isPrivate = it)
+                Checkbox(checked = currentListEntry.private, onCheckedChange = {
+                    currentListEntry = currentListEntry.copy(private = it)
                 })
                 Text(
                     "Private",
@@ -245,10 +253,10 @@ fun EditStatusModalSheet(
             }
 
             OutlinedTextField(
-                value = currentMedia1.note,
+                value = currentListEntry.notes,
                 label = { Text("Notes") },
                 onValueChange = {
-                    currentMedia1 = currentMedia1.copy(note = it)
+                    currentListEntry = currentListEntry.copy(notes = it)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -258,9 +266,9 @@ fun EditStatusModalSheet(
                     ),
                 minLines = 5,
                 trailingIcon = {
-                    if (currentMedia1.note.isNotBlank()) {
+                    if (currentListEntry.notes.isNotBlank()) {
                         IconButton(onClick = {
-                            currentMedia1 = currentMedia1.copy(note = "")
+                            currentListEntry = currentListEntry.copy(notes = "")
                         }) {
                             Box {
                                 Icon(
@@ -277,7 +285,7 @@ fun EditStatusModalSheet(
             var showDeleteConfirmation by remember { mutableStateOf(false) }
             AnimatedVisibility(visible = showDeleteConfirmation) {
                 AlertDialog(
-                    title = { Text(text = "Delete entry?") },
+                    title = { Text(text = "Delete entry \"${media.title}\"?") },
                     dismissButton = {
                         TextButton(onClick = { showDeleteConfirmation = false }) {
                             Text(text = stringResource(R.string.cancel))
@@ -285,7 +293,7 @@ fun EditStatusModalSheet(
                     },
                     confirmButton = {
                         TextButton(onClick = {
-                            deleteListEntry(currentMedia1.listEntryId)
+                            deleteListEntry(currentListEntry.listEntryId)
                             showDeleteConfirmation = false
                             hideEditSheet()
                         }) {
@@ -387,9 +395,9 @@ fun SliderTextField(rawScore: Double, setRawScore: (Double) -> Unit) {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun DropDownMenuStatus(
-    selectedOptionText: PersonalMediaStatus,
+    selectedOptionText: AniPersonalMediaStatus,
     isAnime: Boolean,
-    setSelectedOptionText: (PersonalMediaStatus) -> Unit,
+    setSelectedOptionText: (AniPersonalMediaStatus) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     // We want to react on tap/press on TextField to show menu
@@ -405,7 +413,9 @@ fun DropDownMenuStatus(
                 .fillMaxWidth(),
             readOnly = true,
             value = selectedOptionText.toString(
-                isAnime = isAnime, context = LocalContext.current
+                isAnime = isAnime, context = LocalContext.current, unknownString = stringResource(
+                    R.string.none
+                )
             ),
             onValueChange = {},
             label = { Text("Status") },
@@ -416,10 +426,17 @@ fun DropDownMenuStatus(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
-            PersonalMediaStatus.values().forEach { selectionOption ->
-                if (selectionOption != PersonalMediaStatus.UNKNOWN) {
+            AniPersonalMediaStatus.values().forEach { selectionOption ->
+                if (selectionOption != AniPersonalMediaStatus.UNKNOWN) {
                     DropdownMenuItem(
-                        text = { Text(selectionOption.toString(isAnime = isAnime, context = LocalContext.current)) },
+                        text = {
+                            Text(
+                                selectionOption.toString(
+                                    isAnime = isAnime,
+                                    context = LocalContext.current
+                                )
+                            )
+                        },
                         onClick = {
                             setSelectedOptionText(selectionOption)
                             expanded = false
@@ -626,19 +643,19 @@ fun DatePickerDialogue(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview
-@Composable
-fun EditStatusModalSheetPreview() {
-    EditStatusModalSheet(
-        editSheetState = rememberModalBottomSheetState(),
-        unchangedMedia = Media(),
-        isAnime = true,
-        hideEditSheet = { },
-        saveStatus = { },
-        deleteListEntry = { }
-    )
-}
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Preview
+//@Composable
+//fun EditStatusModalSheetPreview() {
+//    EditStatusModalSheet(
+//        editSheetState = rememberModalBottomSheetState(),
+//        unChangeListEntry = Media(),
+//        isAnime = true,
+//        hideEditSheet = { },
+//        saveStatus = { },
+//        deleteListEntry = { }
+//    )
+//}
 
 @Preview(showBackground = true, group = "Date picker")
 @Composable

@@ -5,9 +5,9 @@ import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniTag
 import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.AniUser
-import com.example.anilist.data.models.CharacterDetail
+import com.example.anilist.data.models.AniCharacterDetail
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.models.AniStaffDetail
 import com.example.anilist.ui.home.AniCharacterSort
 import com.example.anilist.ui.home.MediaPagingSource
 import com.example.anilist.ui.home.MediaSearchState
@@ -47,9 +47,9 @@ interface HomeRepository {
         pageSize: Int,
         text: String,
         sort: AniCharacterSort
-    ): AniResult<List<CharacterDetail>>
+    ): AniResult<List<AniCharacterDetail>>
 
-    suspend fun searchStaff(text: String, page: Int, pageSize: Int): AniResult<List<StaffDetail>>
+    suspend fun searchStaff(text: String, page: Int, pageSize: Int): AniResult<List<AniStaffDetail>>
 
     suspend fun searchStudio(text: String, page: Int, pageSize: Int): AniResult<List<AniStudio>>
 

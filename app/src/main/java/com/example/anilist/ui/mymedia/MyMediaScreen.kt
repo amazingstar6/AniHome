@@ -79,7 +79,7 @@ import com.example.anilist.data.models.AniMediaFormat
 import com.example.anilist.data.models.AniMediaListSort
 import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.PersonalMediaStatus
+import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.EditStatusModalSheet
@@ -140,8 +140,8 @@ fun MyMediaScreen(
                 isAnime = isAnime,
                 myMedia = (uiState as MyMediaUiState.Success).myMedia,
                 navigateToDetails = navigateToDetails,
-                saveStatus = {
-                    myMediaViewModel.updateProgress(statusUpdate = it)
+                saveStatus = { status, isComplete ->
+                    myMediaViewModel.updateProgress(statusUpdate = status, isComplete = isComplete)
                 },
                 reloadMyMedia = {
                     myMediaViewModel.fetchMyMedia(isAnime, true)
@@ -172,13 +172,13 @@ fun MyMediaScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun MyMedia(
     isAnime: Boolean,
-    myMedia: Map<PersonalMediaStatus, List<Media>>,
+    myMedia: Map<AniPersonalMediaStatus, List<Media>>,
     sort: AniMediaListSort,
     setSort: (AniMediaListSort, Boolean) -> Unit,
     isDescending: Boolean,
     setIsDescending: (Boolean) -> Unit,
     navigateToDetails: (Int) -> Unit,
-    saveStatus: (StatusUpdate) -> Unit,
+    saveStatus: (StatusUpdate, Boolean) -> Unit,
     reloadMyMedia: () -> Unit,
     deleteListEntry: (id: Int) -> Unit,
 ) {
@@ -226,8 +226,8 @@ private fun MyMedia(
     }
     var showSortingSheet by remember { mutableStateOf(false) }
 
-    var filter by rememberSaveable { mutableStateOf(PersonalMediaStatus.UNKNOWN) }
-    val setFilter: (PersonalMediaStatus) -> Unit = { filter = it }
+    var filter by rememberSaveable { mutableStateOf(AniPersonalMediaStatus.UNKNOWN) }
+    val setFilter: (AniPersonalMediaStatus) -> Unit = { filter = it }
 
     val topAppBarScrollBehaviour = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val lazyListState = rememberLazyListState()
@@ -282,7 +282,7 @@ private fun MyMedia(
                 ExtendedFloatingActionButton(
                     text = {
                         Text(
-                            if (filter == PersonalMediaStatus.UNKNOWN) stringResource(id = R.string.filter) else filter.toString(
+                            if (filter == AniPersonalMediaStatus.UNKNOWN) stringResource(id = R.string.filter) else filter.toString(
                                 isAnime = isAnime,
                                 context = LocalContext.current
                             )
@@ -336,7 +336,10 @@ private fun MyMedia(
                                 advancedScores = null,
                                 startedAt = null,
                                 completedAt = null,
-                            )
+                                mediaId = currentMedia.id
+                            ),
+                            (if (isAnime) currentMedia.episodeAmount else currentMedia.chapters)
+                                    == currentMedia.mediaListEntry.progress
                         )
                     },
                     increaseVolumeProgress = { entryId, newProgress ->
@@ -356,7 +359,10 @@ private fun MyMedia(
                                 advancedScores = null,
                                 startedAt = null,
                                 completedAt = null,
-                            )
+                                mediaId = currentMedia.id
+                            ),
+                            (if (isAnime) currentMedia.episodeAmount else currentMedia.chapters)
+                                    == currentMedia.mediaListEntry.progress
                         )
                     },
                     showEditSheet = showEditSheet,
@@ -370,7 +376,7 @@ private fun MyMedia(
             if (showRatingDialog) {
                 RatingDialog(
                     { showRatingDialog = it },
-                    saveStatus,
+                    {saveStatus(it, false)},
                     currentMedia,
                     { currentMedia = it })
             }
@@ -378,7 +384,8 @@ private fun MyMedia(
                 EditStatusModalSheet(
                     editSheetState = editSheetState,
                     hideEditSheet = hideEditSheet,
-                    unchangedMedia = currentMedia,
+                    unChangeListEntry = currentMedia.mediaListEntry,
+                    media = currentMedia,
                     saveStatus = saveStatus,
                     isAnime = isAnime,
                     deleteListEntry = deleteListEntry
@@ -410,9 +417,9 @@ private fun MyMedia(
 @OptIn(ExperimentalFoundationApi::class)
 private fun MyMediaLazyList(
     it: PaddingValues,
-    filter: PersonalMediaStatus,
+    filter: AniPersonalMediaStatus,
     sort: AniMediaListSort,
-    myMedia: Map<PersonalMediaStatus, List<Media>>?,
+    myMedia: Map<AniPersonalMediaStatus, List<Media>>?,
     navigateToDetails: (Int) -> Unit,
     increaseEpisodeProgress: (entryId: Int, newProgress: Int) -> Unit,
     increaseVolumeProgress: (entryId: Int, newProgress: Int) -> Unit,
@@ -421,7 +428,7 @@ private fun MyMediaLazyList(
     isAnime: Boolean,
     lazyListState: LazyListState
 ) {
-    val sortedMediaList: Map<PersonalMediaStatus, List<Media>>? by remember(
+    val sortedMediaList: Map<AniPersonalMediaStatus, List<Media>>? by remember(
         key1 = sort,
         key2 = myMedia
     ) {
@@ -429,40 +436,45 @@ private fun MyMediaLazyList(
             when (sort) {
                 AniMediaListSort.MEDIA_ID -> mediaList.sortedBy { media -> media.id }
                 AniMediaListSort.MEDIA_ID_DESC -> mediaList.sortedByDescending { media -> media.id }
-                AniMediaListSort.SCORE -> mediaList.sortedBy { media -> media.rawScore }
-                AniMediaListSort.SCORE_DESC -> mediaList.sortedByDescending { media -> media.rawScore }
-                AniMediaListSort.UPDATED_TIME -> mediaList.sortedBy { media -> media.updatedAt }
-                AniMediaListSort.UPDATED_TIME_DESC -> mediaList.sortedByDescending { media -> media.updatedAt }
-                AniMediaListSort.PROGRESS -> mediaList.sortedBy { media -> media.personalProgress }
-                AniMediaListSort.PROGRESS_DESC -> mediaList.sortedByDescending { media -> media.personalProgress }
-                AniMediaListSort.PROGRESS_VOLUMES -> mediaList.sortedBy { media -> media.personalVolumeProgress }
-                AniMediaListSort.PROGRESS_VOLUMES_DESC -> mediaList.sortedByDescending { media -> media.personalVolumeProgress }
-                AniMediaListSort.REPEAT -> mediaList.sortedBy { media -> media.rewatches }
-                AniMediaListSort.REPEAT_DESC -> mediaList.sortedByDescending { media -> media.rewatches }
+                AniMediaListSort.SCORE -> mediaList.sortedBy { media -> media.mediaListEntry.score }
+                AniMediaListSort.SCORE_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.score }
+                AniMediaListSort.UPDATED_TIME -> mediaList.sortedBy { media -> sortDate(media.mediaListEntry.updatedAt) }
+                AniMediaListSort.UPDATED_TIME_DESC -> mediaList.sortedByDescending { media ->
+                    sortDate(
+                        media.mediaListEntry.updatedAt
+                    )
+                }
+
+                AniMediaListSort.PROGRESS -> mediaList.sortedBy { media -> media.mediaListEntry.progress }
+                AniMediaListSort.PROGRESS_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.progress }
+                AniMediaListSort.PROGRESS_VOLUMES -> mediaList.sortedBy { media -> media.mediaListEntry.progressVolumes }
+                AniMediaListSort.PROGRESS_VOLUMES_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.progressVolumes }
+                AniMediaListSort.REPEAT -> mediaList.sortedBy { media -> media.mediaListEntry.repeat }
+                AniMediaListSort.REPEAT_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.repeat }
                 AniMediaListSort.PRIORITY -> mediaList.sortedBy { media -> media.priority }
                 AniMediaListSort.PRIORITY_DESC -> mediaList.sortedByDescending { media -> media.priority }
                 AniMediaListSort.STARTED_ON -> mediaList.sortedBy { media ->
-                    sortDate(media.startedAt)
+                    sortDate(media.mediaListEntry.startedAt)
                 }
 
                 AniMediaListSort.STARTED_ON_DESC -> mediaList.sortedByDescending { media ->
-                    sortDate(media.startedAt)
+                    sortDate(media.mediaListEntry.startedAt)
                 }
 
                 AniMediaListSort.FINISHED_ON -> mediaList.sortedBy { media ->
-                    sortDate(media.completedAt)
+                    sortDate(media.mediaListEntry.completedAt)
                 }
 
                 AniMediaListSort.FINISHED_ON_DESC -> mediaList.sortedByDescending { media ->
-                    sortDate(media.completedAt)
+                    sortDate(media.mediaListEntry.completedAt)
                 }
 
                 AniMediaListSort.ADDED_TIME -> mediaList.sortedBy { media ->
-                    sortDate(media.createdAt)
+                    sortDate(media.mediaListEntry.createdAt)
                 }
 
                 AniMediaListSort.ADDED_TIME_DESC -> mediaList.sortedByDescending { media ->
-                    sortDate(media.createdAt)
+                    sortDate(media.mediaListEntry.createdAt)
                 }
 
                 AniMediaListSort.MEDIA_TITLE -> mediaList.sortedBy { media -> media.title }
@@ -472,8 +484,8 @@ private fun MyMediaLazyList(
         )
     }
     LazyColumn(state = lazyListState, modifier = Modifier.padding(top = it.calculateTopPadding())) {
-        PersonalMediaStatus.values().forEach { status ->
-            if (filter == PersonalMediaStatus.UNKNOWN || filter == status) {
+        AniPersonalMediaStatus.values().forEach { status ->
+            if (filter == AniPersonalMediaStatus.UNKNOWN || filter == status) {
                 val mediaList = sortedMediaList?.get(status).orEmpty()
                 if (mediaList.isNotEmpty()) {
                     stickyHeader {
@@ -632,7 +644,7 @@ private fun MyMediaLazyList(
     }
 }
 
-private fun sortDate(date: FuzzyDate?) =
+fun sortDate(date: FuzzyDate?) =
     (date?.year?.times(10000) ?: 0) + (date?.month?.times(100) ?: 0) + (date?.day ?: 0)
 
 @Composable
@@ -745,14 +757,14 @@ private fun MediaCard(
                                 modifier = Modifier.padding(end = 2.dp)
                             )
                             Text(
-                                text = media.personalRating.div(10).toString(),
+                                text = media.mediaListEntry.score.div(10).toString(),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                         }
                         if (isAnime) {
                             Text(
-                                text = "${media.personalProgress}/${
+                                text = "${media.mediaListEntry.progress}/${
                                     if (media.episodeAmount != -1) media.episodeAmount else stringResource(
                                         id = R.string.question_mark
                                     )
@@ -762,7 +774,7 @@ private fun MediaCard(
                             )
                         } else {
                             Text(
-                                text = "${media.personalProgress}/${
+                                text = "${media.mediaListEntry.progress}/${
                                     if (media.chapters != -1) media.chapters else stringResource(
                                         id = R.string.question_mark
                                     )
@@ -771,7 +783,7 @@ private fun MediaCard(
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
-                                text = "${media.personalVolumeProgress}/${
+                                text = "${media.mediaListEntry.progressVolumes}/${
                                     if (media.volumes != -1) media.volumes else stringResource(
                                         id = R.string.question_mark
                                     )
@@ -802,28 +814,28 @@ private fun MediaCard(
                             }
                         }
                         if (isAnime) {
-                            if (media.personalProgress != media.episodeAmount) {
+                            if (media.mediaListEntry.progress != media.episodeAmount) {
                                 IncreaseProgress(
                                     increaseEpisodeProgress,
-                                    media.listEntryId,
-                                    media.personalProgress,
+                                    media.mediaListEntry.listEntryId,
+                                    media.mediaListEntry.progress,
                                     stringResource(id = R.string.plus_one_episode),
                                 )
                             }
                         } else {
-                            if (media.chapters != media.personalProgress) {
+                            if (media.chapters != media.mediaListEntry.progress) {
                                 IncreaseProgress(
                                     increaseEpisodeProgress,
-                                    media.listEntryId,
-                                    media.personalProgress,
+                                    media.mediaListEntry.listEntryId,
+                                    media.mediaListEntry.progress,
                                     stringResource(id = R.string.plus_one_chapter),
                                 )
                             }
-                            if (media.personalVolumeProgress != media.volumes) {
+                            if (media.mediaListEntry.progressVolumes != media.volumes) {
                                 IncreaseProgress(
                                     increaseVolumeProgress,
-                                    media.listEntryId,
-                                    media.personalVolumeProgress,
+                                    media.mediaListEntry.listEntryId,
+                                    media.mediaListEntry.progressVolumes,
                                     stringResource(
                                         id = R.string.plus_one_volume,
                                     ),
@@ -835,7 +847,7 @@ private fun MediaCard(
             }
         }
         val progress =
-            (media.personalProgress / (if (isAnime) media.episodeAmount.toFloat() else media.chapters.toFloat()))
+            (media.mediaListEntry.progress / (if (isAnime) media.episodeAmount.toFloat() else media.chapters.toFloat()))
         val animatedProgress by animateFloatAsState(
             targetValue = progress,
             animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
@@ -882,55 +894,55 @@ private fun IncreaseProgress(
     }
 }
 
-@Preview(showBackground = true, group = "fullscreen")
-@Composable
-fun MyAnimePreview() {
-    MyMedia(
-        isAnime = false,
-        myMedia = mapOf(
-            PersonalMediaStatus.CURRENT to listOf(
-                Media(
-                    title = "鬼滅の刃",
-                    format = AniMediaFormat.TV,
-                    personalRating = 6.0,
-                    personalProgress = 20,
-                    note = "",
-                    volumes = 6,
-                    personalVolumeProgress = 3,
-                    chapters = 80,
-                ),
-                Media(
-                    title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
-                    format = AniMediaFormat.TV,
-                    personalRating = 10.0,
-                    personalProgress = 120,
-                    note = "",
-                    volumes = 5,
-                    personalVolumeProgress = 2,
-                    chapters = 1012,
-                ),
-                Media(
-                    title = "ONE PIECE",
-                    format = AniMediaFormat.TV,
-                    episodeAmount = 101,
-                    personalRating = 3.0,
-                    personalProgress = 101,
-                    note = "",
-                    volumes = 3,
-                    personalVolumeProgress = 2,
-                )
-            ),
-        ),
-        navigateToDetails = {},
-        saveStatus = { },
-        reloadMyMedia = { },
-        deleteListEntry = {},
-        sort = AniMediaListSort.UPDATED_TIME_DESC,
-        setSort = { _, _ -> },
-        isDescending = true,
-        setIsDescending = {}
-    )
-}
+//@Preview(showBackground = true, group = "fullscreen")
+//@Composable
+//fun MyAnimePreview() {
+//    MyMedia(
+//        isAnime = false,
+//        myMedia = mapOf(
+//            PersonalMediaStatus.CURRENT to listOf(
+//                Media(
+//                    title = "鬼滅の刃",
+//                    format = AniMediaFormat.TV,
+//                    personalRating = 6.0,
+//                    personalProgress = 20,
+//                    note = "",
+//                    volumes = 6,
+//                    personalVolumeProgress = 3,
+//                    chapters = 80,
+//                ),
+//                Media(
+//                    title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
+//                    format = AniMediaFormat.TV,
+//                    personalRating = 10.0,
+//                    personalProgress = 120,
+//                    note = "",
+//                    volumes = 5,
+//                    personalVolumeProgress = 2,
+//                    chapters = 1012,
+//                ),
+//                Media(
+//                    title = "ONE PIECE",
+//                    format = AniMediaFormat.TV,
+//                    episodeAmount = 101,
+//                    personalRating = 3.0,
+//                    personalProgress = 101,
+//                    note = "",
+//                    volumes = 3,
+//                    personalVolumeProgress = 2,
+//                )
+//            ),
+//        ),
+//        navigateToDetails = {},
+//        saveStatus = { },
+//        reloadMyMedia = { },
+//        deleteListEntry = {},
+//        sort = AniMediaListSort.UPDATED_TIME_DESC,
+//        setSort = { _, _ -> },
+//        isDescending = true,
+//        setIsDescending = {}
+//    )
+//}
 
 @Preview(showBackground = true)
 @Composable
@@ -943,9 +955,9 @@ fun MediaCardPreview() {
             title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
             format = AniMediaFormat.TV,
             episodeAmount = 204,
-            personalRating = 10.0,
-            personalProgress = 120,
-            note = "",
+//            personalRating = 10.0,
+//            personalProgress = 120,
+//            note = "",
         ),
         openEditStatusSheet = { },
         openRatingDialog = { },

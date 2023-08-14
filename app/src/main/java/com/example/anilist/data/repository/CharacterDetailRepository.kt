@@ -1,16 +1,18 @@
 package com.example.anilist.data.repository
 
+import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.example.anilist.GetCharacterDetailQuery
+import com.example.anilist.ToggleFavoriteCharacterMutation
 import com.example.anilist.data.models.AniResult
-import com.example.anilist.data.models.CharacterDetail
-import com.example.anilist.data.models.CharacterMediaConnection
-import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.models.AniCharacterDetail
+import com.example.anilist.data.models.AniCharacterMediaConnection
+import com.example.anilist.data.models.AniStaffDetail
 import com.example.anilist.utils.Apollo
 import javax.inject.Inject
 
 class CharacterDetailRepository @Inject constructor() {
-    suspend fun fetchCharacter(characterId: Int): AniResult<CharacterDetail> {
+    suspend fun fetchCharacter(characterId: Int): AniResult<AniCharacterDetail> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -33,7 +35,7 @@ class CharacterDetailRepository @Inject constructor() {
         }
     }
 
-    private fun parseCharacter(data: GetCharacterDetailQuery.Character): CharacterDetail {
+    private fun parseCharacter(data: GetCharacterDetailQuery.Character): AniCharacterDetail {
         val regex = Regex("<span class='markdown_spoiler'>(.*?)</span>")
         val matches = regex.findAll(data.description ?: "")
 
@@ -56,7 +58,7 @@ class CharacterDetailRepository @Inject constructor() {
                 )
             }
         }
-        return CharacterDetail(
+        return AniCharacterDetail(
             id = data.id,
             userPreferredName = data.name?.userPreferred ?: "",
             firstName = data.name?.first ?: "",
@@ -77,12 +79,12 @@ class CharacterDetailRepository @Inject constructor() {
         )
     }
 
-    private fun parseVoiceActorsForCharacter(mediaList: GetCharacterDetailQuery.Media?): List<StaffDetail> {
-        val result = mutableListOf<StaffDetail>()
+    private fun parseVoiceActorsForCharacter(mediaList: GetCharacterDetailQuery.Media?): List<AniStaffDetail> {
+        val result = mutableListOf<AniStaffDetail>()
         for (media in mediaList?.edges.orEmpty()) {
             for (voiceActor in media?.voiceActorRoles.orEmpty()) {
                 result.add(
-                    StaffDetail(
+                    AniStaffDetail(
                         id = voiceActor?.voiceActor?.id ?: -1,
                         userPreferredName = voiceActor?.voiceActor?.name?.userPreferred ?: "",
                         coverImage = voiceActor?.voiceActor?.image?.large ?: "",
@@ -94,11 +96,11 @@ class CharacterDetailRepository @Inject constructor() {
         return result.distinctBy { it.id }
     }
 
-    private fun parseMediaCharacter(mediaList: GetCharacterDetailQuery.Media?): List<CharacterMediaConnection> {
-        val result = mutableListOf<CharacterMediaConnection>()
+    private fun parseMediaCharacter(mediaList: GetCharacterDetailQuery.Media?): List<AniCharacterMediaConnection> {
+        val result = mutableListOf<AniCharacterMediaConnection>()
         for (media in mediaList?.edges.orEmpty()) {
             result.add(
-                CharacterMediaConnection(
+                AniCharacterMediaConnection(
                     id = media?.node?.id ?: -1,
                     title = media?.node?.title?.userPreferred ?: "",
                     coverImage = media?.node?.coverImage?.extraLarge ?: "",
@@ -107,5 +109,34 @@ class CharacterDetailRepository @Inject constructor() {
             )
         }
         return result
+    }
+
+    suspend fun toggleFavourite(id: Int): AniResult<Boolean> {
+        try {
+            val result =
+                Apollo.apolloClient.mutation(
+                    ToggleFavoriteCharacterMutation(
+                        characterId = Optional.present(
+                            id,
+                        ),
+                    ),
+                )
+                    .execute()
+            if (result.hasErrors()) {
+                return AniResult.Failure(buildString {
+                    result.errors?.forEach { appendLine(it.message) }
+                })
+            }
+            // the result is a list of all the things you've already liked of the same type
+            val isFavourite =
+                result.data?.ToggleFavourite?.characters?.nodes?.any { it?.id == id }
+            return if (isFavourite != null) {
+                AniResult.Success(isFavourite)
+            } else {
+                AniResult.Failure("Network error")
+            }
+        } catch (exception: ApolloException) {
+            return AniResult.Failure(exception.localizedMessage ?: "No exception message given")
+        }
     }
 }

@@ -102,7 +102,7 @@ import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniTag
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaType
-import com.example.anilist.data.models.Season
+import com.example.anilist.data.models.AniSeason
 import com.example.anilist.data.models.HomeTrendingTypes
 import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.ui.Dimens
@@ -506,7 +506,7 @@ private fun AniSearchBar(
         mutableStateOf(AniCharacterSort.FAVOURITES_DESC)
     }
 
-    var selectedSeason by rememberSaveable { mutableStateOf(Season.UNKNOWN) }
+    var selectedSeason by rememberSaveable { mutableStateOf(AniSeason.UNKNOWN) }
     var selectedYear by rememberSaveable { mutableIntStateOf(-1) }
     var selectedStatus by rememberSaveable { mutableStateOf(AniMediaStatus.UNKNOWN) }
     val selectedGenres: MutableList<String> by rememberSaveable { mutableStateOf(mutableListOf()) } //fixme warning?
@@ -733,7 +733,7 @@ private fun AniSearchBar(
                                 )
                             }, label = {
                                 Text(
-                                    text = if (selectedSeason == Season.UNKNOWN) {
+                                    text = if (selectedSeason == AniSeason.UNKNOWN) {
                                         stringResource(id = R.string.season)
                                     } else selectedSeason.getString(
                                         context
@@ -757,7 +757,7 @@ private fun AniSearchBar(
                                         text = if (selectedStatus == AniMediaStatus.UNKNOWN) {
                                             stringResource(R.string.airing_status)
                                         } else {
-                                            selectedStatus.getString(context)
+                                            selectedStatus.toString(context)
                                         }
                                     )
                                 },
@@ -918,12 +918,12 @@ private fun AniSearchBar(
                 }
                 if (showSeasonBottomSheet) {
                     ModalBottomSheet(onDismissRequest = { showSeasonBottomSheet = false }) {
-                        Season.values().forEach { season ->
-                            if (season != Season.UNKNOWN) {
+                        AniSeason.values().forEach { season ->
+                            if (season != AniSeason.UNKNOWN) {
                                 TextButton(
                                     onClick = {
                                         selectedSeason = if (selectedSeason == season) {
-                                            Season.UNKNOWN
+                                            AniSeason.UNKNOWN
                                         } else {
                                             season
                                         }
@@ -954,7 +954,7 @@ private fun AniSearchBar(
                                     }, modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        text = status.getString(context),
+                                        text = status.toString(context),
                                         color = if (status == selectedStatus) {
                                             MaterialTheme.colorScheme.primary
                                         } else {

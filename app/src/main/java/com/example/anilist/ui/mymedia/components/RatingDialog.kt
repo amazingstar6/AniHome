@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.anilist.R
+import com.example.anilist.data.models.AniMediaListEntry
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.ui.SliderTextField
@@ -31,10 +32,10 @@ fun RatingDialog(
             onClick = {
                 saveStatus(
                     StatusUpdate(
-                        entryListId = currentMedia.listEntryId,
+                        entryListId = currentMedia.mediaListEntry.listEntryId,
                         progressVolumes = null,
                         status = null,
-                        scoreRaw = currentMedia.rawScore.toInt(),
+                        scoreRaw = currentMedia.mediaListEntry.score.toInt(),
                         progress = null,
                         repeat = null,
                         priority = null,
@@ -44,7 +45,8 @@ fun RatingDialog(
                         customLists = null,
                         advancedScores = null,
                         startedAt = null,
-                        completedAt = null
+                        completedAt = null,
+                        mediaId = currentMedia.id
                     )
                 )
                 setShowRatingDialog(false)
@@ -54,8 +56,16 @@ fun RatingDialog(
     }, text = {
         Column {
             SliderTextField(
-                rawScore = currentMedia.rawScore,
-                setRawScore = { setCurrentMedia(currentMedia.copy(rawScore = it)) })
+                rawScore = currentMedia.mediaListEntry.score,
+                setRawScore = {
+                    setCurrentMedia(
+                        currentMedia.copy(
+                            mediaListEntry = currentMedia.mediaListEntry.copy(
+                                score = it
+                            )
+                        )
+                    )
+                })
         }
     })
 }
@@ -66,7 +76,7 @@ fun RatingDialogPreview() {
     RatingDialog(
         setShowRatingDialog = {},
         saveStatus = {},
-        currentMedia = Media(rawScore = 25.0,),
+        currentMedia = Media(mediaListEntry = AniMediaListEntry(score = 25.0)),
         setCurrentMedia = {}
     )
 }

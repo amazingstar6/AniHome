@@ -18,9 +18,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.anilist.R
-import com.example.anilist.data.models.ScoreDistribution
-import com.example.anilist.data.models.Season
-import com.example.anilist.data.models.Stats
+import com.example.anilist.data.models.AniScoreDistribution
+import com.example.anilist.data.models.AniSeason
+import com.example.anilist.data.models.AniStats
 import com.example.anilist.data.models.Status
 import com.example.anilist.ui.Dimens
 import com.patrykandpatrick.vico.compose.axis.axisGuidelineComponent
@@ -35,7 +35,7 @@ import com.patrykandpatrick.vico.core.component.text.VerticalPosition
 import com.patrykandpatrick.vico.core.entry.entryModelOf
 
 @Composable
-fun Stats(stats: Stats) {
+fun Stats(stats: AniStats) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -146,7 +146,7 @@ fun Stats(stats: Stats) {
 }
 
 @Composable
-fun Rankings(stats: Stats, modifier: Modifier = Modifier) {
+fun Rankings(stats: AniStats, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         if (stats.highestRatedAllTime != -1) {
             IconWithTextRankings(
@@ -262,20 +262,20 @@ private fun IconWithTextRankings(text: String, showHeart: Boolean) {
 @Composable
 fun StatsPreview() {
     Stats(
-        stats = Stats(
+        stats = AniStats(
             highestRatedAllTime = 99,
             mostPopularAllTime = 183,
             highestRatedYearRank = 8,
             highestRatedYearNumber = 2023,
             mostPopularSeasonRank = 2,
             mostPopularSeasonYear = 2023,
-            mostPopularSeasonSeason = Season.SUMMER,
+            mostPopularSeasonSeason = AniSeason.SUMMER,
             mostPopularYearNumber = 2023,
             mostPopularYearRank = 65,
             highestRatedSeasonRank = 3,
-            highestRatedSeasonSeason = Season.SUMMER,
+            highestRatedSeasonSeason = AniSeason.SUMMER,
             highestRatedSeasonYear = 2023,
-            scoreDistribution = ScoreDistribution(
+            scoreDistribution = AniScoreDistribution(
                 105,
                 34, 28, 28, 102, 143, 627, 1511, 3009, 2437,
             ),

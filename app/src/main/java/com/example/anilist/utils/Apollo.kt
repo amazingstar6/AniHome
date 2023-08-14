@@ -1,12 +1,9 @@
 package com.example.anilist.utils
 
-import android.util.Log
 import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.http.HttpHeader
 import com.apollographql.apollo3.api.http.HttpRequest
 import com.apollographql.apollo3.api.http.HttpResponse
 import com.apollographql.apollo3.cache.normalized.FetchPolicy
-import com.apollographql.apollo3.cache.normalized.api.CacheResolver
 import com.apollographql.apollo3.cache.normalized.api.MemoryCacheFactory
 import com.apollographql.apollo3.cache.normalized.fetchPolicy
 import com.apollographql.apollo3.cache.normalized.normalizedCache
@@ -14,12 +11,8 @@ import com.apollographql.apollo3.cache.normalized.sql.SqlNormalizedCacheFactory
 import com.apollographql.apollo3.cache.normalized.writeToCacheAsynchronously
 import com.apollographql.apollo3.network.http.HttpInterceptor
 import com.apollographql.apollo3.network.http.HttpInterceptorChain
-import com.apollographql.apollo3.network.okHttpClient
 import com.example.anilist.MainActivity
-import com.example.anilist.data.models.Notification
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Response
+import com.example.anilist.data.models.AniNotification
 import timber.log.Timber
 
 private const val TAG = "Apollo"
@@ -117,5 +110,5 @@ enum class ResultStatus {
 data class ResultData(
     val status: ResultStatus,
     val errorMessage: String = "",
-    val data: List<Notification>? = null,
+    val data: List<AniNotification>? = null,
 )

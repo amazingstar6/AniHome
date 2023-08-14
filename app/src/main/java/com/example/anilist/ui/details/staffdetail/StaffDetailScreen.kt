@@ -3,6 +3,7 @@ package com.example.anilist.ui.details.staffdetail
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -23,10 +24,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.anilist.R
 import com.example.anilist.data.models.CharacterWithVoiceActor
-import com.example.anilist.data.models.CharacterMediaConnection
-import com.example.anilist.data.models.StaffDetail
+import com.example.anilist.data.models.AniCharacterMediaConnection
+import com.example.anilist.data.models.MediaType
+import com.example.anilist.data.models.AniStaffDetail
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.details.characterdetail.AvatarAndName
 import com.example.anilist.ui.details.characterdetail.Description
@@ -43,7 +47,7 @@ fun StaffDetailScreen(
     onNavigateBack: () -> Unit,
 ) {
     val staff by staffDetailViewModel.staff.collectAsStateWithLifecycle()
-    staffDetailViewModel.fetchStaff(id)
+    val staffMedia = staffDetailViewModel.staffRoleMedia.collectAsLazyPagingItems()
 
     Scaffold(topBar = {
         TopAppBar(title = {
@@ -64,7 +68,8 @@ fun StaffDetailScreen(
     }) {
         AnimatedVisibility(visible = staff is StaffDetailUiState.Success) {
             StaffScreen(
-                staff = (staff as? StaffDetailUiState.Success)?.staff ?: StaffDetail(),
+                staff = (staff as? StaffDetailUiState.Success)?.staff ?: AniStaffDetail(),
+                staffMedia = staffMedia,
                 onNavigateToCharacter = onNavigateToCharacter,
                 onNavigateToMedia = onNavigateToMedia,
                 modifier = Modifier.padding(
@@ -83,7 +88,8 @@ fun StaffDetailScreen(
 
 @Composable
 private fun StaffScreen(
-    staff: StaffDetail,
+    staff: AniStaffDetail,
+    staffMedia: LazyPagingItems<AniCharacterMediaConnection>,
     onNavigateToCharacter: (Int) -> Unit,
     onNavigateToMedia: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -100,28 +106,30 @@ private fun StaffScreen(
             staff.alternativeNames,
             emptyList(),
             staff.favourites,
-            modifier = Modifier.padding(Dimens.PaddingNormal),
+            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
             isFavorite = staff.isFavourite,
             toggleFavourite = toggleFavourite,
         )
-        Description(staff.description)
+        if (staff.description.isNotBlank()) {
+            Description(staff.description)
+        }
         if (staff.voicedCharacters.isNotEmpty()) {
             Headline("Voiced characters")
             VoiceCharacters(staff.voicedCharacters, onNavigateToCharacter)
         }
         if (staff.animeStaffRole.isNotEmpty()) {
             Headline("Anime staff role")
-            AnimeStaffRole(staff.animeStaffRole, onNavigateToMedia)
+            MediaStaffRole(staffMedia, onNavigateToMedia, type = MediaType.ANIME)
         }
         if (staff.mangaStaffRole.isNotEmpty()) {
             Headline("Manga staff role")
-            MangaStaffRole(staff.mangaStaffRole, onNavigateToMedia)
+            MediaStaffRole(staffMedia, onNavigateToMedia, type = MediaType.MANGA)
         }
     }
 }
 
 @Composable
-fun MangaStaffRole(media: List<CharacterMediaConnection>, onNavigateToMedia: (Int) -> Unit) {
+fun MangaStaffRole(media: List<AniCharacterMediaConnection>, onNavigateToMedia: (Int) -> Unit) {
     LazyRow {
         items(media) { media ->
             ImageWithTitleAndSubTitle(
@@ -136,16 +144,23 @@ fun MangaStaffRole(media: List<CharacterMediaConnection>, onNavigateToMedia: (In
 }
 
 @Composable
-fun AnimeStaffRole(media: List<CharacterMediaConnection>, onNavigateToMedia: (Int) -> Unit) {
-    LazyRow {
-        items(media) { media ->
-            ImageWithTitleAndSubTitle(
-                media.coverImage,
-                media.title,
-                media.characterRole,
-                media.id,
-                onNavigateToMedia,
-            )
+fun MediaStaffRole(
+    media: LazyPagingItems<AniCharacterMediaConnection>,
+    onNavigateToMedia: (Int) -> Unit,
+    type: MediaType
+) {
+    LazyRow(contentPadding = PaddingValues(end = Dimens.PaddingNormal)) {
+        items(media.itemCount) { index ->
+            val mediaConnection = media[index]
+            if (mediaConnection != null && mediaConnection.type == type) {
+                ImageWithTitleAndSubTitle(
+                    mediaConnection.coverImage,
+                    mediaConnection.title,
+                    mediaConnection.characterRole,
+                    mediaConnection.id,
+                    onNavigateToMedia,
+                )
+            }
         }
     }
 }
