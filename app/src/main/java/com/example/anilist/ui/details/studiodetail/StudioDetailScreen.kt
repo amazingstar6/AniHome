@@ -31,7 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.anilist.R
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.repository.MediaDetailsRepository
+import com.example.anilist.data.models.AniLikeAbleType
 import com.example.anilist.ui.Dimens
 import com.example.anilist.utils.AsyncImageRoundedCorners
 
@@ -58,7 +58,7 @@ fun StudioDetailScreen(
             PlainTooltipBox(tooltip = { Text(text = "Add to favourites") }) {
                 IconButton(onClick = {
                     studioDetailViewModel.toggleFavourite(
-                        MediaDetailsRepository.LikeAbleType.STUDIO,
+                        AniLikeAbleType.STUDIO,
                         studio.id
                     )
                 }, modifier = Modifier.tooltipTrigger()) {

@@ -86,6 +86,7 @@ fragment MediaDetailFragment on Media {
         rank
         isMediaSpoiler
         userId
+        description
     }
     relations {
         edges {

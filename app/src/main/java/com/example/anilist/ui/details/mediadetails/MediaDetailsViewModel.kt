@@ -8,15 +8,18 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
+import com.example.anilist.data.models.AniLikeAbleType
 import com.example.anilist.data.models.AniResult
+import com.example.anilist.data.models.AniReviewRatingStatus
 import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.AniReviewRatingStatus
 import com.example.anilist.data.models.StatusUpdate
-import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.data.repository.ReviewDetailRepository
-import com.example.anilist.data.repository.mymedia.MyMediaRepositoryImpl
-import com.example.anilist.ui.details.reviewdetail.ReviewPagingSource
+import com.example.anilist.data.repository.mediadetail.CharacterPagingSource
+import com.example.anilist.data.repository.mediadetail.MediaDetailsRepository
+import com.example.anilist.data.repository.mediadetail.StaffPagingSource
+import com.example.anilist.data.repository.mymedia.MyMediaRepository
+import com.example.anilist.data.repository.mediadetail.ReviewPagingSource
 import com.example.anilist.ui.home.PREFETCH_DISTANCE
 import com.example.anilist.ui.navigation.AniListRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,12 +40,11 @@ import javax.inject.Inject
 //    val Anime: Anime? = null,
 // )
 
-
 //todo refactor repositories?
 @HiltViewModel
 class MediaDetailsViewModel @Inject constructor(
     private val mediaDetailsRepository: MediaDetailsRepository,
-    private val myMediaRepository: MyMediaRepositoryImpl,
+    private val myMediaRepository: MyMediaRepository,
     private val reviewDetailRepository: ReviewDetailRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -84,6 +86,10 @@ class MediaDetailsViewModel @Inject constructor(
         ).flow.cachedIn(viewModelScope)
     }
 
+    /**
+     * This should get loaded only when the media has loaded as well,
+     * the get or else is only there to avoid exceptions
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
     val characterList: Flow<PagingData<CharacterWithVoiceActor>> =
         _mediaId.combine(selectedCharacterLanguage) { id, languageId -> id to languageId }
@@ -102,9 +108,16 @@ class MediaDetailsViewModel @Inject constructor(
                     }
                 ).flow.map { pagingData ->
                     pagingData.filter {
+//                        if ((media.value as? MediaDetailUiState.Success)?.data?.languages != null) {
+//                            it.voiceActorLanguage == (media.value as? MediaDetailUiState.Success)?.data?.languages?.get(
+//                                selectedCharacterLanguage.value
+//                            )
+//                        } else {
+//                            true
+//                        }
                         it.voiceActorLanguage == (media.value as? MediaDetailUiState.Success)?.data?.languages?.getOrElse(
-                            selectedCharacterLanguage.value, { "Japanese"  }
-                        )
+                            selectedCharacterLanguage.value
+                        ) { "Japanese" }
                     }
                 }
                     .cachedIn(viewModelScope)
@@ -139,19 +152,19 @@ class MediaDetailsViewModel @Inject constructor(
         }
     }
 
-    fun toggleFavourite(type: MediaDetailsRepository.LikeAbleType, id: Int) {
+    fun toggleFavourite(type: AniLikeAbleType, id: Int) {
         viewModelScope.launch {
             val isFavourite = mediaDetailsRepository.toggleFavourite(type, id)
             when (type) {
-                MediaDetailsRepository.LikeAbleType.CHARACTER -> {}
+                AniLikeAbleType.CHARACTER -> {}
 //                    _character.value =
 //                        _character.value!!.copy(isFavourite = isFavourite)
 
-                MediaDetailsRepository.LikeAbleType.STAFF -> {}
+                AniLikeAbleType.STAFF -> {}
 //                    _staff.value =
 //                        _staff.value!!.copy(isFavourite = isFavourite)
 
-                MediaDetailsRepository.LikeAbleType.ANIME, MediaDetailsRepository.LikeAbleType.MANGA -> {
+                AniLikeAbleType.ANIME, AniLikeAbleType.MANGA -> {
                     when (isFavourite) {
                         is AniResult.Failure -> {
                             sendMessage(isFavourite.error)
@@ -168,7 +181,7 @@ class MediaDetailsViewModel @Inject constructor(
                     }
                 }
 
-                MediaDetailsRepository.LikeAbleType.STUDIO -> {}
+                AniLikeAbleType.STUDIO -> {}
 //                    _studio.value = _studio.value.copy(isFavourite = isFavourite)
             }
         }
@@ -180,11 +193,14 @@ class MediaDetailsViewModel @Inject constructor(
                 statusUpdate,
             )) {
                 is AniResult.Success -> {
-                    _media.value = MediaDetailUiState.Success((_media.value as MediaDetailUiState.Success).data.copy(
-                        mediaListEntry = data.data.mediaListEntry
-                    ))
+                    _media.value = MediaDetailUiState.Success(
+                        (_media.value as MediaDetailUiState.Success).data.copy(
+                            mediaListEntry = data.data.mediaListEntry
+                        )
+                    )
 //                    _media.value = MediaDetailUiState.Success(data.data)
                 }
+
                 is AniResult.Failure -> {
                     sendMessage(data.error)
 //                    sendMessage("Failed updating progress, please try again")
@@ -210,6 +226,7 @@ class MediaDetailsViewModel @Inject constructor(
         }
     }
 }
+
 
 sealed interface MediaDetailUiState {
     object Loading : MediaDetailUiState

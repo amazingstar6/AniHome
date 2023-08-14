@@ -22,6 +22,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -59,6 +60,7 @@ import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
+import com.example.anilist.utils.Utils
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -82,6 +84,31 @@ fun EditStatusModalSheet(
     var showCloseConfirmation by remember {
         mutableStateOf(false)
     }
+
+    val datePickerStateCompletedAt = rememberDatePickerState(
+        initialSelectedDateMillis = if (currentListEntry.completedAt == null) {
+            null
+        } else {
+            LocalDate(
+                currentListEntry.completedAt!!.year,
+                currentListEntry.completedAt!!.month,
+                currentListEntry.completedAt!!.day,
+            ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+        },
+    )
+
+    val datePickerStateStartedAt = rememberDatePickerState(
+        initialSelectedDateMillis = if (currentListEntry.startedAt == null) {
+            null
+        } else {
+            LocalDate(
+                currentListEntry.completedAt!!.year,
+                currentListEntry.completedAt!!.month,
+                currentListEntry.completedAt!!.day,
+            ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+        },
+    )
+
     ModalBottomSheet(sheetState = editSheetState,
         onDismissRequest = { hideEditSheet() }) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -181,7 +208,11 @@ fun EditStatusModalSheet(
                     if ((if (isAnime) media.episodeAmount else media.chapters)
                         == currentListEntry.progress
                     ) {
-                        currentListEntry = currentListEntry.copy(status = AniPersonalMediaStatus.COMPLETED)
+                        currentListEntry = currentListEntry.copy(
+                            status = AniPersonalMediaStatus.COMPLETED,
+                            completedAt = Utils.getCurrentDay(),
+                        )
+                        datePickerStateCompletedAt.selectedDateMillis = Utils.getCurrentDayMillisEpoch()
                     }
                 },
                 maxCount = if (isAnime) {
@@ -224,11 +255,13 @@ fun EditStatusModalSheet(
                 "Start date",
                 initialValue = currentListEntry.startedAt,
                 setValue = { currentListEntry = currentListEntry.copy(startedAt = it) },
+                datePickerState = datePickerStateStartedAt
             )
             DatePickerDialogue(
                 "Finish date",
                 initialValue = currentListEntry.completedAt,
                 setValue = { currentListEntry = currentListEntry.copy(completedAt = it) },
+                datePickerState = datePickerStateCompletedAt
             )
 
             Row(
@@ -530,19 +563,11 @@ fun DatePickerDialogue(
     label: String,
     initialValue: FuzzyDate?,
     setValue: (FuzzyDate?) -> Unit,
+    datePickerState: DatePickerState
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = if (initialValue == null) {
-            null
-        } else {
-            LocalDate(
-                initialValue.year,
-                initialValue.month,
-                initialValue.day,
-            ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
-        },
-    )
+//    val mutableInitialValue by remember { mutableStateOf(initialValue) }
+
 //    ExposedDropdownMenuBox(
 //        expanded = expanded,
 //        onExpandedChange = { expanded = !expanded },
@@ -657,16 +682,18 @@ fun DatePickerDialogue(
 //    )
 //}
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, group = "Date picker")
 @Composable
 fun DatePickerPreview() {
-    DatePickerDialogue("Start date", initialValue = FuzzyDate(2022, 7, 22), setValue = {})
+    DatePickerDialogue("Start date", initialValue = FuzzyDate(2022, 7, 22), setValue = {}, datePickerState = rememberDatePickerState())
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, group = "Date picker")
 @Composable
 fun DatePickerNoDatePreview() {
-    DatePickerDialogue("Start date", initialValue = null, setValue = {})
+    DatePickerDialogue("Start date", initialValue = null, setValue = {}, datePickerState = rememberDatePickerState())
 }
 
 @Preview(showBackground = true, group = "Dialog")

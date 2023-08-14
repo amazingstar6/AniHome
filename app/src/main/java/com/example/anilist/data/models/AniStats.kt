@@ -15,14 +15,15 @@ data class AniStats(
     val mostPopularSeasonSeason: AniSeason = AniSeason.UNKNOWN,
     val mostPopularSeasonYear: Int = -1,
     val scoreDistribution: AniScoreDistribution = AniScoreDistribution(),
-    val statusDistribution: Map<Status, Int> = mapOf(
-        Status.CURRENT to 0,
-        Status.PLANNING to 0,
-        Status.COMPLETED to 0,
-        Status.DROPPED to 0,
-        Status.PAUSED to 0,
-        Status.UNKNOWN to 0,
-    ),
+    val statusDistribution: AniStatsStatusDistribution = AniStatsStatusDistribution(0, 0, 0, 0, 0)
+)
+
+data class AniStatsStatusDistribution(
+    val current: Int,
+    val planning: Int,
+    val completed: Int,
+    val dropped: Int,
+    val paused: Int,
 )
 
 data class AniScoreDistribution(
@@ -47,4 +48,3 @@ enum class Status {
     PAUSED,
     UNKNOWN,
 }
-

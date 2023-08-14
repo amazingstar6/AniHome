@@ -15,7 +15,7 @@ import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
-import com.example.anilist.data.repository.getFuzzyDate
+import com.example.anilist.data.repository.mediadetail.getFuzzyDate
 import com.example.anilist.data.repository.homerepository.toAni
 import com.example.anilist.fragment.MyMedia
 import com.example.anilist.type.FuzzyDateInput

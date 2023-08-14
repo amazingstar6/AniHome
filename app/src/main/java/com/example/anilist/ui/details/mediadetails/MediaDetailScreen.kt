@@ -58,9 +58,9 @@ import com.example.anilist.MainActivity
 import com.example.anilist.R
 import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.MediaType
+import com.example.anilist.data.models.AniMediaType
 import com.example.anilist.data.models.AniPersonalMediaStatus
-import com.example.anilist.data.repository.MediaDetailsRepository
+import com.example.anilist.data.models.AniLikeAbleType
 import com.example.anilist.ui.EditStatusModalSheet
 import com.example.anilist.ui.details.mediadetails.components.Characters
 import com.example.anilist.ui.details.mediadetails.components.Overview
@@ -100,7 +100,7 @@ fun MediaDetail(
     val isAnime by remember {
         mutableStateOf(
             if (media is MediaDetailUiState.Success) {
-                (media as MediaDetailUiState.Success).data.type == MediaType.ANIME
+                (media as MediaDetailUiState.Success).data.type == AniMediaType.ANIME
             } else true
         )
     }
@@ -134,11 +134,6 @@ fun MediaDetail(
     val reviews = mediaDetailsViewModel.reviews.collectAsLazyPagingItems()
     val staff = mediaDetailsViewModel.staffList.collectAsLazyPagingItems()
 
-    val selectedLanguage by mediaDetailsViewModel.selectedCharacterLanguage.collectAsStateWithLifecycle()
-//    val languages: List<String> =
-//        mediaDetailsViewModel.characterList.map { it.map { it.voiceActorLanguage } }
-    val characters = mediaDetailsViewModel.characterList.collectAsLazyPagingItems()
-    val setSelectedLanguage: (Int) -> Unit = { mediaDetailsViewModel.setCharacterLanguage(it) }
 
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(title = {
@@ -155,7 +150,6 @@ fun MediaDetail(
                 )
             }
         }, actions = {
-            val context = LocalContext.current
             val uriHandler = LocalUriHandler.current
             val uri = "https://anilist.co/${if (isAnime) "anime" else "manga"}/$mediaId"
             PlainTooltipBox(tooltip = {
@@ -166,7 +160,7 @@ fun MediaDetail(
                 IconButton(
                     onClick = {
                         mediaDetailsViewModel.toggleFavourite(
-                            if (isAnime) MediaDetailsRepository.LikeAbleType.ANIME else MediaDetailsRepository.LikeAbleType.MANGA,
+                            if (isAnime) AniLikeAbleType.ANIME else AniLikeAbleType.MANGA,
                             mediaId,
                         )
                     },
@@ -208,6 +202,10 @@ fun MediaDetail(
             }
 
             is MediaDetailUiState.Success -> {
+
+                val selectedLanguage by mediaDetailsViewModel.selectedCharacterLanguage.collectAsStateWithLifecycle()
+                val characters = mediaDetailsViewModel.characterList.collectAsLazyPagingItems()
+                val setSelectedLanguage: (Int) -> Unit = { mediaDetailsViewModel.setCharacterLanguage(it) }
                 Box {
                     Column {
                         val pagerState =
@@ -267,7 +265,6 @@ fun MediaDetail(
                                 }
 
                                 3 -> {
-                                    //fixme
                                     val dataIsLoaded: Boolean =
                                         reviews.loadState.source.refresh is LoadState.NotLoading
                                     if (!dataIsLoaded) {
@@ -295,7 +292,7 @@ fun MediaDetail(
                             EditStatusModalSheet(
                                 editSheetState = editSheetState,
                                 hideEditSheet = hideEditSheet,
-                                unChangeListEntry = (media as MediaDetailUiState.Success).data.mediaListEntry, //FIXME!!!
+                                unChangeListEntry = (media as MediaDetailUiState.Success).data.mediaListEntry,
                                 media = (media as? MediaDetailUiState.Success)?.data ?: Media(),
                                 saveStatus = { status, isComplete ->
                                     mediaDetailsViewModel.updateProgress(

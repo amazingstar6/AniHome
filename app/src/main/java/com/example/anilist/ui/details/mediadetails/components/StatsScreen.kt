@@ -1,12 +1,16 @@
 package com.example.anilist.ui.details.mediadetails.components
 
+import android.content.Context
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,13 +20,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewFontScale
+import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import com.example.anilist.R
 import com.example.anilist.data.models.AniScoreDistribution
 import com.example.anilist.data.models.AniSeason
 import com.example.anilist.data.models.AniStats
-import com.example.anilist.data.models.Status
+import com.example.anilist.data.models.AniStatsStatusDistribution
 import com.example.anilist.ui.Dimens
+import com.example.anilist.ui.theme.AnilistTheme
 import com.patrykandpatrick.vico.compose.axis.axisGuidelineComponent
 import com.patrykandpatrick.vico.compose.axis.axisLineComponent
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
@@ -42,11 +49,11 @@ fun Stats(stats: AniStats) {
             .padding(Dimens.PaddingNormal),
     ) {
         if (stats.ranksIsNotEmpty) {
-            Heading("Rankings")
+            Heading(stringResource(R.string.rankings))
             Rankings(stats)
         }
 
-        Heading("Score distribution")
+        Heading(stringResource(R.string.score_distribution))
         val scoreDistribution = stats.scoreDistribution
         val chartEntryModel = entryModelOf(
             10 to scoreDistribution.ten,
@@ -70,77 +77,45 @@ fun Stats(stats: AniStats) {
                 bottomAxis = bottomAxis(
                     axis = axisLineComponent(),
                     label = textComponent(color = MaterialTheme.colorScheme.onSurface),
-//                    valueFormatter = AxisValueFormatter {
-//                            value, chartValues
-//                        ->
-//                        "$chartValues"
-//                    },
                     guideline = axisGuidelineComponent(thickness = 0.dp),
                 ),
-//                marker = markerComponent(
-//                    label = textComponent(MaterialTheme.colorScheme.onSurface),
-//                    indicator = shapeComponent(Shapes.pillShape, MaterialTheme.colorScheme.surface),
-//                    guideline = axisGuidelineComponent()
-//                ),
             )
         }
-        Heading("Status distribution")
+        Heading(stringResource(R.string.status_distribution))
         val statusDistribution = stats.statusDistribution
-        val total = statusDistribution.values.sum()
-        val currentColor = Color.Red
-        val planningColor = Color.Black
-        val completedColor = Color.Green
-        val droppedColor = Color.Magenta
-        val pausedColor = Color.Gray
 
-        Row {
-            StatsLegendText(text = "Completed", completedColor)
-            StatsLegendText(text = "Current", currentColor)
-            StatsLegendText(text = "Planning", planningColor)
-            StatsLegendText(text = "Paused", pausedColor)
-            StatsLegendText(text = "Dropped", droppedColor)
+        val listToSortValues: List<Pair<AniStatsStatusTypes, Int>> =
+            listOf(
+                Pair(AniStatsStatusTypes.CURRENT, statusDistribution.current),
+                Pair(AniStatsStatusTypes.COMPLETED, statusDistribution.completed),
+                Pair(AniStatsStatusTypes.PLANNING, statusDistribution.planning),
+                Pair(AniStatsStatusTypes.PAUSED, statusDistribution.paused),
+                Pair(AniStatsStatusTypes.DROPPED, statusDistribution.dropped),
+            ).sortedByDescending { it.second }
+
+        //todo sort by largest first
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = Dimens.PaddingSmall),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            listToSortValues.forEach {
+                StatsLegendText(
+                    text = it.first.toString(LocalContext.current),
+                    it.first.getColor(LocalContext.current),
+                    it.second
+                )
+            }
         }
-        Row {
-            HorizontalDivider(
-                modifier = Modifier.weight(
-                    (
-                            total / (
-                                    statusDistribution[Status.COMPLETED]?.toFloat()
-                                        ?: 1f
-                                    )
-                            ),
-                ),
-                thickness = 12.dp,
-                color = completedColor
-            )
-            HorizontalDivider(
-                modifier = Modifier.weight(
-                    total / (statusDistribution[Status.CURRENT]?.toFloat() ?: 1f),
-                ),
-                thickness = 12.dp,
-                color = currentColor
-            )
-            HorizontalDivider(
-                modifier = Modifier.weight(
-                    total / (statusDistribution[Status.PLANNING]?.toFloat() ?: 1f),
-                ),
-                thickness = 12.dp,
-                color = planningColor
-            )
-            HorizontalDivider(
-                modifier = Modifier.weight(
-                    total / (statusDistribution[Status.PAUSED]?.toFloat() ?: 1f),
-                ),
-                thickness = 12.dp,
-                color = pausedColor
-            )
-            HorizontalDivider(
-                modifier = Modifier.weight(
-                    total / (statusDistribution[Status.DROPPED]?.toFloat() ?: 1f),
-                ),
-                thickness = 12.dp,
-                color = droppedColor
-            )
+        Row(modifier = Modifier.fillMaxWidth()) {
+            listToSortValues.forEach {
+                HorizontalDivider(
+                    modifier = Modifier.weight(
+                        it.second.toFloat()
+                    ), thickness = 12.dp, color = it.first.getColor(LocalContext.current)
+                )
+            }
         }
     }
 }
@@ -217,8 +192,29 @@ fun Rankings(stats: AniStats, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun StatsLegendText(text: String, color: Color) {
-    Text(text = text, color = color)
+private fun StatsLegendText(
+    text: String,
+    color: Color,
+    amount: Int,
+    modifier: Modifier = Modifier
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Surface(color = color, shape = MaterialTheme.shapes.medium) {
+            Text(
+                text = text,
+                color = Color.White,
+                modifier = Modifier
+                    .padding(4.dp)
+                    .then(modifier)
+            )
+        }
+        Text(
+            text = amount.toString(),
+            color = color,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(top = 2.dp)
+        )
+    }
 }
 
 @Composable
@@ -261,31 +257,70 @@ private fun IconWithTextRankings(text: String, showHeart: Boolean) {
 @Preview(showBackground = true)
 @Composable
 fun StatsPreview() {
-    Stats(
-        stats = AniStats(
-            highestRatedAllTime = 99,
-            mostPopularAllTime = 183,
-            highestRatedYearRank = 8,
-            highestRatedYearNumber = 2023,
-            mostPopularSeasonRank = 2,
-            mostPopularSeasonYear = 2023,
-            mostPopularSeasonSeason = AniSeason.SUMMER,
-            mostPopularYearNumber = 2023,
-            mostPopularYearRank = 65,
-            highestRatedSeasonRank = 3,
-            highestRatedSeasonSeason = AniSeason.SUMMER,
-            highestRatedSeasonYear = 2023,
-            scoreDistribution = AniScoreDistribution(
-                105,
-                34, 28, 28, 102, 143, 627, 1511, 3009, 2437,
-            ),
-            statusDistribution = mapOf(
-                Status.COMPLETED to 100,
-                Status.CURRENT to 230,
-                Status.PLANNING to 500,
-                Status.DROPPED to 54,
-                Status.PAUSED to 20,
-            ),
-        ),
-    )
+    AnilistTheme {
+        Surface {
+            Stats(
+                stats = AniStats(
+                    highestRatedAllTime = 99,
+                    mostPopularAllTime = 183,
+                    highestRatedYearRank = 8,
+                    highestRatedYearNumber = 2023,
+                    mostPopularSeasonRank = 2,
+                    mostPopularSeasonYear = 2023,
+                    mostPopularSeasonSeason = AniSeason.SUMMER,
+                    mostPopularYearNumber = 2023,
+                    mostPopularYearRank = 65,
+                    highestRatedSeasonRank = 3,
+                    highestRatedSeasonSeason = AniSeason.SUMMER,
+                    highestRatedSeasonYear = 2023,
+                    scoreDistribution = AniScoreDistribution(
+                        105,
+                        34, 28, 28, 102, 143, 627, 1511, 3009, 2437,
+                    ),
+                    statusDistribution = AniStatsStatusDistribution(
+                        current = 279069,
+                        planning = 67133,
+                        completed = 20648,
+                        dropped = 29865,
+                        paused = 56446,
+                    )
+//            mapOf(
+//                Status.CURRENT to 279069,
+//                Status.COMPLETED to 20648,
+//                Status.PLANNING to 67133,
+//                Status.DROPPED to 29865,
+//                Status.PAUSED to 56446,
+//            ),
+                ),
+            )
+        }
+    }
+}
+
+enum class AniStatsStatusTypes {
+    CURRENT,
+    PLANNING,
+    PAUSED,
+    DROPPED,
+    COMPLETED;
+
+    fun toString(context: Context): String {
+        return when (this) {
+            CURRENT -> context.getString(R.string.current)
+            PLANNING -> context.getString(R.string.planning)
+            PAUSED -> context.getString(R.string.paused)
+            DROPPED -> context.getString(R.string.dropped)
+            COMPLETED -> context.getString(R.string.completed)
+        }
+    }
+
+    fun getColor(context: Context): Color {
+        return when (this) {
+            CURRENT -> Color(context.getColor(R.color.purple_200))
+            PLANNING -> Color(context.getColor(R.color.green_200))
+            PAUSED -> Color(context.getColor(R.color.blue_200))
+            DROPPED -> Color(context.getColor(R.color.pink_200))
+            COMPLETED -> Color(context.getColor(R.color.red_200))
+        }
+    }
 }

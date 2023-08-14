@@ -5,8 +5,7 @@ import com.example.anilist.R
 
 data class Media(
     val id: Int = -1,
-//    val listEntryId: Int = -1,
-    val type: MediaType = MediaType.UNKNOWN,
+    val type: AniMediaType = AniMediaType.UNKNOWN,
     val title: String = "?",
     val coverImage: String = "",
     val format: AniMediaFormat = AniMediaFormat.UNKNOWN,
@@ -24,37 +23,21 @@ data class Media(
     val trailerImage: String = "",
     val trailerLink: String = "",
     val externalLinks: List<AniLink> = emptyList(),
-//    val personalRating: Double = (-1).toDouble(),
-//    var personalProgress: Int = -1,
-//    val isPrivate: Boolean = false,
-//    val note: String = "",
-//    val rewatches: Int = -1,
     val volumes: Int = -1,
-//    val personalVolumeProgress: Int = -1,
     val chapters: Int = -1,
-    //todo unused
-    val characterWithVoiceActors: List<CharacterWithVoiceActor> = emptyList(),
     val stats: AniStats = AniStats(),
     val startDate: FuzzyDate? = null,
     val endDate: FuzzyDate? = null,
-
     val favourites: Int = -1,
     val isFavourite: Boolean = false,
     val isFavouriteBlocked: Boolean = false,
-
-//    val startedAt: FuzzyDate? = null,
-//    val completedAt: FuzzyDate? = null,
-//    val createdAt: FuzzyDate? = null,
-//    val personalStatus: PersonalMediaStatus = PersonalMediaStatus.UNKNOWN,
-
-//    val rawScore: Double = -1.0,
     val studios: List<AniStudio> = emptyList(),
-    // epoch timestamp in seconds
-//    val updatedAt: Int = -1,
     //todo not used
     val priority: Int = -1,
+    /**
+     * Only used to know what languages there are for filtering the character's voice actors based on language
+     */
     val languages: List<String> = emptyList(),
-    //todo
     val mediaListEntry: AniMediaListEntry = AniMediaListEntry()
 )
 
@@ -91,7 +74,7 @@ data class AniMediaListEntry(
     val createdAt: FuzzyDate? = null
 )
 
-enum class MediaType {
+enum class AniMediaType {
     ANIME,
     MANGA,
     UNKNOWN,

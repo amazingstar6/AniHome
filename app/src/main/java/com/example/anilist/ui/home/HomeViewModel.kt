@@ -16,15 +16,15 @@ import com.example.anilist.data.models.AniCharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.AniSeason
 import com.example.anilist.data.models.AniStaffDetail
-import com.example.anilist.data.repository.NotificationsRepository
+import com.example.anilist.data.repository.notificationrepository.NotificationsRepository
 import com.example.anilist.data.repository.homerepository.HomeRepositoryImpl
 import com.example.anilist.data.repository.TrendingTogether
-import com.example.anilist.ui.home.searchpagingsource.SearchCharactersPagingSource
-import com.example.anilist.ui.home.searchpagingsource.SearchMediaPagingSource
-import com.example.anilist.ui.home.searchpagingsource.SearchStaffPagingSource
-import com.example.anilist.ui.home.searchpagingsource.SearchStudioPagingSource
-import com.example.anilist.ui.home.searchpagingsource.SearchThreadPagingSource
-import com.example.anilist.ui.home.searchpagingsource.SearchUserPagingSource
+import com.example.anilist.data.repository.homerepository.searchpagingsource.SearchCharactersPagingSource
+import com.example.anilist.data.repository.homerepository.searchpagingsource.SearchMediaPagingSource
+import com.example.anilist.data.repository.homerepository.searchpagingsource.SearchStaffPagingSource
+import com.example.anilist.data.repository.homerepository.searchpagingsource.SearchStudioPagingSource
+import com.example.anilist.data.repository.homerepository.searchpagingsource.SearchThreadPagingSource
+import com.example.anilist.data.repository.homerepository.searchpagingsource.SearchUserPagingSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -184,8 +184,8 @@ class HomeViewModel @Inject constructor(
         initialValue = SearchFilter.MEDIA
     )
 
-    private val _unReadNotificationCount = MutableStateFlow(-1)
-    val unReadNotificationCount: StateFlow<Int> = _unReadNotificationCount
+//    private val _unReadNotificationCount = MutableStateFlow(-1)
+//    val unReadNotificationCount: StateFlow<Int> = _unReadNotificationCount
 
     private val mediaSearchState = MutableStateFlow(
         MediaSearchState(
@@ -363,19 +363,19 @@ class HomeViewModel @Inject constructor(
         fetchGenres()
     }
 
-    fun fetchUnReadNotifications() {
-        viewModelScope.launch {
-            when (val result = notificationsRepository.getUnReadNotificationCount()) {
-                is AniResult.Success -> {
-                    _unReadNotificationCount.value = result.data
-                }
-
-                is AniResult.Failure -> {
-                    sendMessage("Failed to load notifications unread count")
-                }
-            }
-        }
-    }
+//    fun fetchUnReadNotifications() {
+//        viewModelScope.launch {
+//            when (val result = notificationsRepository.getUnReadNotificationCount()) {
+//                is AniResult.Success -> {
+//                    _unReadNotificationCount.value = result.data
+//                }
+//
+//                is AniResult.Failure -> {
+//                    sendMessage("Failed to load notifications unread count")
+//                }
+//            }
+//        }
+//    }
 
     fun fetchGenres() {
         viewModelScope.launch {

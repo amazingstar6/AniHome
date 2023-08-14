@@ -156,6 +156,9 @@
     <string name="clear_cache">Clear cache</string>
     <string name="notifications">Notifications</string>
     <string name="none">None</string>
+    <string name="rankings">Rankings</string>
+    <string name="score_distribution">Score distribution</string>
+    <string name="status_distribution">Status distribution</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>

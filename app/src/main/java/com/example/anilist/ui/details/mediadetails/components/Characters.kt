@@ -59,7 +59,7 @@ fun Characters(
     navigateToCharacter: (Int) -> Unit,
     navigateToStaff: (Int) -> Unit,
 ) {
-    if (characterWithVoiceActors.itemCount != 0) {
+    if (true /*characterWithVoiceActors.itemCount != 0*/) {
         Column(modifier = Modifier.fillMaxHeight()) {
             val lazyGridState = rememberLazyGridState()
             val coroutineScope = rememberCoroutineScope()
@@ -93,7 +93,6 @@ fun Characters(
                 columns = GridCells.Adaptive(120.dp),
                 modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
             ) {
-//                items(characterWithVoiceActors.filter { it.voiceActorLanguage == languages[selected] }) { character ->
                 items(characterWithVoiceActors.itemCount) { index ->
                     val character = characterWithVoiceActors[index]
                     if (character != null) {

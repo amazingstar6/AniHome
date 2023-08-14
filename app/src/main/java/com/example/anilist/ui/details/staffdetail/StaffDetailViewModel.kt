@@ -8,7 +8,8 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.AniStaffDetail
-import com.example.anilist.data.repository.StaffDetailRepository
+import com.example.anilist.data.repository.staffdetail.StaffDetailRepository
+import com.example.anilist.data.repository.staffdetail.StaffMediaPagingSource
 import com.example.anilist.ui.home.PREFETCH_DISTANCE
 import com.example.anilist.ui.navigation.AniListRoute
 import dagger.hilt.android.lifecycle.HiltViewModel

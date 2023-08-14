@@ -4,7 +4,6 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideOut
 import androidx.compose.runtime.Composable
@@ -17,28 +16,27 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.anilist.ui.details.activitydetail.ActivityDetailScreen
 import com.example.anilist.ui.PleaseLogin
-import com.example.anilist.ui.details.threadcommentdetail.ThreadCommentScreen
-import com.example.anilist.ui.feed.FeedScreen
-import com.example.anilist.ui.forum.ForumScreen
-import com.example.anilist.ui.home.HomeScreen
-import com.example.anilist.ui.home.HomeViewModel
-import com.example.anilist.ui.home.MediaOverview
-import com.example.anilist.ui.home.notifications.NotificationScreen
-import com.example.anilist.ui.home.SettingsScreen
-import com.example.anilist.ui.details.characterdetail.CharacterDetailScreen
 import com.example.anilist.ui.details.CoverLarge
+import com.example.anilist.ui.details.activitydetail.ActivityDetailScreen
+import com.example.anilist.ui.details.characterdetail.CharacterDetailScreen
 import com.example.anilist.ui.details.forumdetail.ForumDetailScreen
 import com.example.anilist.ui.details.mediadetails.MediaDetail
 import com.example.anilist.ui.details.reviewdetail.ReviewDetailScreen
 import com.example.anilist.ui.details.staffdetail.StaffDetailScreen
 import com.example.anilist.ui.details.studiodetail.StudioDetailScreen
+import com.example.anilist.ui.details.threadcommentdetail.ThreadCommentScreen
 import com.example.anilist.ui.details.userdetail.UserDetailScreen
+import com.example.anilist.ui.feed.FeedScreen
+import com.example.anilist.ui.forum.ForumScreen
+import com.example.anilist.ui.home.HomeScreen
+import com.example.anilist.ui.home.HomeViewModel
+import com.example.anilist.ui.home.MediaOverview
+import com.example.anilist.ui.home.SettingsScreen
+import com.example.anilist.ui.home.notifications.NotificationScreen
+import com.example.anilist.ui.home.notifications.UnreadNotificationsViewModel
 import com.example.anilist.ui.mymedia.MyMediaScreen
 import timber.log.Timber
-
-private const val TAG = "AniNavGraph"
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -50,6 +48,7 @@ fun AniNavHost(
     setBottomBarState: (Boolean) -> Unit,
 ) {
     val homeViewModel: HomeViewModel = hiltViewModel()
+    val unreadNotificationsViewModel: UnreadNotificationsViewModel = hiltViewModel()
     NavHost(
         modifier = modifier,
         navController = navController,
@@ -74,7 +73,8 @@ fun AniNavHost(
                 navigateToStudioDetails = navigationActions::navigateToStudio,
                 navigateToThreadDetails = navigationActions::navigateToThread,
                 navigateToUserDetails = navigationActions::navigateToUser,
-                navigateToOverview = navigationActions::navigateToOverview
+                navigateToOverview = navigationActions::navigateToOverview,
+                unreadNotificationsViewModel = unreadNotificationsViewModel
             )
         }
         composable(
@@ -96,8 +96,22 @@ fun AniNavHost(
         }
         composable(
             "${AniListRoute.MEDIA_DETAIL_ROUTE}/{${AniListRoute.MEDIA_DETAIL_ID_KEY}}",
-            enterTransition = { slideIn(initialOffset = { IntOffset(x = it.width / 2, y = 0) }) + fadeIn() },
-            exitTransition = { slideOut(targetOffset = { IntOffset(x = it.width / 2, y = 0) }) + fadeOut() },
+            enterTransition = {
+                slideIn(initialOffset = {
+                    IntOffset(
+                        x = it.width / 2,
+                        y = 0
+                    )
+                }) + fadeIn()
+            },
+            exitTransition = {
+                slideOut(targetOffset = {
+                    IntOffset(
+                        x = it.width / 2,
+                        y = 0
+                    )
+                }) + fadeOut()
+            },
             arguments = listOf(
                 navArgument(AniListRoute.MEDIA_DETAIL_ID_KEY) {
                     type = NavType.IntType
@@ -200,7 +214,8 @@ fun AniNavHost(
                 onNavigateToActivity = navigationActions::navigateToActivity,
                 onNavigateToUser = navigationActions::navigateToUser,
                 onNavigateToThread = navigationActions::navigateToThread,
-                onNavigateToThreadComment = navigationActions::navigateToThreadComment
+                onNavigateToThreadComment = navigationActions::navigateToThreadComment,
+                unreadNotificationsViewModel = unreadNotificationsViewModel
             )
         }
         composable(

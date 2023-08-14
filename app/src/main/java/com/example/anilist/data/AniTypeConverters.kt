@@ -2,12 +2,14 @@ package com.example.anilist.data
 
 import com.example.anilist.data.models.AniCharacterRole
 import com.example.anilist.data.models.AniMediaRelationTypes
+import com.example.anilist.data.models.AniNotificationType
 import com.example.anilist.data.models.AniReviewRatingStatus
 import com.example.anilist.data.models.AniSeason
 import com.example.anilist.type.CharacterRole
 import com.example.anilist.type.MediaRelation
 import com.example.anilist.type.MediaSeason
 import com.example.anilist.type.MediaType
+import com.example.anilist.type.NotificationType
 import com.example.anilist.type.ReviewRating
 
 fun CharacterRole?.toAniRole(): AniCharacterRole {
@@ -50,11 +52,11 @@ fun MediaSeason.toAniHomeSeason(): AniSeason {
     }
 }
 
-fun MediaType.toAniHomeType(): com.example.anilist.data.models.MediaType {
+fun MediaType.toAniHomeType(): com.example.anilist.data.models.AniMediaType {
     return when (this) {
-        MediaType.MANGA -> com.example.anilist.data.models.MediaType.MANGA
-        MediaType.ANIME -> com.example.anilist.data.models.MediaType.ANIME
-        MediaType.UNKNOWN__ -> com.example.anilist.data.models.MediaType.UNKNOWN
+        MediaType.MANGA -> com.example.anilist.data.models.AniMediaType.MANGA
+        MediaType.ANIME -> com.example.anilist.data.models.AniMediaType.ANIME
+        MediaType.UNKNOWN__ -> com.example.anilist.data.models.AniMediaType.UNKNOWN
     }
 }
 
@@ -65,5 +67,29 @@ fun ReviewRating?.toAni(): AniReviewRatingStatus {
         ReviewRating.DOWN_VOTE -> AniReviewRatingStatus.DOWN_VOTE
         ReviewRating.UNKNOWN__ -> AniReviewRatingStatus.UNKNOWN
         null -> AniReviewRatingStatus.UNKNOWN
+    }
+}
+
+fun NotificationType?.toAni(): AniNotificationType {
+    return when (this) {
+        NotificationType.ACTIVITY_MESSAGE -> AniNotificationType.ActivityMessageNotification
+        NotificationType.ACTIVITY_REPLY -> AniNotificationType.ActivityReplyNotification
+        NotificationType.FOLLOWING -> AniNotificationType.FollowingNotification
+        NotificationType.ACTIVITY_MENTION -> AniNotificationType.ActivityMentionNotification
+        NotificationType.THREAD_COMMENT_MENTION -> AniNotificationType.ThreadCommentMentionNotification
+        NotificationType.THREAD_SUBSCRIBED -> AniNotificationType.ThreadCommentSubscribedNotification
+        NotificationType.THREAD_COMMENT_REPLY -> AniNotificationType.ThreadCommentReplyNotification
+        NotificationType.AIRING -> AniNotificationType.AiringNotification
+        NotificationType.ACTIVITY_LIKE -> AniNotificationType.ActivityLikeNotification
+        NotificationType.ACTIVITY_REPLY_LIKE -> AniNotificationType.ActivityReplyLikeNotification
+        NotificationType.THREAD_LIKE -> AniNotificationType.ThreadLikeNotification
+        NotificationType.THREAD_COMMENT_LIKE -> AniNotificationType.ThreadCommentLikeNotification
+        NotificationType.ACTIVITY_REPLY_SUBSCRIBED -> AniNotificationType.ActivityReplySubscribedNotification
+        NotificationType.RELATED_MEDIA_ADDITION -> AniNotificationType.RelatedMediaAdditionNotification
+        NotificationType.MEDIA_DATA_CHANGE -> AniNotificationType.MediaDataChangeNotification
+        NotificationType.MEDIA_MERGE -> AniNotificationType.MediaMergeNotification
+        NotificationType.MEDIA_DELETION -> AniNotificationType.MediaDeletionNotification
+        NotificationType.UNKNOWN__ -> AniNotificationType.UNKNOWN
+        null -> AniNotificationType.UNKNOWN
     }
 }

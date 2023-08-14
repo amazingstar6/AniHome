@@ -85,5 +85,14 @@ class Utils {
         fun Int?.orMinusOne(): Int {
             return this ?: -1
         }
+
+        fun getCurrentDay(): FuzzyDate {
+            val date = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+            return FuzzyDate(year = date.year, month = date.monthNumber, day = date.dayOfMonth)
+        }
+
+        fun getCurrentDayMillisEpoch(): Long {
+            return Clock.System.now().toEpochMilliseconds()
+        }
     }
 }

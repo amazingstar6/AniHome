@@ -4,6 +4,7 @@ import com.example.anilist.GetMediaOfStudioQuery
 import com.example.anilist.GetStudioDetailsQuery
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.AniLikeAbleType
 import com.example.anilist.utils.Apollo
 import javax.inject.Inject
 
@@ -39,7 +40,7 @@ class StudioDetailRepository @Inject constructor() {
         }.orEmpty()
     }
 
-    fun toggleFavourite(type: MediaDetailsRepository.LikeAbleType, id: Int): Any {
+    fun toggleFavourite(type: AniLikeAbleType, id: Int): Any {
         TODO("Not yet implemented")
     }
 }

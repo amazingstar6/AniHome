@@ -9,7 +9,6 @@ import com.example.anilist.data.models.AniCharacterDetail
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.AniStaffDetail
 import com.example.anilist.ui.home.AniCharacterSort
-import com.example.anilist.ui.home.MediaPagingSource
 import com.example.anilist.ui.home.MediaSearchState
 
 interface HomeRepository {

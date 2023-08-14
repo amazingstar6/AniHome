@@ -29,7 +29,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.anilist.R
 import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.AniCharacterMediaConnection
-import com.example.anilist.data.models.MediaType
+import com.example.anilist.data.models.AniMediaType
 import com.example.anilist.data.models.AniStaffDetail
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.details.characterdetail.AvatarAndName
@@ -119,11 +119,11 @@ private fun StaffScreen(
         }
         if (staff.animeStaffRole.isNotEmpty()) {
             Headline("Anime staff role")
-            MediaStaffRole(staffMedia, onNavigateToMedia, type = MediaType.ANIME)
+            MediaStaffRole(staffMedia, onNavigateToMedia, type = AniMediaType.ANIME)
         }
         if (staff.mangaStaffRole.isNotEmpty()) {
             Headline("Manga staff role")
-            MediaStaffRole(staffMedia, onNavigateToMedia, type = MediaType.MANGA)
+            MediaStaffRole(staffMedia, onNavigateToMedia, type = AniMediaType.MANGA)
         }
     }
 }
@@ -147,7 +147,7 @@ fun MangaStaffRole(media: List<AniCharacterMediaConnection>, onNavigateToMedia: 
 fun MediaStaffRole(
     media: LazyPagingItems<AniCharacterMediaConnection>,
     onNavigateToMedia: (Int) -> Unit,
-    type: MediaType
+    type: AniMediaType
 ) {
     LazyRow(contentPadding = PaddingValues(end = Dimens.PaddingNormal)) {
         items(media.itemCount) { index ->

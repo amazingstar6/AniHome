@@ -7,8 +7,8 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.AniNotification
-import com.example.anilist.data.repository.NotificationsPagingSource
-import com.example.anilist.data.repository.NotificationsRepository
+import com.example.anilist.data.repository.notificationrepository.NotificationsPagingSource
+import com.example.anilist.data.repository.notificationrepository.NotificationsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,8 +32,8 @@ class NotificationsViewModel @Inject constructor(private val notificationsReposi
         )
     }).flow.cachedIn(viewModelScope)
 
-    private val _notificationUnReadCount = MutableStateFlow(-1)
-    val notificationUnReadCount: StateFlow<Int> = _notificationUnReadCount
+//    private val _notificationUnReadCount = MutableStateFlow(-1)
+//    val notificationUnReadCount: StateFlow<Int> = _notificationUnReadCount
 
     private val _toastMessage = MutableSharedFlow<String>()
     val toastMessage: SharedFlow<String> = _toastMessage.asSharedFlow()
@@ -44,37 +44,37 @@ class NotificationsViewModel @Inject constructor(private val notificationsReposi
         }
     }
 
-    init {
-        viewModelScope.launch {
-            fetchNotificationUnReadCount()
-        }
-    }
+//    init {
+//        viewModelScope.launch {
+//            fetchNotificationUnReadCount()
+//        }
+//    }
 
-    private suspend fun fetchNotificationUnReadCount() {
-        when (val result = notificationsRepository.getUnReadNotificationCount()) {
-            is AniResult.Success -> {
-                _notificationUnReadCount.value = result.data
-            }
+//    private suspend fun fetchNotificationUnReadCount() {
+//        when (val result = notificationsRepository.getUnReadNotificationCount()) {
+//            is AniResult.Success -> {
+//                _notificationUnReadCount.value = result.data
+//            }
+//
+//            is AniResult.Failure -> {
+//                sendMessage("Failed to load notifications unread count")
+//            }
+//        }
+//    }
 
-            is AniResult.Failure -> {
-                sendMessage("Failed to load notifications unread count")
-            }
-        }
-    }
-
-    fun markAllNotificationsAsRead() {
-        viewModelScope.launch {
-            when (val result = notificationsRepository.markAllAsRead()) {
-                is AniResult.Success -> {
-                    _notificationUnReadCount.value = result.data
-                }
-
-                is AniResult.Failure -> {
-                    sendMessage("Failed to mark notifications as read")
-                }
-            }
-        }
-    }
+//    fun markAllNotificationsAsRead() {
+//        viewModelScope.launch {
+//            when (val result = notificationsRepository.markAllAsRead()) {
+//                is AniResult.Success -> {
+//                    _notificationUnReadCount.value = result.data
+//                }
+//
+//                is AniResult.Failure -> {
+//                    sendMessage("Failed to mark notifications as read")
+//                }
+//            }
+//        }
+//    }
 
 }
 

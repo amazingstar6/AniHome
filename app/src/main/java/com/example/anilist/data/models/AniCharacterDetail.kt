@@ -25,5 +25,5 @@ data class AniCharacterMediaConnection(
     val coverImage: String = "",
     val characterRole: String = "",
     val mediaType: String = "",
-    val type: MediaType = MediaType.UNKNOWN
+    val type: AniMediaType = AniMediaType.UNKNOWN
 )

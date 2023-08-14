@@ -9,6 +9,7 @@ import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.data.repository.UserDataRepository
 import com.example.anilist.data.repository.mymedia.MyMediaRepository
+import com.example.anilist.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,7 +41,8 @@ class MyMediaViewModel @Inject constructor(
         }
     }
 
-    private val _sort: MutableStateFlow<AniMediaListSort> = MutableStateFlow(AniMediaListSort.UPDATED_TIME_DESC)
+    private val _sort: MutableStateFlow<AniMediaListSort> =
+        MutableStateFlow(AniMediaListSort.UPDATED_TIME_DESC)
 
     val sort: StateFlow<AniMediaListSort> = _sort
 
@@ -82,7 +85,7 @@ class MyMediaViewModel @Inject constructor(
 
     /**
      * Updates the progress and changes the media list only for that updated media and sorts it by updated at descending again.
-     * @param isComplete if progress is equal to the amount of chapters/episodes
+     * @param isComplete if progress is equal to the amount of chapters/episodes (should only be used for increasing chapter/episode progress, since that doesn't allow to immediately set the status to COMPLETE and the end date to the current day
      */
     fun updateProgress(
         statusUpdate: StatusUpdate,
@@ -104,8 +107,25 @@ class MyMediaViewModel @Inject constructor(
                             var mediaStatus = statusUpdate.status
                             if (isComplete) {
                                 mediaStatus = AniPersonalMediaStatus.COMPLETED
+                                newMedia.copy(
+                                    data = newMedia.data.copy(
+                                        mediaListEntry = newMedia.data.mediaListEntry.copy(
+                                            status = mediaStatus
+                                        )
+                                    )
+                                )
+                                if (statusUpdate.completedAt == null) {
+                                    newMedia.copy(
+                                        data = newMedia.data.copy(
+                                            mediaListEntry = newMedia.data.mediaListEntry.copy(
+                                                completedAt = Utils.getCurrentDay()
+                                            )
+                                        )
+                                    )
+                                }
                             }
 
+                            Timber.d("Media status before moving locally is $mediaStatus, is complete is $isComplete, media status received is ${newMedia.data.mediaListEntry.status}")
                             // first we move the status if we need to
                             if (mediaStatus != null) {
                                 // first we remove the current entry from the wrong list

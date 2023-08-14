@@ -41,7 +41,6 @@ import com.example.anilist.type.MediaStatus
 import com.example.anilist.type.MediaType
 import com.example.anilist.ui.home.AniCharacterSort
 import com.example.anilist.ui.home.AniMediaSort
-import com.example.anilist.ui.home.MediaPagingSource
 import com.example.anilist.ui.home.MediaSearchState
 import com.example.anilist.ui.home.SearchFilter
 import com.example.anilist.utils.Apollo
@@ -53,14 +52,6 @@ import kotlinx.datetime.toLocalDateTime
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
-
-data class HomeMedia(
-    var popularThisSeason: List<Media> = emptyList(),
-    val trendingNow: List<Media> = emptyList(),
-    val upcomingNextSeason: List<Media> = emptyList(),
-    val allTimePopular: List<Media> = emptyList(),
-    val top100Anime: List<Media> = emptyList(),
-)
 
 @Singleton
 class HomeRepositoryImpl @Inject constructor() : HomeRepository {
@@ -318,7 +309,7 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
     private fun parseMediaTitleCover(media: MediaTitleCover): Media {
         return Media(
             id = media.id,
-            type = media.type?.toAniHomeType() ?: com.example.anilist.data.models.MediaType.UNKNOWN,
+            type = media.type?.toAniHomeType() ?: com.example.anilist.data.models.AniMediaType.UNKNOWN,
             title = media.title?.userPreferred ?: "",
             coverImage = media.coverImage?.extraLarge ?: "",
         )
@@ -327,7 +318,7 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
     private fun parseSearchMedia(media: SearchMediaQuery.Medium): Media {
         return Media(
             id = media.id,
-            type = media.type?.toAniHomeType() ?: com.example.anilist.data.models.MediaType.UNKNOWN,
+            type = media.type?.toAniHomeType() ?: com.example.anilist.data.models.AniMediaType.UNKNOWN,
             title = media.title?.userPreferred ?: "",
             coverImage = media.coverImage?.extraLarge ?: "",
             format = media.format?.toAni() ?: AniMediaFormat.UNKNOWN,

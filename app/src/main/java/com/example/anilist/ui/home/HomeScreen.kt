@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -101,14 +102,15 @@ import com.example.anilist.data.models.AniMediaStatus
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniTag
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.MediaType
+import com.example.anilist.data.models.AniMediaType
 import com.example.anilist.data.models.AniSeason
 import com.example.anilist.data.models.HomeTrendingTypes
-import com.example.anilist.data.repository.MediaDetailsRepository
+import com.example.anilist.data.models.AniLikeAbleType
 import com.example.anilist.ui.Dimens
 import com.example.anilist.utils.LoadingCircle
 import com.example.anilist.ui.details.mediadetails.MediaDetailsViewModel
 import com.example.anilist.ui.details.mediadetails.QuickInfo
+import com.example.anilist.ui.home.notifications.UnreadNotificationsViewModel
 import com.example.anilist.utils.AsyncImageRoundedCorners
 import com.example.anilist.utils.Utils
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -123,6 +125,7 @@ private const val CARD_HEIGHT = 240
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel,
+    unreadNotificationsViewModel: UnreadNotificationsViewModel,
     mediaDetailsViewModel: MediaDetailsViewModel = hiltViewModel(),
     onNavigateToMediaDetails: (Int) -> Unit,
     onNavigateToNotification: () -> Unit,
@@ -154,8 +157,8 @@ fun HomeScreen(
     val searchType by homeViewModel.searchType.collectAsStateWithLifecycle()
 
     // fixme don't fetch this after every destroyed composition
-    LaunchedEffect(key1 = Unit) { homeViewModel.fetchUnReadNotifications() }
-    val unReadNotificationCount by homeViewModel.unReadNotificationCount.collectAsStateWithLifecycle()
+//    LaunchedEffect(key1 = Unit) { homeViewModel.fetchUnReadNotifications() }
+    val unReadNotificationCount by unreadNotificationsViewModel.notificationUnReadCount.collectAsStateWithLifecycle()
 
     val uiState2 by homeViewModel.uiState.collectAsStateWithLifecycle()
 //    val trendingTogethery by homeViewModel.trendingTogetherPager.collectAsLazyPagingItems()
@@ -207,7 +210,7 @@ fun HomeScreen(
             navigateToStudioDetails = navigateToStudioDetails,
             toggleFavourite = {
                 mediaDetailsViewModel.toggleFavourite(
-                    MediaDetailsRepository.LikeAbleType.STUDIO, it
+                    AniLikeAbleType.STUDIO, it
                 )
                 uiState.searchResultsStudio.refresh()
             },
@@ -577,31 +580,7 @@ private fun AniSearchBar(
         },
         trailingIcon = {
             if (!active) {
-                PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.notifications)) }) {
-                    BadgedBox(badge = {
-                        if (unReadNotificationCount != 0 && unReadNotificationCount != -1) {
-                            Badge {
-                                Text(
-                                    unReadNotificationCount.toString(),
-                                    modifier = Modifier.semantics {
-                                        contentDescription =
-                                            "$unReadNotificationCount new notifications"
-                                    }
-                                )
-                            }
-                        }
-                    }) {
-//                        IconButton(onClick = onNavigateToNotification, modifier = Modifier.tooltipTrigger()) {
-                        Icon(
-                            imageVector = Icons.Outlined.Notifications,
-                            contentDescription = "notifications",
-                            modifier = Modifier
-                                .clickable { onNavigateToNotification() }
-                                .tooltipTrigger()
-                        )
-//                        }
-                    }
-                }
+                NotificationBadge(unReadNotificationCount, onNavigateToNotification)
             } else if (query == "") {
                 Icon(
                     painterResource(id = R.drawable.baseline_search_24),
@@ -979,6 +958,54 @@ private fun AniSearchBar(
                     toggleFavourite = toggleFavourite
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true, group = "Notification")
+@Composable
+fun NotificationBadgePreview() {
+    NotificationBadge(unReadNotificationCount = 2, onNavigateToNotification = {})
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun NotificationBadge(
+    unReadNotificationCount: Int,
+    onNavigateToNotification: () -> Unit
+) {
+    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.notifications)) }) {
+//        IconButton(onClick = { /*TODO*/ }) {
+        BadgedBox(modifier = Modifier
+//            .padding(Dimens.PaddingNormal)
+//            .clip(CircleShape)
+//            .clickable { onNavigateToNotification() }
+            , badge = {
+            if (unReadNotificationCount != 0 && unReadNotificationCount != -1) {
+                Badge {
+                    Text(
+                        unReadNotificationCount.toString(),
+                        modifier = Modifier.semantics {
+                            contentDescription =
+                                "$unReadNotificationCount new notifications"
+                        }
+                    )
+                }
+            }
+        }) {
+//                        IconButton(onClick = onNavigateToNotification, modifier = Modifier.tooltipTrigger()) {
+            Icon(
+                imageVector = Icons.Outlined.Notifications,
+                contentDescription = "notifications",
+                modifier = Modifier
+
+                        .clip(CircleShape)
+                        .clickable { onNavigateToNotification() }
+                    .tooltipTrigger()
+
+            )
+//                        }
+//            }
         }
     }
 }
@@ -1604,7 +1631,7 @@ private fun SearchCardMedia(
     id: Int,
     coverImage: String,
     title: String,
-    mediaType: MediaType
+    mediaType: AniMediaType
 ) {
     Row(
         modifier = Modifier
@@ -1642,7 +1669,7 @@ private fun SearchCardMedia(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            QuickInfo(media = media, isAnime = mediaType == MediaType.ANIME)
+            QuickInfo(media = media, isAnime = mediaType == AniMediaType.ANIME)
         }
     }
 }

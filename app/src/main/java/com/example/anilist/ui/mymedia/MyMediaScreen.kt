@@ -320,6 +320,7 @@ private fun MyMedia(
                     myMedia,
                     navigateToDetails,
                     increaseEpisodeProgress = { entryId, newProgress ->
+                        Timber.d("New progress is $newProgress, current media episode amount is ${currentMedia.episodeAmount}")
                         saveStatus(
                             StatusUpdate(
                                 entryListId = entryId,
@@ -339,7 +340,7 @@ private fun MyMedia(
                                 mediaId = currentMedia.id
                             ),
                             (if (isAnime) currentMedia.episodeAmount else currentMedia.chapters)
-                                    == currentMedia.mediaListEntry.progress
+                                    == newProgress
                         )
                     },
                     increaseVolumeProgress = { entryId, newProgress ->
@@ -347,7 +348,7 @@ private fun MyMedia(
                             StatusUpdate(
                                 entryListId = entryId,
                                 progressVolumes = newProgress,
-                                status = null,
+                                status = currentMedia.mediaListEntry.status,
                                 scoreRaw = null,
                                 progress = null,
                                 repeat = null,
@@ -361,8 +362,7 @@ private fun MyMedia(
                                 completedAt = null,
                                 mediaId = currentMedia.id
                             ),
-                            (if (isAnime) currentMedia.episodeAmount else currentMedia.chapters)
-                                    == currentMedia.mediaListEntry.progress
+                            currentMedia.volumes == currentMedia.mediaListEntry.progress
                         )
                     },
                     showEditSheet = showEditSheet,
@@ -376,7 +376,7 @@ private fun MyMedia(
             if (showRatingDialog) {
                 RatingDialog(
                     { showRatingDialog = it },
-                    {saveStatus(it, false)},
+                    { saveStatus(it, false) },
                     currentMedia,
                     { currentMedia = it })
             }

@@ -82,6 +82,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun NotificationScreen(
     notificationsViewModel: NotificationsViewModel = hiltViewModel(),
+    unreadNotificationsViewModel: UnreadNotificationsViewModel,
     onNavigateBack: () -> Unit,
     navigateToMediaDetails: (Int) -> Unit,
     onNavigateToActivity: (Int) -> Unit,
@@ -90,7 +91,7 @@ fun NotificationScreen(
     onNavigateToThreadComment: (Int) -> Unit
 ) {
     val notifications = notificationsViewModel.notifications.collectAsLazyPagingItems()
-    val unReadNotificationsCount by notificationsViewModel.notificationUnReadCount.collectAsStateWithLifecycle()
+    val unReadNotificationsCount by unreadNotificationsViewModel.notificationUnReadCount.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     LaunchedEffect(Unit) {
@@ -108,13 +109,14 @@ fun NotificationScreen(
     Notifications(
         notifications = notifications,
         unReadNotificationsCount = unReadNotificationsCount,
-        markAllAsRead = notificationsViewModel::markAllNotificationsAsRead,
+        markAllAsRead = unreadNotificationsViewModel::markAllNotificationsAsRead,
         onNavigateBack = onNavigateBack,
         navigateToMediaDetails = navigateToMediaDetails,
         onNavigateToUser = onNavigateToUser,
         onNavigateToActivity = onNavigateToActivity,
         onNavigateToThread = onNavigateToThread,
-        onNavigateToThreadComment = onNavigateToThreadComment
+        onNavigateToThreadComment = onNavigateToThreadComment,
+        reloadNotificationCount = unreadNotificationsViewModel::fetchNotificationUnReadCount
     )
 }
 
@@ -124,6 +126,7 @@ private fun Notifications(
     notifications: LazyPagingItems<AniNotification>,
     unReadNotificationsCount: Int,
     markAllAsRead: () -> Unit,
+    reloadNotificationCount: () -> Unit,
     onNavigateBack: () -> Unit,
     navigateToMediaDetails: (Int) -> Unit,
     onNavigateToUser: (Int) -> Unit,
@@ -158,7 +161,10 @@ private fun Notifications(
             },
             actions = {
                 PlainTooltipBox(tooltip = { Text(text = "Reload") }) {
-                    IconButton(onClick = { notifications.refresh() }) {
+                    IconButton(onClick = {
+                        notifications.refresh()
+                        reloadNotificationCount()
+                    }) {
                         Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reload")
                     }
                 }
@@ -470,8 +476,8 @@ private fun NotificationComponent(
         color = if (isUnRead) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(Dimens.PaddingSmall)
-            .clickable { onClick() }
+            .padding(Dimens.PaddingSmall),
+        onClick = onClick
     ) {
         Row(
             verticalAlignment = Alignment.Top,
@@ -504,9 +510,7 @@ private fun NotificationComponent(
                         .clip(MaterialTheme.shapes.medium),
                 )
             }
-            Column(
-//                modifier = Modifier.padding(end = Dimens.PaddingNormal)
-            ) {
+            Column {
                 Text(
                     text = Utils.getRelativeTime(notification.createdAt.toLong()),
                     style = MaterialTheme.typography.titleSmall,

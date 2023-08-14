@@ -21,11 +21,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ChipColors
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RichTooltipBox
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberRichTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,15 +54,15 @@ import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
-import com.example.anilist.data.models.AniMediaFormat
-import com.example.anilist.data.models.AniMediaStatus
 import com.example.anilist.data.models.AniLink
 import com.example.anilist.data.models.AniLinkType
+import com.example.anilist.data.models.AniMediaFormat
+import com.example.anilist.data.models.AniMediaRelation
+import com.example.anilist.data.models.AniMediaStatus
+import com.example.anilist.data.models.AniSeason
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaDetailInfoList
-import com.example.anilist.data.models.MediaType
-import com.example.anilist.data.models.AniMediaRelation
-import com.example.anilist.data.models.AniSeason
+import com.example.anilist.data.models.AniMediaType
 import com.example.anilist.data.models.Tag
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.details.mediadetails.IconWithText
@@ -70,7 +73,6 @@ import com.example.anilist.utils.FormattedHtmlWebView
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-@OptIn(ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun Overview(
@@ -207,7 +209,7 @@ private fun OverviewAnimeCoverDetails(
     genres: List<String>,
     showImageLarge: (String) -> Unit
 ) {
-    val isAnime = media.type == MediaType.ANIME
+    val isAnime = media.type == AniMediaType.ANIME
     Row(modifier = Modifier.padding(Dimens.PaddingNormal)) {
         if (media.coverImage != "") {
             AsyncImage(
@@ -362,7 +364,7 @@ private fun LinkFlowRow(
 }
 
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 private fun OverViewTags(
     tags: List<Tag>,
     showSpoilers: Boolean,
@@ -384,52 +386,71 @@ private fun OverViewTags(
     ) {
         for (tag in tags) {
             if (!tag.isMediaSpoiler) {
-                SuggestionChip(
-                    onClick = { },
-                    modifier = Modifier.padding(end = Dimens.PaddingNormal), label = {
-                        Text(
-                            buildAnnotatedString {
-                                withStyle(
-                                    style = SpanStyle(color = MaterialTheme.colorScheme.primary),
-                                ) {
-                                    append("${tag.rank}% ")
-                                }
-                                withStyle(style = SpanStyle()) {
-                                    append(tag.name)
-                                }
-                            },
-                        )
+                RichTooltipBox(
+                    text = { Text(text = tag.description) },
+                    tooltipState = rememberRichTooltipState(
+                        isPersistent = true
+                    )
+                ) {
+                    SuggestionChip(
+                        onClick = { },
+                        modifier = Modifier
+                            .padding(end = Dimens.PaddingNormal)
+                            .tooltipTrigger(),
+                        label = {
+                            Text(
+                                buildAnnotatedString {
+                                    withStyle(
+                                        style = SpanStyle(color = MaterialTheme.colorScheme.primary),
+                                    ) {
+                                        append("${tag.rank}% ")
+                                    }
+                                    withStyle(style = SpanStyle()) {
+                                        append(tag.name)
+                                    }
+                                },
+                            )
 //                        Text(text = tag.name, style = MaterialTheme.typography.labelMedium)
-                    })
+                        })
+                }
             } else if (showSpoilers) {
-                SuggestionChip(
-                    onClick = { },
-                    modifier = Modifier.padding(end = 12.dp, bottom = 4.dp),
-                    colors = ChipColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        labelColor = MaterialTheme.colorScheme.onErrorContainer,
-                        disabledContainerColor = MaterialTheme.colorScheme.onErrorContainer,
-                        disabledLabelColor = MaterialTheme.colorScheme.onErrorContainer,
-                        leadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-                        trailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-                        disabledLeadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-                        disabledTrailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer
-                    ), label = {
-                        Text(
-                            buildAnnotatedString {
-                                withStyle(
-                                    style = SpanStyle(
-                                        color = MaterialTheme.colorScheme.error,
-                                    ),
-                                ) {
-                                    append("${tag.rank}% ")
-                                }
-                                withStyle(style = SpanStyle()) {
-                                    append(tag.name)
-                                }
-                            },
-                        )
-                    })
+                RichTooltipBox(
+                    text = { Text(text = tag.description) },
+                    tooltipState = rememberRichTooltipState(
+                        isPersistent = true
+                    )
+                ) {
+                    SuggestionChip(
+                        onClick = { },
+                        modifier = Modifier
+                            .padding(end = 12.dp, bottom = 4.dp)
+                            .tooltipTrigger(),
+                        colors = ChipColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            labelColor = MaterialTheme.colorScheme.onErrorContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.onErrorContainer,
+                            disabledLabelColor = MaterialTheme.colorScheme.onErrorContainer,
+                            leadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            trailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            disabledLeadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            disabledTrailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer
+                        ), label = {
+                            Text(
+                                buildAnnotatedString {
+                                    withStyle(
+                                        style = SpanStyle(
+                                            color = MaterialTheme.colorScheme.error,
+                                        ),
+                                    ) {
+                                        append("${tag.rank}% ")
+                                    }
+                                    withStyle(style = SpanStyle()) {
+                                        append(tag.name)
+                                    }
+                                },
+                            )
+                        })
+                }
             }
         }
     }
@@ -461,8 +482,8 @@ private fun OverViewInfo(media: Media, navigateToStudioDetails: (Int) -> Unit) {
             )
         }
         InfoDataItem(
-            if (media.type == MediaType.ANIME) "Episodes" else "Chapters",
-            if (media.type == MediaType.ANIME) {
+            if (media.type == AniMediaType.ANIME) "Episodes" else "Chapters",
+            if (media.type == AniMediaType.ANIME) {
                 if (media.episodeAmount == -1) stringResource(id = R.string.question_mark) else media.episodeAmount.toString()
             } else {
                 if (media.chapters == -1) stringResource(id = R.string.question_mark) else media.chapters.toString()
@@ -585,7 +606,7 @@ fun OverviewPreview() {
                 onNavigateToLargeCover = {},
                 onNavigateToDetails = {},
                 media = Media(
-                    type = MediaType.ANIME,
+                    type = AniMediaType.ANIME,
                     title = "鬼滅の刃 刀鍛冶の里編",
                     coverImage = "",
                     format = AniMediaFormat.TV,
@@ -615,8 +636,18 @@ fun OverviewPreview() {
                         nsfw = false,
                     ),
                     tags = listOf(
-                        Tag(name = "Demons", 96, false),
-                        Tag(name = "Shounen", rank = 40, true),
+                        Tag(
+                            name = "Demons",
+                            96,
+                            false,
+                            description = "Media that involves a whole lot of demons."
+                        ),
+                        Tag(
+                            name = "Shounen",
+                            rank = 40,
+                            true,
+                            description = "Media meant for young virgins."
+                        ),
                         //                        "Shounen",
                         //                        "Swordplay",
                         //                        "Male Protagonist",

@@ -27,7 +27,6 @@ class Apollo {
         private val sqlNormalizedCacheFactory = SqlNormalizedCacheFactory("apollo.db")
 
         // Creates a 10MB MemoryCacheFactory
-        // todo enable cache
         private const val ONE_HOUR_IN_MILLI_SECONDS: Long = 3600000L
         private val cacheFactory = MemoryCacheFactory(
             maxSizeBytes = 10 * 1024 * 1024,
@@ -46,15 +45,9 @@ class Apollo {
          */
         val apolloClient =
             ApolloClient.Builder()
-//                .httpHeaders(headers)
-//                .okHttpClient(
-//                    OkHttpClient.Builder().addInterceptor(AuthorizationInterceptor()).build()
-//                )
-//                fixme i don't think cache works (in general) //for deleting
                 .normalizedCache(cacheFactory.chain(sqlNormalizedCacheFactory))
                 .serverUrl("https://graphql.anilist.co")
                 .fetchPolicy(FetchPolicy.CacheFirst)
-                // todo should this be true?
                 .writeToCacheAsynchronously(true)
                 .addHttpInterceptor(AuthorizationInterceptor(accessCode))
                 .build()

@@ -6,10 +6,9 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.example.anilist.data.models.AniStudio
-import com.example.anilist.data.repository.MediaDetailsRepository
 import com.example.anilist.data.repository.StudioDetailRepository
 import com.example.anilist.data.repository.StudioMediaPagingSource
-import com.example.anilist.ui.details.mediadetails.MediaDetailUiState
+import com.example.anilist.data.models.AniLikeAbleType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +34,7 @@ class StudioDetailViewModel @Inject constructor(
         ).flow.cachedIn(viewModelScope)
     }
 
-    fun toggleFavourite(type: MediaDetailsRepository.LikeAbleType, id: Int) {
+    fun toggleFavourite(type: AniLikeAbleType, id: Int) {
         viewModelScope.launch {
             val isFavourite = studioDetailRepository.toggleFavourite(type, id)
         }
