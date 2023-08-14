@@ -46,7 +46,7 @@ class MediaDetailsViewModel @Inject constructor(
     private val mediaDetailsRepository: MediaDetailsRepository,
     private val myMediaRepository: MyMediaRepository,
     private val reviewDetailRepository: ReviewDetailRepository,
-    private val savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _media: MutableStateFlow<MediaDetailUiState> =
@@ -136,7 +136,6 @@ class MediaDetailsViewModel @Inject constructor(
 
 
     private fun fetchMedia(mediaId: Int) {
-        Timber.d("Saved state handle has ${savedStateHandle.get<Int>(AniListRoute.MEDIA_DETAIL_ID_KEY)}")
         viewModelScope.launch {
             when (val data = mediaDetailsRepository.fetchMedia(mediaId)) {
                 is AniResult.Success -> {

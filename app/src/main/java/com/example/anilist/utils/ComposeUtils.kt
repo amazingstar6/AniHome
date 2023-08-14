@@ -37,6 +37,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -48,6 +53,7 @@ import com.example.anilist.utils.Utils.Companion.toHexString
 import com.google.accompanist.web.AccompanistWebViewClient
 import com.google.accompanist.web.WebView
 import com.google.accompanist.web.rememberWebViewStateWithHTMLData
+import org.jsoup.Jsoup
 
 private const val TAG = "ComposeUtils"
 
@@ -226,4 +232,66 @@ fun shimmerBrush(showShimmer: Boolean = true, targetValue:Float = 1000f): Brush 
             end = Offset.Zero
         )
     }
+}
+@Composable
+fun htmlToAnnotatedString(htmlString: String, isSpoilerVisible: Boolean): AnnotatedString {
+    val replacedSpans = htmlString.replace(
+        """
+        <p><span class='markdown_spoiler'><span>
+    """.trimIndent().trim(), """
+        <span class='markdown_spoiler'>
+    """.trimIndent().trim(), ignoreCase = true
+    ).replace(
+        """
+        </span></span></p>
+    """.trimIndent().trim(), """
+        </span>
+    """.trimIndent().trim(), ignoreCase = true
+    )
+    val doc = Jsoup.parse(replacedSpans)
+//    this returns only the spoilers
+//    val elements = doc.body().allElements.not("*:not(span.markdown_spoiler:has(span))")
+    val elements = doc.body().allElements
+//    val processedBody = processElements(elements, StringBuilder())
+    val annotatedString = buildAnnotatedString {
+        elements.forEach { element ->
+            when (element.tagName()) {
+                "p" -> append(element.text() + "\n")
+                "span" -> {
+                    val classNames = element.classNames()
+                    val spoiler = classNames.contains("markdown_spoiler")
+                    if (!spoiler || isSpoilerVisible) {
+                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.error)) {
+                            append(element.text())
+                            if (spoiler) {
+                                addStringAnnotation(
+                                    tag = "spoiler",
+                                    annotation = "spoiler",
+                                    start = length - element.text().length,
+                                    end = length
+                                )
+                            }
+                        }
+                    } else {
+
+                    }
+
+                }
+
+                "br" -> append("\n")
+                "strong" -> {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(element.text())
+                    }
+                }
+
+                "div" -> append(element.text() + "\n")
+
+                else -> {
+//                    this.append(element.text())
+                }
+            }
+        }
+    }
+    return annotatedString
 }

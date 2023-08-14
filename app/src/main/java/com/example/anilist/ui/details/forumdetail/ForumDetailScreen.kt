@@ -6,4 +6,5 @@ import androidx.compose.runtime.Composable
 @Composable
 fun ForumDetailScreen(id: Int) {
     Text(text = "Showing forum with id $id")
+    // todo
 }

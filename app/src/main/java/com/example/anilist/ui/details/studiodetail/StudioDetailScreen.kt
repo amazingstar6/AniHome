@@ -18,6 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -45,7 +46,9 @@ fun StudioDetailScreen(
 ) {
     val studio by studioDetailViewModel.studio.collectAsState()
     val mediaList = studioDetailViewModel.mediaOfStudio.collectAsLazyPagingItems()
-    studioDetailViewModel.getStudioDetails(id)
+    LaunchedEffect(key1 = Unit) {
+        studioDetailViewModel.getStudioDetails(id)
+    }
     Scaffold(topBar = {
         TopAppBar(title = { Text(text = studio.name) }, navigationIcon = {
             IconButton(onClick = navigateBack) {

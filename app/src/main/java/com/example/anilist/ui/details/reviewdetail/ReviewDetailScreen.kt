@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -50,7 +51,9 @@ fun ReviewDetailScreen(
     reviewDetailViewModel: ReviewDetailViewModel = hiltViewModel(),
 ) {
     val review by reviewDetailViewModel.review.observeAsState()
-    reviewDetailViewModel.fetchReview(reviewId)
+    LaunchedEffect(key1 = Unit) {
+        reviewDetailViewModel.fetchReview(reviewId)
+    }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {

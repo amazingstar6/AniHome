@@ -59,7 +59,7 @@ fun Characters(
     navigateToCharacter: (Int) -> Unit,
     navigateToStaff: (Int) -> Unit,
 ) {
-    if (true /*characterWithVoiceActors.itemCount != 0*/) {
+    if (true /* fixme characterWithVoiceActors.itemCount != 0*/) {
         Column(modifier = Modifier.fillMaxHeight()) {
             val lazyGridState = rememberLazyGridState()
             val coroutineScope = rememberCoroutineScope()

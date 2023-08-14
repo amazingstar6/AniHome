@@ -6,4 +6,5 @@ import androidx.compose.runtime.Composable
 @Composable
 fun UserDetailScreen(id: Int) {
     Text(text = "Showing user with id $id")
+    // todo
 }

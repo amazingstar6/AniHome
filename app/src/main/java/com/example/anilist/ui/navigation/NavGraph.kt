@@ -132,11 +132,11 @@ fun AniNavHost(
             )
         }
         composable(
-            route = AniListRoute.CHARACTER_DETAIL_ROUTE + "/{characterId}",
-            arguments = listOf(navArgument("characterId") { type = NavType.IntType }),
+            route = "${AniListRoute.CHARACTER_DETAIL_ROUTE}/{${AniListRoute.CHARACTER_DETAIL_KEY}}",
+            arguments = listOf(navArgument(AniListRoute.CHARACTER_DETAIL_KEY) { type = NavType.IntType }),
             content = { backStackEntry ->
                 CharacterDetailScreen(
-                    id = backStackEntry.arguments?.getInt("characterId") ?: -1,
+                    id = backStackEntry.arguments?.getInt(AniListRoute.CHARACTER_DETAIL_KEY) ?: -1,
                     onNavigateToMedia = navigationActions::navigateToMediaDetails,
                     onNavigateToStaff = navigationActions::navigateToStaff,
                     onNavigateBack = navigationActions::navigateBack,

@@ -26,6 +26,7 @@ object AniListRoute {
     const val FORUM_ROUTE = "Forum"
     const val MEDIA_DETAIL_ID_KEY = "mediaId"
     const val STAFF_DETAIL_ID_KEY = "staffId"
+    const val CHARACTER_DETAIL_KEY = "characterId"
 }
 
 data class AnilistTopLevelDestination(

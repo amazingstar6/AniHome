@@ -37,6 +37,7 @@ class StudioDetailViewModel @Inject constructor(
     fun toggleFavourite(type: AniLikeAbleType, id: Int) {
         viewModelScope.launch {
             val isFavourite = studioDetailRepository.toggleFavourite(type, id)
+            _studio.value = _studio.value.copy(isFavourite = isFavourite)
         }
     }
 

@@ -40,7 +40,7 @@ class StudioDetailRepository @Inject constructor() {
         }.orEmpty()
     }
 
-    fun toggleFavourite(type: AniLikeAbleType, id: Int): Any {
+    suspend fun toggleFavourite(type: AniLikeAbleType, id: Int): Boolean {
         TODO("Not yet implemented")
     }
 }

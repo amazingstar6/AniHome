@@ -1,7 +1,9 @@
 package com.example.anilist.ui.details.characterdetail
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -24,8 +26,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,15 +37,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
@@ -52,9 +50,11 @@ import com.example.anilist.data.models.AniCharacterMediaConnection
 import com.example.anilist.data.models.AniStaffDetail
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.details.mediadetails.IconWithText
+import com.example.anilist.ui.mymedia.components.ErrorScreen
 import com.example.anilist.utils.FormattedHtmlWebView
+import com.example.anilist.utils.LoadingCircle
 import com.example.anilist.utils.quantityStringResource
-import org.jsoup.Jsoup
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,13 +65,26 @@ fun CharacterDetailScreen(
     onNavigateToMedia: (Int) -> Unit,
     onNavigateBack: () -> Unit,
 ) {
-    val character by characterDetailViewModel.character.observeAsState()
-    characterDetailViewModel.fetchCharacter(id)
+    val character by characterDetailViewModel.character.collectAsStateWithLifecycle()
+    val toast = characterDetailViewModel.toast
+    val context = LocalContext.current
+    LaunchedEffect(key1 = Unit, block = {
+        launch {
+            toast.collect {
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            }
+        }
+    })
     Scaffold(topBar = {
         TopAppBar(title = {
-            AnimatedVisibility(visible = character?.userPreferredName != null, enter = fadeIn()) {
+            AnimatedVisibility(
+                visible = (character as? CharacterDetailUiState.Success) != null,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 Text(
-                    text = character?.userPreferredName ?: stringResource(R.string.question_mark),
+                    text = (character as? CharacterDetailUiState.Success)?.character?.userPreferredName
+                        ?: stringResource(R.string.question_mark),
                 )
             }
         }, navigationIcon = {
@@ -83,22 +96,32 @@ fun CharacterDetailScreen(
             }
         })
     }) {
-        AnimatedVisibility(visible = character != null) {
-            CharacterDetail(
-                character = character ?: AniCharacterDetail(),
-                isFavorite = character?.isFavourite ?: false,
-                onNavigateToStaff = onNavigateToStaff,
-                onNavigateToMedia = onNavigateToMedia,
-                modifier = Modifier.padding(
-                    top = it.calculateTopPadding(),
-                    bottom = Dimens.PaddingNormal,
-                ),
-                toggleFavorite = {
-                    characterDetailViewModel.toggleFavourite(
-                        id
-                    )
-                },
-            )
+        when (character) {
+            is CharacterDetailUiState.Success -> {
+                CharacterDetail(
+                    character = (character as CharacterDetailUiState.Success).character,
+                    isFavorite = (character as CharacterDetailUiState.Success).character.isFavourite,
+                    onNavigateToStaff = onNavigateToStaff,
+                    onNavigateToMedia = onNavigateToMedia,
+                    modifier = Modifier.padding(
+                        top = it.calculateTopPadding(),
+                        bottom = Dimens.PaddingNormal,
+                    ),
+                    toggleFavorite = {
+                        characterDetailViewModel.toggleFavourite(
+                            id
+                        )
+                    },
+                )
+            }
+
+            is CharacterDetailUiState.Error -> ErrorScreen(
+                errorMessage = (character as CharacterDetailUiState.Error).message,
+                reloadMedia = { characterDetailViewModel.fetchCharacter(id) })
+
+            is CharacterDetailUiState.Loading -> {
+                LoadingCircle()
+            }
         }
     }
 }
@@ -303,69 +326,6 @@ fun Description(description: String) {
 //        Spacer(modifier = Modifier.height(16.dp))
 //        Text(text = description)
     }
-}
-
-@Composable
-fun htmlToAnnotatedString(htmlString: String, isSpoilerVisible: Boolean): AnnotatedString {
-    val replacedSpans = htmlString.replace(
-        """
-        <p><span class='markdown_spoiler'><span>
-    """.trimIndent().trim(), """
-        <span class='markdown_spoiler'>
-    """.trimIndent().trim(), ignoreCase = true
-    ).replace(
-        """
-        </span></span></p>
-    """.trimIndent().trim(), """
-        </span>
-    """.trimIndent().trim(), ignoreCase = true
-    )
-    val doc = Jsoup.parse(replacedSpans)
-//    this returns only the spoilers
-//    val elements = doc.body().allElements.not("*:not(span.markdown_spoiler:has(span))")
-    val elements = doc.body().allElements
-//    val processedBody = processElements(elements, StringBuilder())
-    val annotatedString = buildAnnotatedString {
-        elements.forEach { element ->
-            when (element.tagName()) {
-                "p" -> append(element.text() + "\n")
-                "span" -> {
-                    val classNames = element.classNames()
-                    val spoiler = classNames.contains("markdown_spoiler")
-                    if (!spoiler || isSpoilerVisible) {
-                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.error)) {
-                            append(element.text())
-                            if (spoiler) {
-                                addStringAnnotation(
-                                    tag = "spoiler",
-                                    annotation = "spoiler",
-                                    start = length - element.text().length,
-                                    end = length
-                                )
-                            }
-                        }
-                    } else {
-
-                    }
-
-                }
-
-                "br" -> append("\n")
-                "strong" -> {
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(element.text())
-                    }
-                }
-
-                "div" -> append(element.text() + "\n")
-
-                else -> {
-//                    this.append(element.text())
-                }
-            }
-        }
-    }
-    return annotatedString
 }
 
 @Composable
