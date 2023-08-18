@@ -135,7 +135,7 @@ class MediaDetailsViewModel @Inject constructor(
     }
 
 
-    private fun fetchMedia(mediaId: Int) {
+    fun fetchMedia(mediaId: Int) {
         viewModelScope.launch {
             when (val data = mediaDetailsRepository.fetchMedia(mediaId)) {
                 is AniResult.Success -> {

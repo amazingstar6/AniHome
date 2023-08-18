@@ -1,5 +1,11 @@
 package com.example.anilist.ui.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -28,7 +34,7 @@ import com.example.anilist.ui.Dimens
 import com.example.anilist.utils.AsyncImageRoundedCorners
 import com.example.anilist.utils.shimmerBrush
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MediaOverview(
     ordinalNumber: Int,
@@ -66,10 +72,13 @@ fun MediaOverview(
             items(pager.itemCount) { index ->
                 val media = pager[index]
 //                if (media != null) {
+//                AnimatedVisibility(visible = media != null, enter = scaleIn(), exit = scaleOut()) {
                     Column(modifier = Modifier
                         .clickable {
                             navigateToDetails(media?.id ?: -1)
                         }
+//                    .animateContentSize()
+//                    .animateItemPlacement(tween())
 //                        .background(shimmerBrush(media != null))
                     ) {
                         AsyncImageRoundedCorners(
@@ -80,11 +89,16 @@ fun MediaOverview(
                             text = media?.title ?: "",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(start = Dimens.PaddingSmall, end = Dimens.PaddingSmall, bottom = Dimens.PaddingNormal)
+                            modifier = Modifier.padding(
+                                start = Dimens.PaddingSmall,
+                                end = Dimens.PaddingSmall,
+                                bottom = Dimens.PaddingNormal
+                            )
                         )
                     }
+                }
 //                }
-            }
+//            }
         }
 
     }

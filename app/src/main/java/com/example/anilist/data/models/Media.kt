@@ -38,7 +38,19 @@ data class Media(
      * Only used to know what languages there are for filtering the character's voice actors based on language
      */
     val languages: List<String> = emptyList(),
-    val mediaListEntry: AniMediaListEntry = AniMediaListEntry()
+    val mediaListEntry: AniMediaListEntry = AniMediaListEntry(),
+    val nextAiringEpisode: AniAiringSchedule = AniAiringSchedule()
+)
+
+data class AniAiringSchedule(
+    val id: Int = -1,
+    val airingAt: Int = -1,
+    /**
+     * In seconds
+     */
+    val timeUntilAiring: Int = -1,
+    val episode: Int = -1,
+    val mediaId: Int = -1,
 )
 
 data class MediaDetailInfoList(

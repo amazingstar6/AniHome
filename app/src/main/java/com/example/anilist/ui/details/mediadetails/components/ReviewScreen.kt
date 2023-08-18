@@ -62,7 +62,7 @@ fun Reviews(
                         AvatarNameDate(
                             avatar = review.userAvatar,
                             userName = review.userName,
-                            date = Utils.getRelativeTime(review.createdAt.toLong()),
+                            date = Utils.getRelativeTimeFromNow(review.createdAt.toLong()),
                             modifier = Modifier.padding(Dimens.PaddingSmall),
                         )
                         Text(

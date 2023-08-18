@@ -120,7 +120,7 @@ private fun ReviewDetail(
         AvatarNameDate(
             review.userAvatar,
             review.userName,
-            Utils.convertEpochToString(review.createdAt.toLong()),
+            Utils.convertEpochToDateString(review.createdAt.toLong()),
         )
 //        HtmlText(
 //            text = review.body,

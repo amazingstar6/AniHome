@@ -9,6 +9,7 @@ import com.example.anilist.GetMediaDetailQuery
 import com.example.anilist.GetReviewsOfMediaQuery
 import com.example.anilist.GetStaffInfoQuery
 import com.example.anilist.ToggleFavoriteCharacterMutation
+import com.example.anilist.data.models.AniAiringSchedule
 import com.example.anilist.data.models.AniLikeAbleType
 import com.example.anilist.data.models.AniLink
 import com.example.anilist.data.models.AniLinkType
@@ -59,9 +60,10 @@ class MediaDetailsRepositoryImpl @Inject constructor() : MediaDetailsRepository 
     ): AniResult<Media> {
         try {
             val result =
-                Apollo.apolloClient.newBuilder().fetchPolicy(FetchPolicy.NetworkFirst).build().query(
-                    GetMediaDetailQuery(mediaId),
-                )
+                Apollo.apolloClient.newBuilder().fetchPolicy(FetchPolicy.NetworkFirst).build()
+                    .query(
+                        GetMediaDetailQuery(mediaId),
+                    )
                     .execute()
             if (result.hasErrors()) {
                 // these errors are related to GraphQL errors
@@ -76,7 +78,11 @@ class MediaDetailsRepositoryImpl @Inject constructor() : MediaDetailsRepository 
         }
     }
 
-    override suspend fun fetchStaffList(mediaId: Int, page: Int, pageSize: Int): AniResult<List<AniStaff>> {
+    override suspend fun fetchStaffList(
+        mediaId: Int,
+        page: Int,
+        pageSize: Int
+    ): AniResult<List<AniStaff>> {
         try {
             val result =
                 Apollo.apolloClient.query(
@@ -127,7 +133,11 @@ class MediaDetailsRepositoryImpl @Inject constructor() : MediaDetailsRepository 
     }
 
 
-    override suspend fun fetchReviews(mediaId: Int, page: Int, pageSize: Int): AniResult<List<AniReview>> {
+    override suspend fun fetchReviews(
+        mediaId: Int,
+        page: Int,
+        pageSize: Int
+    ): AniResult<List<AniReview>> {
         try {
             val result =
                 Apollo.apolloClient.newBuilder().fetchPolicy(FetchPolicy.NetworkFirst).build()
@@ -161,9 +171,24 @@ class MediaDetailsRepositoryImpl @Inject constructor() : MediaDetailsRepository 
                     ),
                 )
 
-                AniLikeAbleType.STAFF -> ToggleFavoriteCharacterMutation(staffId = Optional.present(id))
-                AniLikeAbleType.ANIME -> ToggleFavoriteCharacterMutation(animeId = Optional.present(id))
-                AniLikeAbleType.MANGA -> ToggleFavoriteCharacterMutation(mangaId = Optional.present(id))
+                AniLikeAbleType.STAFF -> ToggleFavoriteCharacterMutation(
+                    staffId = Optional.present(
+                        id
+                    )
+                )
+
+                AniLikeAbleType.ANIME -> ToggleFavoriteCharacterMutation(
+                    animeId = Optional.present(
+                        id
+                    )
+                )
+
+                AniLikeAbleType.MANGA -> ToggleFavoriteCharacterMutation(
+                    mangaId = Optional.present(
+                        id
+                    )
+                )
+
                 AniLikeAbleType.STUDIO -> ToggleFavoriteCharacterMutation(
                     studioId = Optional.present(
                         id,
@@ -220,9 +245,6 @@ class MediaDetailsRepositoryImpl @Inject constructor() : MediaDetailsRepository 
         }
         return list
     }
-
-
-
 
 
     private fun parseCharacters(media: GetCharactersOfMediaQuery.Media?): List<CharacterWithVoiceActor> {
@@ -325,7 +347,14 @@ fun parseMediaDetailFragment(data: MediaDetailFragment?): Media {
     val tags: MutableList<Tag> = mutableListOf()
     for (tag in data?.tags.orEmpty()) {
         if (tag != null) {
-            tags.add(Tag(tag.name, tag.rank ?: 0, tag.isMediaSpoiler ?: true, description = tag.description.orEmpty() ))
+            tags.add(
+                Tag(
+                    tag.name,
+                    tag.rank ?: 0,
+                    tag.isMediaSpoiler ?: true,
+                    description = tag.description.orEmpty()
+                )
+            )
         }
     }
     buildString {
@@ -396,10 +425,20 @@ fun parseMediaDetailFragment(data: MediaDetailFragment?): Media {
         ),
         tags = tags,
         trailerImage = data?.trailer?.thumbnail.orEmpty(),
-        trailerLink =
-        if (data?.trailer?.site == "youtube") "https://www.youtube.com/watch?v=${data.trailer.id}" else if (data?.trailer?.site == "dailymotion") "" else "",
-
         // todo add dailymotion
+        trailerLink = when (data?.trailer?.site) {
+            "youtube" -> {
+                "https://www.youtube.com/watch?v=${data.trailer.id}"
+            }
+
+            "dailymotion" -> {
+                "https://www.dailymotion.com/video/${data.trailer.id}"
+            }
+
+            else -> {
+                ""
+            }
+        },
         externalLinks = externalLinks,
         languages = data?.characters?.edges?.let {
             val resultList = mutableListOf<String>()
@@ -424,18 +463,14 @@ fun parseMediaDetailFragment(data: MediaDetailFragment?): Media {
             data.mediaListEntry
         ),
         startDate = getFuzzyDate(data?.startDate?.fuzzyDate),
-        endDate = getFuzzyDate(data?.endDate?.fuzzyDate)
-//            personalProgress = data?.Media?.mediaListEntry?.progress.orMinusOne(),
-//            isPrivate = data?.Media?.mediaListEntry?.private ?: false,
-//            listEntryId = data?.Media?.mediaListEntry?.id.orMinusOne(),
-//            note = data?.Media?.mediaListEntry?.notes.orEmpty(),
-//            rewatches = data?.Media?.mediaListEntry?.repeat.orMinusOne(),
-//            personalVolumeProgress = data?.Media?.mediaListEntry?.progressVolumes.orMinusOne(),
-//            startedAt = getFuzzyDate(data?.Media?.mediaListEntry?.startedAt?.fuzzyDate),
-//            completedAt = getFuzzyDate(data?.Media?.mediaListEntry?.completedAt?.fuzzyDate),
-//            personalStatus = data?.Media?.mediaListEntry?.status?.toAniStatus()
-//                ?: PersonalMediaStatus.UNKNOWN,
-//            rawScore = data?.Media?.mediaListEntry?.score ?: 0.0,
+        endDate = getFuzzyDate(data?.endDate?.fuzzyDate),
+        nextAiringEpisode = AniAiringSchedule(
+            id = data?.nextAiringEpisode?.id ?: -1,
+            airingAt = data?.nextAiringEpisode?.airingAt ?: -1,
+            timeUntilAiring = data?.nextAiringEpisode?.timeUntilAiring ?: -1,
+            episode = data?.nextAiringEpisode?.episode ?: -1,
+            mediaId = data?.nextAiringEpisode?.mediaId ?: -1
+        )
     )
 }
 
@@ -525,11 +560,16 @@ fun parseStats(media: MediaDetailFragment?): AniStats {
     }
 
     val statusDistribution = AniStatsStatusDistribution(
-        current = media?.stats?.statusDistribution?.find { it?.status == MediaListStatus.CURRENT }?.amount ?: 0,
-        planning = media?.stats?.statusDistribution?.find { it?.status == MediaListStatus.PLANNING }?.amount ?: 0,
-        completed = media?.stats?.statusDistribution?.find { it?.status == MediaListStatus.COMPLETED }?.amount ?: 0,
-        dropped = media?.stats?.statusDistribution?.find { it?.status == MediaListStatus.DROPPED }?.amount ?: 0,
-        paused = media?.stats?.statusDistribution?.find { it?.status == MediaListStatus.PAUSED }?.amount ?: 0
+        current = media?.stats?.statusDistribution?.find { it?.status == MediaListStatus.CURRENT }?.amount
+            ?: 0,
+        planning = media?.stats?.statusDistribution?.find { it?.status == MediaListStatus.PLANNING }?.amount
+            ?: 0,
+        completed = media?.stats?.statusDistribution?.find { it?.status == MediaListStatus.COMPLETED }?.amount
+            ?: 0,
+        dropped = media?.stats?.statusDistribution?.find { it?.status == MediaListStatus.DROPPED }?.amount
+            ?: 0,
+        paused = media?.stats?.statusDistribution?.find { it?.status == MediaListStatus.PAUSED }?.amount
+            ?: 0
     )
 //    for (status in media?.stats?.statusDistribution.orEmpty()) {
 //        statusDistribution[

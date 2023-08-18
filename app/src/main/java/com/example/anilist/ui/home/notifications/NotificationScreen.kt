@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -512,7 +511,7 @@ private fun NotificationComponent(
             }
             Column {
                 Text(
-                    text = Utils.getRelativeTime(notification.createdAt.toLong()),
+                    text = Utils.getRelativeTimeFromNow(notification.createdAt.toLong()),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

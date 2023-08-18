@@ -1,18 +1,19 @@
 package com.example.anilist.ui.details.mediadetails.components
 
-import android.content.res.Configuration
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -33,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +48,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -59,24 +62,34 @@ import com.example.anilist.data.models.AniLinkType
 import com.example.anilist.data.models.AniMediaFormat
 import com.example.anilist.data.models.AniMediaRelation
 import com.example.anilist.data.models.AniMediaStatus
+import com.example.anilist.data.models.AniMediaType
 import com.example.anilist.data.models.AniSeason
 import com.example.anilist.data.models.Media
 import com.example.anilist.data.models.MediaDetailInfoList
-import com.example.anilist.data.models.AniMediaType
 import com.example.anilist.data.models.Tag
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.details.mediadetails.IconWithText
 import com.example.anilist.ui.details.mediadetails.QuickInfo
 import com.example.anilist.ui.details.mediadetails.formatFuzzyDateToYearMonthDayString
 import com.example.anilist.ui.theme.AnilistTheme
+import com.example.anilist.utils.AsyncImageRoundedCorners
 import com.example.anilist.utils.FormattedHtmlWebView
+import com.example.anilist.utils.LARGE_MEDIA_HEIGHT
+import com.example.anilist.utils.LARGE_MEDIA_WIDTH
+import com.example.anilist.utils.SMALL_MEDIA_HEIGHT
+import com.example.anilist.utils.Utils
+import com.example.anilist.utils.defaultPlaceholder
+import io.github.fornewid.placeholder.foundation.PlaceholderHighlight
+import io.github.fornewid.placeholder.material3.placeholder
+import io.github.fornewid.placeholder.material3.shimmer
+import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun Overview(
-    media: Media?,
+    media: Media,
+    isLoading: Boolean,
     onNavigateToDetails: (Int) -> Unit,
     onNavigateToLargeCover: (String) -> Unit,
     navigateToStudioDetails: (Int) -> Unit
@@ -87,21 +100,120 @@ fun Overview(
             .padding(bottom = 100.dp),
         //            .padding(20.dp)
     ) {
-        val anime: Media = media ?: Media()
-        OverviewAnimeCoverDetails(anime, anime.genres, onNavigateToLargeCover)
-        OverviewDescription(anime.description)
-        OverviewRelations(anime.relations, onNavigateToDetails)
-        OverViewInfo(anime, navigateToStudioDetails)
-        OverViewStudios(anime, navigateToStudioDetails)
-        var showSpoilers by remember {
-            mutableStateOf(false)
+        val anime: Media = media
+        if (!isLoading) {
+            OverviewAnimeCoverDetails(anime, anime.genres, onNavigateToLargeCover)
+            OverviewDescription(anime.description)
+            OverviewRelations(anime.relations, onNavigateToDetails)
+            OverViewInfo(anime, navigateToStudioDetails)
+            OverViewStudios(anime, navigateToStudioDetails)
+            var showSpoilers by remember {
+                mutableStateOf(false)
+            }
+            OverViewTags(anime.tags, showSpoilers) { showSpoilers = !showSpoilers }
+            val uriHandler = LocalUriHandler.current
+            OverviewTrailer(anime.trailerImage) { uriHandler.openUri(anime.trailerLink) }
+            OverviewExternalLinks(anime) { uriHandler.openUri(it) }
+        } else {
+            AnimeCoverDetailsPlaceHolder()
+            DescriptionPlaceHolder()
+            RelationsPlaceHolder()
+            // not necessary i think
+//            InfoPlaceHolder()
+//            StudiosPlaceholder()
+//            TagsPlaceholder()
+//            TrailerPlaceholder()
+//            ExternalLinksPlaceholder()
         }
-        OverViewTags(anime.tags, showSpoilers) { showSpoilers = !showSpoilers }
-        val uriHandler = LocalUriHandler.current
-        OverviewTrailer(anime.trailerImage) { uriHandler.openUri(anime.trailerLink) }
-        OverviewExternalLinks(anime) { uriHandler.openUri(it) }
     }
 
+}
+
+@Composable
+fun RelationsPlaceHolder() {
+    Column(
+        modifier = Modifier
+            .padding(Dimens.PaddingNormal)
+    ) {
+        Text(
+            text = "Relations placeholder",
+            modifier = Modifier
+                .padding(bottom = Dimens.PaddingNormal)
+                .defaultPlaceholder()
+        )
+        Box(
+            modifier = Modifier
+                .height(SMALL_MEDIA_HEIGHT.dp)
+                .fillMaxWidth()
+                .defaultPlaceholder()
+        )
+    }
+}
+
+@Composable
+fun AnimeCoverDetailsPlaceHolder() {
+    Column {
+        Row(modifier = Modifier.padding(Dimens.PaddingNormal)) {
+            Box(
+                modifier = Modifier
+                    .size(LARGE_MEDIA_WIDTH.dp, LARGE_MEDIA_HEIGHT.dp)
+                    .defaultPlaceholder()
+            )
+            Column(modifier = Modifier.padding(start = Dimens.PaddingNormal)) {
+                Text(
+                    text = "Placeholder for title",
+                    modifier = Modifier
+                        .padding(bottom = Dimens.PaddingNormal)
+                        .defaultPlaceholder()
+                )
+                Box(
+                    modifier = Modifier
+                        .size((LARGE_MEDIA_HEIGHT * 3 / 4).dp)
+                        .defaultPlaceholder()
+                ) {
+
+                }
+            }
+        }
+        Box(
+            modifier = Modifier
+                .padding(Dimens.PaddingNormal)
+                .fillMaxWidth()
+                .height(160.dp)
+                .defaultPlaceholder()
+        )
+    }
+}
+
+@Composable
+fun DescriptionPlaceHolder() {
+    Column(modifier = Modifier.padding(Dimens.PaddingNormal)) {
+        Text(
+            text = "Description",
+            modifier = Modifier
+                .padding(bottom = Dimens.PaddingNormal)
+                .placeholder(
+                    visible = true,
+                    highlight = PlaceholderHighlight.shimmer(),
+                )
+        )
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .placeholder(
+                    visible = true,
+                    highlight = PlaceholderHighlight.shimmer()
+                )
+        ) {
+
+        }
+    }
+//    Box(
+//        modifier = Modifier
+//            .size(200.dp)
+////            .background(Color.Red)
+//            .background(shimmerBrush())
+//    )
 }
 
 @Composable
@@ -136,7 +248,7 @@ private fun OverviewRelations(
 ) {
     if (relations.isNotEmpty()) {
         HeadLine("Relations")
-        LazyRow {
+        LazyRow(contentPadding = PaddingValues(end = Dimens.PaddingNormal)) {
             items(relations) { relation ->
                 Column(
                     modifier = Modifier
@@ -152,7 +264,7 @@ private fun OverviewRelations(
                         contentDescription = "Cover of ${relation.title}",
                         contentScale = ContentScale.FillHeight,
                         modifier = Modifier
-                            .height(140.dp)
+                            .height(SMALL_MEDIA_HEIGHT.dp)
                             .padding(bottom = Dimens.PaddingSmall)
                             .clip(RoundedCornerShape(12.dp)),
                     )
@@ -201,9 +313,9 @@ private fun OverviewTrailer(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 private fun OverviewAnimeCoverDetails(
     media: Media,
     genres: List<String>,
@@ -212,26 +324,35 @@ private fun OverviewAnimeCoverDetails(
     val isAnime = media.type == AniMediaType.ANIME
     Row(modifier = Modifier.padding(Dimens.PaddingNormal)) {
         if (media.coverImage != "") {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(media.coverImage)
-                    .crossfade(true).build(),
+            AsyncImageRoundedCorners(
+                coverImage = media.coverImage,
                 contentDescription = "Cover of ${media.title}",
-                placeholder = painterResource(id = R.drawable.no_image),
-                fallback = painterResource(id = R.drawable.no_image),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .height(250.dp)
-                    .width(175.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable {
-                        showImageLarge(
-                            URLEncoder.encode(
-                                media.coverImage,
-                                StandardCharsets.UTF_8
-                            )
+                width = LARGE_MEDIA_WIDTH.dp,
+                height = LARGE_MEDIA_HEIGHT.dp,
+                modifier = Modifier.                    clickable {
+                    showImageLarge(
+                        //fixme
+                        URLEncoder.encode(
+                            media.coverImage,
+//                                StandardCharsets.UTF_8
                         )
-                    },
+                    )
+                },
+                padding = 0.dp
             )
+//            AsyncImage(
+//                model = ImageRequest.Builder(LocalContext.current).data(media.coverImage)
+//                    .crossfade(true).build(),
+//                contentDescription = "Cover of ${media.title}",
+//                placeholder = painterResource(id = R.drawable.no_image),
+//                fallback = painterResource(id = R.drawable.no_image),
+//                contentScale = ContentScale.Crop,
+//                modifier = Modifier
+//                    .height(LARGE_MEDIA_HEIGHT.dp)
+//                    .width(LARGE_MEDIA_WIDTH.dp)
+//                    .clip(RoundedCornerShape(12.dp))
+//
+//            )
         }
         Column {
             Text(
@@ -243,6 +364,42 @@ private fun OverviewAnimeCoverDetails(
             QuickInfo(media, isAnime)
         }
     }
+
+    if (media.nextAiringEpisode.id != -1) {
+        Timber.d("Time at airing is ${media.nextAiringEpisode.airingAt}")
+        val tooltipState = rememberRichTooltipState(isPersistent = true)
+        val tooltipScope = rememberCoroutineScope()
+        RichTooltipBox(
+            tooltipState = tooltipState,
+            text = { Text(text = Utils.convertEpochToDateTimeTimeZoneString(media.nextAiringEpisode.airingAt.toLong() /* - Clock.System.now().epochSeconds*/)) }) {
+            Text(
+                text = "Episode ${media.nextAiringEpisode.episode} airs in ${
+                    Utils.getRelativeTimeFuture(
+                        media.nextAiringEpisode.timeUntilAiring.toLong()
+                    )
+                }",
+                style = MaterialTheme.typography.headlineSmall,
+                fontFamily = FontFamily.SansSerif,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .padding(
+                        start = Dimens.PaddingNormal,
+                        end = Dimens.PaddingNormal,
+                        bottom = Dimens.PaddingSmall
+                    )
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        tooltipScope.launch {
+                            tooltipState.show()
+                        }
+                    }
+                    .tooltipTrigger()
+            )
+        }
+    }
+
     FlowRow(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier
@@ -463,24 +620,23 @@ private fun OverViewInfo(media: Media, navigateToStudioDetails: (Int) -> Unit) {
         modifier = Modifier
             .padding(horizontal = Dimens.PaddingNormal),
     ) {
-        if (media.infoList.format != "") {
-            InfoDataItem("Format", media.infoList.format)
-        }
-        if (media.infoList.status != AniMediaStatus.UNKNOWN) {
-            InfoDataItem("Status", media.infoList.status.toString(LocalContext.current))
-        }
-        if (media.startDate != null) {
-            InfoDataItem(
-                "Start date",
-                formatFuzzyDateToYearMonthDayString(startDate = media.startDate)
-            )
-        }
-        if (media.endDate != null) {
-            InfoDataItem(
-                "End date",
-                formatFuzzyDateToYearMonthDayString(startDate = media.endDate)
-            )
-        }
+        InfoDataItem("Format", media.infoList.format.ifBlank { "?" })
+
+
+        InfoDataItem(
+            "Status",
+            if (media.infoList.status != AniMediaStatus.UNKNOWN) media.infoList.status.toString(
+                LocalContext.current
+            ) else "?"
+        )
+        InfoDataItem(
+            "Start date",
+            if (media.startDate != null) formatFuzzyDateToYearMonthDayString(startDate = media.startDate) else "?"
+        )
+        InfoDataItem(
+            "End date",
+            if (media.endDate != null) formatFuzzyDateToYearMonthDayString(startDate = media.endDate) else "?"
+        )
         InfoDataItem(
             if (media.type == AniMediaType.ANIME) "Episodes" else "Chapters",
             if (media.type == AniMediaType.ANIME) {
@@ -489,37 +645,62 @@ private fun OverViewInfo(media: Media, navigateToStudioDetails: (Int) -> Unit) {
                 if (media.chapters == -1) stringResource(id = R.string.question_mark) else media.chapters.toString()
             }
         )
-        if (media.infoList.duration != -1) {
-            InfoDataItem("Duration", media.infoList.duration.toString())
-        }
-        if (media.infoList.country != "") {
-            InfoDataItem("Country", media.infoList.country)
-        }
-        if (media.infoList.source != "") {
-            InfoDataItem("Source", media.infoList.source)
-        }
-        if (media.infoList.hashtag.isNotEmpty()) {
-            InfoDataItem("Hashtag", media.infoList.hashtag)
-        }
-        if (media.infoList.licensed != null) {
-            InfoDataItem("Licensed", media.infoList.licensed.toString())
-        }
-        if (media.infoList.updatedAt.isNotEmpty()) {
-            InfoDataItem("Updated at", media.infoList.updatedAt)
-        }
-        if (media.infoList.nsfw != null) {
-            InfoDataItem("NSFW", media.infoList.nsfw.toString())
-        }
-        if (media.infoList.synonyms.isNotEmpty()) {
-            InfoDataItem("Synonyms", buildString {
-                media.infoList.synonyms.forEachIndexed { index, synonym ->
-                    if (index != media.infoList.synonyms.lastIndex) {
-                        append("$synonym, ")
-                    } else {
-                        append(synonym)
+        InfoDataItem(
+            "Duration",
+            if (media.infoList.duration != -1) media.infoList.duration.toString() else "?"
+        )
+
+        InfoDataItem("Country", media.infoList.country.ifBlank { "?" })
+
+        InfoDataItem("Source", media.infoList.source.ifBlank { "?" })
+        val uriHandler = LocalUriHandler.current
+        val uri = getTwitterUriFromHashtags(media.infoList.hashtag)
+        Timber.d("Uri is $uri")
+        //todo make text primary color
+        InfoDataItem("Hashtag", media.infoList.hashtag.ifBlank { "?" },
+            modifier = if (media.infoList.hashtag != "") Modifier
+                .fillMaxWidth()
+                .clickable {
+                    uriHandler.openUri(uri)
+                } else Modifier)
+        InfoDataItem(
+            "Licensed",
+            if (media.infoList.licensed != null) media.infoList.licensed.toString() else "?",
+        )
+        InfoDataItem("Updated at", media.infoList.updatedAt.ifBlank { "?" })
+        InfoDataItem(
+            "NSFW",
+            if (media.infoList.nsfw != null) media.infoList.nsfw.toString() else "?"
+        )
+        InfoDataItem("Synonyms", if (media.infoList.synonyms.isNotEmpty()) buildString {
+            media.infoList.synonyms.forEachIndexed { index, synonym ->
+                if (index != media.infoList.synonyms.lastIndex) {
+                    append("$synonym, ")
+                } else {
+                    append(synonym)
+                }
+            }
+        } else "?")
+    }
+}
+
+fun getTwitterUriFromHashtags(hashtags: String): String {
+    val amountOfHashtags = hashtags.count { it == '#' }
+    if (amountOfHashtags == 1) {
+        return "https://twitter.com/search?q=${hashtags.replace("#", "%23")}&src=typd"
+    } else {
+        val split = hashtags.split("#")
+        Timber.d("Split is $split")
+        return buildString {
+            append("https://twitter.com/search?q=")
+            split.forEachIndexed { index, string ->
+                if (string.isNotBlank()) {
+                    append("%23${string.trim()}")
+                    if (index != split.lastIndex) {
+                        append("+OR%20")
                     }
                 }
-            })
+            }
         }
     }
 }
@@ -585,19 +766,18 @@ private fun SmallHeadLine(text: String) {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Preview(
     name = "Light mode",
     showBackground = true,
     heightDp = 2000,
     group = "Overview",
 )
-@Preview(
-    name = "Night mode",
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES,
-    group = "Overview",
-)
+//@Preview(
+//    name = "Night mode",
+//    showBackground = true,
+//    uiMode = Configuration.UI_MODE_NIGHT_YES,
+//    group = "Overview",
+//)
 @Composable
 fun OverviewPreview() {
     AnilistTheme {
@@ -673,7 +853,7 @@ fun OverviewPreview() {
                             type = AniLinkType.SOCIAL
                         ),
                     ),
-                ), navigateToStudioDetails = {})
+                ), isLoading = true, navigateToStudioDetails = {})
         }
     }
 }

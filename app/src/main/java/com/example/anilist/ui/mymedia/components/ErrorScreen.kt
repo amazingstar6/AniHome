@@ -15,11 +15,12 @@ import com.example.anilist.R
 import com.example.anilist.ui.Dimens
 
 @Composable
-fun ErrorScreen(errorMessage: String, reloadMedia: () -> Unit) {
+fun ErrorScreen(errorMessage: String, reloadMedia: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(Dimens.PaddingNormal),
+            .padding(Dimens.PaddingNormal)
+            .then(modifier),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

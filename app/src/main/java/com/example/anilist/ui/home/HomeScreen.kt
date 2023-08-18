@@ -1747,7 +1747,8 @@ fun AnimeCard(
             .width(120.dp)
             .height(240.dp)
             .then(modifier)
-            .clickable { onNavigateToDetails() },
+            .clickable { onNavigateToDetails() }
+            .semantics(mergeDescendants = true) {},
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)

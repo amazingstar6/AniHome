@@ -5,11 +5,14 @@ import android.util.Log
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import androidx.annotation.PluralsRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,9 +54,11 @@ import com.example.anilist.R
 import com.example.anilist.ui.Dimens
 import com.example.anilist.utils.Utils.Companion.toHexString
 import com.google.accompanist.web.AccompanistWebViewClient
+import com.google.accompanist.web.LoadingState
 import com.google.accompanist.web.WebView
 import com.google.accompanist.web.rememberWebViewStateWithHTMLData
 import org.jsoup.Jsoup
+import timber.log.Timber
 
 private const val TAG = "ComposeUtils"
 
@@ -88,8 +93,10 @@ fun quantityStringResource(@PluralsRes id: Int, quantity: Int, vararg formatArgs
 fun AsyncImageRoundedCorners(
     coverImage: String,
     contentDescription: String,
-    width: Dp = 125.dp,
-    height: Dp = 175.dp
+    modifier: Modifier = Modifier,
+    width: Dp = MEDIUM_MEDIA_WIDTH.dp,
+    height: Dp = MEDIUM_MEDIA_HEIGHT.dp,
+    padding: Dp = Dimens.PaddingSmall
 ) {
     var showShimmer by remember { mutableStateOf(true) }
     AsyncImage(
@@ -104,10 +111,11 @@ fun AsyncImageRoundedCorners(
             .height(height)
             .width(width)
             .padding(
-                Dimens.PaddingSmall
+                padding
             )
             .clip(RoundedCornerShape(12.dp))
             .background(shimmerBrush(showShimmer = showShimmer))
+            .then(modifier)
     )
 }
 
@@ -146,30 +154,37 @@ fun FormattedHtmlWebView(html: String) {
     val state = rememberWebViewStateWithHTMLData(formattedHtml)
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
-    WebView(
-        modifier = Modifier.padding(horizontal = Dimens.PaddingSmall),
-        state = state,
-        onCreated = {
+
+    AnimatedVisibility(
+        visible = state.loadingState !is LoadingState.Loading,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        WebView(
+            modifier = Modifier.padding(horizontal = Dimens.PaddingSmall),
+            state = state,
+            onCreated = {
 //            it.settings.javaScriptEnabled = true
 //            it.settings.standardFontFamily = "Monospace"
-            it.webViewClient = object : AccompanistWebViewClient() {
-                override fun shouldOverrideUrlLoading(
-                    view: WebView?,
-                    request: WebResourceRequest?
-                ): Boolean {
-                    Log.i(TAG, "shouldOverrideUrlLoading was called")
-                    val url = request?.url.toString()
-                    uriHandler.openUri(url)
-                    val intent = Intent(Intent.ACTION_VIEW, request!!.url)
-                    ContextCompat.startActivity(context, intent, null)
+                it.webViewClient = object : AccompanistWebViewClient() {
+                    override fun shouldOverrideUrlLoading(
+                        view: WebView?,
+                        request: WebResourceRequest?
+                    ): Boolean {
+                        Timber.d("shouldOverrideUrlLoading was called")
+                        val url = request?.url.toString()
+                        uriHandler.openUri(url)
+                        val intent = Intent(Intent.ACTION_VIEW, request!!.url)
+                        ContextCompat.startActivity(context, intent, null)
 //                    if (url.startsWith("http://") || url.startsWith("https://")) {
 //                    } else {
 //                        view?.loadUrl(url)
 //                    }
-                    return false
+                        return false
+                    }
                 }
-            }
-        })
+            })
+    }
 }
 
 @Composable
@@ -204,7 +219,7 @@ fun LoadingCircle(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun shimmerBrush(showShimmer: Boolean = true, targetValue:Float = 1000f): Brush {
+fun shimmerBrush(showShimmer: Boolean = true, targetValue: Float = 1000f): Brush {
     return if (showShimmer) {
         val shimmerColors = listOf(
             Color.LightGray.copy(alpha = 0.6f),
@@ -227,12 +242,13 @@ fun shimmerBrush(showShimmer: Boolean = true, targetValue:Float = 1000f): Brush 
         )
     } else {
         Brush.linearGradient(
-            colors = listOf(Color.Transparent,Color.Transparent),
+            colors = listOf(Color.Transparent, Color.Transparent),
             start = Offset.Zero,
             end = Offset.Zero
         )
     }
 }
+
 @Composable
 fun htmlToAnnotatedString(htmlString: String, isSpoilerVisible: Boolean): AnnotatedString {
     val replacedSpans = htmlString.replace(

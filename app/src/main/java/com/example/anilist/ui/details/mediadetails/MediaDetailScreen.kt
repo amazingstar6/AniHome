@@ -67,6 +67,7 @@ import com.example.anilist.ui.details.mediadetails.components.Overview
 import com.example.anilist.ui.details.mediadetails.components.Reviews
 import com.example.anilist.ui.details.mediadetails.components.StaffScreen
 import com.example.anilist.ui.details.mediadetails.components.Stats
+import com.example.anilist.ui.mymedia.components.ErrorScreen
 import com.example.anilist.utils.LoadingCircle
 import com.example.anilist.utils.quantityStringResource
 import kotlinx.coroutines.launch
@@ -182,7 +183,7 @@ fun MediaDetail(
             OpenInBrowserAndShareToolTips(uriHandler, uri, context)
         })
     }, floatingActionButton = {
-        if (MainActivity.accessCode != "") {
+        if (MainActivity.accessCode != "" && media !is MediaDetailUiState.Error && media !is MediaDetailUiState.Loading) {
             FloatingActionButton(
                 onClick = {
                     showEditSheet()
@@ -194,18 +195,19 @@ fun MediaDetail(
     }) {
         when (media) {
             is MediaDetailUiState.Error -> {
-                Text(text = (media as MediaDetailUiState.Error).message)
+                ErrorScreen(
+                    errorMessage = (media as MediaDetailUiState.Error).message,
+                    reloadMedia = { mediaDetailsViewModel.fetchMedia(mediaId) },
+                    modifier = Modifier.padding(top = it.calculateTopPadding())
+                )
             }
 
-            is MediaDetailUiState.Loading -> {
-                LoadingCircle()
-            }
-
-            is MediaDetailUiState.Success -> {
+            is MediaDetailUiState.Success, MediaDetailUiState.Loading -> {
 
                 val selectedLanguage by mediaDetailsViewModel.selectedCharacterLanguage.collectAsStateWithLifecycle()
                 val characters = mediaDetailsViewModel.characterList.collectAsLazyPagingItems()
-                val setSelectedLanguage: (Int) -> Unit = { mediaDetailsViewModel.setCharacterLanguage(it) }
+                val setSelectedLanguage: (Int) -> Unit =
+                    { mediaDetailsViewModel.setCharacterLanguage(it) }
                 Box {
                     Column {
                         val pagerState =
@@ -240,7 +242,8 @@ fun MediaDetail(
                             when (currentPage) {
                                 0 -> {
                                     Overview(
-                                        (media as MediaDetailUiState.Success).data,
+                                        (media as? MediaDetailUiState.Success)?.data ?: Media(),
+                                        isLoading = media is MediaDetailUiState.Loading,
                                         onNavigateToDetails,
                                         onNavigateToLargeCover,
                                         navigateToStudioDetails
