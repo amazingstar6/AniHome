@@ -329,7 +329,7 @@ private fun OverviewAnimeCoverDetails(
                 contentDescription = "Cover of ${media.title}",
                 width = LARGE_MEDIA_WIDTH.dp,
                 height = LARGE_MEDIA_HEIGHT.dp,
-                modifier = Modifier.                    clickable {
+                modifier = Modifier.clickable {
                     showImageLarge(
                         //fixme
                         URLEncoder.encode(
@@ -415,7 +415,16 @@ private fun OverviewAnimeCoverDetails(
             }
         }
     }
-    Rankings(stats = media.stats, modifier = Modifier.padding(horizontal = Dimens.PaddingNormal))
+    Rankings(
+        stats = media.stats,
+        onlyShowTwo = true,
+        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+    )
+//    if (media.stats.mostPopularAllTime != -1) {
+//        IconWithTextRankings(text = , showHeart = )
+//    }
+
+
 //    if (anime1.highestRated != "") {
 //        IconWithText(
 //            icon = R.drawable.anime_details_rating_star,
@@ -645,9 +654,18 @@ private fun OverViewInfo(media: Media, navigateToStudioDetails: (Int) -> Unit) {
                 if (media.chapters == -1) stringResource(id = R.string.question_mark) else media.chapters.toString()
             }
         )
+        val duration = media.infoList.duration
         InfoDataItem(
-            "Duration",
-            if (media.infoList.duration != -1) media.infoList.duration.toString() else "?"
+            LocalContext.current.resources.getString(R.string.duration),
+            if (duration != -1) {
+                if (duration >= 60) {
+                    val hours = duration / 60
+                    val restMinutes = duration % 60
+                    "$hours hours, $restMinutes mins"
+                } else {
+                    "$duration mins"
+                }
+            } else "?"
         )
 
         InfoDataItem("Country", media.infoList.country.ifBlank { "?" })

@@ -33,6 +33,7 @@ import com.example.anilist.ui.theme.AnilistTheme
 import com.patrykandpatrick.vico.compose.axis.axisGuidelineComponent
 import com.patrykandpatrick.vico.compose.axis.axisLineComponent
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
+import com.patrykandpatrick.vico.compose.axis.vertical.startAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
 import com.patrykandpatrick.vico.compose.chart.column.columnChart
 import com.patrykandpatrick.vico.compose.component.textComponent
@@ -120,10 +121,24 @@ fun Stats(stats: AniStats) {
     }
 }
 
+/**
+ * Only shows the two most highest ones when onlyShowTwo is true.
+ * So an element is shown when onlyShowTwo is true and heart/starShown is true, this gives the truth table:
+ *
+ * | onlyShowTwo | heart/starShown | output |
+ * |-------------|-----------------|--------|
+ * | 0           | 0               | 1      |
+ * | 0           | 1               | 1      |
+ * | 1           | 0               | 1      |
+ * | 1           | 1               | 0      |
+ */
 @Composable
-fun Rankings(stats: AniStats, modifier: Modifier = Modifier) {
+fun Rankings(stats: AniStats, onlyShowTwo: Boolean = false, modifier: Modifier = Modifier) {
+    var heartShown = false
+    var starShown = false
     Column(modifier = modifier) {
         if (stats.highestRatedAllTime != -1) {
+            starShown = true
             IconWithTextRankings(
                 stringResource(
                     id = R.string.highest_rated_all_time,
@@ -134,6 +149,7 @@ fun Rankings(stats: AniStats, modifier: Modifier = Modifier) {
         }
 
         if (stats.mostPopularAllTime != -1) {
+            heartShown = true
             IconWithTextRankings(
                 stringResource(
                     id = R.string.most_popular_all_time,
@@ -143,7 +159,8 @@ fun Rankings(stats: AniStats, modifier: Modifier = Modifier) {
             )
         }
 
-        if (stats.highestRatedYearRank != -1) {
+        if (stats.highestRatedYearRank != -1 && !(onlyShowTwo && starShown)) {
+            starShown = true
             IconWithTextRankings(
                 stringResource(
                     id = R.string.highest_rated_year,
@@ -154,7 +171,8 @@ fun Rankings(stats: AniStats, modifier: Modifier = Modifier) {
             )
         }
 
-        if (stats.mostPopularYearRank != -1) {
+        if (stats.mostPopularYearRank != -1 && !(onlyShowTwo && heartShown)) {
+            heartShown = true
             IconWithTextRankings(
                 stringResource(
                     id = R.string.most_popular_year,
@@ -165,7 +183,8 @@ fun Rankings(stats: AniStats, modifier: Modifier = Modifier) {
             )
         }
 
-        if (stats.highestRatedSeasonRank != -1) {
+        if (stats.highestRatedSeasonRank != -1 && !(onlyShowTwo && starShown)) {
+            starShown = true
             IconWithTextRankings(
                 stringResource(
                     id = R.string.highest_rated_season,
@@ -177,7 +196,8 @@ fun Rankings(stats: AniStats, modifier: Modifier = Modifier) {
             )
         }
 
-        if (stats.mostPopularSeasonRank != -1) {
+        if (stats.mostPopularSeasonRank != -1 && !(onlyShowTwo && heartShown)) {
+            heartShown = true
             IconWithTextRankings(
                 stringResource(
                     id = R.string.most_popular_season,
@@ -227,7 +247,7 @@ private fun Heading(text: String) {
 }
 
 @Composable
-private fun IconWithTextRankings(text: String, showHeart: Boolean) {
+fun IconWithTextRankings(text: String, showHeart: Boolean) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier

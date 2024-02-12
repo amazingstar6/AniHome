@@ -1,46 +1,30 @@
 package com.example.anilist
 
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.example.anilist.data.models.AniMediaListSort
 import com.example.anilist.data.repository.Theme
-import com.example.anilist.utils.LoadingCircle
-import com.example.anilist.ui.navigation.AniListBottomNavigationBar
-import com.example.anilist.ui.navigation.AniListNavigationActions
-import com.example.anilist.ui.navigation.AniListNavigationRail
-import com.example.anilist.ui.navigation.AniListRoute
-import com.example.anilist.ui.navigation.AniNavHost
-import com.example.anilist.ui.navigation.TOP_LEVEL_DESTINATIONS
 import com.example.anilist.ui.theme.AnilistTheme
-import com.example.anilist.utils.Apollo
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
@@ -56,32 +40,24 @@ class MainActivity : ComponentActivity() {
         var mediaListSort = AniMediaListSort.UPDATED_TIME_DESC
     }
 
-
     private val viewModel: MainActivityViewModel by viewModels()
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge( // fixme not working
+            SystemBarStyle.auto(
+                resources.getColor(R.color.purple_200, null),
+                resources.getColor(R.color.purple_200, null)
+            )
+        )
         super.onCreate(savedInstanceState)
-        Timber.plant(Timber.DebugTree()) // fixme disable for release
+        Timber.plant(Timber.DebugTree())
 
         // processing the uri received for logging in
-        if (intent?.data != null) {
-            Timber.i("Data is " + intent.data)
-            val uri = intent.data.toString()
-            val query = uri.substringAfter("#")
-            val parameters = query.split("&")
-            val parameterMap = parameters.associate {
-                val (key, value) = it.split("=")
-                key to value
-            }
-            accessCode = parameterMap["access_token"] ?: ""
-            val tokenType = parameterMap["token_type"] ?: ""
-            val expiresIn = parameterMap["expires_in"] ?: ""
-            Timber.i("Access code is $accessCode, token type is $tokenType, expires in $expiresIn seconds")
-            viewModel.saveAccessCodeAndUserId(accessCode, tokenType, expiresIn)
-        }
+        viewModel.processIntentUti(intent.data)
 
+        // collecting toast messages send by view model
         lifecycleScope.launch {
             viewModel
                 .toastMessage
@@ -89,13 +65,13 @@ class MainActivity : ComponentActivity() {
                     Toast.makeText(
                         this@MainActivity,
                         message,
-                        Toast.LENGTH_SHORT,
+                        Toast.LENGTH_SHORT
                     ).show()
                 }
         }
 
+        // Collect the uiState
         var uiState: MainActivityUiState by mutableStateOf(MainActivityUiState.Loading)
-        // Update the uiState
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState
@@ -109,6 +85,8 @@ class MainActivity : ComponentActivity() {
                     .collect()
             }
         }
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             AnilistTheme(
@@ -124,71 +102,7 @@ class MainActivity : ComponentActivity() {
                 }
             ) {
                 // A surface container using the 'background' color from the theme
-                Surface(
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    val windowSize = calculateWindowSizeClass(this)
-                    val navController = rememberNavController()
-                    val navigationAction = remember(navController) {
-                        AniListNavigationActions(navController)
-                    }
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val selectedDestination =
-                        navBackStackEntry?.destination?.route ?: AniListRoute.HOME_ROUTE
-
-                    var showBottomBar by remember {
-                        mutableStateOf(true)
-                    }
-                    val bottomBarIsVisible =navController.currentBackStackEntryAsState().value?.destination?.route in TOP_LEVEL_DESTINATIONS.map { it.route }
-                    Scaffold(bottomBar = {
-                        AnimatedVisibility(
-                            windowSize.widthSizeClass == WindowWidthSizeClass.Compact
-                                    && bottomBarIsVisible,
-                            enter = fadeIn(),
-                            exit = fadeOut()
-                        ) {
-                            AniListBottomNavigationBar(
-                                selectedDestination = selectedDestination,
-                                navigateToTopLevelDestination = navigationAction::navigateTo,
-                                showBottomBar,
-                            )
-                        }
-
-                    }) {
-                        when (uiState) {
-                            is MainActivityUiState.Loading -> {
-                                LoadingCircle()
-                            }
-
-                            is MainActivityUiState.Success -> {
-                                accessCode =
-                                    (uiState as MainActivityUiState.Success).userData.accessCode
-                                Apollo.setAccessCode(accessCode)
-                                Row {
-                                    if (windowSize.widthSizeClass == WindowWidthSizeClass.Medium
-                                        || windowSize.widthSizeClass == WindowWidthSizeClass.Expanded
-                                    ) {
-                                        AniListNavigationRail(
-                                            selectedDestination = selectedDestination,
-                                            navigateToTopLevelDestination = navigationAction::navigateTo,
-                                            showBottomBar,
-                                        )
-                                    }
-                                    AniNavHost(
-                                        accessCode = accessCode,
-                                        navController = navController,
-                                        navigationActions = navigationAction,
-                                        // fixme navigation bar has a height of 80.dp https://m3.material.io/components/navigation-bar/specs
-                                        modifier = Modifier.padding(bottom = if (bottomBarIsVisible) 80.dp else 0.dp/*it.calculateBottomPadding()*/),
-                                        setBottomBarState = { newValue ->
-                                            showBottomBar = newValue
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                AniApp(uiState, calculateWindowSizeClass(this))
             }
         }
     }

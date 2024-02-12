@@ -1,5 +1,6 @@
 package com.example.anilist
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.anilist.data.models.AniResult
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,7 +41,27 @@ class MainActivityViewModel @Inject constructor(
         }
     }
 
-    fun saveAccessCodeAndUserId(accessCode: String, tokenType: String, expiresIn: String) {
+    fun processIntentUti(data: Uri?) {
+        if (data != null) {
+            Timber.i("Data is " + data)
+            val uri = data.toString()
+            val query = uri.substringAfter("#")
+            val parameters = query.split("&")
+            val parameterMap = parameters.associate {
+                val (key, value) = it.split("=")
+                key to value
+            }
+            MainActivity.accessCode = parameterMap["access_token"] ?: ""
+            val tokenType = parameterMap["token_type"] ?: ""
+            val expiresIn = parameterMap["expires_in"] ?: ""
+            Timber.i(
+                "Access code is ${MainActivity.accessCode}, token type is $tokenType, expires in $expiresIn seconds"
+            )
+            saveAccessCodeAndUserId(MainActivity.accessCode, tokenType, expiresIn)
+        }
+    }
+
+    private fun saveAccessCodeAndUserId(accessCode: String, tokenType: String, expiresIn: String) {
         viewModelScope.launch {
             userDataRepository.saveAccessCode(
                 accessCode = accessCode,

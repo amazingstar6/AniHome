@@ -33,7 +33,7 @@ import com.example.anilist.data.models.AniMediaType
 import com.example.anilist.data.models.AniStaffDetail
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.details.characterdetail.AvatarAndName
-import com.example.anilist.ui.details.characterdetail.Description
+import com.example.anilist.utils.Description
 import com.example.anilist.ui.details.characterdetail.Headline
 import com.example.anilist.ui.details.characterdetail.ImageWithTitleAndSubTitle
 
@@ -81,6 +81,7 @@ fun StaffDetailScreen(
                         id,
                     )
                 },
+                isLoading = staff is StaffDetailUiState.Loading
             )
         }
     }
@@ -94,6 +95,7 @@ private fun StaffScreen(
     onNavigateToMedia: (Int) -> Unit,
     modifier: Modifier = Modifier,
     toggleFavourite: () -> Unit,
+    isLoading: Boolean
 ) {
     Column(
         modifier = Modifier
@@ -109,6 +111,7 @@ private fun StaffScreen(
             modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
             isFavorite = staff.isFavourite,
             toggleFavourite = toggleFavourite,
+            isLoading = isLoading
         )
         if (staff.description.isNotBlank()) {
             Description(staff.description)
@@ -124,21 +127,6 @@ private fun StaffScreen(
         if (staff.mangaStaffRole.isNotEmpty()) {
             Headline("Manga staff role")
             MediaStaffRole(staffMedia, onNavigateToMedia, type = AniMediaType.MANGA)
-        }
-    }
-}
-
-@Composable
-fun MangaStaffRole(media: List<AniCharacterMediaConnection>, onNavigateToMedia: (Int) -> Unit) {
-    LazyRow {
-        items(media) { media ->
-            ImageWithTitleAndSubTitle(
-                media.coverImage,
-                media.title,
-                media.characterRole,
-                media.id,
-                onNavigateToMedia,
-            )
         }
     }
 }
@@ -170,7 +158,7 @@ fun VoiceCharacters(
     characterWithVoiceActors: List<CharacterWithVoiceActor>,
     onNavigateToCharacter: (Int) -> Unit
 ) {
-    LazyRow {
+    LazyRow(contentPadding = PaddingValues(end = Dimens.PaddingNormal)) {
         items(characterWithVoiceActors) { character ->
             ImageWithTitleAndSubTitle(
                 character.coverImage,
