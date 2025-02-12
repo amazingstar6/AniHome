@@ -6,6 +6,7 @@ The initial design of the app was made using figma: [View-only link](https://www
 
 It has the following list of features:
 - Show the most popular anime & manga
+- View detailed information of specific anime & manga
 - Look up anime & manga
 - Track your anime & manga
 
