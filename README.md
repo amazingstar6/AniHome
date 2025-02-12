@@ -12,4 +12,4 @@ It has the following list of features:
 
 Since, it's a WIP it has the following issue or missing features:
 - "Upcoming next season" doesn't display anything
-- ...
+- Display the body of a review
