@@ -177,7 +177,9 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
         val month = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).month
         val nextSeason = getMediaSeasonFromMonth((month.number + 4) % 12)
         val year = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year
-        return if (nextSeason == MediaSeason.SPRING) year + 1 else year
+        // Winter season is from January to March, so if the next season is Winter,
+        // we're in the previous year of those months
+        return if (nextSeason == MediaSeason.WINTER) year + 1 else year
     }
 
     private fun getNextSeason(): MediaSeason {
