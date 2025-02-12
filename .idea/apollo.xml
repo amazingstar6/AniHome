@@ -2,5 +2,6 @@
 <project version="4">
   <component name="com.apollographql.ijplugin.settings.SettingsState">
     <option name="hasEnabledGraphQLPluginApolloKotlinSupport" value="true" />
+    <option name="telemetryInstanceId" value="ad7fb52c-6cea-4522-b0c4-9caec7122771" />
   </component>
 </project>

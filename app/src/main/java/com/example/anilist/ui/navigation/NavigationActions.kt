@@ -124,6 +124,9 @@ class AniListNavigationActions(private val navController: NavController) {
     }
 }
 
+/**
+ * Describes all the top level destinations in the app; the three destinations in the bottom bar
+ */
 val TOP_LEVEL_DESTINATIONS = listOf(
     AnilistTopLevelDestination(
         route = AniListRoute.HOME_ROUTE,

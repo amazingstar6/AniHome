@@ -1,0 +1,16 @@
+
+`kotlin:S1172ò"@Remove this unused function parameter "navigateToStudioDetails".(›­æ8÷ÍŠş·1
+Bkotlin:S125y"Remove this commented out code.(º´Ì™ıÿÿÿÿ8ÎŠş·1
+Ckotlin:S125Ó"Remove this commented out code.(±¦‹ğøÿÿÿÿ8‚ÎŠş·1
+>kotlin:S125×"Remove this commented out code.(íÜÎ•8ƒÎŠş·1
+>kotlin:S125ö"Remove this commented out code.(¬é÷›8ƒÎŠş·1
+>kotlin:S125¬"Remove this commented out code.(³†ÿÌ8„ÎŠş·1
+>kotlin:S125Ã"Remove this commented out code.(ÆùÛë8…ÎŠş·1
+Ckotlin:S125Ñ"Remove this commented out code.(· ƒùÿÿÿÿ8…ÎŠş·1
+lkotlin:S1134Î"LTake the required action to fix the issue indicated by this "FIXME" comment.(İùÎô8ŸÎŠş·1
+Rkotlin:S1135¥"2Complete the task associated to this TODO comment.(öı’Ñ8¨ÎŠş·1
+9kotlin:S1128"Remove this unused import.(™òæÜ8¸ÎŠş·1
+>kotlin:S1128/"Remove this unused import.(‚ÅÎùúÿÿÿÿ8¸ÎŠş·1
+Ckotlin:S1874Ï"#Deprecated code should not be used.(¹ğ¡8¿ÎŠş·1
+rkotlin:S3776ò"RRefactor this method to reduce its Cognitive Complexity from 37 to the 15 allowed.(›­æ8ÁÎŠş·1
+fkotlin:S6510Ã"AMove "return" statements from all branches before "if" statement.(àÓÇ”ıÿÿÿÿ8ÉÎŠş·1

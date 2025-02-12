@@ -1,10 +1,5 @@
 package com.example.anilist.ui.navigation
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.Icon
@@ -19,88 +14,78 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 
+/**
+ * Shows a navigation bar for the top level destinations in the app
+ */
 @Composable
 fun AniListBottomNavigationBar(
     selectedDestination: String,
-    navigateToTopLevelDestination: (AnilistTopLevelDestination) -> Unit,
-    visible: Boolean,
+    navigateToTopLevelDestination: (AnilistTopLevelDestination) -> Unit
 ) {
-//    AnimatedVisibility(
-//        visible = visible,
-//        enter = slideInVertically(initialOffsetY = { it }),
-//        exit = slideOutVertically(targetOffsetY = { it }),
-//    ) {
-        NavigationBar {
-            TOP_LEVEL_DESTINATIONS.forEach { destination ->
-                NavigationBarItem(
-                    selected = selectedDestination == destination.route,
-                    onClick = { navigateToTopLevelDestination(destination) },
-                    icon = {
-                        if (selectedDestination == destination.route) {
-                            Icon(
-                                painter = painterResource(id = destination.selectedIcon),
-                                contentDescription = stringResource(
-                                    id = destination.iconTextId,
-                                ),
-                            )
-                        } else {
-                            Icon(
-                                painter = painterResource(id = destination.unselectedIcon),
-                                contentDescription = stringResource(
-                                    id = destination.iconTextId,
-                                ),
-                            )
-                        }
-                    },
-                    label = { Text(stringResource(id = destination.iconTextId)) },
-//                    alwaysShowLabel = false,
-                )
-            }
+    NavigationBar {
+        TOP_LEVEL_DESTINATIONS.forEach { destination ->
+            NavigationBarItem(
+                selected = selectedDestination == destination.route,
+                onClick = { navigateToTopLevelDestination(destination) },
+                icon = {
+                    if (selectedDestination == destination.route) {
+                        Icon(
+                            painter = painterResource(id = destination.selectedIcon),
+                            contentDescription = stringResource(
+                                id = destination.iconTextId,
+                            ),
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(id = destination.unselectedIcon),
+                            contentDescription = stringResource(
+                                id = destination.iconTextId,
+                            ),
+                        )
+                    }
+                },
+                label = { Text(stringResource(id = destination.iconTextId)) },
+            )
         }
-//    }
+    }
 }
 
+/**
+ * Shows a navigation rail for the top level destinations in the app
+ */
 @Composable
 fun AniListNavigationRail(
     selectedDestination: String,
-    navigateToTopLevelDestination: (AnilistTopLevelDestination) -> Unit,
-    visible: Boolean,
+    navigateToTopLevelDestination: (AnilistTopLevelDestination) -> Unit
 ) {
-
-    AnimatedVisibility(
-        visible = visible,
-        enter = slideInVertically(initialOffsetY = { it }),
-        exit = slideOutVertically(targetOffsetY = { it }),
-    ) {
-        NavigationRail(modifier = Modifier.fillMaxHeight()) {
-            Spacer(modifier = Modifier.weight(1f))
-            TOP_LEVEL_DESTINATIONS.forEach { destination ->
-                NavigationRailItem(
-                    selected = selectedDestination == destination.route,
-                    onClick = { navigateToTopLevelDestination(destination) },
-                    icon = {
-                        if (selectedDestination == destination.route) {
-                            Icon(
-                                painter = painterResource(id = destination.selectedIcon),
-                                contentDescription = stringResource(
-                                    id = destination.iconTextId,
-                                ),
-                            )
-                        } else {
-                            Icon(
-                                painter = painterResource(id = destination.unselectedIcon),
-                                contentDescription = stringResource(
-                                    id = destination.iconTextId,
-                                ),
-                            )
-                        }
-                    },
-                    label = { Text(stringResource(id = destination.iconTextId)) },
-                    alwaysShowLabel = false,
-                )
-            }
-            Spacer(modifier = Modifier.weight(1f))
+    NavigationRail(modifier = Modifier.fillMaxHeight()) {
+        Spacer(modifier = Modifier.weight(1f))
+        TOP_LEVEL_DESTINATIONS.forEach { destination ->
+            NavigationRailItem(
+                selected = selectedDestination == destination.route,
+                onClick = { navigateToTopLevelDestination(destination) },
+                icon = {
+                    if (selectedDestination == destination.route) {
+                        Icon(
+                            painter = painterResource(id = destination.selectedIcon),
+                            contentDescription = stringResource(
+                                id = destination.iconTextId,
+                            ),
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(id = destination.unselectedIcon),
+                            contentDescription = stringResource(
+                                id = destination.iconTextId,
+                            ),
+                        )
+                    }
+                },
+                label = { Text(stringResource(id = destination.iconTextId)) },
+                alwaysShowLabel = false,
+            )
         }
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
 
@@ -109,8 +94,7 @@ fun AniListNavigationRail(
 fun AniBottomNavigationBarPreview() {
     AniListBottomNavigationBar(
         selectedDestination = AniListRoute.HOME_ROUTE,
-        navigateToTopLevelDestination = { },
-        visible = true,
+        navigateToTopLevelDestination = { }
     )
 }
 
@@ -119,7 +103,6 @@ fun AniBottomNavigationBarPreview() {
 fun AniNavigationRailPreview() {
     AniListNavigationRail(
         selectedDestination = AniListRoute.HOME_ROUTE,
-        navigateToTopLevelDestination = { },
-        visible = true,
+        navigateToTopLevelDestination = { }
     )
 }

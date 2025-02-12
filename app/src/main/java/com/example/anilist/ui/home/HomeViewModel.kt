@@ -6,19 +6,17 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.example.anilist.data.models.AniCharacterDetail
 import com.example.anilist.data.models.AniMediaStatus
 import com.example.anilist.data.models.AniResult
+import com.example.anilist.data.models.AniSeason
+import com.example.anilist.data.models.AniStaffDetail
 import com.example.anilist.data.models.AniStudio
 import com.example.anilist.data.models.AniTag
 import com.example.anilist.data.models.AniThread
 import com.example.anilist.data.models.AniUser
-import com.example.anilist.data.models.AniCharacterDetail
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.AniSeason
-import com.example.anilist.data.models.AniStaffDetail
-import com.example.anilist.data.repository.notificationrepository.NotificationsRepository
 import com.example.anilist.data.repository.homerepository.HomeRepositoryImpl
-import com.example.anilist.data.repository.TrendingTogether
 import com.example.anilist.data.repository.homerepository.searchpagingsource.SearchCharactersPagingSource
 import com.example.anilist.data.repository.homerepository.searchpagingsource.SearchMediaPagingSource
 import com.example.anilist.data.repository.homerepository.searchpagingsource.SearchStaffPagingSource
@@ -26,6 +24,7 @@ import com.example.anilist.data.repository.homerepository.searchpagingsource.Sea
 import com.example.anilist.data.repository.homerepository.searchpagingsource.SearchThreadPagingSource
 import com.example.anilist.data.repository.homerepository.searchpagingsource.SearchUserPagingSource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -42,24 +41,19 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
-private const val TIME_OUT = 300L //milli seconds
+private const val TIME_OUT = 300L // milli seconds
 private const val PAGE_SIZE = 25
 const val PREFETCH_DISTANCE = 10
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val homeRepository: HomeRepositoryImpl,
-    private val notificationsRepository: NotificationsRepository
+    private val homeRepository: HomeRepositoryImpl
 ) :
     ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState
-
-    private val _trendingUiState = MutableStateFlow(HomeUiState.Loading)
-    val trendingUiState: StateFlow<HomeUiState> = _trendingUiState
 
     private var _isAnime = MutableStateFlow(true)
     val isAnime: StateFlow<Boolean> = _isAnime
@@ -88,19 +82,6 @@ class HomeViewModel @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val trendingTogetherPager: Flow<PagingData<TrendingTogether>> =
-        isAnime.flatMapLatest {
-            Pager(
-                config = PagingConfig(
-                    pageSize = PAGE_SIZE,
-                    prefetchDistance = PREFETCH_DISTANCE,
-                    enablePlaceholders = false
-                ),
-                pagingSourceFactory = { homeRepository.trendingTogetherPagingSource(isAnime = isAnime.value) }
-            ).flow.cachedIn(viewModelScope)
-        }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
     val trendingNowPager: Flow<PagingData<Media>> =
         isAnime.flatMapLatest {
             Pager(
@@ -109,7 +90,9 @@ class HomeViewModel @Inject constructor(
                     prefetchDistance = PREFETCH_DISTANCE,
                     enablePlaceholders = true
                 ),
-                pagingSourceFactory = { homeRepository.trendingNowPagingSource(isAnime = isAnime.value) }
+                pagingSourceFactory = {
+                    homeRepository.trendingNowPagingSource(isAnime = isAnime.value)
+                }
             ).flow.cachedIn(viewModelScope)
         }
 
@@ -141,10 +124,11 @@ class HomeViewModel @Inject constructor(
                     prefetchDistance = PREFETCH_DISTANCE,
                     enablePlaceholders = false
                 ),
-                pagingSourceFactory = { homeRepository.allTimePopularPagingSource(isAnime = isAnime.value) }
+                pagingSourceFactory = {
+                    homeRepository.allTimePopularPagingSource(isAnime = isAnime.value)
+                }
             ).flow.cachedIn(viewModelScope)
         }
-
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val top100AnimePager = isAnime.flatMapLatest {
@@ -154,7 +138,9 @@ class HomeViewModel @Inject constructor(
                 prefetchDistance = PREFETCH_DISTANCE,
                 enablePlaceholders = false
             ),
-            pagingSourceFactory = { homeRepository.top100AnimePagingSource(isAnime = isAnime.value) }
+            pagingSourceFactory = {
+                homeRepository.top100AnimePagingSource(isAnime = isAnime.value)
+            }
         ).flow.cachedIn(viewModelScope)
     }
 
@@ -167,7 +153,6 @@ class HomeViewModel @Inject constructor(
         pagingSourceFactory = { homeRepository.popularManhwaPagingSource() }
     ).flow.cachedIn(viewModelScope)
 
-
     private val _search = MutableStateFlow("")
     val search = _search.asStateFlow()
         .stateIn(
@@ -176,16 +161,13 @@ class HomeViewModel @Inject constructor(
             initialValue = ""
         )
 
-    //fixme do we use this?
+    // fixme do we use this?
     private val _searchType = MutableStateFlow(SearchFilter.MEDIA)
     val searchType = _searchType.asStateFlow().stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(),
         initialValue = SearchFilter.MEDIA
     )
-
-//    private val _unReadNotificationCount = MutableStateFlow(-1)
-//    val unReadNotificationCount: StateFlow<Int> = _unReadNotificationCount
 
     private val mediaSearchState = MutableStateFlow(
         MediaSearchState(
@@ -202,13 +184,13 @@ class HomeViewModel @Inject constructor(
         )
     )
 
-
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val searchResultsMedia =
         mediaSearchState.debounce(TIME_OUT).flatMapLatest { searchState ->
-            if (searchState.searchType == SearchFilter.MEDIA
-                || searchState.searchType == SearchFilter.ANIME
-                || searchState.searchType == SearchFilter.MANGA) {
+            if (searchState.searchType == SearchFilter.MEDIA ||
+                searchState.searchType == SearchFilter.ANIME ||
+                searchState.searchType == SearchFilter.MANGA
+            ) {
                 Timber.d("Media search is searching for " + searchState.query)
                 Pager(
                     config = PagingConfig(
@@ -233,7 +215,9 @@ class HomeViewModel @Inject constructor(
         mediaSearchState
             .debounce(300).flatMapLatest { searchState ->
                 if (searchState.searchType == SearchFilter.CHARACTERS) {
-                    Timber.d("Character search is searching for " + searchState.query + " with sort " + searchState.mediaSort)
+                    Timber.d(
+                        "Character search is searching for " + searchState.query + " with sort " + searchState.mediaSort
+                    )
                     Pager(
                         config = PagingConfig(
                             pageSize = PAGE_SIZE,
@@ -266,7 +250,7 @@ class HomeViewModel @Inject constructor(
                     pagingSourceFactory = {
                         SearchStaffPagingSource(
                             homeRepository = homeRepository,
-                            search = state.query,
+                            search = state.query
                         )
                     }
                 ).flow.cachedIn(viewModelScope)
@@ -289,7 +273,7 @@ class HomeViewModel @Inject constructor(
                 pagingSourceFactory = {
                     SearchStudioPagingSource(
                         homeRepository = homeRepository,
-                        search = state.query,
+                        search = state.query
                     )
                 }
             ).flow.cachedIn(viewModelScope)
@@ -311,7 +295,7 @@ class HomeViewModel @Inject constructor(
                     pagingSourceFactory = {
                         SearchThreadPagingSource(
                             homeRepository = homeRepository,
-                            search = state.query,
+                            search = state.query
                         )
                     }
                 ).flow.cachedIn(viewModelScope)
@@ -333,7 +317,7 @@ class HomeViewModel @Inject constructor(
                     pagingSourceFactory = {
                         SearchUserPagingSource(
                             homeRepository = homeRepository,
-                            search = state.query,
+                            search = state.query
                         )
                     }
                 ).flow.cachedIn(viewModelScope)
@@ -362,20 +346,6 @@ class HomeViewModel @Inject constructor(
         fetchTags()
         fetchGenres()
     }
-
-//    fun fetchUnReadNotifications() {
-//        viewModelScope.launch {
-//            when (val result = notificationsRepository.getUnReadNotificationCount()) {
-//                is AniResult.Success -> {
-//                    _unReadNotificationCount.value = result.data
-//                }
-//
-//                is AniResult.Failure -> {
-//                    sendMessage("Failed to load notifications unread count")
-//                }
-//            }
-//        }
-//    }
 
     fun fetchGenres() {
         viewModelScope.launch {

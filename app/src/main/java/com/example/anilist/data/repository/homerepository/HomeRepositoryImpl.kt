@@ -141,8 +141,8 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
     }
 
     override suspend fun getUpcomingNextSeason(page: Int, pageSize: Int): AniResult<List<Media>> {
+        Timber.i("Next season is ${getNextSeason()}\nNext year is ${getNextYear()}")
         try {
-//            Log.d(TAG, "Parameters are: $page, $pageSize, ${getNextSeason()}, ${getNextYear()}")
             val result =
                 Apollo.apolloClient.query(
                     GetUpComingNextSeasonQuery(
@@ -183,8 +183,8 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
     private fun getNextSeason(): MediaSeason {
         // plus four months equals the next season
         return getMediaSeasonFromMonth(
-            (Clock.System.now()
-                .toLocalDateTime(TimeZone.currentSystemDefault()).monthNumber + 4 % 12)
+            ((Clock.System.now()
+                .toLocalDateTime(TimeZone.currentSystemDefault()).monthNumber + 4) % 12)
         )
     }
 

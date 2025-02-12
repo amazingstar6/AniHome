@@ -1,0 +1,32 @@
+
+\kotlin:S1172Ý"7Use "_" instead of this unused lambda parameter "text".(·£è«øÿÿÿÿ8îÒ÷—¼1
+Ckotlin:S125¡"Remove this commented out code.(¹¥†òþÿÿÿÿ8üÒ÷—¼1
+=kotlin:S125¦"Remove this commented out code.(Ý¢Àc8üÒ÷—¼1
+Ckotlin:S125Þ"Remove this commented out code.(¹úºžúÿÿÿÿ8üÒ÷—¼1
+Ckotlin:S125¶"Remove this commented out code.(œµôÝüÿÿÿÿ8þÒ÷—¼1
+Ckotlin:S125Í"Remove this commented out code.(”‚¨éùÿÿÿÿ8þÒ÷—¼1
+Ckotlin:S125Ù"Remove this commented out code.(œì•ùúÿÿÿÿ8ÿÒ÷—¼1
+Ckotlin:S125ð	"Remove this commented out code.(¼÷›Ïúÿÿÿÿ8ÿÒ÷—¼1
+Ckotlin:S1145î"#Remove this useless "if" statement.(Üßªß8”Ó÷—¼1
+lkotlin:S107€"HThis function has 12 parameters, which is greater than the 7 authorized.(›¼¾“üÿÿÿÿ8¢Ó÷—¼1
+gkotlin:S107Ú"HThis function has 23 parameters, which is greater than the 7 authorized.(´×…‹8¢Ó÷—¼1
+gkotlin:S107ü"HThis function has 11 parameters, which is greater than the 7 authorized.(ëŒ‘î8¢Ó÷—¼1
+kkotlin:S107¦
+"GThis function has 9 parameters, which is greater than the 7 authorized.(—¬æµÿÿÿÿÿ8¢Ó÷—¼1
+qkotlin:S1134¡"LTake the required action to fix the issue indicated by this "FIXME" comment.(¹¥†òþÿÿÿÿ8¦Ó÷—¼1
+lkotlin:S1134í"LTake the required action to fix the issue indicated by this "FIXME" comment.(ÝùÎô8¦Ó÷—¼1
+qkotlin:S1134“"LTake the required action to fix the issue indicated by this "FIXME" comment.(Ëù÷Ûþÿÿÿÿ8¦Ó÷—¼1
+lkotlin:S1134…"LTake the required action to fix the issue indicated by this "FIXME" comment.(³µ°É8¦Ó÷—¼1
+lkotlin:S1134‡"LTake the required action to fix the issue indicated by this "FIXME" comment.(óÙƒ‘8§Ó÷—¼1
+lkotlin:S1134ê"LTake the required action to fix the issue indicated by this "FIXME" comment.(Í¶ôÇ8§Ó÷—¼1
+Rkotlin:S1135í"2Complete the task associated to this TODO comment.(Á¿Þ8²Ó÷—¼1
+Wkotlin:S1135Ô"2Complete the task associated to this TODO comment.(£÷É þÿÿÿÿ8³Ó÷—¼1
+Wkotlin:S1135Õ
+"2Complete the task associated to this TODO comment.(÷¥èˆÿÿÿÿÿ8³Ó÷—¼1
+Tkotlin:S1481ƒ"4Remove this unused "showGenreDialog" local variable.(ýÏ¡ì8ºÓ÷—¼1
+9kotlin:S1128"Remove this unused import.(ñ¡Ë¸8ßÌû—¼1
+>kotlin:S1128:"Remove this unused import.(òÙÁ–øÿÿÿÿ8ñÔø—¼1
+wkotlin:S3776€"RRefactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.(›¼¾“üÿÿÿÿ8ÔÓ÷—¼1
+skotlin:S3776Ú"SRefactor this method to reduce its Cognitive Complexity from 190 to the 15 allowed.(´×…‹8ÕÓ÷—¼1
+wkotlin:S3776¦
+"RRefactor this method to reduce its Cognitive Complexity from 56 to the 15 allowed.(—¬æµÿÿÿÿÿ8ÖÓ÷—¼1

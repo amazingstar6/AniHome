@@ -15,6 +15,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -52,6 +53,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.ui.Dimens
+import com.example.anilist.ui.details.characterdetail.Headline
 import com.example.anilist.utils.Utils.Companion.toHexString
 import com.google.accompanist.web.AccompanistWebViewClient
 import com.google.accompanist.web.LoadingState
@@ -310,4 +312,79 @@ fun htmlToAnnotatedString(htmlString: String, isSpoilerVisible: Boolean): Annota
         }
     }
     return annotatedString
+}
+
+@Composable
+fun Description(description: String) {
+    Column {
+        Headline("Description")
+        FormattedHtmlWebView(html = description)
+//        val state = rememberWebViewStateWithHTMLData(description)
+//        val uriHandler = LocalUriHandler.current
+//        val context = LocalContext.current
+//        WebView(state = state, onCreated = {
+//            it.settings.javaScriptEnabled = true
+//            it.webViewClient = object : WebViewClient() {
+//                override fun shouldOverrideUrlLoading(
+//                    view: WebView?,
+//                    request: WebResourceRequest?
+//                ): Boolean {
+//                    Log.i(TAG, "shouldOverrideUrlLoading was called")
+//                    val url = request?.url.toString()
+//                    uriHandler.openUri(url)
+//                    val intent = Intent(Intent.ACTION_VIEW, request!!.url)
+//                    startActivity(context, intent, null)
+////                    if (url.startsWith("http://") || url.startsWith("https://")) {
+////                    } else {
+////                        view?.loadUrl(url)
+////                    }
+//                    return true
+//                }
+//            }
+//        })
+//        HtmlText(
+//            text = description,
+//            color = MaterialTheme.colorScheme.onSurface,
+//            fontSize = 16.sp,
+//            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
+//        )
+//        var isSpoilerVisible by remember { mutableStateOf(false) }
+//        val annotatedString = htmlToAnnotatedString(description, isSpoilerVisible)
+//        Row(
+//            verticalAlignment = Alignment.CenterVertically,
+//            horizontalArrangement = Arrangement.SpaceBetween,
+//            modifier = Modifier.fillMaxWidth()
+//        ) {
+//            Headline("Description")
+//            if (htmlToAnnotatedString(
+//                    htmlString = description,
+//                    isSpoilerVisible = false
+//                ).text != htmlToAnnotatedString(
+//                    htmlString = description,
+//                    isSpoilerVisible = true
+//                ).text
+//            ) {
+//                ShowHideSpoiler(showSpoilers = isSpoilerVisible) {
+//                    isSpoilerVisible = !isSpoilerVisible
+//                }
+//            }
+//        }
+//        ClickableText(
+//            text = annotatedString,
+//            onClick = { offset ->
+//                annotatedString.getStringAnnotations(
+//                    tag = "spoiler",
+//                    start = offset,
+//                    end = offset
+//                ).firstOrNull()?.let { annotation ->
+////                    if (annotation.tag == "spoiler") {
+//                    isSpoilerVisible = !isSpoilerVisible
+////                    }
+//                }
+//            },
+//            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+//        )
+//        Spacer(modifier = Modifier.height(16.dp))
+//        Text(text = description)
+    }
 }

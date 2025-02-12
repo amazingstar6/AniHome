@@ -40,6 +40,9 @@ import com.example.anilist.utils.materialEnterTransitionSpec
 import com.example.anilist.utils.materialExitTransitionSpec
 import timber.log.Timber
 
+/**
+ * Contains the screens for the top level destinations above the navigation bar
+ */
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun AniNavHost(
