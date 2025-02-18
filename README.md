@@ -13,3 +13,6 @@ It has the following list of features:
 Since, it's a WIP it has the following issue or missing features:
 - ~~"Upcoming next season" doesn't display anything~~
 - Fix scrolability of the body of a review
+
+## Screenshots
+[!screenshot](https://github.com/amazingstar6/AniHome/blob/master/screenshots/detail_anime_light.png?raw=true)
