@@ -15,4 +15,7 @@ Since, it's a WIP it has the following issue or missing features:
 - Fix scrolability of the body of a review
 
 ## Screenshots
-[!screenshot](/screenshots/detail_anime_light.png)
+[!Detail screen anime light mode](/screenshots/detail_anime_light.png)
+[!Detail screen manga light mode](/screenshots/detail_manga_light.png)
+[!Home screen anime light mode](/screenshots/home_anime_light.png)
+[!Home screen manga light mode](/screenshots/home_manga_light.png)
