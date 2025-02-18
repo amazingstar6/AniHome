@@ -15,4 +15,4 @@ Since, it's a WIP it has the following issue or missing features:
 - Fix scrolability of the body of a review
 
 ## Screenshots
-[!screenshot](https://github.com/amazingstar6/AniHome/blob/master/screenshots/detail_anime_light.png?raw=true)
+[!screenshot](/screenshots/detail_anime_light.png)
