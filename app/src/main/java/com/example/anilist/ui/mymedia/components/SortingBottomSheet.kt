@@ -8,8 +8,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.PlainTooltipBox
+//import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,7 +50,13 @@ fun SortingBottomSheet(
                     onClick = {
                         setIsDescending(false)
                         setSort(sort.removeDescending(), false)
-                    }) {
+                    },
+                    // TODO is the shape correct?
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = 0,
+                        count = 0
+                    )
+                ) {
                     Text(text = "Ascending")
                 }
                 SegmentedButton(
@@ -57,27 +64,33 @@ fun SortingBottomSheet(
                     onClick = {
                         setIsDescending(true)
                         setSort(sort.removeDescending(), true)
-                    }) {
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = 0,
+                        count = 0
+                    )
+                ) {
                     Text(text = "Descending")
                 }
             }
-            PlainTooltipBox(tooltip = { Text(text = stringResource(R.string.reset_sort)) }) {
-                IconButton(onClick = {
-                    setSort(AniMediaListSort.UPDATED_TIME, true)
-                    setIsDescending(true)
-                }, modifier = Modifier
-                    .tooltipTrigger()
-                    .padding(start = Dimens.PaddingSmall)) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.baseline_restart_alt_24),
-                        contentDescription = stringResource(R.string.reset_sort)
-                    )
+            // TODO deprecated
+//            PlainTooltipBox(tooltip = { Text(text = stringResource(R.string.reset_sort)) }) {
+//                IconButton(onClick = {
+//                    setSort(AniMediaListSort.UPDATED_TIME, true)
+//                    setIsDescending(true)
+//                }, modifier = Modifier
+//                    .tooltipTrigger()
+//                    .padding(start = Dimens.PaddingSmall)) {
 //                    Icon(
-//                        imageVector = Icons.Default.Clear,
-//                        contentDescription = stringResource(R.string.reset)
+//                        painter = painterResource(id = R.drawable.baseline_restart_alt_24),
+//                        contentDescription = stringResource(R.string.reset_sort)
 //                    )
-                }
-            }
+////                    Icon(
+////                        imageVector = Icons.Default.Clear,
+////                        contentDescription = stringResource(R.string.reset)
+////                    )
+//                }
+//            }
         }
         val sortTypesToShow by remember {
             mutableStateOf(

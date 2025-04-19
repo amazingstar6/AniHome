@@ -13,7 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltipBox
+//import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -58,36 +58,38 @@ fun StudioDetailScreen(
                 )
             }
         }, actions = {
-            PlainTooltipBox(tooltip = { Text(text = "Add to favourites") }) {
-                IconButton(onClick = {
-                    studioDetailViewModel.toggleFavourite(
-                        AniLikeAbleType.STUDIO,
-                        studio.id
-                    )
-                }, modifier = Modifier.tooltipTrigger()) {
-                    Icon(
-                        painter = painterResource(if (studio.isFavourite) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart),
-                        contentDescription = "Favourite"
-                    )
-                }
-            }
+            // TODO deprecated
+//            PlainTooltipBox(tooltip = { Text(text = "Add to favourites") }) {
+//                IconButton(onClick = {
+//                    studioDetailViewModel.toggleFavourite(
+//                        AniLikeAbleType.STUDIO,
+//                        studio.id
+//                    )
+//                }, modifier = Modifier.tooltipTrigger()) {
+//                    Icon(
+//                        painter = painterResource(if (studio.isFavourite) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart),
+//                        contentDescription = "Favourite"
+//                    )
+//                }
+//            }
             val uriHandler = LocalUriHandler.current
             val uri = "https://anilist.co/studio/${studio.id}"
-            PlainTooltipBox(tooltip = {
-                Text(
-                    text = "Open in browser",
-                )
-            }) {
-                IconButton(
-                    onClick = { uriHandler.openUri(uri) },
-                    modifier = Modifier.tooltipTrigger(),
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
-                        contentDescription = "open in browser",
-                    )
-                }
-            }
+            // TODO deprecated
+//            PlainTooltipBox(tooltip = {
+//                Text(
+//                    text = "Open in browser",
+//                )
+//            }) {
+//                IconButton(
+//                    onClick = { uriHandler.openUri(uri) },
+//                    modifier = Modifier.tooltipTrigger(),
+//                ) {
+//                    Icon(
+//                        painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
+//                        contentDescription = "open in browser",
+//                    )
+//                }
+//            }
         })
     }) {
         Column(modifier = Modifier.padding(top = it.calculateTopPadding())) {

@@ -51,8 +51,8 @@ import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PlainTooltipBox
-import androidx.compose.material3.RichTooltipBox
+//import androidx.compose.material3.PlainTooltipBox
+//import androidx.compose.material3.RichTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
@@ -62,7 +62,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberRichTooltipState
+//import androidx.compose.material3.rememberRichTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.NonRestartableComposable
@@ -251,8 +251,8 @@ fun HomeScreen(
                             bottom = Dimens.PaddingSmall
                         )
                 ) {
-                    SegmentedButton(shape = SegmentedButtonDefaults.shape(
-                        position = 0, count = options.size
+                    SegmentedButton(shape = SegmentedButtonDefaults.itemShape(
+                        index = 0, count = options.size
                     ), onClick = {
                         columnScrollScope.launch {
                             columnScrollState.animateScrollTo(0)
@@ -262,8 +262,11 @@ fun HomeScreen(
                     }, selected = 0 == selectedIndex, icon = { }) {
                         Text("Anime")
                     }
-                    SegmentedButton(shape = SegmentedButtonDefaults.shape(
-                        position = 1, count = options.size
+                    // TODO does this work well?
+//                    SegmentedButton(shape = SegmentedButtonDefaults.shape(
+//                        position = 1, count = options.size
+                    SegmentedButton(shape = SegmentedButtonDefaults.itemShape(
+                        index = 1, count = options.size
                     ), onClick = {
                         columnScrollScope.launch {
                             columnScrollState.animateScrollTo(0)
@@ -320,8 +323,25 @@ fun HomeScreen(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun LazyRowLazyPagingItems(
+fun HeadlineText(text: String, onNavigateToOverview: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(12.dp),
+        )
+        IconButton(onClick = onNavigateToOverview) {
+            Icon(imageVector = Icons.Outlined.ArrowForward, contentDescription = "anime overview")
+        }
+    }
+}
+
+@Composable
+fun LazyRowLazyPagingItems(
     pager: LazyPagingItems<Media>, onNavigateToMediaDetails: (Int) -> Unit
 ) {
     when (pager.loadState.refresh) {
@@ -364,6 +384,42 @@ private fun LazyRowLazyPagingItems(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AnimeCard(
+    title: String,
+    coverImage: String,
+    onNavigateToDetails: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = Modifier
+            .padding(start = 12.dp)
+            .width(120.dp)
+            .height(240.dp)
+            .then(modifier)
+            .clickable { onNavigateToDetails() }
+            .semantics(mergeDescendants = true) {},
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
+                .build(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .height(160.dp)
+                .clip(RoundedCornerShape(12.dp)),
+
+            )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(10.dp),
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -471,7 +527,7 @@ fun GenreCheckBox(selectedGenres: MutableList<String>, genre: String) {
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class
 )
-private fun AniSearchBar(
+fun AniSearchBar(
 //    characterSort: AniCharacterSort,
 //    setCharacterSort: (AniCharacterSort) -> Unit,
     uiState: HomeUiStateData,
@@ -563,20 +619,21 @@ private fun AniSearchBar(
                 }
             } else {
                 Box {
-                    PlainTooltipBox(
-                        tooltip = { Text(text = stringResource(R.string.settings)) },
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                    ) {
-                        IconButton(
-                            onClick = onNavigateToSettings,
-                            modifier = Modifier.tooltipTrigger(),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Settings,
-                                contentDescription = stringResource(R.string.settings),
-                            )
-                        }
-                    }
+                    // TODO deprecated
+//                    PlainTooltipBox(
+//                        tooltip = { Text(text = stringResource(R.string.settings)) },
+//                        modifier = Modifier.align(Alignment.BottomCenter),
+//                    ) {
+//                        IconButton(
+//                            onClick = onNavigateToSettings,
+//                            modifier = Modifier.tooltipTrigger(),
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Outlined.Settings,
+//                                contentDescription = stringResource(R.string.settings),
+//                            )
+//                        }
+//                    }
                 }
             }
         },
@@ -590,17 +647,18 @@ private fun AniSearchBar(
                     modifier = Modifier.padding(end = 16.dp),
                 )
             } else {
-                PlainTooltipBox(tooltip = { Text(text = "Clear text") }) {
-                    IconButton(
-                        onClick = { updateSearchParameterless("") },
-                        modifier = Modifier.tooltipTrigger()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = stringResource(R.string.clear)
-                        )
-                    }
-                }
+                // TODO deprecated
+//                PlainTooltipBox(tooltip = { Text(text = "Clear text") }) {
+//                    IconButton(
+//                        onClick = { updateSearchParameterless("") },
+//                        modifier = Modifier.tooltipTrigger()
+//                    ) {
+//                        Icon(
+//                            imageVector = Icons.Default.Clear,
+//                            contentDescription = stringResource(R.string.clear)
+//                        )
+//                    }
+//                }
             }
         },
         modifier = Modifier
@@ -964,358 +1022,8 @@ private fun AniSearchBar(
     }
 }
 
-@Preview(showBackground = true, group = "Notification")
 @Composable
-fun NotificationBadgePreview() {
-    NotificationBadge(unReadNotificationCount = 2, onNavigateToNotification = {})
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun NotificationBadge(
-    unReadNotificationCount: Int,
-    onNavigateToNotification: () -> Unit
-) {
-    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.notifications)) }) {
-//        IconButton(onClick = { /*TODO*/ }) {
-        BadgedBox(modifier = Modifier
-//            .padding(Dimens.PaddingNormal)
-//            .clip(CircleShape)
-//            .clickable { onNavigateToNotification() }
-            , badge = {
-            if (unReadNotificationCount != 0 && unReadNotificationCount != -1) {
-                Badge {
-                    Text(
-                        unReadNotificationCount.toString(),
-                        modifier = Modifier.semantics {
-                            contentDescription =
-                                "$unReadNotificationCount new notifications"
-                        }
-                    )
-                }
-            }
-        }) {
-//                        IconButton(onClick = onNavigateToNotification, modifier = Modifier.tooltipTrigger()) {
-            Icon(
-                imageVector = Icons.Outlined.Notifications,
-                contentDescription = "notifications",
-                modifier = Modifier
-
-                        .clip(CircleShape)
-                        .clickable { onNavigateToNotification() }
-                    .tooltipTrigger()
-
-            )
-//                        }
-//            }
-        }
-    }
-}
-
-@Composable
-@OptIn(
-    ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
-    ExperimentalLayoutApi::class
-)
-private fun TagDialog(
-    showTagDialog: Boolean,
-    selectedTags: MutableList<String>,
-    selectedGenres: MutableList<String>,
-    setShowTagDialog: (Boolean) -> Unit,
-    updateSearchParameterless: (String) -> Unit,
-    query: String,
-    tags: List<AniTag>,
-    genres: List<String>,
-    reloadGenres: () -> Unit,
-    reloadTags: () -> Unit,
-    filterTagsAndGenres: (String) -> Unit
-) {
-    if (showTagDialog) {
-        var filterTextFieldValue by remember { mutableStateOf("") }
-        val unChangedTags by remember(key1 = showTagDialog) {
-            mutableStateOf(selectedTags.toImmutableList())
-        }
-        val unChangedGenres by remember(key1 = showTagDialog) {
-            mutableStateOf(selectedGenres.toImmutableList())
-        }
-        val filteredTags by remember(key1 = filterTextFieldValue) {
-            mutableStateOf(tags.filter { tag ->
-                tag.name.startsWith(
-                    filterTextFieldValue,
-                    ignoreCase = true
-                )
-            })
-        }
-        val filteredGenres by remember(key1 = filterTextFieldValue) {
-            mutableStateOf(genres.filter { name ->
-                name.startsWith(
-                    filterTextFieldValue,
-                    ignoreCase = true
-                )
-            })
-        }
-
-        AlertDialog(
-            onDismissRequest = { setShowTagDialog(false) },
-            shape = RectangleShape,
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false
-            ),
-            dismissButton = {
-                TextButton(onClick = {
-                    selectedTags.apply {
-                        clear()
-                        addAll(unChangedTags)
-                    }
-                    selectedGenres.apply {
-                        clear()
-                        addAll(unChangedGenres)
-                    }
-                    setShowTagDialog(false)
-                }) {
-                    Text(text = stringResource(id = R.string.close))
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    setShowTagDialog(false)
-                    updateSearchParameterless(query)
-                }) {
-                    Text(text = stringResource(id = R.string.save))
-                }
-            },
-            title = { Text(text = stringResource(id = R.string.genres_tags)) },
-            text = {
-                if (tags.isNotEmpty() && genres.isNotEmpty()) {
-                    Column {
-                        OutlinedTextField(
-                            value = filterTextFieldValue, onValueChange = {
-                                filterTextFieldValue = it
-                                filterTagsAndGenres(it)
-                            }, modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Dimens.PaddingNormal)
-                        )
-                        FlowRow {
-//                            val chosenTags by remember(key1 = selectedTags, key2 = selectedGenres) {
-//                                mutableStateOf(selectedTags.apply { addAll(selectedGenres) }.toImmutableList())
-//                            }
-                            selectedTags.forEach {
-                                InputChip(
-                                    selected = false,
-                                    trailingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.Clear,
-                                            contentDescription = "Clear"
-                                        )
-                                    },
-                                    onClick = { selectedTags.remove(it); /*selectedGenres.remove(it)*/ },
-                                    label = { Text(text = it) })
-                            }
-                        }
-                        TextButton(onClick = { selectedTags.clear(); selectedGenres.clear() }) {
-                            Text(text = "Clear filters")
-                        }
-                        LazyColumn {
-                            val alphabeticalListOfTagCategories =
-                                filteredTags.map { it.category }.distinct().sorted()
-                            Timber.d(alphabeticalListOfTagCategories.toString())
-
-                            if (filteredGenres.isNotEmpty()) {
-                                stickyHeader {
-                                    Surface(modifier = Modifier.fillMaxWidth()) {
-                                        Text(
-                                            text = stringResource(id = R.string.genres),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
-                                        )
-                                    }
-                                }
-                                items(filteredGenres) { genre ->
-                                    GenreCheckBox(
-                                        selectedGenres = selectedGenres,
-                                        genre = genre
-                                    )
-                                }
-                            }
-
-                            alphabeticalListOfTagCategories.forEach { category ->
-                                stickyHeader {
-                                    Surface(modifier = Modifier.fillMaxWidth()) {
-                                        Text(
-                                            text = category,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
-                                        )
-                                    }
-                                }
-                                items(filteredTags.filter { tag -> tag.category == category }) { aniTag ->
-                                    TagCheckBox(selectedTags = selectedTags, tag = aniTag)
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    FailedToLoadTagsAndGenres(genres, reloadGenres, tags, reloadTags)
-                }
-            })
-    }
-}
-
-@Composable
-private fun FailedToLoadTagsAndGenres(
-    genres: List<String>,
-    reloadGenres: () -> Unit,
-    tags: List<AniTag>,
-    reloadTags: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.Start,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = "Failed to load",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
-        )
-        if (genres.isEmpty()) {
-            TextButton(onClick = { reloadGenres() }) {
-                Text(text = stringResource(R.string.reload_genres))
-            }
-        }
-        if (tags.isEmpty()) {
-            TextButton(onClick = { reloadTags() }) {
-                Text(text = stringResource(R.string.reload_tags))
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun TagDialogPreview() {
-    TagDialog(
-        showTagDialog = true,
-        selectedTags = mutableListOf(),
-        selectedGenres = mutableListOf(),
-        setShowTagDialog = {},
-        updateSearchParameterless = {},
-        query = "Demon",
-        tags = mutableListOf(
-            AniTag(
-                id = 12321,
-                name = "Boy's love",
-                category = "Romance",
-                description = "Content involving male gay relationships",
-                isAdult = false
-            ), AniTag(
-                id = 12321,
-                name = "Yuri",
-                category = "Romance",
-                description = "Content involving lesbian relationships",
-                isAdult = false
-            ),
-            AniTag(
-                id = 1421,
-                name = "Drawing",
-                category = "Theme / Arts",
-                description = "Centers around the art of drawign",
-                isAdult = false
-            )
-        ),
-        genres = mutableListOf("Drama"),
-        reloadGenres = { },
-        reloadTags = { }) {
-
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TagCheckBox(
-    selectedTags: MutableList<String>,
-    tag: AniTag
-) {
-    var checked by remember(key1 = selectedTags) {
-        mutableStateOf(
-            selectedTags.contains(
-                tag.name
-            )
-        )
-    }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                if (checked) {
-                    checked = false
-                    selectedTags.remove(tag.name)
-                } else {
-                    checked = true
-                    selectedTags.add(tag.name)
-                }
-            }) {
-
-//        var showTagDescription by remember {
-//            mutableStateOf(
-//                false
-//            )
-//        }
-        Checkbox(
-            checked = checked,
-            onCheckedChange = {
-                if (it) {
-                    checked = true
-                    selectedTags.add(tag.name)
-                } else {
-                    checked = false
-                    selectedTags.remove(tag.name)
-                }
-                Timber.d(
-                    "Checkbox change in tag: parameter is $it\n list of tags is $selectedTags\n check status is $checked"
-                )
-            })
-        Text(
-            text = tag.name,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
-
-        val tooltipState = rememberRichTooltipState(isPersistent = true)
-        val scope = rememberCoroutineScope()
-        RichTooltipBox(
-            title = { Text(text = tag.name) },
-            action = null,
-//                {
-//                    TextButton(
-//                        onClick = {
-//                            scope.launch {
-//                                tooltipState.dismiss()
-//                            }
-//                        }
-//                    ) { Text(text = "Close") }
-//                },
-            text = { Text(text = tag.description) },
-            tooltipState = tooltipState
-        ) {
-            IconButton(onClick = { scope.launch { tooltipState.show() } }) {
-                Icon(
-                    imageVector = Icons.Filled.Info,
-                    contentDescription = stringResource(R.string.tag_info)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SearchResults(
+fun SearchResults(
     uiState: HomeUiStateData,
     selectedChip: SearchFilter,
     onNavigateToMediaDetails: (Int) -> Unit,
@@ -1627,7 +1335,7 @@ fun SearchCardCharacter(
 }
 
 @Composable
-private fun SearchCardMedia(
+fun SearchCardMedia(
     media: Media,
     onNavigateToDetails: (Int) -> Unit,
     id: Int,
@@ -1677,7 +1385,6 @@ private fun SearchCardMedia(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 fun AnimeRow(
     onNavigateToDetails: (Int) -> Unit,
     animeList: List<Media>,
@@ -1716,79 +1423,381 @@ fun AnimeRow(
     }
 }
 
+
 @Composable
-fun HeadlineText(text: String, onNavigateToOverview: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth(),
+fun NotificationBadge(
+    unReadNotificationCount: Int,
+    onNavigateToNotification: () -> Unit
+) {
+    // TODO deprecated
+//    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.notifications)) }) {
+////        IconButton(onClick = { /*TODO*/ }) {
+//        BadgedBox(modifier = Modifier
+////            .padding(Dimens.PaddingNormal)
+////            .clip(CircleShape)
+////            .clickable { onNavigateToNotification() }
+//            , badge = {
+//            if (unReadNotificationCount != 0 && unReadNotificationCount != -1) {
+//                Badge {
+//                    Text(
+//                        unReadNotificationCount.toString(),
+//                        modifier = Modifier.semantics {
+//                            contentDescription =
+//                                "$unReadNotificationCount new notifications"
+//                        }
+//                    )
+//                }
+//            }
+//        }) {
+////                        IconButton(onClick = onNavigateToNotification, modifier = Modifier.tooltipTrigger()) {
+//            Icon(
+//                imageVector = Icons.Outlined.Notifications,
+//                contentDescription = "notifications",
+//                modifier = Modifier
+//
+//                        .clip(CircleShape)
+//                        .clickable { onNavigateToNotification() }
+//                    .tooltipTrigger()
+//
+//            )
+////                        }
+////            }
+//        }
+//    }
+}
+
+@Composable
+@OptIn(
+    ExperimentalFoundationApi::class,
+    ExperimentalLayoutApi::class
+)
+fun TagDialog(
+    showTagDialog: Boolean,
+    selectedTags: MutableList<String>,
+    selectedGenres: MutableList<String>,
+    setShowTagDialog: (Boolean) -> Unit,
+    updateSearchParameterless: (String) -> Unit,
+    query: String,
+    tags: List<AniTag>,
+    genres: List<String>,
+    reloadGenres: () -> Unit,
+    reloadTags: () -> Unit,
+    filterTagsAndGenres: (String) -> Unit
+) {
+    if (showTagDialog) {
+        var filterTextFieldValue by remember { mutableStateOf("") }
+        val unChangedTags by remember(key1 = showTagDialog) {
+            mutableStateOf(selectedTags.toImmutableList())
+        }
+        val unChangedGenres by remember(key1 = showTagDialog) {
+            mutableStateOf(selectedGenres.toImmutableList())
+        }
+        val filteredTags by remember(key1 = filterTextFieldValue) {
+            mutableStateOf(tags.filter { tag ->
+                tag.name.startsWith(
+                    filterTextFieldValue,
+                    ignoreCase = true
+                )
+            })
+        }
+        val filteredGenres by remember(key1 = filterTextFieldValue) {
+            mutableStateOf(genres.filter { name ->
+                name.startsWith(
+                    filterTextFieldValue,
+                    ignoreCase = true
+                )
+            })
+        }
+
+        AlertDialog(
+            onDismissRequest = { setShowTagDialog(false) },
+            shape = RectangleShape,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false
+            ),
+            dismissButton = {
+                TextButton(onClick = {
+                    selectedTags.apply {
+                        clear()
+                        addAll(unChangedTags)
+                    }
+                    selectedGenres.apply {
+                        clear()
+                        addAll(unChangedGenres)
+                    }
+                    setShowTagDialog(false)
+                }) {
+                    Text(text = stringResource(id = R.string.close))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    setShowTagDialog(false)
+                    updateSearchParameterless(query)
+                }) {
+                    Text(text = stringResource(id = R.string.save))
+                }
+            },
+            title = { Text(text = stringResource(id = R.string.genres_tags)) },
+            text = {
+                if (tags.isNotEmpty() && genres.isNotEmpty()) {
+                    Column {
+                        OutlinedTextField(
+                            value = filterTextFieldValue, onValueChange = {
+                                filterTextFieldValue = it
+                                filterTagsAndGenres(it)
+                            }, modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Dimens.PaddingNormal)
+                        )
+                        FlowRow {
+//                            val chosenTags by remember(key1 = selectedTags, key2 = selectedGenres) {
+//                                mutableStateOf(selectedTags.apply { addAll(selectedGenres) }.toImmutableList())
+//                            }
+                            selectedTags.forEach {
+                                InputChip(
+                                    selected = false,
+                                    trailingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Clear,
+                                            contentDescription = "Clear"
+                                        )
+                                    },
+                                    onClick = { selectedTags.remove(it); /*selectedGenres.remove(it)*/ },
+                                    label = { Text(text = it) })
+                            }
+                        }
+                        TextButton(onClick = { selectedTags.clear(); selectedGenres.clear() }) {
+                            Text(text = "Clear filters")
+                        }
+                        LazyColumn {
+                            val alphabeticalListOfTagCategories =
+                                filteredTags.map { it.category }.distinct().sorted()
+                            Timber.d(alphabeticalListOfTagCategories.toString())
+
+                            if (filteredGenres.isNotEmpty()) {
+                                stickyHeader {
+                                    Surface(modifier = Modifier.fillMaxWidth()) {
+                                        Text(
+                                            text = stringResource(id = R.string.genres),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+                                        )
+                                    }
+                                }
+                                items(filteredGenres) { genre ->
+                                    GenreCheckBox(
+                                        selectedGenres = selectedGenres,
+                                        genre = genre
+                                    )
+                                }
+                            }
+
+                            alphabeticalListOfTagCategories.forEach { category ->
+                                stickyHeader {
+                                    Surface(modifier = Modifier.fillMaxWidth()) {
+                                        Text(
+                                            text = category,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+                                        )
+                                    }
+                                }
+                                items(filteredTags.filter { tag -> tag.category == category }) { aniTag ->
+                                    TagCheckBox(selectedTags = selectedTags, tag = aniTag)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    FailedToLoadTagsAndGenres(genres, reloadGenres, tags, reloadTags)
+                }
+            })
+    }
+}
+
+@Composable
+fun FailedToLoadTagsAndGenres(
+    genres: List<String>,
+    reloadGenres: () -> Unit,
+    tags: List<AniTag>,
+    reloadTags: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.Start,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(12.dp),
+            text = "Failed to load",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
         )
-        IconButton(onClick = onNavigateToOverview) {
-            Icon(imageVector = Icons.Outlined.ArrowForward, contentDescription = "anime overview")
+        if (genres.isEmpty()) {
+            TextButton(onClick = { reloadGenres() }) {
+                Text(text = stringResource(R.string.reload_genres))
+            }
+        }
+        if (tags.isEmpty()) {
+            TextButton(onClick = { reloadTags() }) {
+                Text(text = stringResource(R.string.reload_tags))
+            }
         }
     }
 }
 
-@ExperimentalMaterial3Api
-@Composable
-@NonRestartableComposable
-fun AnimeCard(
-    title: String,
-    coverImage: String,
-    onNavigateToDetails: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = Modifier
-            .padding(start = 12.dp)
-            .width(120.dp)
-            .height(240.dp)
-            .then(modifier)
-            .clickable { onNavigateToDetails() }
-            .semantics(mergeDescendants = true) {},
-    ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
-                .build(),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .height(160.dp)
-                .clip(RoundedCornerShape(12.dp)),
 
+
+@Composable
+fun TagCheckBox(
+    selectedTags: MutableList<String>,
+    tag: AniTag
+) {
+    var checked by remember(key1 = selectedTags) {
+        mutableStateOf(
+            selectedTags.contains(
+                tag.name
             )
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(10.dp),
-            overflow = TextOverflow.Ellipsis,
         )
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                if (checked) {
+                    checked = false
+                    selectedTags.remove(tag.name)
+                } else {
+                    checked = true
+                    selectedTags.add(tag.name)
+                }
+            }) {
+
+//        var showTagDescription by remember {
+//            mutableStateOf(
+//                false
+//            )
+//        }
+        Checkbox(
+            checked = checked,
+            onCheckedChange = {
+                if (it) {
+                    checked = true
+                    selectedTags.add(tag.name)
+                } else {
+                    checked = false
+                    selectedTags.remove(tag.name)
+                }
+                Timber.d(
+                    "Checkbox change in tag: parameter is $it\n list of tags is $selectedTags\n check status is $checked"
+                )
+            })
+        Text(
+            text = tag.name,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        // TODO deprecated
+//        val tooltipState = rememberRichTooltipState(isPersistent = true)
+//        val scope = rememberCoroutineScope()
+//        RichTooltipBox(
+//            title = { Text(text = tag.name) },
+//            action = null,
+////                {
+////                    TextButton(
+////                        onClick = {
+////                            scope.launch {
+////                                tooltipState.dismiss()
+////                            }
+////                        }
+////                    ) { Text(text = "Close") }
+////                },
+//            text = { Text(text = tag.description) },
+//            tooltipState = tooltipState
+//        ) {
+//            IconButton(onClick = { scope.launch { tooltipState.show() } }) {
+//                Icon(
+//                    imageVector = Icons.Filled.Info,
+//                    contentDescription = stringResource(R.string.tag_info)
+//                )
+//            }
+//        }
+//    }
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun SearchCardStudioPreview() {
-    SearchCardStudio(AniStudio(id = 12, name = "Tokyo TV", favourites = 2123),
-        navigateToStudioDetails = { },
-        toggleFavourite = { })
-}
 
-@Preview(showBackground = true)
-@Composable
-fun SearchCardCharacterPreview() {
-    SearchCardCharacter(
-        onNavigateToDetails = {},
-        id = 12,
-        coverImage = "",
-        userPreferredName = "Jabami Yumeko",
-        favourites = 1223,
-        isFavourite = true
-    )
-}
+
+
+
+
+//@Preview(showBackground = true)
+//@Composable
+//fun SearchCardStudioPreview() {
+//    SearchCardStudio(AniStudio(id = 12, name = "Tokyo TV", favourites = 2123),
+//        navigateToStudioDetails = { },
+//        toggleFavourite = { })
+//}
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun SearchCardCharacterPreview() {
+//    SearchCardCharacter(
+//        onNavigateToDetails = {},
+//        id = 12,
+//        coverImage = "",
+//        userPreferredName = "Jabami Yumeko",
+//        favourites = 1223,
+//        isFavourite = true
+//    )
+//}
+//
+//@Preview(showBackground = true, group = "Notification")
+//@Composable
+//fun NotificationBadgePreview() {
+//    NotificationBadge(unReadNotificationCount = 2, onNavigateToNotification = {})
+//}
+
+//@Preview
+//@Composable
+//fun TagDialogPreview() {
+//    TagDialog(
+//        showTagDialog = true,
+//        selectedTags = mutableListOf(),
+//        selectedGenres = mutableListOf(),
+//        setShowTagDialog = {},
+//        updateSearchParameterless = {},
+//        query = "Demon",
+//        tags = mutableListOf(
+//            AniTag(
+//                id = 12321,
+//                name = "Boy's love",
+//                category = "Romance",
+//                description = "Content involving male gay relationships",
+//                isAdult = false
+//            ), AniTag(
+//                id = 12321,
+//                name = "Yuri",
+//                category = "Romance",
+//                description = "Content involving lesbian relationships",
+//                isAdult = false
+//            ),
+//            AniTag(
+//                id = 1421,
+//                name = "Drawing",
+//                category = "Theme / Arts",
+//                description = "Centers around the art of drawign",
+//                isAdult = false
+//            )
+//        ),
+//        genres = mutableListOf("Drama"),
+//        reloadGenres = { },
+//        reloadTags = { }) {
+//
+//    }
+//}

@@ -24,7 +24,8 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltipBox
+// TODO deprecated
+//import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.SheetValue
@@ -153,33 +154,34 @@ fun MediaDetail(
         }, actions = {
             val uriHandler = LocalUriHandler.current
             val uri = "https://anilist.co/${if (isAnime) "anime" else "manga"}/$mediaId"
-            PlainTooltipBox(tooltip = {
-                Text(
-                    text = "Favourite",
-                )
-            }) {
-                IconButton(
-                    onClick = {
-                        mediaDetailsViewModel.toggleFavourite(
-                            if (isAnime) AniLikeAbleType.ANIME else AniLikeAbleType.MANGA,
-                            mediaId,
-                        )
-                    },
-                    modifier = Modifier.tooltipTrigger(),
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            id = if (if (media is MediaDetailUiState.Success) {
-                                    (media as MediaDetailUiState.Success).data.isFavourite
-                                } else false
-                            ) {
-                                R.drawable.baseline_favorite_24
-                            } else R.drawable.anime_details_heart,
-                        ),
-                        contentDescription = "Add to favourites",
-                    )
-                }
-            }
+            // TODO deprecated
+//            PlainTooltipBox(tooltip = {
+//                Text(
+//                    text = "Favourite",
+//                )
+//            }) {
+//                IconButton(
+//                    onClick = {
+//                        mediaDetailsViewModel.toggleFavourite(
+//                            if (isAnime) AniLikeAbleType.ANIME else AniLikeAbleType.MANGA,
+//                            mediaId,
+//                        )
+//                    },
+//                    modifier = Modifier.tooltipTrigger(),
+//                ) {
+//                    Icon(
+//                        painter = painterResource(
+//                            id = if (if (media is MediaDetailUiState.Success) {
+//                                    (media as MediaDetailUiState.Success).data.isFavourite
+//                                } else false
+//                            ) {
+//                                R.drawable.baseline_favorite_24
+//                            } else R.drawable.anime_details_heart,
+//                        ),
+//                        contentDescription = "Add to favourites",
+//                    )
+//                }
+//            }
             OpenInBrowserAndShareToolTips(uriHandler, uri, context)
         })
     }, floatingActionButton = {
@@ -320,41 +322,42 @@ fun OpenInBrowserAndShareToolTips(
     uri: String,
     context: Context
 ) {
-    PlainTooltipBox(tooltip = {
-        Text(
-            text = "Open in browser",
-        )
-    }) {
-        IconButton(
-            onClick = { uriHandler.openUri(uri) },
-            modifier = Modifier.tooltipTrigger(),
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
-                contentDescription = "open in browser",
-            )
-        }
-    }
-    PlainTooltipBox(tooltip = { Text(stringResource(id = R.string.share)) }) {
-        IconButton(onClick = {
-            val sendIntent: Intent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, uri)
-                putExtra(Intent.EXTRA_TITLE, "Share AniList.co URL")
-                type = "text/plain"
-            }
-
-            val shareIntent = Intent.createChooser(sendIntent, "Share AniList.co URL")
-            startActivity(context, shareIntent, null)
-        }, modifier = Modifier.tooltipTrigger()) {
-            Icon(
-                imageVector = Icons.Default.Share,
-                contentDescription = stringResource(
-                    id = R.string.share,
-                ),
-            )
-        }
-    }
+    // TODO deprecated
+//    PlainTooltipBox(tooltip = {
+//        Text(
+//            text = "Open in browser",
+//        )
+//    }) {
+//        IconButton(
+//            onClick = { uriHandler.openUri(uri) },
+//            modifier = Modifier.tooltipTrigger(),
+//        ) {
+//            Icon(
+//                painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
+//                contentDescription = "open in browser",
+//            )
+//        }
+//    }
+//    PlainTooltipBox(tooltip = { Text(stringResource(id = R.string.share)) }) {
+//        IconButton(onClick = {
+//            val sendIntent: Intent = Intent().apply {
+//                action = Intent.ACTION_SEND
+//                putExtra(Intent.EXTRA_TEXT, uri)
+//                putExtra(Intent.EXTRA_TITLE, "Share AniList.co URL")
+//                type = "text/plain"
+//            }
+//
+//            val shareIntent = Intent.createChooser(sendIntent, "Share AniList.co URL")
+//            startActivity(context, shareIntent, null)
+//        }, modifier = Modifier.tooltipTrigger()) {
+//            Icon(
+//                imageVector = Icons.Default.Share,
+//                contentDescription = stringResource(
+//                    id = R.string.share,
+//                ),
+//            )
+//        }
+//    }
 }
 
 @Composable

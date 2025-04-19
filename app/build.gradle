@@ -66,7 +66,7 @@ dependencies {
     implementation 'com.google.accompanist:accompanist-webview:0.31.5-beta'
 
     // For window size classes
-    implementation 'androidx.compose.material3:material3-window-size-class:1.1.1'
+    implementation 'androidx.compose.material3:material3-window-size-class:1.3.2'
     implementation 'com.jakewharton.timber:timber:5.0.1'
     // For shimmer placeholders
     implementation 'io.github.fornewid:placeholder-material3:1.1.0-alpha'
@@ -85,7 +85,7 @@ dependencies {
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.ui:ui-graphics'
     implementation 'androidx.compose.ui:ui-tooling-preview'
-    implementation 'androidx.compose.material3:material3:1.2.0-alpha04'
+    implementation 'androidx.compose.material3:material3:1.3.2'
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.compose.ui:ui-viewbinding:1.4.3'

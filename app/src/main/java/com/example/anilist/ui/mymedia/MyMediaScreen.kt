@@ -39,7 +39,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.PlainTooltipBox
+// todo deprecated
+//import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
@@ -245,30 +246,31 @@ private fun MyMedia(
                     )
                 },
                 actions = {
-                    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.refresh)) }) {
-                        IconButton(
-                            onClick = reloadMyMedia,
-                            modifier = Modifier.tooltipTrigger()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = stringResource(id = R.string.refresh)
-                            )
-                        }
-                    }
-                    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.sort)) }) {
-                        IconButton(
-                            onClick = { showSortingSheet = true },
-                            modifier = Modifier.tooltipTrigger()
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.sort),
-                                contentDescription = stringResource(
-                                    id = R.string.sort
-                                )
-                            )
-                        }
-                    }
+                    // todo deprecated
+//                    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.refresh)) }) {
+//                        IconButton(
+//                            onClick = reloadMyMedia,
+//                            modifier = Modifier.tooltipTrigger()
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Default.Refresh,
+//                                contentDescription = stringResource(id = R.string.refresh)
+//                            )
+//                        }
+//                    }
+//                    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.sort)) }) {
+//                        IconButton(
+//                            onClick = { showSortingSheet = true },
+//                            modifier = Modifier.tooltipTrigger()
+//                        ) {
+//                            Icon(
+//                                painter = painterResource(id = R.drawable.sort),
+//                                contentDescription = stringResource(
+//                                    id = R.string.sort
+//                                )
+//                            )
+//                        }
+//                    }
                 })
         },
         floatingActionButton = {
@@ -798,21 +800,22 @@ private fun MediaCard(
                         verticalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxHeight()
                     ) {
-                        PlainTooltipBox(
-                            tooltip = { Text(text = stringResource(R.string.edit)) },
-//                            modifier = Modifier.align(Alignment.BottomCenter),
-                        ) {
-                            IconButton(
-                                onClick = openEditStatusSheet,
-                                modifier = Modifier.tooltipTrigger()
-                                //                        modifier = Modifier.weight(1f, false)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = stringResource(id = R.string.edit),
-                                )
-                            }
-                        }
+                        // TODO deprecated
+//                        PlainTooltipBox(
+//                            tooltip = { Text(text = stringResource(R.string.edit)) },
+////                            modifier = Modifier.align(Alignment.BottomCenter),
+//                        ) {
+//                            IconButton(
+//                                onClick = openEditStatusSheet,
+//                                modifier = Modifier.tooltipTrigger()
+//                                //                        modifier = Modifier.weight(1f, false)
+//                            ) {
+//                                Icon(
+//                                    imageVector = Icons.Default.Edit,
+//                                    contentDescription = stringResource(id = R.string.edit),
+//                                )
+//                            }
+//                        }
                         if (isAnime) {
                             if (media.mediaListEntry.progress != media.episodeAmount) {
                                 IncreaseProgress(

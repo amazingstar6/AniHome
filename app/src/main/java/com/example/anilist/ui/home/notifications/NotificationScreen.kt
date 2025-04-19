@@ -32,7 +32,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.PlainTooltipBox
+// todo deprecated
+//import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -159,14 +160,15 @@ private fun Notifications(
                 }
             },
             actions = {
-                PlainTooltipBox(tooltip = { Text(text = "Reload") }) {
-                    IconButton(onClick = {
-                        notifications.refresh()
-                        reloadNotificationCount()
-                    }) {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reload")
-                    }
-                }
+                // todo deprecated
+//                PlainTooltipBox(tooltip = { Text(text = "Reload") }) {
+//                    IconButton(onClick = {
+//                        notifications.refresh()
+//                        reloadNotificationCount()
+//                    }) {
+//                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reload")
+//                    }
+//                }
             })
     }, floatingActionButton = {
         ScrollUpFab(fabVisibility, lazyScrollScope, topAppBarState, lazyState)

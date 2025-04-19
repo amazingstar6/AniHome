@@ -25,11 +25,13 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RichTooltipBox
+// TODO deprecated
+//import androidx.compose.material3.RichTooltipBox
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberRichTooltipState
+// TODO deprecated
+//import androidx.compose.material3.rememberRichTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -367,37 +369,38 @@ private fun OverviewAnimeCoverDetails(
 
     if (media.nextAiringEpisode.id != -1) {
         Timber.d("Time at airing is ${media.nextAiringEpisode.airingAt}")
-        val tooltipState = rememberRichTooltipState(isPersistent = true)
-        val tooltipScope = rememberCoroutineScope()
-        RichTooltipBox(
-            tooltipState = tooltipState,
-            text = { Text(text = Utils.convertEpochToDateTimeTimeZoneString(media.nextAiringEpisode.airingAt.toLong() /* - Clock.System.now().epochSeconds*/)) }) {
-            Text(
-                text = "Episode ${media.nextAiringEpisode.episode} airs in ${
-                    Utils.getRelativeTimeFuture(
-                        media.nextAiringEpisode.timeUntilAiring.toLong()
-                    )
-                }",
-                style = MaterialTheme.typography.headlineSmall,
-                fontFamily = FontFamily.SansSerif,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .padding(
-                        start = Dimens.PaddingNormal,
-                        end = Dimens.PaddingNormal,
-                        bottom = Dimens.PaddingSmall
-                    )
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        tooltipScope.launch {
-                            tooltipState.show()
-                        }
-                    }
-                    .tooltipTrigger()
-            )
-        }
+        // TODO deprecated
+//        val tooltipState = rememberRichTooltipState(isPersistent = true)
+//        val tooltipScope = rememberCoroutineScope()
+//        RichTooltipBox(
+//            tooltipState = tooltipState,
+//            text = { Text(text = Utils.convertEpochToDateTimeTimeZoneString(media.nextAiringEpisode.airingAt.toLong() /* - Clock.System.now().epochSeconds*/)) }) {
+//            Text(
+//                text = "Episode ${media.nextAiringEpisode.episode} airs in ${
+//                    Utils.getRelativeTimeFuture(
+//                        media.nextAiringEpisode.timeUntilAiring.toLong()
+//                    )
+//                }",
+//                style = MaterialTheme.typography.headlineSmall,
+//                fontFamily = FontFamily.SansSerif,
+//                color = MaterialTheme.colorScheme.primary,
+//                modifier = Modifier
+//                    .padding(
+//                        start = Dimens.PaddingNormal,
+//                        end = Dimens.PaddingNormal,
+//                        bottom = Dimens.PaddingSmall
+//                    )
+//                    .clickable(
+//                        interactionSource = remember { MutableInteractionSource() },
+//                        indication = null
+//                    ) {
+//                        tooltipScope.launch {
+//                            tooltipState.show()
+//                        }
+//                    }
+//                    .tooltipTrigger()
+//            )
+//        }
     }
 
     FlowRow(
@@ -550,75 +553,76 @@ private fun OverViewTags(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
     ) {
-        for (tag in tags) {
-            if (!tag.isMediaSpoiler) {
-                RichTooltipBox(
-                    text = { Text(text = tag.description) },
-                    tooltipState = rememberRichTooltipState(
-                        isPersistent = true
-                    )
-                ) {
-                    SuggestionChip(
-                        onClick = { },
-                        modifier = Modifier
-                            .padding(end = Dimens.PaddingNormal)
-                            .tooltipTrigger(),
-                        label = {
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(
-                                        style = SpanStyle(color = MaterialTheme.colorScheme.primary),
-                                    ) {
-                                        append("${tag.rank}% ")
-                                    }
-                                    withStyle(style = SpanStyle()) {
-                                        append(tag.name)
-                                    }
-                                },
-                            )
-//                        Text(text = tag.name, style = MaterialTheme.typography.labelMedium)
-                        })
-                }
-            } else if (showSpoilers) {
-                RichTooltipBox(
-                    text = { Text(text = tag.description) },
-                    tooltipState = rememberRichTooltipState(
-                        isPersistent = true
-                    )
-                ) {
-                    SuggestionChip(
-                        onClick = { },
-                        modifier = Modifier
-                            .padding(end = 12.dp, bottom = 4.dp)
-                            .tooltipTrigger(),
-                        colors = ChipColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            labelColor = MaterialTheme.colorScheme.onErrorContainer,
-                            disabledContainerColor = MaterialTheme.colorScheme.onErrorContainer,
-                            disabledLabelColor = MaterialTheme.colorScheme.onErrorContainer,
-                            leadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-                            trailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-                            disabledLeadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-                            disabledTrailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer
-                        ), label = {
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(
-                                        style = SpanStyle(
-                                            color = MaterialTheme.colorScheme.error,
-                                        ),
-                                    ) {
-                                        append("${tag.rank}% ")
-                                    }
-                                    withStyle(style = SpanStyle()) {
-                                        append(tag.name)
-                                    }
-                                },
-                            )
-                        })
-                }
-            }
-        }
+        // TODO deprecated
+//        for (tag in tags) {
+//            if (!tag.isMediaSpoiler) {
+//                RichTooltipBox(
+//                    text = { Text(text = tag.description) },
+//                    tooltipState = rememberRichTooltipState(
+//                        isPersistent = true
+//                    )
+//                ) {
+//                    SuggestionChip(
+//                        onClick = { },
+//                        modifier = Modifier
+//                            .padding(end = Dimens.PaddingNormal)
+//                            .tooltipTrigger(),
+//                        label = {
+//                            Text(
+//                                buildAnnotatedString {
+//                                    withStyle(
+//                                        style = SpanStyle(color = MaterialTheme.colorScheme.primary),
+//                                    ) {
+//                                        append("${tag.rank}% ")
+//                                    }
+//                                    withStyle(style = SpanStyle()) {
+//                                        append(tag.name)
+//                                    }
+//                                },
+//                            )
+////                        Text(text = tag.name, style = MaterialTheme.typography.labelMedium)
+//                        })
+//                }
+//            } else if (showSpoilers) {
+//                RichTooltipBox(
+//                    text = { Text(text = tag.description) },
+//                    tooltipState = rememberRichTooltipState(
+//                        isPersistent = true
+//                    )
+//                ) {
+//                    SuggestionChip(
+//                        onClick = { },
+//                        modifier = Modifier
+//                            .padding(end = 12.dp, bottom = 4.dp)
+//                            .tooltipTrigger(),
+//                        colors = ChipColors(
+//                            containerColor = MaterialTheme.colorScheme.errorContainer,
+//                            labelColor = MaterialTheme.colorScheme.onErrorContainer,
+//                            disabledContainerColor = MaterialTheme.colorScheme.onErrorContainer,
+//                            disabledLabelColor = MaterialTheme.colorScheme.onErrorContainer,
+//                            leadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+//                            trailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+//                            disabledLeadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+//                            disabledTrailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer
+//                        ), label = {
+//                            Text(
+//                                buildAnnotatedString {
+//                                    withStyle(
+//                                        style = SpanStyle(
+//                                            color = MaterialTheme.colorScheme.error,
+//                                        ),
+//                                    ) {
+//                                        append("${tag.rank}% ")
+//                                    }
+//                                    withStyle(style = SpanStyle()) {
+//                                        append(tag.name)
+//                                    }
+//                                },
+//                            )
+//                        })
+//                }
+//            }
+//        }
     }
 }
 
