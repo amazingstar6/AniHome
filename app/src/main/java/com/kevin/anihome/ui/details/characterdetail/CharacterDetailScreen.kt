@@ -23,18 +23,24 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -271,6 +277,7 @@ fun VoiceActors(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImageWithTitleAndSubTitle(
     coverImage: String,
@@ -278,45 +285,45 @@ fun ImageWithTitleAndSubTitle(
     subTitle: String,
     id: Int,
     onClick: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-//    startPadding: Dp = Dimens.PaddingNormal //todo remove start padding for every lazy using this composable
 ) {
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
+        tooltip = {RichTooltip { Text(text = subTitle) }},
+        state = rememberTooltipState()
+    ) {
     Column(
         Modifier
-            .padding(start = Dimens.PaddingNormal)
             .clickable { onClick(id) }
-            .height(MEDIUM_MEDIA_HEIGHT.dp + 50.dp)
-            .width(MEDIUM_MEDIA_WIDTH.dp)
-            .then(modifier),
+            .padding(horizontal = Dimens.PaddingNormal)
+
+//            .height(MEDIUM_MEDIA_HEIGHT.dp + 50.dp)
+//            .width(MEDIUM_MEDIA_WIDTH.dp)
     ) {
-//        CoverImage(
-//            coverImage = coverImage,
-//            userPreferredName = title,
-//        )
         AsyncImageRoundedCorners(
             coverImage = coverImage,
             contentDescription = "Cover image of $title",
-            height = MEDIUM_MEDIA_HEIGHT.dp,
             width = MEDIUM_MEDIA_WIDTH.dp,
+            height = MEDIUM_MEDIA_HEIGHT.dp,
+            padding = 0.dp
         )
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier =
-                Modifier
-                    .padding(vertical = Dimens.PaddingSmall)
-                    .width(120.dp),
+            modifier =                Modifier         .width(MEDIUM_MEDIA_WIDTH.dp),
             overflow = TextOverflow.Ellipsis,
-            maxLines = 2,
+            maxLines = 1,
         )
-        Text(
-            text = subTitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.width(120.dp),
-            overflow = TextOverflow.Ellipsis,
-        )
+            Text(
+                text = subTitle,
+                style = MaterialTheme.typography.bodyMedium,
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.width(MEDIUM_MEDIA_WIDTH.dp),
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+            )
+        }
     }
 }
 
@@ -473,6 +480,8 @@ fun CharacterDetailPreview() {
                 favorites = 12123,
                 coverImage = "https:\\s4.anilist.co\\file\\anilistcdn\\character\\large\\123327-V47VOOqFfsVy.jpg",
                 isFavourite = true,
+                voiceActors = listOf(AniStaffDetail(userPreferredName = "Natsuki Hanae", language = "Japanese")),
+                relatedMedia = listOf(AniCharacterMediaConnection(title = "Kimetsu no Yaiba", characterRole = "MAIN")),
             ),
         isFavorite = true,
         onNavigateToMedia = {},
