@@ -9,7 +9,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.PlainTooltip
-// import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -56,11 +55,10 @@ fun SortingBottomSheet(
                         setIsDescending(false)
                         setSort(sort.removeDescending(), false)
                     },
-                    // TODO is the shape correct?
                     shape =
                         SegmentedButtonDefaults.itemShape(
                             index = 0,
-                            count = 0,
+                            count = 2,
                         ),
                 ) {
                     Text(text = "Ascending")
@@ -73,8 +71,8 @@ fun SortingBottomSheet(
                     },
                     shape =
                         SegmentedButtonDefaults.itemShape(
-                            index = 0,
-                            count = 0,
+                            index = 1,
+                            count = 2,
                         ),
                 ) {
                     Text(text = "Descending")
@@ -102,16 +100,12 @@ fun SortingBottomSheet(
                         painter = painterResource(id = R.drawable.baseline_restart_alt_24),
                         contentDescription = stringResource(R.string.reset_sort),
                     )
-//                    Icon(
-//                        imageVector = Icons.Default.Clear,
-//                        contentDescription = stringResource(R.string.reset)
-//                    )
                 }
             }
         }
         val sortTypesToShow by remember {
             mutableStateOf(
-                AniMediaListSort.values().filter { !it.name.contains("DESC") },
+                AniMediaListSort.entries.filter { !it.name.contains("DESC") },
             )
         }
         sortTypesToShow.forEach {
