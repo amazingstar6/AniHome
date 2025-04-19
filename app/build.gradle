@@ -64,6 +64,9 @@ ktlint {
         reporter "checkstyle"
         reporter "sarif"
     }
+    additionalEditorconfig = [ // not supported until ktlint 0.49
+                               "ktlint_function_naming_ignore_when_annotated_with": "Composable"
+    ]
     filter {
         exclude("**/generated/**")
     }
