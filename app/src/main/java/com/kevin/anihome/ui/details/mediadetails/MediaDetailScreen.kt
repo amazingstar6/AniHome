@@ -93,6 +93,7 @@ fun MediaDetail(
     onNavigateBack: () -> Unit,
     onNavigateToDetails: (Int) -> Unit,
     onNavigateToReviewDetails: (Int) -> Unit,
+    onNavigateToUserDetails: (Int) -> Unit,
     navigateToStaff: (Int) -> Unit,
     navigateToCharacter: (Int) -> Unit,
     onNavigateToStaff: (Int) -> Unit,
@@ -296,6 +297,7 @@ fun MediaDetail(
                                                 reviews.refresh() // fixme don't reload pls
                                             },
                                             onNavigateToReviewDetails,
+                                            onNavigateToUserDetails,
                                         )
                                     }
                                 }

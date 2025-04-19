@@ -261,6 +261,7 @@ class MediaDetailsRepositoryImpl
                         totalVotes = review?.ratingAmount.orMinusOne(),
                         userRating = review?.userRating.toAni(),
                         userAvatar = review?.user?.avatar?.large.orEmpty(),
+                        userId = review?.userId ?: -1,
                     ),
                 )
             }

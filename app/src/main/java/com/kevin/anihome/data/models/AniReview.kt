@@ -10,6 +10,7 @@ data class AniReview(
     // upvotes is called rating and total votes is called ratingAmount
     val upvotes: Int = -1,
     val totalVotes: Int = -1,
+    val userId: Int,
     val userRating: AniReviewRatingStatus = AniReviewRatingStatus.NO_VOTE,
     val userAvatar: String = "",
 )

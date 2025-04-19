@@ -86,6 +86,7 @@ class ReviewDetailRepository
                 score = review?.score ?: -1,
                 upvotes = review?.rating ?: -1,
                 totalVotes = review?.ratingAmount ?: -1,
+                userId = review?.userId ?: -1,
                 userRating =
                     when (review?.userRating) {
                         ReviewRating.NO_VOTE -> AniReviewRatingStatus.NO_VOTE

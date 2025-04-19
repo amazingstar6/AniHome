@@ -443,6 +443,7 @@ fragment StaffMedia on MediaConnection {
 query GetReviewDetail($id: Int!) {
     Review(id: $id) {
         id
+        userId
         summary,
         user {
             name

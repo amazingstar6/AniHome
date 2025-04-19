@@ -43,6 +43,7 @@ fun Reviews(
     reviews: LazyPagingItems<AniReview>,
     vote: (rating: AniReviewRatingStatus, reviewId: Int) -> Unit,
     onNavigateToReviewDetails: (Int) -> Unit,
+    onNavigateToUserDetails: (Int) -> Unit,
 ) {
     if (reviews.itemCount != 0) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -63,6 +64,7 @@ fun Reviews(
                             avatar = review.userAvatar,
                             userName = review.userName,
                             date = Utils.getRelativeTimeFromNow(review.createdAt.toLong()),
+                            navigateToUserDetailScreen = { onNavigateToUserDetails(review.userId) },
                             modifier = Modifier.padding(Dimens.PaddingSmall),
                         )
                         Text(
@@ -138,6 +140,7 @@ fun Reviews(
 fun Avatar(
     avatar: String,
     userName: String,
+    modifier: Modifier = Modifier
 ) {
     AsyncImage(
         model =
@@ -149,7 +152,8 @@ fun Avatar(
         modifier =
             Modifier
                 .clip(CircleShape)
-                .size(60.dp),
+                .size(60.dp)
+                .then(modifier),
     )
 }
 

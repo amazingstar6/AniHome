@@ -149,6 +149,7 @@ fun AniNavHost(
                 onNavigateBack = navigationActions::navigateBack,
                 onNavigateToDetails = navigationActions::navigateToMediaDetails,
                 onNavigateToReviewDetails = navigationActions::navigateToReviewDetails,
+                onNavigateToUserDetails = navigationActions::navigateToUser,
                 navigateToStaff = navigationActions::navigateToStaff,
                 navigateToCharacter = navigationActions::navigateToCharacter,
                 onNavigateToStaff = navigationActions::navigateToStaff,
@@ -197,6 +198,7 @@ fun AniNavHost(
                 ReviewDetailScreen(
                     reviewId = backStackEntry.arguments?.getInt("reviewId") ?: -1,
                     onNavigateBack = navigationActions::navigateBack,
+                    navigateToUserDetailScreen = navigationActions::navigateToUser
                 )
             },
         )
