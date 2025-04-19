@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.anilist'
+    namespace 'com.kevin.anihome'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.anilist"
+        applicationId "com.kevin.anihome"
         minSdk 26
         targetSdk 33
         versionCode 1
@@ -21,7 +21,7 @@ android {
 
         resourceConfigurations += ["en", "nl"]
 
-        testInstrumentationRunner "com.example.anilist.CustomTestRunner"
+        testInstrumentationRunner "com.kevin.anihome.CustomTestRunner"
         vectorDrawables {
             useSupportLibrary true
         }
@@ -161,7 +161,7 @@ dependencies {
 
 apollo {
     service("service") {
-        packageName.set("com.example.anilist")
+        packageName.set("com.kevin.anihome")
     }
 }
 
