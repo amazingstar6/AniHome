@@ -52,6 +52,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.RichTooltip
 //import androidx.compose.material3.PlainTooltipBox
 //import androidx.compose.material3.RichTooltipBox
 import androidx.compose.material3.Scaffold
@@ -255,7 +256,8 @@ fun HomeScreen(
                             bottom = Dimens.PaddingSmall
                         )
                 ) {
-                    SegmentedButton(shape = SegmentedButtonDefaults.itemShape(
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(
                         index = 0, count = options.size
                     ), onClick = {
                         columnScrollScope.launch {
@@ -269,7 +271,8 @@ fun HomeScreen(
                     // TODO does this work well?
 //                    SegmentedButton(shape = SegmentedButtonDefaults.shape(
 //                        position = 1, count = options.size
-                    SegmentedButton(shape = SegmentedButtonDefaults.itemShape(
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(
                         index = 1, count = options.size
                     ), onClick = {
                         columnScrollScope.launch {
@@ -284,17 +287,20 @@ fun HomeScreen(
 
 
                 Column(modifier = Modifier.verticalScroll(columnScrollState)) {
-                    HeadlineText(text = stringResource(R.string.trending_now),
+                    HeadlineText(
+                        text = stringResource(R.string.trending_now),
                         onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TRENDING_NOW) })
                     LazyRowLazyPagingItems(uiState.pagerTrendingNow, onNavigateToMediaDetails)
 
                     if (isAnime) {
-                        HeadlineText(text = stringResource(R.string.popular_this_season),
+                        HeadlineText(
+                            text = stringResource(R.string.popular_this_season),
                             onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_THIS_SEASON) })
                         LazyRowLazyPagingItems(
                             uiState.pagerPopularThisSeason, onNavigateToMediaDetails
                         )
-                        HeadlineText(text = stringResource(R.string.upcoming_next_season),
+                        HeadlineText(
+                            text = stringResource(R.string.upcoming_next_season),
                             onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.UPCOMING_NEXT_SEASON) })
                         Timber.d(uiState.pagerUpcomingNextSeason.itemCount.toString())
                         LazyRowLazyPagingItems(
@@ -303,7 +309,8 @@ fun HomeScreen(
                     }
 
                     if (!isAnime) {
-                        HeadlineText(text = stringResource(id = R.string.popular_manhwa),
+                        HeadlineText(
+                            text = stringResource(id = R.string.popular_manhwa),
                             onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_MANHWA) })
                         LazyRowLazyPagingItems(
                             pager = uiState.pagerPopularManhwa,
@@ -311,11 +318,13 @@ fun HomeScreen(
                         )
                     }
 
-                    HeadlineText(text = stringResource(R.string.all_time_popular),
+                    HeadlineText(
+                        text = stringResource(R.string.all_time_popular),
                         onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.ALL_TIME_POPULAR) })
                     LazyRowLazyPagingItems(uiState.pagerAllTimePopular, onNavigateToMediaDetails)
 
-                    HeadlineText(text = stringResource(if (isAnime) R.string.top_100_anime else R.string.top_100_manga),
+                    HeadlineText(
+                        text = stringResource(if (isAnime) R.string.top_100_anime else R.string.top_100_manga),
                         onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TOP_100_ANIME) })
                     LazyRowLazyPagingItems(uiState.pagerTop100Anime, onNavigateToMediaDetails)
                 }
@@ -624,7 +633,7 @@ fun AniSearchBar(
             } else {
                 Box {
                     TooltipBox(
-                        tooltip = { PlainTooltip { Text(text = stringResource(R.string.settings)) }},
+                        tooltip = { PlainTooltip { Text(text = stringResource(R.string.settings)) } },
                         modifier = Modifier.align(Alignment.BottomCenter),
                         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
                         state = rememberTooltipState(),
@@ -651,18 +660,20 @@ fun AniSearchBar(
                     modifier = Modifier.padding(end = 16.dp),
                 )
             } else {
-                // TODO deprecated
-//                PlainTooltipBox(tooltip = { Text(text = "Clear text") }) {
-//                    IconButton(
-//                        onClick = { updateSearchParameterless("") },
-//                        modifier = Modifier.tooltipTrigger()
-//                    ) {
-//                        Icon(
-//                            imageVector = Icons.Default.Clear,
-//                            contentDescription = stringResource(R.string.clear)
-//                        )
-//                    }
-//                }
+                TooltipBox(
+                    tooltip = { PlainTooltip { Text(text = "Clear text") } },
+                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    state = rememberTooltipState()
+                ) {
+                    IconButton(
+                        onClick = { updateSearchParameterless("") }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear)
+                        )
+                    }
+                }
             }
         },
         modifier = Modifier
@@ -676,7 +687,8 @@ fun AniSearchBar(
                 val filterList = SearchFilter.values()
                 LazyRow(modifier = Modifier.padding(top = Dimens.PaddingSmall)) {
                     itemsIndexed(filterList) { index, filterName ->
-                        FilterChip(selected = index == selectedChip.ordinal, onClick = {
+                        FilterChip(
+                            selected = index == selectedChip.ordinal, onClick = {
                             setSelectedChipValue(filterList[index]) //fixme
 //                            updateSearchParameterless(query)
                         }, label = { Text(text = filterName.toString()) }, leadingIcon = {
@@ -769,7 +781,8 @@ fun AniSearchBar(
 
 
                         if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME) {
-                            AssistChip(onClick = { showSeasonBottomSheet = true }, leadingIcon = {
+                            AssistChip(
+                                onClick = { showSeasonBottomSheet = true }, leadingIcon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.baseline_local_florist_24),
                                     contentDescription = null
@@ -1271,7 +1284,8 @@ fun SearchCardForum(id: Int, title: String, navigateToThreadDetails: (Int) -> Un
 fun SearchCardStudio(
     studio: AniStudio, navigateToStudioDetails: (Int) -> Unit, toggleFavourite: (Int) -> Unit
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
@@ -1291,7 +1305,8 @@ fun SearchCardStudio(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = Dimens.PaddingSmall)
         )
-        Icon(painter = painterResource(id = if (!studio.isFavourite) R.drawable.anime_details_heart else R.drawable.baseline_favorite_24),
+        Icon(
+            painter = painterResource(id = if (!studio.isFavourite) R.drawable.anime_details_heart else R.drawable.baseline_favorite_24),
             contentDescription = "Favourites",
             modifier = Modifier.clickable {
                 toggleFavourite(studio.id)
@@ -1308,9 +1323,10 @@ fun SearchCardCharacter(
     favourites: Int,
     isFavourite: Boolean
 ) {
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .clickable { onNavigateToDetails(id) }) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onNavigateToDetails(id) }) {
         AsyncImageRoundedCorners(coverImage = coverImage, contentDescription = userPreferredName)
         Column(modifier = Modifier.padding(Dimens.PaddingNormal)) {
             Text(
@@ -1428,46 +1444,50 @@ fun AnimeRow(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationBadge(
     unReadNotificationCount: Int,
     onNavigateToNotification: () -> Unit
 ) {
-    // TODO deprecated
-//    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.notifications)) }) {
-////        IconButton(onClick = { /*TODO*/ }) {
-//        BadgedBox(modifier = Modifier
-////            .padding(Dimens.PaddingNormal)
-////            .clip(CircleShape)
-////            .clickable { onNavigateToNotification() }
-//            , badge = {
-//            if (unReadNotificationCount != 0 && unReadNotificationCount != -1) {
-//                Badge {
-//                    Text(
-//                        unReadNotificationCount.toString(),
-//                        modifier = Modifier.semantics {
-//                            contentDescription =
-//                                "$unReadNotificationCount new notifications"
+    TooltipBox(
+        tooltip = { PlainTooltip { Text(text = stringResource(id = R.string.notifications)) } },
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        state = rememberTooltipState()
+    ) {
+//        IconButton(onClick = { /*TODO*/ }) {
+        BadgedBox(
+            modifier = Modifier
+//            .padding(Dimens.PaddingNormal)
+//            .clip(CircleShape)
+//            .clickable { onNavigateToNotification() }
+            , badge = {
+                if (unReadNotificationCount != 0 && unReadNotificationCount != -1) {
+                    Badge {
+                        Text(
+                            unReadNotificationCount.toString(),
+                            modifier = Modifier.semantics {
+                                contentDescription =
+                                    "$unReadNotificationCount new notifications"
+                            }
+                        )
+                    }
+                }
+            }) {
+//                        IconButton(onClick = onNavigateToNotification, modifier = Modifier.tooltipTrigger()) {
+            Icon(
+                imageVector = Icons.Outlined.Notifications,
+                contentDescription = "notifications",
+                modifier = Modifier
+
+                    .clip(CircleShape)
+                    .clickable { onNavigateToNotification() }
+
+            )
 //                        }
-//                    )
-//                }
 //            }
-//        }) {
-////                        IconButton(onClick = onNavigateToNotification, modifier = Modifier.tooltipTrigger()) {
-//            Icon(
-//                imageVector = Icons.Outlined.Notifications,
-//                contentDescription = "notifications",
-//                modifier = Modifier
-//
-//                        .clip(CircleShape)
-//                        .clickable { onNavigateToNotification() }
-//                    .tooltipTrigger()
-//
-//            )
-////                        }
-////            }
-//        }
-//    }
+        }
+    }
 }
 
 @Composable
@@ -1654,7 +1674,7 @@ fun FailedToLoadTagsAndGenres(
 }
 
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TagCheckBox(
     selectedTags: MutableList<String>,
@@ -1706,38 +1726,20 @@ fun TagCheckBox(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
-        // TODO deprecated
-//        val tooltipState = rememberRichTooltipState(isPersistent = true)
-//        val scope = rememberCoroutineScope()
-//        RichTooltipBox(
-//            title = { Text(text = tag.name) },
-//            action = null,
-////                {
-////                    TextButton(
-////                        onClick = {
-////                            scope.launch {
-////                                tooltipState.dismiss()
-////                            }
-////                        }
-////                    ) { Text(text = "Close") }
-////                },
-//            text = { Text(text = tag.description) },
-//            tooltipState = tooltipState
-//        ) {
-//            IconButton(onClick = { scope.launch { tooltipState.show() } }) {
-//                Icon(
-//                    imageVector = Icons.Filled.Info,
-//                    contentDescription = stringResource(R.string.tag_info)
-//                )
-//            }
-//        }
-//    }
+//        val tooltipState = rememberTooltipState(isPersistent = true)
+        val scope = rememberCoroutineScope()
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
+            state = rememberTooltipState(isPersistent = true),
+            tooltip = { RichTooltip(title = { Text(text = tag.name) }) { Text(text = tag.description) } },
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Info,
+                contentDescription = stringResource(R.string.tag_info)
+            )
+        }
     }
 }
-
-
-
-
 
 
 //@Preview(showBackground = true)

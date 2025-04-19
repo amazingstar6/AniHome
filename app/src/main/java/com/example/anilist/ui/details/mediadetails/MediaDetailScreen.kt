@@ -328,42 +328,50 @@ fun OpenInBrowserAndShareToolTips(
     uri: String,
     context: Context
 ) {
-    // TODO deprecated
-//    PlainTooltipBox(tooltip = {
-//        Text(
-//            text = "Open in browser",
-//        )
-//    }) {
-//        IconButton(
-//            onClick = { uriHandler.openUri(uri) },
-//            modifier = Modifier.tooltipTrigger(),
-//        ) {
-//            Icon(
-//                painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
-//                contentDescription = "open in browser",
-//            )
-//        }
-//    }
-//    PlainTooltipBox(tooltip = { Text(stringResource(id = R.string.share)) }) {
-//        IconButton(onClick = {
-//            val sendIntent: Intent = Intent().apply {
-//                action = Intent.ACTION_SEND
-//                putExtra(Intent.EXTRA_TEXT, uri)
-//                putExtra(Intent.EXTRA_TITLE, "Share AniList.co URL")
-//                type = "text/plain"
-//            }
-//
-//            val shareIntent = Intent.createChooser(sendIntent, "Share AniList.co URL")
-//            startActivity(context, shareIntent, null)
-//        }, modifier = Modifier.tooltipTrigger()) {
-//            Icon(
-//                imageVector = Icons.Default.Share,
-//                contentDescription = stringResource(
-//                    id = R.string.share,
-//                ),
-//            )
-//        }
-//    }
+    TooltipBox(
+        tooltip = {
+            PlainTooltip {
+                Text(
+                    text = "Open in browser",
+                )
+            }
+        },
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        state = rememberTooltipState()
+    ) {
+        IconButton(
+            onClick = { uriHandler.openUri(uri) }
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
+                contentDescription = "open in browser",
+            )
+        }
+    }
+    TooltipBox(
+        tooltip = { PlainTooltip { Text(stringResource(id = R.string.share)) } },
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        state = rememberTooltipState()
+    ) {
+        IconButton(onClick = {
+            val sendIntent: Intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, uri)
+                putExtra(Intent.EXTRA_TITLE, "Share AniList.co URL")
+                type = "text/plain"
+            }
+
+            val shareIntent = Intent.createChooser(sendIntent, "Share AniList.co URL")
+            startActivity(context, shareIntent, null)
+        }) {
+            Icon(
+                imageVector = Icons.Default.Share,
+                contentDescription = stringResource(
+                    id = R.string.share,
+                ),
+            )
+        }
+    }
 }
 
 @Composable

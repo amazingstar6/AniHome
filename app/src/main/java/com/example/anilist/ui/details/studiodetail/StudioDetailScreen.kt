@@ -13,10 +13,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 //import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,38 +62,42 @@ fun StudioDetailScreen(
                 )
             }
         }, actions = {
-            // TODO deprecated
-//            PlainTooltipBox(tooltip = { Text(text = "Add to favourites") }) {
-//                IconButton(onClick = {
-//                    studioDetailViewModel.toggleFavourite(
-//                        AniLikeAbleType.STUDIO,
-//                        studio.id
-//                    )
-//                }, modifier = Modifier.tooltipTrigger()) {
-//                    Icon(
-//                        painter = painterResource(if (studio.isFavourite) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart),
-//                        contentDescription = "Favourite"
-//                    )
-//                }
-//            }
+            TooltipBox(
+                tooltip = { PlainTooltip { Text(text = "Add to favourites") } },
+                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                state = rememberTooltipState()
+            ) {
+                IconButton(onClick = {
+                    studioDetailViewModel.toggleFavourite(
+                        AniLikeAbleType.STUDIO,
+                        studio.id
+                    )
+                }) {
+                    Icon(
+                        painter = painterResource(if (studio.isFavourite) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart),
+                        contentDescription = "Favourite"
+                    )
+                }
+            }
             val uriHandler = LocalUriHandler.current
             val uri = "https://anilist.co/studio/${studio.id}"
-            // TODO deprecated
-//            PlainTooltipBox(tooltip = {
-//                Text(
-//                    text = "Open in browser",
-//                )
-//            }) {
-//                IconButton(
-//                    onClick = { uriHandler.openUri(uri) },
-//                    modifier = Modifier.tooltipTrigger(),
-//                ) {
-//                    Icon(
-//                        painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
-//                        contentDescription = "open in browser",
-//                    )
-//                }
-//            }
+            TooltipBox(
+                tooltip = {PlainTooltip {
+                    Text(
+                        text = "Open in browser",
+                    )
+                }},
+                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                state = rememberTooltipState()
+            ) {
+                IconButton(
+                    onClick = { uriHandler.openUri(uri) }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
+                        contentDescription = "open in browser",
+                    )
+                }
+            }
         })
     }) {
         Column(modifier = Modifier.padding(top = it.calculateTopPadding())) {

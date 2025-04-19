@@ -557,76 +557,72 @@ private fun OverViewTags(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
     ) {
-        // TODO deprecated
-//        for (tag in tags) {
-//            if (!tag.isMediaSpoiler) {
-//                RichTooltipBox(
-//                    text = { Text(text = tag.description) },
-//                    tooltipState = rememberRichTooltipState(
-//                        isPersistent = true
-//                    )
-//                ) {
-//                    SuggestionChip(
-//                        onClick = { },
-//                        modifier = Modifier
-//                            .padding(end = Dimens.PaddingNormal)
-//                            .tooltipTrigger(),
-//                        label = {
-//                            Text(
-//                                buildAnnotatedString {
-//                                    withStyle(
-//                                        style = SpanStyle(color = MaterialTheme.colorScheme.primary),
-//                                    ) {
-//                                        append("${tag.rank}% ")
-//                                    }
-//                                    withStyle(style = SpanStyle()) {
-//                                        append(tag.name)
-//                                    }
-//                                },
-//                            )
-////                        Text(text = tag.name, style = MaterialTheme.typography.labelMedium)
-//                        })
-//                }
-//            } else if (showSpoilers) {
-//                RichTooltipBox(
-//                    text = { Text(text = tag.description) },
-//                    tooltipState = rememberRichTooltipState(
-//                        isPersistent = true
-//                    )
-//                ) {
-//                    SuggestionChip(
-//                        onClick = { },
-//                        modifier = Modifier
-//                            .padding(end = 12.dp, bottom = 4.dp)
-//                            .tooltipTrigger(),
-//                        colors = ChipColors(
-//                            containerColor = MaterialTheme.colorScheme.errorContainer,
-//                            labelColor = MaterialTheme.colorScheme.onErrorContainer,
-//                            disabledContainerColor = MaterialTheme.colorScheme.onErrorContainer,
-//                            disabledLabelColor = MaterialTheme.colorScheme.onErrorContainer,
-//                            leadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-//                            trailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-//                            disabledLeadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-//                            disabledTrailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer
-//                        ), label = {
-//                            Text(
-//                                buildAnnotatedString {
-//                                    withStyle(
-//                                        style = SpanStyle(
-//                                            color = MaterialTheme.colorScheme.error,
-//                                        ),
-//                                    ) {
-//                                        append("${tag.rank}% ")
-//                                    }
-//                                    withStyle(style = SpanStyle()) {
-//                                        append(tag.name)
-//                                    }
-//                                },
-//                            )
-//                        })
-//                }
-//            }
-//        }
+        for (tag in tags) {
+            if (!tag.isMediaSpoiler) {
+                val tooltipCoroutine = rememberCoroutineScope()
+                val tooltipState = rememberTooltipState(isPersistent = true)
+                TooltipBox (
+                    tooltip = { RichTooltip {Text(text = tag.description) }},
+                    state = tooltipState,
+                    positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider()
+                ) {
+                    SuggestionChip(
+                        onClick = { tooltipCoroutine.launch {tooltipState.show()} },
+                        modifier = Modifier
+                            .padding(end = Dimens.PaddingNormal),
+                        label = {
+                            Text(
+                                buildAnnotatedString {
+                                    withStyle(
+                                        style = SpanStyle(color = MaterialTheme.colorScheme.primary),
+                                    ) {
+                                        append("${tag.rank}% ")
+                                    }
+                                    withStyle(style = SpanStyle()) {
+                                        append(tag.name)
+                                    }
+                                },
+                            )
+                        })
+                }
+            } else if (showSpoilers) {
+                TooltipBox (
+                    tooltip = { RichTooltip {Text(text = tag.description) }},
+                    state = rememberTooltipState(isPersistent = true),
+                    positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider()
+                ) {
+                    SuggestionChip(
+                        onClick = { },
+                        modifier = Modifier
+                            .padding(end = 12.dp, bottom = 4.dp),
+                        colors = ChipColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            labelColor = MaterialTheme.colorScheme.onErrorContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.onErrorContainer,
+                            disabledLabelColor = MaterialTheme.colorScheme.onErrorContainer,
+                            leadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            trailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            disabledLeadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            disabledTrailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer
+                        ), label = {
+                            Text(
+                                buildAnnotatedString {
+                                    withStyle(
+                                        style = SpanStyle(
+                                            color = MaterialTheme.colorScheme.error,
+                                        ),
+                                    ) {
+                                        append("${tag.rank}% ")
+                                    }
+                                    withStyle(style = SpanStyle()) {
+                                        append(tag.name)
+                                    }
+                                },
+                            )
+                        })
+                }
+            }
+        }
     }
 }
 

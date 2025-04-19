@@ -32,14 +32,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-// todo deprecated
-//import androidx.compose.material3.PlainTooltipBox
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -160,15 +162,18 @@ private fun Notifications(
                 }
             },
             actions = {
-                // todo deprecated
-//                PlainTooltipBox(tooltip = { Text(text = "Reload") }) {
-//                    IconButton(onClick = {
-//                        notifications.refresh()
-//                        reloadNotificationCount()
-//                    }) {
-//                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reload")
-//                    }
-//                }
+                TooltipBox(
+                    tooltip = { PlainTooltip { Text(text = "Reload") }},
+                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    state = rememberTooltipState()
+                ) {
+                    IconButton(onClick = {
+                        notifications.refresh()
+                        reloadNotificationCount()
+                    }) {
+                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reload")
+                    }
+                }
             })
     }, floatingActionButton = {
         ScrollUpFab(fabVisibility, lazyScrollScope, topAppBarState, lazyState)
