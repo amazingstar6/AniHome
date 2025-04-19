@@ -12,11 +12,14 @@ import com.example.anilist.R
 fun NoMediaScreen(isAnime: Boolean) {
     Box(contentAlignment = Alignment.Center) {
         Text(
-            text = if (isAnime) {
-                stringResource(R.string.no_anime_add_something_to_your_list)
-            } else stringResource(
-                R.string.no_manga_add_something_to_your_list
-            )
+            text =
+                if (isAnime) {
+                    stringResource(R.string.no_anime_add_something_to_your_list)
+                } else {
+                    stringResource(
+                        R.string.no_manga_add_something_to_your_list,
+                    )
+                },
         )
     }
 }

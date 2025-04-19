@@ -1,7 +1,6 @@
 package com.example.anilist.utils
 
 import android.content.Intent
-import android.util.Log
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import androidx.annotation.PluralsRes
@@ -40,7 +39,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -51,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.anilist.R
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.details.characterdetail.Headline
 import com.example.anilist.utils.Utils.Companion.toHexString
@@ -72,7 +69,10 @@ private const val TAG = "ComposeUtils"
  * @return the string data associated with the resource
  */
 @Composable
-fun quantityStringResource(@PluralsRes id: Int, quantity: Int): String {
+fun quantityStringResource(
+    @PluralsRes id: Int,
+    quantity: Int,
+): String {
     val context = LocalContext.current
     return context.resources.getQuantityString(id, quantity)
 }
@@ -86,7 +86,11 @@ fun quantityStringResource(@PluralsRes id: Int, quantity: Int): String {
  * @return the string data associated with the resource
  */
 @Composable
-fun quantityStringResource(@PluralsRes id: Int, quantity: Int, vararg formatArgs: Any): String {
+fun quantityStringResource(
+    @PluralsRes id: Int,
+    quantity: Int,
+    vararg formatArgs: Any,
+): String {
     val context = LocalContext.current
     return context.resources.getQuantityString(id, quantity, *formatArgs)
 }
@@ -98,60 +102,62 @@ fun AsyncImageRoundedCorners(
     modifier: Modifier = Modifier,
     width: Dp = MEDIUM_MEDIA_WIDTH.dp,
     height: Dp = MEDIUM_MEDIA_HEIGHT.dp,
-    padding: Dp = Dimens.PaddingSmall
+    padding: Dp = Dimens.PaddingSmall,
 ) {
     var showShimmer by remember { mutableStateOf(true) }
     AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current).data(coverImage)
-            .crossfade(true).build(),
+        model =
+            ImageRequest.Builder(LocalContext.current).data(coverImage)
+                .crossfade(true).build(),
         contentDescription = contentDescription,
 //        placeholder = painterResource(id = R.drawable.no_image),
 //        fallback = painterResource(id = R.drawable.no_image),
         onSuccess = { showShimmer = false },
         contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .height(height)
-            .width(width)
-            .padding(
-                padding
-            )
-            .clip(RoundedCornerShape(12.dp))
-            .background(shimmerBrush(showShimmer = showShimmer))
-            .then(modifier)
+        modifier =
+            Modifier
+                .height(height)
+                .width(width)
+                .padding(
+                    padding,
+                )
+                .clip(RoundedCornerShape(12.dp))
+                .background(shimmerBrush(showShimmer = showShimmer))
+                .then(modifier),
     )
 }
 
 @Composable
 fun FormattedHtmlWebView(html: String) {
-    //fixme font not loading
-    val formattedHtml = """
-            <html>
-            
-            <style type="text/css">
-                @font-face {
-                    font-family: aclonica;
-                    src: url("file:///android_asset/font/aclonica.ttf")
-                }
-                body {
-                    color: ${MaterialTheme.colorScheme.onSurface.toHexString()};
-                    background-color: ${MaterialTheme.colorScheme.surface.toHexString()};
-                    line-height: 1.25;
-                    font-family: aclonica;
-                }
-                .markdown_spoiler:not(hover), .markdown_spoiler:not(active) {
-                    background-color: ${MaterialTheme.colorScheme.onSurface.toHexString()}
-                }
-                .markdown_spoiler:hover, .markdown_spoiler:active {
-                    background-color: ${MaterialTheme.colorScheme.surface.toHexString()};
-                }
-            </style>
-            
-            <body>
-            $html
-            </body>
-            </html>
+    // fixme font not loading
+    val formattedHtml =
+        """
+        <html>
+        
+        <style type="text/css">
+            @font-face {
+                font-family: aclonica;
+                src: url("file:///android_asset/font/aclonica.ttf")
+            }
+            body {
+                color: ${MaterialTheme.colorScheme.onSurface.toHexString()};
+                background-color: ${MaterialTheme.colorScheme.surface.toHexString()};
+                line-height: 1.25;
+                font-family: aclonica;
+            }
+            .markdown_spoiler:not(hover), .markdown_spoiler:not(active) {
+                background-color: ${MaterialTheme.colorScheme.onSurface.toHexString()}
+            }
+            .markdown_spoiler:hover, .markdown_spoiler:active {
+                background-color: ${MaterialTheme.colorScheme.surface.toHexString()};
+            }
+        </style>
+        
+        <body>
+        $html
+        </body>
+        </html>
         """.trimIndent()
-
 
     val state = rememberWebViewStateWithHTMLData(formattedHtml)
     val uriHandler = LocalUriHandler.current
@@ -160,7 +166,7 @@ fun FormattedHtmlWebView(html: String) {
     AnimatedVisibility(
         visible = state.loadingState !is LoadingState.Loading,
         enter = fadeIn(),
-        exit = fadeOut()
+        exit = fadeOut(),
     ) {
         WebView(
             modifier = Modifier.padding(horizontal = Dimens.PaddingSmall),
@@ -168,24 +174,26 @@ fun FormattedHtmlWebView(html: String) {
             onCreated = {
 //            it.settings.javaScriptEnabled = true
 //            it.settings.standardFontFamily = "Monospace"
-                it.webViewClient = object : AccompanistWebViewClient() {
-                    override fun shouldOverrideUrlLoading(
-                        view: WebView?,
-                        request: WebResourceRequest?
-                    ): Boolean {
-                        Timber.d("shouldOverrideUrlLoading was called")
-                        val url = request?.url.toString()
-                        uriHandler.openUri(url)
-                        val intent = Intent(Intent.ACTION_VIEW, request!!.url)
-                        ContextCompat.startActivity(context, intent, null)
+                it.webViewClient =
+                    object : AccompanistWebViewClient() {
+                        override fun shouldOverrideUrlLoading(
+                            view: WebView?,
+                            request: WebResourceRequest?,
+                        ): Boolean {
+                            Timber.d("shouldOverrideUrlLoading was called")
+                            val url = request?.url.toString()
+                            uriHandler.openUri(url)
+                            val intent = Intent(Intent.ACTION_VIEW, request!!.url)
+                            ContextCompat.startActivity(context, intent, null)
 //                    if (url.startsWith("http://") || url.startsWith("https://")) {
 //                    } else {
 //                        view?.loadUrl(url)
 //                    }
-                        return false
+                            return false
+                        }
                     }
-                }
-            })
+            },
+        )
     }
 }
 
@@ -210,9 +218,11 @@ fun LazyListState.isScrollingUp(): Boolean {
 @Composable
 fun LoadingCircle(modifier: Modifier = Modifier) {
     Box(
-        contentAlignment = Alignment.Center, modifier = Modifier
-            .fillMaxSize()
-            .then(modifier)
+        contentAlignment = Alignment.Center,
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .then(modifier),
     ) {
         CircularProgressIndicator(
             modifier = Modifier,
@@ -221,96 +231,111 @@ fun LoadingCircle(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun shimmerBrush(showShimmer: Boolean = true, targetValue: Float = 1000f): Brush {
+fun shimmerBrush(
+    showShimmer: Boolean = true,
+    targetValue: Float = 1000f,
+): Brush {
     return if (showShimmer) {
-        val shimmerColors = listOf(
-            Color.LightGray.copy(alpha = 0.6f),
-            Color.LightGray.copy(alpha = 0.2f),
-            Color.LightGray.copy(alpha = 0.6f),
-        )
+        val shimmerColors =
+            listOf(
+                Color.LightGray.copy(alpha = 0.6f),
+                Color.LightGray.copy(alpha = 0.2f),
+                Color.LightGray.copy(alpha = 0.6f),
+            )
 
         val transition = rememberInfiniteTransition(label = "Shimmer")
-        val translateAnimation = transition.animateFloat(
-            initialValue = 0f,
-            targetValue = targetValue,
-            animationSpec = infiniteRepeatable(
-                animation = tween(800), repeatMode = RepeatMode.Reverse
-            ), label = "Shimmer"
-        )
+        val translateAnimation =
+            transition.animateFloat(
+                initialValue = 0f,
+                targetValue = targetValue,
+                animationSpec =
+                    infiniteRepeatable(
+                        animation = tween(800),
+                        repeatMode = RepeatMode.Reverse,
+                    ),
+                label = "Shimmer",
+            )
         Brush.linearGradient(
             colors = shimmerColors,
             start = Offset.Zero,
-            end = Offset(x = translateAnimation.value, y = translateAnimation.value)
+            end = Offset(x = translateAnimation.value, y = translateAnimation.value),
         )
     } else {
         Brush.linearGradient(
             colors = listOf(Color.Transparent, Color.Transparent),
             start = Offset.Zero,
-            end = Offset.Zero
+            end = Offset.Zero,
         )
     }
 }
 
 @Composable
-fun htmlToAnnotatedString(htmlString: String, isSpoilerVisible: Boolean): AnnotatedString {
-    val replacedSpans = htmlString.replace(
-        """
-        <p><span class='markdown_spoiler'><span>
-    """.trimIndent().trim(), """
-        <span class='markdown_spoiler'>
-    """.trimIndent().trim(), ignoreCase = true
-    ).replace(
-        """
-        </span></span></p>
-    """.trimIndent().trim(), """
-        </span>
-    """.trimIndent().trim(), ignoreCase = true
-    )
+fun htmlToAnnotatedString(
+    htmlString: String,
+    isSpoilerVisible: Boolean,
+): AnnotatedString {
+    val replacedSpans =
+        htmlString.replace(
+            """
+            <p><span class='markdown_spoiler'><span>
+            """.trimIndent().trim(),
+            """
+            <span class='markdown_spoiler'>
+            """.trimIndent().trim(),
+            ignoreCase = true,
+        ).replace(
+            """
+            </span></span></p>
+            """.trimIndent().trim(),
+            """
+            </span>
+            """.trimIndent().trim(),
+            ignoreCase = true,
+        )
     val doc = Jsoup.parse(replacedSpans)
 //    this returns only the spoilers
 //    val elements = doc.body().allElements.not("*:not(span.markdown_spoiler:has(span))")
     val elements = doc.body().allElements
 //    val processedBody = processElements(elements, StringBuilder())
-    val annotatedString = buildAnnotatedString {
-        elements.forEach { element ->
-            when (element.tagName()) {
-                "p" -> append(element.text() + "\n")
-                "span" -> {
-                    val classNames = element.classNames()
-                    val spoiler = classNames.contains("markdown_spoiler")
-                    if (!spoiler || isSpoilerVisible) {
-                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.error)) {
-                            append(element.text())
-                            if (spoiler) {
-                                addStringAnnotation(
-                                    tag = "spoiler",
-                                    annotation = "spoiler",
-                                    start = length - element.text().length,
-                                    end = length
-                                )
+    val annotatedString =
+        buildAnnotatedString {
+            elements.forEach { element ->
+                when (element.tagName()) {
+                    "p" -> append(element.text() + "\n")
+                    "span" -> {
+                        val classNames = element.classNames()
+                        val spoiler = classNames.contains("markdown_spoiler")
+                        if (!spoiler || isSpoilerVisible) {
+                            withStyle(SpanStyle(color = MaterialTheme.colorScheme.error)) {
+                                append(element.text())
+                                if (spoiler) {
+                                    addStringAnnotation(
+                                        tag = "spoiler",
+                                        annotation = "spoiler",
+                                        start = length - element.text().length,
+                                        end = length,
+                                    )
+                                }
                             }
+                        } else {
                         }
-                    } else {
-
                     }
 
-                }
-
-                "br" -> append("\n")
-                "strong" -> {
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(element.text())
+                    "br" -> append("\n")
+                    "strong" -> {
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(element.text())
+                        }
                     }
-                }
 
-                "div" -> append(element.text() + "\n")
+                    "div" -> append(element.text() + "\n")
 
-                else -> {
+                    else -> {
 //                    this.append(element.text())
+                    }
                 }
             }
         }
-    }
     return annotatedString
 }
 
@@ -334,10 +359,10 @@ fun Description(description: String) {
 //                    uriHandler.openUri(url)
 //                    val intent = Intent(Intent.ACTION_VIEW, request!!.url)
 //                    startActivity(context, intent, null)
-////                    if (url.startsWith("http://") || url.startsWith("https://")) {
-////                    } else {
-////                        view?.loadUrl(url)
-////                    }
+// //                    if (url.startsWith("http://") || url.startsWith("https://")) {
+// //                    } else {
+// //                        view?.loadUrl(url)
+// //                    }
 //                    return true
 //                }
 //            }
@@ -377,9 +402,9 @@ fun Description(description: String) {
 //                    start = offset,
 //                    end = offset
 //                ).firstOrNull()?.let { annotation ->
-////                    if (annotation.tag == "spoiler") {
+// //                    if (annotation.tag == "spoiler") {
 //                    isSpoilerVisible = !isSpoilerVisible
-////                    }
+// //                    }
 //                }
 //            },
 //            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)

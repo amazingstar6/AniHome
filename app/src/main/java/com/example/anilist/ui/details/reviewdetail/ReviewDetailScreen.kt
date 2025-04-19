@@ -33,15 +33,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.anilist.R
-import com.example.anilist.utils.Utils
 import com.example.anilist.data.models.AniReview
 import com.example.anilist.data.models.AniReviewRatingStatus
 import com.example.anilist.ui.Dimens
+import com.example.anilist.ui.details.mediadetails.OpenInBrowserAndShareToolTips
 import com.example.anilist.ui.details.mediadetails.components.Avatar
 import com.example.anilist.ui.details.mediadetails.components.UpDownVote
-import com.example.anilist.utils.LoadingCircle
-import com.example.anilist.ui.details.mediadetails.OpenInBrowserAndShareToolTips
 import com.example.anilist.utils.FormattedHtmlWebView
+import com.example.anilist.utils.LoadingCircle
+import com.example.anilist.utils.Utils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,14 +63,14 @@ fun ReviewDetailScreen(
                 Text(
                     text = review?.title ?: "",
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
-                        contentDescription = stringResource(id = R.string.back)
+                        contentDescription = stringResource(id = R.string.back),
                     )
                 }
             },
@@ -78,15 +78,16 @@ fun ReviewDetailScreen(
                 OpenInBrowserAndShareToolTips(
                     uriHandler = LocalUriHandler.current,
                     uri = "https://anilist.co/review/$reviewId",
-                    context = LocalContext.current
+                    context = LocalContext.current,
                 )
-            })
+            },
+        )
     }) {
         if (review != null) {
             ReviewDetail(
                 review ?: AniReview(),
                 vote = { reviewDetailViewModel.rateReview(review?.id ?: -1, it) },
-                modifier = Modifier.padding(top = it.calculateTopPadding())
+                modifier = Modifier.padding(top = it.calculateTopPadding()),
             )
         } else {
             LoadingCircle()
@@ -98,24 +99,26 @@ fun ReviewDetailScreen(
 private fun ReviewDetail(
     review: AniReview,
     vote: (AniReviewRatingStatus) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(Dimens.PaddingNormal)
-            .then(modifier),
+        modifier =
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(Dimens.PaddingNormal)
+                .then(modifier),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = review.title,
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(
-                bottom = Dimens.PaddingSmall,
-                start = Dimens.PaddingNormal,
-                end = Dimens.PaddingNormal
-            ),
+            modifier =
+                Modifier.padding(
+                    bottom = Dimens.PaddingSmall,
+                    start = Dimens.PaddingNormal,
+                    end = Dimens.PaddingNormal,
+                ),
         )
         AvatarNameDate(
             review.userAvatar,
@@ -126,7 +129,7 @@ private fun ReviewDetail(
 //            text = review.body,
 //            style = MaterialTheme.typography.bodyMedium,
 //            color = MaterialTheme.colorScheme.onSurfaceVariant,
-////                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
+// //                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
 //            modifier = Modifier.padding(top = Dimens.PaddingNormal),
 //        )
         FormattedHtmlWebView(html = review.body)
@@ -144,13 +147,21 @@ private fun ReviewDetail(
                 review.upvotes,
                 if (review.userRating == AniReviewRatingStatus.UP_VOTE) R.drawable.media_detail_thumbs_up_filled else R.drawable.media_detail_thumbs_up_outlined,
                 "upvote",
-                vote = { vote(if (review.userRating == AniReviewRatingStatus.UP_VOTE) AniReviewRatingStatus.NO_VOTE else AniReviewRatingStatus.UP_VOTE) }
+                vote = {
+                    vote(
+                        if (review.userRating == AniReviewRatingStatus.UP_VOTE) AniReviewRatingStatus.NO_VOTE else AniReviewRatingStatus.UP_VOTE,
+                    )
+                },
             )
             UpDownVote(
                 review.totalVotes - review.upvotes,
                 iconId = if (review.userRating == AniReviewRatingStatus.DOWN_VOTE) R.drawable.media_detail_thumbs_down_filled else R.drawable.media_detail_thumb_down_outlined,
                 contentDescription = "downvote",
-                vote = { vote(if (review.userRating == AniReviewRatingStatus.DOWN_VOTE) AniReviewRatingStatus.NO_VOTE else AniReviewRatingStatus.DOWN_VOTE) }
+                vote = {
+                    vote(
+                        if (review.userRating == AniReviewRatingStatus.DOWN_VOTE) AniReviewRatingStatus.NO_VOTE else AniReviewRatingStatus.DOWN_VOTE,
+                    )
+                },
             )
         }
     }
@@ -164,10 +175,11 @@ fun AvatarNameDate(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(Dimens.PaddingSmall)
-            .then(modifier),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(Dimens.PaddingSmall)
+                .then(modifier),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -201,6 +213,6 @@ fun ReviewDetailScreenPreview() {
             score = 80,
             createdAt = 1533109209,
         ),
-        vote = { }
+        vote = { },
     )
 }

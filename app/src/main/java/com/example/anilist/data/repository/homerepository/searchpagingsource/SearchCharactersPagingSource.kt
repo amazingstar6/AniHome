@@ -2,8 +2,8 @@ package com.example.anilist.data.repository.homerepository.searchpagingsource
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.models.AniCharacterDetail
+import com.example.anilist.data.models.AniResult
 import com.example.anilist.data.repository.homerepository.HomeRepositoryImpl
 import com.example.anilist.ui.home.AniCharacterSort
 import timber.log.Timber
@@ -13,7 +13,7 @@ private const val STARTING_KEY = 1
 class SearchCharactersPagingSource(
     private val homeRepository: HomeRepositoryImpl,
     private val search: String,
-    private val sortType: AniCharacterSort
+    private val sortType: AniCharacterSort,
 ) : PagingSource<Int, AniCharacterDetail>() {
     override fun getRefreshKey(state: PagingState<Int, AniCharacterDetail>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
@@ -32,10 +32,9 @@ class SearchCharactersPagingSource(
                 LoadResult.Page(
                     data = data.data,
                     prevKey = if (start == STARTING_KEY) null else start - 1,
-                    nextKey = if (data.data.isNotEmpty()) start + 1 else null
+                    nextKey = if (data.data.isNotEmpty()) start + 1 else null,
                 )
             }
         }
     }
-
 }

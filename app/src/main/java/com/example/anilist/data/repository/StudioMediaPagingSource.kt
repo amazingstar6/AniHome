@@ -6,17 +6,17 @@ import com.example.anilist.data.models.Media
 
 private const val STARTING_KEY = 1
 
-class StudioMediaPagingSource (
+class StudioMediaPagingSource(
     private val studioDetailRepository: StudioDetailRepository,
-    private val studioId: Int
+    private val studioId: Int,
 ) : PagingSource<Int, Media>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Media> {
         val start = params.key ?: STARTING_KEY
-        val data = studioDetailRepository.fetchMedia(studioId = studioId, page =  start, pageSize = params.loadSize)
+        val data = studioDetailRepository.fetchMedia(studioId = studioId, page = start, pageSize = params.loadSize)
         return LoadResult.Page(
             data = data,
             prevKey = if (start == STARTING_KEY) null else start - 1,
-            nextKey = if (data.isNotEmpty()) start + 1 else null
+            nextKey = if (data.isNotEmpty()) start + 1 else null,
         )
     }
 
@@ -27,5 +27,4 @@ class StudioMediaPagingSource (
             anchorPage?.prevKey ?: anchorPage?.nextKey
         }
     }
-
 }

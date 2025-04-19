@@ -23,19 +23,24 @@ import com.example.anilist.R
 import com.example.anilist.ui.Dimens
 
 @Composable
-fun CoverLarge(coverImage: String, navigateBack: () -> Unit) {
+fun CoverLarge(
+    coverImage: String,
+    navigateBack: () -> Unit,
+) {
 //    var scale by remember { mutableFloatStateOf(1f) }
-    Box() {
+    Box {
         AnimatedVisibility(visible = coverImage != "", enter = fadeIn(), exit = fadeOut()) {
 //        Box {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(coverImage)
-                    .crossfade(true).build(),
+                model =
+                    ImageRequest.Builder(LocalContext.current).data(coverImage)
+                        .crossfade(true).build(),
                 contentDescription = "Cover of media",
                 fallback = painterResource(id = R.drawable.no_image),
                 contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier =
+                    Modifier
+                        .fillMaxSize()
 //                    .align(Alignment.Center)
 //                    .graphicsLayer(
 //                        scaleX = scale,
@@ -50,14 +55,14 @@ fun CoverLarge(coverImage: String, navigateBack: () -> Unit) {
 //                            }
 //                        }
 //                    }
-                    .clickable { navigateBack() }
+                        .clickable { navigateBack() },
             )
 //        }
         }
         IconButton(onClick = navigateBack, modifier = Modifier.padding(Dimens.PaddingSmall)) {
             Icon(
                 imageVector = Icons.Default.ArrowBack,
-                contentDescription = stringResource(id = R.string.back)
+                contentDescription = stringResource(id = R.string.back),
             )
         }
     }

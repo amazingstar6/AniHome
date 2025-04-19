@@ -37,13 +37,12 @@ import com.example.anilist.utils.Utils
 import de.charlex.compose.HtmlText
 import timber.log.Timber
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Reviews(
     reviews: LazyPagingItems<AniReview>,
     vote: (rating: AniReviewRatingStatus, reviewId: Int) -> Unit,
-    onNavigateToReviewDetails: (Int) -> Unit
+    onNavigateToReviewDetails: (Int) -> Unit,
 ) {
     if (reviews.itemCount != 0) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -52,12 +51,13 @@ fun Reviews(
                 if (review != null) {
                     Card(
                         onClick = { onNavigateToReviewDetails(review.id) },
-                        modifier = Modifier.padding(
-                            top = Dimens.PaddingNormal,
-                            bottom = Dimens.PaddingSmall,
-                            start = Dimens.PaddingNormal,
-                            end = Dimens.PaddingNormal,
-                        ),
+                        modifier =
+                            Modifier.padding(
+                                top = Dimens.PaddingNormal,
+                                bottom = Dimens.PaddingSmall,
+                                start = Dimens.PaddingNormal,
+                                end = Dimens.PaddingNormal,
+                            ),
                     ) {
                         AvatarNameDate(
                             avatar = review.userAvatar,
@@ -82,9 +82,10 @@ fun Reviews(
                         )
                     }
                     Row(
-                        modifier = Modifier
-                            .padding(horizontal = Dimens.PaddingNormal)
-                            .fillMaxWidth(),
+                        modifier =
+                            Modifier
+                                .padding(horizontal = Dimens.PaddingNormal)
+                                .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
@@ -96,9 +97,9 @@ fun Reviews(
                             vote = {
                                 vote(
                                     if (review.userRating == AniReviewRatingStatus.UP_VOTE) AniReviewRatingStatus.NO_VOTE else AniReviewRatingStatus.UP_VOTE,
-                                    review.id
+                                    review.id,
                                 )
-                            }
+                            },
                         )
                         UpDownVote(
                             review.totalVotes - review.upvotes,
@@ -108,9 +109,9 @@ fun Reviews(
                             vote = {
                                 vote(
                                     if (review.userRating == AniReviewRatingStatus.DOWN_VOTE) AniReviewRatingStatus.NO_VOTE else AniReviewRatingStatus.DOWN_VOTE,
-                                    review.id
+                                    review.id,
                                 )
-                            }
+                            },
                         )
                         Text(
                             text = "${review.score}/100",
@@ -134,16 +135,21 @@ fun Reviews(
 }
 
 @Composable
-fun Avatar(avatar: String, userName: String) {
+fun Avatar(
+    avatar: String,
+    userName: String,
+) {
     AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(avatar).crossfade(true).build(),
+        model =
+            ImageRequest.Builder(LocalContext.current)
+                .data(avatar).crossfade(true).build(),
         placeholder = painterResource(id = R.drawable.no_image),
         contentDescription = "avatar of $userName",
         contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .clip(CircleShape)
-            .size(60.dp),
+        modifier =
+            Modifier
+                .clip(CircleShape)
+                .size(60.dp),
     )
 }
 
@@ -166,9 +172,9 @@ fun UpDownVote(
     }
 }
 
-//@Preview(showBackground = true)
-//@Composable
-//fun ReviewListPreview() {
+// @Preview(showBackground = true)
+// @Composable
+// fun ReviewListPreview() {
 //    Reviews(
 //        listOf(
 //            Review(
@@ -182,12 +188,12 @@ fun UpDownVote(
 //            ),
 //        ),
 //    ) { }
-//}
+// }
 
-//@Preview(showBackground = true)
-//@Composable
-//fun NoReviewsPreview() {
+// @Preview(showBackground = true)
+// @Composable
+// fun NoReviewsPreview() {
 //    Reviews(
 //        emptyList(),
 //    ) { }
-//}
+// }

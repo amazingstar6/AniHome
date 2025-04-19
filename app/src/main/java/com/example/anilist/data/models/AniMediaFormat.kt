@@ -14,7 +14,8 @@ enum class AniMediaFormat {
     MANGA,
     NOVEL,
     ONE_SHOT,
-    UNKNOWN;
+    UNKNOWN,
+    ;
 
     fun toString(context: Context): String {
         return when (this) {

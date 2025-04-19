@@ -32,14 +32,14 @@ data class Media(
     val isFavourite: Boolean = false,
     val isFavouriteBlocked: Boolean = false,
     val studios: List<AniStudio> = emptyList(),
-    //todo not used
+    // todo not used
     val priority: Int = -1,
     /**
      * Only used to know what languages there are for filtering the character's voice actors based on language
      */
     val languages: List<String> = emptyList(),
     val mediaListEntry: AniMediaListEntry = AniMediaListEntry(),
-    val nextAiringEpisode: AniAiringSchedule = AniAiringSchedule()
+    val nextAiringEpisode: AniAiringSchedule = AniAiringSchedule(),
 )
 
 data class AniAiringSchedule(
@@ -63,7 +63,7 @@ data class MediaDetailInfoList(
     val licensed: Boolean? = false,
     val updatedAt: String = "",
     val synonyms: List<String> = emptyList(),
-    val nsfw: Boolean? = false
+    val nsfw: Boolean? = false,
 )
 
 data class AniMediaListEntry(
@@ -83,7 +83,7 @@ data class AniMediaListEntry(
     val startedAt: FuzzyDate? = null,
     val completedAt: FuzzyDate? = null,
     val updatedAt: FuzzyDate? = null,
-    val createdAt: FuzzyDate? = null
+    val createdAt: FuzzyDate? = null,
 )
 
 enum class AniMediaType {
@@ -97,7 +97,8 @@ enum class AniSeason {
     SPRING,
     SUMMER,
     FALL,
-    WINTER;
+    WINTER,
+    ;
 
     fun getString(context: Context): String {
         return when (this) {

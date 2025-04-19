@@ -14,7 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
-//import androidx.compose.material3.PlainTooltipBox
+// import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
@@ -46,7 +46,7 @@ fun StudioDetailScreen(
     id: Int,
     navigateToMedia: (Int) -> Unit,
     navigateBack: () -> Unit,
-    studioDetailViewModel: StudioDetailViewModel = hiltViewModel()
+    studioDetailViewModel: StudioDetailViewModel = hiltViewModel(),
 ) {
     val studio by studioDetailViewModel.studio.collectAsState()
     val mediaList = studioDetailViewModel.mediaOfStudio.collectAsLazyPagingItems()
@@ -58,40 +58,46 @@ fun StudioDetailScreen(
             IconButton(onClick = navigateBack) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = stringResource(id = R.string.back)
+                    contentDescription = stringResource(id = R.string.back),
                 )
             }
         }, actions = {
             TooltipBox(
                 tooltip = { PlainTooltip { Text(text = "Add to favourites") } },
                 positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                state = rememberTooltipState()
+                state = rememberTooltipState(),
             ) {
                 IconButton(onClick = {
                     studioDetailViewModel.toggleFavourite(
                         AniLikeAbleType.STUDIO,
-                        studio.id
+                        studio.id,
                     )
                 }) {
                     Icon(
-                        painter = painterResource(if (studio.isFavourite) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart),
-                        contentDescription = "Favourite"
+                        painter =
+                            painterResource(
+                                if (studio.isFavourite) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart,
+                            ),
+                        contentDescription = "Favourite",
                     )
                 }
             }
             val uriHandler = LocalUriHandler.current
             val uri = "https://anilist.co/studio/${studio.id}"
             TooltipBox(
-                tooltip = {PlainTooltip {
-                    Text(
-                        text = "Open in browser",
-                    )
-                }},
+                tooltip = {
+                    PlainTooltip {
+                        Text(
+                            text = "Open in browser",
+                        )
+                    }
+                },
                 positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                state = rememberTooltipState()
+                state = rememberTooltipState(),
             ) {
                 IconButton(
-                    onClick = { uriHandler.openUri(uri) }) {
+                    onClick = { uriHandler.openUri(uri) },
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
                         contentDescription = "open in browser",
@@ -105,13 +111,13 @@ fun StudioDetailScreen(
                 Text(
                     text = "This studio is not an animation studio",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             } else {
                 Text(
                     text = "This studio is an animation studio",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
             LazyVerticalGrid(
@@ -129,22 +135,27 @@ fun StudioDetailScreen(
 }
 
 @Composable
-private fun MediaCard(media: Media, navigateToMedia: (Int) -> Unit) {
+private fun MediaCard(
+    media: Media,
+    navigateToMedia: (Int) -> Unit,
+) {
     Column(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Center,
-        modifier = Modifier.clickable { navigateToMedia(media.id) }) {
+        modifier = Modifier.clickable { navigateToMedia(media.id) },
+    ) {
         AsyncImageRoundedCorners(
             coverImage = media.coverImage,
-            contentDescription = "Cover of ${media.title}"
+            contentDescription = "Cover of ${media.title}",
         )
         Text(
             text = media.title,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .padding(horizontal = Dimens.PaddingNormal, vertical = Dimens.PaddingSmall)
-                .width(125.dp)
+            modifier =
+                Modifier
+                    .padding(horizontal = Dimens.PaddingNormal, vertical = Dimens.PaddingSmall)
+                    .width(125.dp),
         )
     }
 }
@@ -152,5 +163,5 @@ private fun MediaCard(media: Media, navigateToMedia: (Int) -> Unit) {
 @Preview
 @Composable
 fun StudioDetailPreview() {
-    MediaCard(media = Media(title = "鬼滅の刃",), navigateToMedia = { })
+    MediaCard(media = Media(title = "鬼滅の刃"), navigateToMedia = { })
 }

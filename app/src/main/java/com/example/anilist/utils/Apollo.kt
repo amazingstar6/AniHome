@@ -26,10 +26,11 @@ class Apollo {
 
         // Creates a 10MB MemoryCacheFactory
         private const val ONE_HOUR_IN_MILLI_SECONDS: Long = 3600000L
-        private val cacheFactory = MemoryCacheFactory(
-            maxSizeBytes = 10 * 1024 * 1024,
-            ONE_HOUR_IN_MILLI_SECONDS,
-        )
+        private val cacheFactory =
+            MemoryCacheFactory(
+                maxSizeBytes = 10 * 1024 * 1024,
+                ONE_HOUR_IN_MILLI_SECONDS,
+            )
 
 //        private var headers: List<HttpHeader> = if (accessCode != "") listOf(
 //            HttpHeader(
@@ -75,19 +76,18 @@ class Apollo {
 class AuthorizationInterceptor(val token: String) : HttpInterceptor {
     override suspend fun intercept(
         request: HttpRequest,
-        chain: HttpInterceptorChain
+        chain: HttpInterceptorChain,
     ): HttpResponse {
         Timber.d("WERE INTERCEPTING with token $token")
         return if (token != "") {
             chain.proceed(
-                request.newBuilder().addHeader("Authorization", "Bearer $token").build()
+                request.newBuilder().addHeader("Authorization", "Bearer $token").build(),
             )
         } else {
             chain.proceed(request)
         }
     }
 }
-
 
 enum class ResultStatus {
     SUCCESSFUL,

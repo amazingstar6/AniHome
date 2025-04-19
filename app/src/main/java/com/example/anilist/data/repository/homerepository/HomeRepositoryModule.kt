@@ -9,7 +9,5 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface HomeRepositoryModule {
     @Binds
-    fun bindHomeRepository(
-        homeRepositoryImpl: HomeRepositoryImpl
-    ): HomeRepository
+    fun bindHomeRepository(homeRepositoryImpl: HomeRepositoryImpl): HomeRepository
 }

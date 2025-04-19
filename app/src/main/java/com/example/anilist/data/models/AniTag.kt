@@ -5,5 +5,5 @@ data class AniTag(
     val name: String,
     val category: String,
     val description: String,
-    val isAdult: Boolean
+    val isAdult: Boolean,
 )

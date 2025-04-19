@@ -33,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -51,7 +50,6 @@ import com.example.anilist.ui.details.mediadetails.IconWithText
 import com.example.anilist.ui.mymedia.components.ErrorScreen
 import com.example.anilist.utils.AsyncImageRoundedCorners
 import com.example.anilist.utils.DESCRIPTION_HEIGHT
-import com.example.anilist.utils.Description
 import com.example.anilist.utils.FormattedHtmlWebView
 import com.example.anilist.utils.LARGE_MEDIA_HEIGHT
 import com.example.anilist.utils.LARGE_MEDIA_WIDTH
@@ -86,11 +84,12 @@ fun CharacterDetailScreen(
             AnimatedVisibility(
                 visible = (character as? CharacterDetailUiState.Success) != null,
                 enter = fadeIn(),
-                exit = fadeOut()
+                exit = fadeOut(),
             ) {
                 Text(
-                    text = (character as? CharacterDetailUiState.Success)?.character?.userPreferredName
-                        ?: stringResource(R.string.question_mark),
+                    text =
+                        (character as? CharacterDetailUiState.Success)?.character?.userPreferredName
+                            ?: stringResource(R.string.question_mark),
                 )
             }
         }, navigationIcon = {
@@ -105,28 +104,33 @@ fun CharacterDetailScreen(
         when (character) {
             is CharacterDetailUiState.Success, CharacterDetailUiState.Loading -> {
                 CharacterDetail(
-                    character = (character as? CharacterDetailUiState.Success)?.character
-                        ?: AniCharacterDetail(),
-                    isFavorite = (character as? CharacterDetailUiState.Success)?.character?.isFavourite
-                        ?: false,
+                    character =
+                        (character as? CharacterDetailUiState.Success)?.character
+                            ?: AniCharacterDetail(),
+                    isFavorite =
+                        (character as? CharacterDetailUiState.Success)?.character?.isFavourite
+                            ?: false,
                     onNavigateToStaff = onNavigateToStaff,
                     onNavigateToMedia = onNavigateToMedia,
-                    modifier = Modifier.padding(
-                        top = it.calculateTopPadding(),
-                        bottom = Dimens.PaddingNormal,
-                    ),
+                    modifier =
+                        Modifier.padding(
+                            top = it.calculateTopPadding(),
+                            bottom = Dimens.PaddingNormal,
+                        ),
                     toggleFavorite = {
                         characterDetailViewModel.toggleFavourite(
-                            id
+                            id,
                         )
                     },
-                    isLoading = character is CharacterDetailUiState.Loading
+                    isLoading = character is CharacterDetailUiState.Loading,
                 )
             }
 
-            is CharacterDetailUiState.Error -> ErrorScreen(
-                errorMessage = (character as CharacterDetailUiState.Error).message,
-                reloadMedia = { characterDetailViewModel.fetchCharacter(id) })
+            is CharacterDetailUiState.Error ->
+                ErrorScreen(
+                    errorMessage = (character as CharacterDetailUiState.Error).message,
+                    reloadMedia = { characterDetailViewModel.fetchCharacter(id) },
+                )
 
 //            is CharacterDetailUiState.Loading -> {
 //                LoadingCircle()
@@ -143,12 +147,13 @@ private fun CharacterDetail(
     onNavigateToMedia: (Int) -> Unit,
     modifier: Modifier = Modifier,
     toggleFavorite: () -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
 ) {
     Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .then(modifier),
+        modifier =
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .then(modifier),
     ) {
 //        if (true) {
         AvatarAndName(
@@ -160,7 +165,7 @@ private fun CharacterDetail(
             modifier = Modifier.padding(Dimens.PaddingNormal),
             isFavorite = isFavorite,
             toggleFavourite = toggleFavorite,
-            isLoading = isLoading
+            isLoading = isLoading,
         )
 //        } else {
 //            Row {
@@ -206,16 +211,18 @@ private fun CharacterDetail(
         } else {
             Text(
                 text = "Description placeholder",
-                modifier = Modifier
-                    .padding(Dimens.PaddingNormal)
-                    .defaultPlaceholder()
+                modifier =
+                    Modifier
+                        .padding(Dimens.PaddingNormal)
+                        .defaultPlaceholder(),
             )
             Box(
-                modifier = Modifier
-                    .padding(Dimens.PaddingNormal)
-                    .height(DESCRIPTION_HEIGHT.dp)
-                    .fillMaxWidth()
-                    .defaultPlaceholder()
+                modifier =
+                    Modifier
+                        .padding(Dimens.PaddingNormal)
+                        .height(DESCRIPTION_HEIGHT.dp)
+                        .fillMaxWidth()
+                        .defaultPlaceholder(),
             )
         }
         if (character.voiceActors.isNotEmpty()) {
@@ -248,7 +255,10 @@ fun RelatedMedia(
 }
 
 @Composable
-fun VoiceActors(voiceActors: List<AniStaffDetail>, onNavigateToStaff: (Int) -> Unit) {
+fun VoiceActors(
+    voiceActors: List<AniStaffDetail>,
+    onNavigateToStaff: (Int) -> Unit,
+) {
     LazyRow {
         items(voiceActors) { staff ->
             ImageWithTitleAndSubTitle(
@@ -288,24 +298,25 @@ fun ImageWithTitleAndSubTitle(
             coverImage = coverImage,
             contentDescription = "Cover image of $title",
             height = MEDIUM_MEDIA_HEIGHT.dp,
-            width = MEDIUM_MEDIA_WIDTH.dp
+            width = MEDIUM_MEDIA_WIDTH.dp,
         )
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .padding(vertical = Dimens.PaddingSmall)
-                .width(120.dp),
+            modifier =
+                Modifier
+                    .padding(vertical = Dimens.PaddingSmall)
+                    .width(120.dp),
             overflow = TextOverflow.Ellipsis,
-            maxLines = 2
+            maxLines = 2,
         )
         Text(
             text = subTitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.width(120.dp),
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -316,12 +327,13 @@ fun Headline(text: String) {
         text = text,
         style = MaterialTheme.typography.titleLarge,
         color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(
-            bottom = Dimens.PaddingSmall,
-            top = Dimens.PaddingNormal,
-            start = Dimens.PaddingNormal,
-            end = Dimens.PaddingNormal,
-        ),
+        modifier =
+            Modifier.padding(
+                bottom = Dimens.PaddingSmall,
+                top = Dimens.PaddingNormal,
+                start = Dimens.PaddingNormal,
+                end = Dimens.PaddingNormal,
+            ),
     )
 }
 
@@ -335,12 +347,13 @@ fun AvatarAndName(
     isFavorite: Boolean,
     modifier: Modifier = Modifier,
     toggleFavourite: () -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
 ) {
     Row(
-        modifier = Modifier
-            .padding(bottom = Dimens.PaddingNormal)
-            .then(modifier),
+        modifier =
+            Modifier
+                .padding(bottom = Dimens.PaddingNormal)
+                .then(modifier),
     ) {
         Timber.d("Is loading is $isLoading")
         AsyncImageRoundedCorners(
@@ -349,67 +362,70 @@ fun AvatarAndName(
             height = LARGE_MEDIA_HEIGHT.dp,
             width = LARGE_MEDIA_WIDTH.dp,
             padding = 0.dp,
-            modifier = Modifier.defaultPlaceholder(visible = isLoading)
+            modifier = Modifier.defaultPlaceholder(visible = isLoading),
         )
         Column(modifier = Modifier.padding(start = Dimens.PaddingNormal)) {
             Text(
                 text = userPreferredName,
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.defaultPlaceholder(isLoading)
+                modifier = Modifier.defaultPlaceholder(isLoading),
             )
             if (alternativeNames.isNotEmpty()) {
                 Text(
                     text = alternativeNames.joinToString(separator = ", "),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.defaultPlaceholder(isLoading)
+                    modifier = Modifier.defaultPlaceholder(isLoading),
                 )
             }
             if (alternativeSpoilerNames.isNotEmpty()) {
                 var showSpoilerNames by remember { mutableStateOf(false) }
-                val textModifier = if (!showSpoilerNames) {
-                    Modifier
-                        .background(
-                            MaterialTheme.colorScheme.errorContainer,
-                            shape = MaterialTheme.shapes.medium,
-                        )
-                        .padding(Dimens.PaddingSmall)
-                } else {
-                    Modifier
-                }
-                Text(
-                    text = if (showSpoilerNames) {
-                        alternativeSpoilerNames.joinToString(
-                            separator = ", ",
-                        )
+                val textModifier =
+                    if (!showSpoilerNames) {
+                        Modifier
+                            .background(
+                                MaterialTheme.colorScheme.errorContainer,
+                                shape = MaterialTheme.shapes.medium,
+                            )
+                            .padding(Dimens.PaddingSmall)
                     } else {
-                        quantityStringResource(
-                            id = R.plurals.show_spoiler_name,
-                            quantity = alternativeSpoilerNames.size
-                        )
-                    },
+                        Modifier
+                    }
+                Text(
+                    text =
+                        if (showSpoilerNames) {
+                            alternativeSpoilerNames.joinToString(
+                                separator = ", ",
+                            )
+                        } else {
+                            quantityStringResource(
+                                id = R.plurals.show_spoiler_name,
+                                quantity = alternativeSpoilerNames.size,
+                            )
+                        },
                     style = MaterialTheme.typography.titleSmall,
                     color = if (showSpoilerNames) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier
-                        .clickable {
-                            showSpoilerNames = !showSpoilerNames
-                        }
-                        .padding(vertical = Dimens.PaddingSmall)
-                        .then(textModifier),
-
-                    )
+                    modifier =
+                        Modifier
+                            .clickable {
+                                showSpoilerNames = !showSpoilerNames
+                            }
+                            .padding(vertical = Dimens.PaddingSmall)
+                            .then(textModifier),
+                )
             }
             IconWithText(
                 icon = if (isFavorite) R.drawable.baseline_favorite_24 else R.drawable.anime_details_heart,
                 text = favorites.toString(),
                 textColor = MaterialTheme.colorScheme.onSurface,
                 iconTint = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier
-                    .clickable {
-                        toggleFavourite()
-                    }
-                    .defaultPlaceholder(isLoading),
+                modifier =
+                    Modifier
+                        .clickable {
+                            toggleFavourite()
+                        }
+                        .defaultPlaceholder(isLoading),
             )
         }
     }
@@ -426,7 +442,7 @@ private fun CoverImage(
         contentDescription = "Cover image of $userPreferredName",
         height = LARGE_MEDIA_HEIGHT.dp,
         width = LARGE_MEDIA_WIDTH.dp,
-        padding = 0.dp
+        padding = 0.dp,
     )
 //    AsyncImage(
 //        model = ImageRequest.Builder(LocalContext.current)
@@ -448,20 +464,21 @@ private fun CoverImage(
 @Composable
 fun CharacterDetailPreview() {
     CharacterDetail(
-        character = AniCharacterDetail(
-            id = 123327,
-            userPreferredName = "レイチェル・ガードナー",
-            description = "<p><strong>Height:</strong> 156cm (5'1&quot;)</p>\n<p>The protagonist of Satsuriku no Tenshi. Rachel is a 13-year-old girl that awakes in a building with no recollection of why she is there.</p>\n<p><span class='markdown_spoiler'><span>It is eventually revealed that she is actually the B1 floor master. The other floor masters say that she is ruthless, selfish, and manipulative, and willing to do anything to get what she wants, although it's a misnomer to call her an an evil or malicious person, as she doesn't inherently understand human morality and doesn't have actual cruel impulses.</span></span></p>\n<p>Ray is initially presented as extremely calm and collected, however she has issues with empathy and difficulty expressing or understanding emotions. While she has shown fear, anger, compassion, and happiness, these moments are rare and fleeting. She does not, however, fake emotions, and will not pretend to have feelings that aren't present. Ray is fixated on the idea of the existence of God. </p>\n<p><span class='markdown_spoiler'><span>Her desperation in needing a God she believes made her so delusional that she saw Zack as her God. Only until Zack helped her accept her actions that she finally came to terms with her warped view and realized that her true wish was simply to be wished in life and death. Afterwards, Ray started to act like a normal person, particularly in regards to Zack who she developed a close bond with over time. Ray becomes more expressive as the series goes on.</span></span></p>\n<p>(Source: Satsuriku no Tenshi Wiki, edited)</p>",
-            alternativeNames = listOf("Ray"),
-            alternativeSpoilerNames = emptyList(),
-            favorites = 12123,
-            coverImage = "https:\\s4.anilist.co\\file\\anilistcdn\\character\\large\\123327-V47VOOqFfsVy.jpg",
-            isFavourite = true,
-        ),
+        character =
+            AniCharacterDetail(
+                id = 123327,
+                userPreferredName = "レイチェル・ガードナー",
+                description = "<p><strong>Height:</strong> 156cm (5'1&quot;)</p>\n<p>The protagonist of Satsuriku no Tenshi. Rachel is a 13-year-old girl that awakes in a building with no recollection of why she is there.</p>\n<p><span class='markdown_spoiler'><span>It is eventually revealed that she is actually the B1 floor master. The other floor masters say that she is ruthless, selfish, and manipulative, and willing to do anything to get what she wants, although it's a misnomer to call her an an evil or malicious person, as she doesn't inherently understand human morality and doesn't have actual cruel impulses.</span></span></p>\n<p>Ray is initially presented as extremely calm and collected, however she has issues with empathy and difficulty expressing or understanding emotions. While she has shown fear, anger, compassion, and happiness, these moments are rare and fleeting. She does not, however, fake emotions, and will not pretend to have feelings that aren't present. Ray is fixated on the idea of the existence of God. </p>\n<p><span class='markdown_spoiler'><span>Her desperation in needing a God she believes made her so delusional that she saw Zack as her God. Only until Zack helped her accept her actions that she finally came to terms with her warped view and realized that her true wish was simply to be wished in life and death. Afterwards, Ray started to act like a normal person, particularly in regards to Zack who she developed a close bond with over time. Ray becomes more expressive as the series goes on.</span></span></p>\n<p>(Source: Satsuriku no Tenshi Wiki, edited)</p>",
+                alternativeNames = listOf("Ray"),
+                alternativeSpoilerNames = emptyList(),
+                favorites = 12123,
+                coverImage = "https:\\s4.anilist.co\\file\\anilistcdn\\character\\large\\123327-V47VOOqFfsVy.jpg",
+                isFavourite = true,
+            ),
         isFavorite = true,
         onNavigateToMedia = {},
         onNavigateToStaff = {},
         toggleFavorite = {},
-        isLoading = false
+        isLoading = false,
     )
 }

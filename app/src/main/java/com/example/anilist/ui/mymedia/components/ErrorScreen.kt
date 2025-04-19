@@ -15,18 +15,23 @@ import com.example.anilist.R
 import com.example.anilist.ui.Dimens
 
 @Composable
-fun ErrorScreen(errorMessage: String, reloadMedia: () -> Unit, modifier: Modifier = Modifier) {
+fun ErrorScreen(
+    errorMessage: String,
+    reloadMedia: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(Dimens.PaddingNormal)
-            .then(modifier),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(Dimens.PaddingNormal)
+                .then(modifier),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(text = errorMessage)
         Text(
-            text = stringResource(R.string.network_error_info)
+            text = stringResource(R.string.network_error_info),
         )
         Button(onClick = {
             reloadMedia()

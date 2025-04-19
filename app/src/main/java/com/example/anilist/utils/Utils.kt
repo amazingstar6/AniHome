@@ -10,7 +10,6 @@ import timber.log.Timber
 
 class Utils {
     companion object {
-
         /**
          * Converts a timestamp in epoch seconds to a string in the format like "03-12-2012"
          */
@@ -68,7 +67,7 @@ class Utils {
             return FuzzyDate(
                 time.year,
                 time.monthNumber,
-                time.dayOfMonth
+                time.dayOfMonth,
             )
         }
 
@@ -146,7 +145,7 @@ class Utils {
                 time.dayOfMonth,
                 time.hour,
                 time.minute,
-                TimeZone.currentSystemDefault().toString()
+                TimeZone.currentSystemDefault().toString(),
             )
         }
     }

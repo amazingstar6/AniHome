@@ -11,8 +11,8 @@ private const val STARTING_KEY = 1
 
 class SearchStudioPagingSource(
     private val homeRepository: HomeRepositoryImpl,
-    private val search: String
-): PagingSource<Int, AniStudio>() {
+    private val search: String,
+) : PagingSource<Int, AniStudio>() {
     override fun getRefreshKey(state: PagingState<Int, AniStudio>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
             // anchor position is the last index that successfully fetched data
@@ -33,7 +33,7 @@ class SearchStudioPagingSource(
                 LoadResult.Page(
                     data = data.data,
                     prevKey = if (start == STARTING_KEY) null else start - 1,
-                    nextKey = if (data.data.isNotEmpty()) start + 1 else null
+                    nextKey = if (data.data.isNotEmpty()) start + 1 else null,
                 )
             }
         }

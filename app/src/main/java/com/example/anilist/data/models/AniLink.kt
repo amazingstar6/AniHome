@@ -6,12 +6,12 @@ data class AniLink(
     val language: String,
     val color: String,
     val icon: String,
-    val type: AniLinkType
+    val type: AniLinkType,
 )
 
 enum class AniLinkType {
     INFO,
     STREAMING,
     SOCIAL,
-    UNKNOWN;
+    UNKNOWN,
 }

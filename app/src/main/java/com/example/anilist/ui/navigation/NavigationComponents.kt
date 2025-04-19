@@ -20,7 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 fun AniListBottomNavigationBar(
     selectedDestination: String,
-    navigateToTopLevelDestination: (AnilistTopLevelDestination) -> Unit
+    navigateToTopLevelDestination: (AnilistTopLevelDestination) -> Unit,
 ) {
     NavigationBar {
         TOP_LEVEL_DESTINATIONS.forEach { destination ->
@@ -31,16 +31,18 @@ fun AniListBottomNavigationBar(
                     if (selectedDestination == destination.route) {
                         Icon(
                             painter = painterResource(id = destination.selectedIcon),
-                            contentDescription = stringResource(
-                                id = destination.iconTextId,
-                            ),
+                            contentDescription =
+                                stringResource(
+                                    id = destination.iconTextId,
+                                ),
                         )
                     } else {
                         Icon(
                             painter = painterResource(id = destination.unselectedIcon),
-                            contentDescription = stringResource(
-                                id = destination.iconTextId,
-                            ),
+                            contentDescription =
+                                stringResource(
+                                    id = destination.iconTextId,
+                                ),
                         )
                     }
                 },
@@ -56,7 +58,7 @@ fun AniListBottomNavigationBar(
 @Composable
 fun AniListNavigationRail(
     selectedDestination: String,
-    navigateToTopLevelDestination: (AnilistTopLevelDestination) -> Unit
+    navigateToTopLevelDestination: (AnilistTopLevelDestination) -> Unit,
 ) {
     NavigationRail(modifier = Modifier.fillMaxHeight()) {
         Spacer(modifier = Modifier.weight(1f))
@@ -68,16 +70,18 @@ fun AniListNavigationRail(
                     if (selectedDestination == destination.route) {
                         Icon(
                             painter = painterResource(id = destination.selectedIcon),
-                            contentDescription = stringResource(
-                                id = destination.iconTextId,
-                            ),
+                            contentDescription =
+                                stringResource(
+                                    id = destination.iconTextId,
+                                ),
                         )
                     } else {
                         Icon(
                             painter = painterResource(id = destination.unselectedIcon),
-                            contentDescription = stringResource(
-                                id = destination.iconTextId,
-                            ),
+                            contentDescription =
+                                stringResource(
+                                    id = destination.iconTextId,
+                                ),
                         )
                     }
                 },
@@ -94,7 +98,7 @@ fun AniListNavigationRail(
 fun AniBottomNavigationBarPreview() {
     AniListBottomNavigationBar(
         selectedDestination = AniListRoute.HOME_ROUTE,
-        navigateToTopLevelDestination = { }
+        navigateToTopLevelDestination = { },
     )
 }
 
@@ -103,6 +107,6 @@ fun AniBottomNavigationBarPreview() {
 fun AniNavigationRailPreview() {
     AniListNavigationRail(
         selectedDestination = AniListRoute.HOME_ROUTE,
-        navigateToTopLevelDestination = { }
+        navigateToTopLevelDestination = { },
     )
 }

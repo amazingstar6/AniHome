@@ -11,7 +11,7 @@ private const val STARTING_KEY = 1
 
 class SearchUserPagingSource(
     private val homeRepository: HomeRepositoryImpl,
-    private val search: String
+    private val search: String,
 ) : PagingSource<Int, AniUser>() {
     override fun getRefreshKey(state: PagingState<Int, AniUser>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
@@ -35,7 +35,7 @@ class SearchUserPagingSource(
                 LoadResult.Page(
                     data = data.data,
                     prevKey = if (start == STARTING_KEY) null else start - 1,
-                    nextKey = if (data.data.isNotEmpty()) start + 1 else null
+                    nextKey = if (data.data.isNotEmpty()) start + 1 else null,
                 )
             }
         }

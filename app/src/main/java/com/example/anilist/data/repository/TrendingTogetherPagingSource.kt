@@ -7,9 +7,10 @@ import com.example.anilist.data.repository.homerepository.HomeRepositoryImpl
 
 data class TrendingTogether(
     val trending: List<Media>,
-    val popular: List<Media>
+    val popular: List<Media>,
 )
-class TrendingTogetherPagingSource(homeRepository: HomeRepositoryImpl, isAnime: Boolean):
+
+class TrendingTogetherPagingSource(homeRepository: HomeRepositoryImpl, isAnime: Boolean) :
     PagingSource<Int, TrendingTogether>() {
     override fun getRefreshKey(state: PagingState<Int, TrendingTogether>): Int? {
         TODO("Not yet implemented")
@@ -18,5 +19,4 @@ class TrendingTogetherPagingSource(homeRepository: HomeRepositoryImpl, isAnime: 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, TrendingTogether> {
         TODO("Not yet implemented")
     }
-
 }

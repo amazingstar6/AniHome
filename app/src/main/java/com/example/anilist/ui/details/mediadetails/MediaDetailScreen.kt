@@ -59,11 +59,11 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.anilist.MainActivity
 import com.example.anilist.R
-import com.example.anilist.data.models.FuzzyDate
-import com.example.anilist.data.models.Media
+import com.example.anilist.data.models.AniLikeAbleType
 import com.example.anilist.data.models.AniMediaType
 import com.example.anilist.data.models.AniPersonalMediaStatus
-import com.example.anilist.data.models.AniLikeAbleType
+import com.example.anilist.data.models.FuzzyDate
+import com.example.anilist.data.models.Media
 import com.example.anilist.ui.EditStatusModalSheet
 import com.example.anilist.ui.details.mediadetails.components.Characters
 import com.example.anilist.ui.details.mediadetails.components.Overview
@@ -97,7 +97,7 @@ fun MediaDetail(
     navigateToCharacter: (Int) -> Unit,
     onNavigateToStaff: (Int) -> Unit,
     onNavigateToLargeCover: (String) -> Unit,
-    navigateToStudioDetails: (Int) -> Unit
+    navigateToStudioDetails: (Int) -> Unit,
 ) {
     val media by mediaDetailsViewModel.media.collectAsStateWithLifecycle()
 
@@ -105,7 +105,9 @@ fun MediaDetail(
         mutableStateOf(
             if (media is MediaDetailUiState.Success) {
                 (media as MediaDetailUiState.Success).data.type == AniMediaType.ANIME
-            } else true
+            } else {
+                true
+            },
         )
     }
     var editStatusBottomSheetIsVisible by remember { mutableStateOf(false) }
@@ -134,10 +136,9 @@ fun MediaDetail(
 
 //    fetchMedia()
 
-    //fixme reviews reload (network) on navigating back
+    // fixme reviews reload (network) on navigating back
     val reviews = mediaDetailsViewModel.reviews.collectAsLazyPagingItems()
     val staff = mediaDetailsViewModel.staffList.collectAsLazyPagingItems()
-
 
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(title = {
@@ -165,7 +166,7 @@ fun MediaDetail(
                     }
                 },
                 positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                state = rememberTooltipState()
+                state = rememberTooltipState(),
             ) {
                 IconButton(
                     onClick = {
@@ -176,14 +177,20 @@ fun MediaDetail(
                     },
                 ) {
                     Icon(
-                        painter = painterResource(
-                            id = if (if (media is MediaDetailUiState.Success) {
-                                    (media as MediaDetailUiState.Success).data.isFavourite
-                                } else false
-                            ) {
-                                R.drawable.baseline_favorite_24
-                            } else R.drawable.anime_details_heart,
-                        ),
+                        painter =
+                            painterResource(
+                                id =
+                                    if (if (media is MediaDetailUiState.Success) {
+                                            (media as MediaDetailUiState.Success).data.isFavourite
+                                        } else {
+                                            false
+                                        }
+                                    ) {
+                                        R.drawable.baseline_favorite_24
+                                    } else {
+                                        R.drawable.anime_details_heart
+                                    },
+                            ),
                         contentDescription = "Add to favourites",
                     )
                 }
@@ -206,12 +213,11 @@ fun MediaDetail(
                 ErrorScreen(
                     errorMessage = (media as MediaDetailUiState.Error).message,
                     reloadMedia = { mediaDetailsViewModel.fetchMedia(mediaId) },
-                    modifier = Modifier.padding(top = it.calculateTopPadding())
+                    modifier = Modifier.padding(top = it.calculateTopPadding()),
                 )
             }
 
             is MediaDetailUiState.Success, MediaDetailUiState.Loading -> {
-
                 val selectedLanguage by mediaDetailsViewModel.selectedCharacterLanguage.collectAsStateWithLifecycle()
                 val characters = mediaDetailsViewModel.characterList.collectAsLazyPagingItems()
                 val setSelectedLanguage: (Int) -> Unit =
@@ -221,7 +227,8 @@ fun MediaDetail(
                         val pagerState =
                             rememberPagerState(
                                 initialPage = 0,
-                                pageCount = { DetailTabs.values().size })
+                                pageCount = { DetailTabs.values().size },
+                            )
                         val pagerScope = rememberCoroutineScope()
 //                val nestedScrollConnection = PagerDefaults.pageNestedScrollConnection(Orientation.Horizontal)
 
@@ -234,17 +241,18 @@ fun MediaDetail(
                                     pagerState.animateScrollToPage(it.ordinal)
                                 }
 //                        index = it
-                            }
+                            },
                         )
                         HorizontalPager(
                             state = pagerState,
 //                    flingBehavior = PagerDefaults.flingBehavior(
 //                        state = pagerState,
 //                    ),
-                            flingBehavior = PagerDefaults.flingBehavior(
-                                state = pagerState,
-                                snapAnimationSpec = spring(stiffness = Spring.StiffnessHigh)
-                            )
+                            flingBehavior =
+                                PagerDefaults.flingBehavior(
+                                    state = pagerState,
+                                    snapAnimationSpec = spring(stiffness = Spring.StiffnessHigh),
+                                ),
 //                    pageNestedScrollConnection = nestedScrollConnection
                         ) { currentPage ->
                             when (currentPage) {
@@ -254,7 +262,7 @@ fun MediaDetail(
                                         isLoading = media is MediaDetailUiState.Loading,
                                         onNavigateToDetails,
                                         onNavigateToLargeCover,
-                                        navigateToStudioDetails
+                                        navigateToStudioDetails,
                                     )
                                 }
 
@@ -285,16 +293,16 @@ fun MediaDetail(
                                             reviews,
                                             vote = { rating, reviewId ->
                                                 mediaDetailsViewModel.rateReview(reviewId, rating)
-                                                reviews.refresh() //fixme don't reload pls
+                                                reviews.refresh() // fixme don't reload pls
                                             },
-                                            onNavigateToReviewDetails
+                                            onNavigateToReviewDetails,
                                         )
                                     }
                                 }
 
                                 4 -> {
                                     Stats(
-                                        (media as MediaDetailUiState.Success).data.stats
+                                        (media as MediaDetailUiState.Success).data.stats,
                                     )
                                 }
                             }
@@ -307,11 +315,11 @@ fun MediaDetail(
                                 media = (media as? MediaDetailUiState.Success)?.data ?: Media(),
                                 saveStatus = { status, isComplete ->
                                     mediaDetailsViewModel.updateProgress(
-                                        if (isComplete) status.copy(status = AniPersonalMediaStatus.COMPLETED) else status
+                                        if (isComplete) status.copy(status = AniPersonalMediaStatus.COMPLETED) else status,
                                     )
                                 },
                                 isAnime = isAnime,
-                                deleteListEntry = { mediaDetailsViewModel.deleteEntry(it) }
+                                deleteListEntry = { mediaDetailsViewModel.deleteEntry(it) },
                             )
                         }
                     }
@@ -326,7 +334,7 @@ fun MediaDetail(
 fun OpenInBrowserAndShareToolTips(
     uriHandler: UriHandler,
     uri: String,
-    context: Context
+    context: Context,
 ) {
     TooltipBox(
         tooltip = {
@@ -337,10 +345,10 @@ fun OpenInBrowserAndShareToolTips(
             }
         },
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-        state = rememberTooltipState()
+        state = rememberTooltipState(),
     ) {
         IconButton(
-            onClick = { uriHandler.openUri(uri) }
+            onClick = { uriHandler.openUri(uri) },
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
@@ -351,24 +359,26 @@ fun OpenInBrowserAndShareToolTips(
     TooltipBox(
         tooltip = { PlainTooltip { Text(stringResource(id = R.string.share)) } },
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-        state = rememberTooltipState()
+        state = rememberTooltipState(),
     ) {
         IconButton(onClick = {
-            val sendIntent: Intent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, uri)
-                putExtra(Intent.EXTRA_TITLE, "Share AniList.co URL")
-                type = "text/plain"
-            }
+            val sendIntent: Intent =
+                Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, uri)
+                    putExtra(Intent.EXTRA_TITLE, "Share AniList.co URL")
+                    type = "text/plain"
+                }
 
             val shareIntent = Intent.createChooser(sendIntent, "Share AniList.co URL")
             startActivity(context, shareIntent, null)
         }) {
             Icon(
                 imageVector = Icons.Default.Share,
-                contentDescription = stringResource(
-                    id = R.string.share,
-                ),
+                contentDescription =
+                    stringResource(
+                        id = R.string.share,
+                    ),
             )
         }
     }
@@ -394,7 +404,10 @@ private fun AniDetailTabs(
 }
 
 @Composable
-fun QuickInfo(media: Media, isAnime: Boolean) {
+fun QuickInfo(
+    media: Media,
+    isAnime: Boolean,
+) {
     Column(modifier = Modifier.padding(start = 24.dp)) {
         IconWithText(
             R.drawable.anime_details_movie,
@@ -403,15 +416,16 @@ fun QuickInfo(media: Media, isAnime: Boolean) {
         )
         IconWithText(
             R.drawable.anime_details_calendar,
-            text = if (isAnime) {
-                "${media.season.getString(LocalContext.current)}${if (media.seasonYear != -1) " " + media.seasonYear else ""}"
-            } else {
-                if (media.startDate != null) {
-                    formatFuzzyDateToYearMonthDayString(media.startDate)
+            text =
+                if (isAnime) {
+                    "${media.season.getString(LocalContext.current)}${if (media.seasonYear != -1) " " + media.seasonYear else ""}"
                 } else {
-                    stringResource(id = R.string.question_mark)
-                }
-            },
+                    if (media.startDate != null) {
+                        formatFuzzyDateToYearMonthDayString(media.startDate)
+                    } else {
+                        stringResource(id = R.string.question_mark)
+                    }
+                },
             textColor = MaterialTheme.colorScheme.onSurface,
         )
         IconWithText(
@@ -423,7 +437,9 @@ fun QuickInfo(media: Media, isAnime: Boolean) {
                         quantity = media.episodeAmount,
                         media.episodeAmount,
                     )
-                } else stringResource(id = R.string.question_mark)
+                } else {
+                    stringResource(id = R.string.question_mark)
+                }
             } else {
                 if (media.chapters != -1) {
                     quantityStringResource(
@@ -439,20 +455,25 @@ fun QuickInfo(media: Media, isAnime: Boolean) {
         )
         IconWithText(
             R.drawable.anime_details_heart,
-            text = if (media.averageScore != -1) "${media.averageScore}% Average score" else stringResource(
-                id = R.string.question_mark
-            ),
+            text =
+                if (media.averageScore != -1) {
+                    "${media.averageScore}% Average score"
+                } else {
+                    stringResource(
+                        id = R.string.question_mark,
+                    )
+                },
             textColor = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
 
-fun formatFuzzyDateToYearMonthDayString(startDate: FuzzyDate) = "${
-    startDate.day.toString().padStart(2, '0')
-}-${
-    startDate.month.toString().padStart(2, '0')
-}-${startDate.year.toString().padStart(2, '0')}"
-
+fun formatFuzzyDateToYearMonthDayString(startDate: FuzzyDate) =
+    "${
+        startDate.day.toString().padStart(2, '0')
+    }-${
+        startDate.month.toString().padStart(2, '0')
+    }-${startDate.year.toString().padStart(2, '0')}"
 
 @Composable
 fun IconWithText(
@@ -464,9 +485,10 @@ fun IconWithText(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .padding(vertical = 4.dp)
-            .then(modifier),
+        modifier =
+            Modifier
+                .padding(vertical = 4.dp)
+                .then(modifier),
     ) {
         Icon(
             painter = painterResource(id = icon),
@@ -481,4 +503,3 @@ fun IconWithText(
         )
     }
 }
-

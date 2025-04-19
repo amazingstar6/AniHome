@@ -25,7 +25,6 @@ import kotlin.properties.ReadOnlyProperty
 // fixme tests only work when executed separately
 @HiltAndroidTest
 class ComposeTests {
-
     /**
      * Manages the components' state and is used to perform injection on your test
      */
@@ -52,12 +51,13 @@ class ComposeTests {
 //        composeTestRule.activity.datas
         File(
             ApplicationProvider.getApplicationContext<Context>().filesDir,
-            "USER_PREFERENCES"
+            "USER_PREFERENCES",
         ).deleteRecursively()
     }
 
-    private fun AndroidComposeTestRule<*, *>.stringResource(@StringRes resId: Int) =
-        ReadOnlyProperty<Any?, String> { _, _ -> activity.getString(resId) }
+    private fun AndroidComposeTestRule<*, *>.stringResource(
+        @StringRes resId: Int,
+    ) = ReadOnlyProperty<Any?, String> { _, _ -> activity.getString(resId) }
 
     private val settings by composeTestRule.stringResource(R.string.settings)
     private val back by composeTestRule.stringResource(R.string.back)
@@ -88,8 +88,11 @@ class ComposeTests {
 
 // A custom runner to set up the instrumented application class for tests.
 class CustomTestRunner : AndroidJUnitRunner() {
-
-    override fun newApplication(cl: ClassLoader?, name: String?, context: Context?): Application {
+    override fun newApplication(
+        cl: ClassLoader?,
+        name: String?,
+        context: Context?,
+    ): Application {
         return super.newApplication(cl, HiltTestApplication::class.java.name, context)
     }
 }

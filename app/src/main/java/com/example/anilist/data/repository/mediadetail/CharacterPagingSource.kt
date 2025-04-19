@@ -9,8 +9,8 @@ private const val STARTING_KEY = 1
 
 class CharacterPagingSource(
     private val mediaDetailsRepository: MediaDetailsRepository,
-    private val mediaId: Int
-): PagingSource<Int, CharacterWithVoiceActor>() {
+    private val mediaId: Int,
+) : PagingSource<Int, CharacterWithVoiceActor>() {
     override fun getRefreshKey(state: PagingState<Int, CharacterWithVoiceActor>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
             // anchor position is the last index that successfully fetched data
@@ -26,7 +26,7 @@ class CharacterPagingSource(
                 LoadResult.Page(
                     data = data.data,
                     prevKey = if (start == STARTING_KEY) null else start - 1,
-                    nextKey = if (data.data.isNotEmpty()) start + 1 else null
+                    nextKey = if (data.data.isNotEmpty()) start + 1 else null,
                 )
             }
 

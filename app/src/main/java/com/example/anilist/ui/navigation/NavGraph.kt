@@ -79,14 +79,17 @@ fun AniNavHost(
                 navigateToThreadDetails = navigationActions::navigateToThread,
                 navigateToUserDetails = navigationActions::navigateToUser,
                 navigateToOverview = navigationActions::navigateToOverview,
-                unreadNotificationsViewModel = unreadNotificationsViewModel
+                unreadNotificationsViewModel = unreadNotificationsViewModel,
             )
         }
         composableMaterialForwardBackWard(
             route = AniListRoute.MEDIA_OVERVIEW_ROUTE + "/{trendingType}",
-            arguments = listOf(navArgument("trendingType") {
-                type = NavType.IntType
-            }),
+            arguments =
+                listOf(
+                    navArgument("trendingType") {
+                        type = NavType.IntType
+                    },
+                ),
         ) { navBackStackEntry ->
             val ordinalNumber = navBackStackEntry.arguments?.getInt("trendingType") ?: -1
             setBottomBarState(false)
@@ -94,12 +97,11 @@ fun AniNavHost(
                 homeViewModel = homeViewModel,
                 ordinalNumber = ordinalNumber,
                 navigateBack = navigationActions::navigateBack,
-                navigateToDetails = navigationActions::navigateToMediaDetails
+                navigateToDetails = navigationActions::navigateToMediaDetails,
             )
         }
         composableMaterialForwardBackWard(
             "${AniListRoute.MEDIA_DETAIL_ROUTE}/{${AniListRoute.MEDIA_DETAIL_ID_KEY}}",
-
 //            enterTransition = {
 //                slideIn(initialOffset = {
 //                    IntOffset(
@@ -123,7 +125,7 @@ fun AniNavHost(
 //                        y = 0
 //                    )
 //                }) + fadeOut()
-////                scaleOut()
+// //                scaleOut()
 //            },
 //            popExitTransition = {
 //                slideOut(targetOffset = {
@@ -132,13 +134,14 @@ fun AniNavHost(
 //                        y = 0
 //                    )
 //                }) + fadeOut()
-////                scaleOut()
+// //                scaleOut()
 //            },
-            arguments = listOf(
-                navArgument(AniListRoute.MEDIA_DETAIL_ID_KEY) {
-                    type = NavType.IntType
-                },
-            ),
+            arguments =
+                listOf(
+                    navArgument(AniListRoute.MEDIA_DETAIL_ID_KEY) {
+                        type = NavType.IntType
+                    },
+                ),
         ) { backStackEntry ->
             setBottomBarState(false)
             MediaDetail(
@@ -150,14 +153,17 @@ fun AniNavHost(
                 navigateToCharacter = navigationActions::navigateToCharacter,
                 onNavigateToStaff = navigationActions::navigateToStaff,
                 onNavigateToLargeCover = navigationActions::navigateToLargeCover,
-                navigateToStudioDetails = navigationActions::navigateToStudio
+                navigateToStudioDetails = navigationActions::navigateToStudio,
             )
         }
         composableMaterialForwardBackWard(
             route = "${AniListRoute.CHARACTER_DETAIL_ROUTE}/{${AniListRoute.CHARACTER_DETAIL_KEY}}",
-            arguments = listOf(navArgument(AniListRoute.CHARACTER_DETAIL_KEY) {
-                type = NavType.IntType
-            }),
+            arguments =
+                listOf(
+                    navArgument(AniListRoute.CHARACTER_DETAIL_KEY) {
+                        type = NavType.IntType
+                    },
+                ),
             content = { backStackEntry ->
                 CharacterDetailScreen(
                     id = backStackEntry.arguments?.getInt(AniListRoute.CHARACTER_DETAIL_KEY) ?: -1,
@@ -169,9 +175,12 @@ fun AniNavHost(
         )
         composableMaterialForwardBackWard(
             route = AniListRoute.STAFF_DETAIL_ROUTE + "/{${AniListRoute.STAFF_DETAIL_ID_KEY}}",
-            arguments = listOf(navArgument(AniListRoute.STAFF_DETAIL_ID_KEY) {
-                type = NavType.IntType
-            }),
+            arguments =
+                listOf(
+                    navArgument(AniListRoute.STAFF_DETAIL_ID_KEY) {
+                        type = NavType.IntType
+                    },
+                ),
             content = { backStackEntry ->
                 StaffDetailScreen(
                     id = backStackEntry.arguments?.getInt(AniListRoute.STAFF_DETAIL_ID_KEY) ?: -1,
@@ -187,7 +196,7 @@ fun AniNavHost(
             content = { backStackEntry ->
                 ReviewDetailScreen(
                     reviewId = backStackEntry.arguments?.getInt("reviewId") ?: -1,
-                    onNavigateBack = navigationActions::navigateBack
+                    onNavigateBack = navigationActions::navigateBack,
                 )
             },
         )
@@ -198,7 +207,7 @@ fun AniNavHost(
                 StudioDetailScreen(
                     id = backStackEntry.arguments?.getInt("studioId") ?: -1,
                     navigateToMedia = navigationActions::navigateToMediaDetails,
-                    navigateBack = navigationActions::navigateBack
+                    navigateBack = navigationActions::navigateBack,
                 )
             },
         )
@@ -220,14 +229,16 @@ fun AniNavHost(
                 )
             },
         )
-        composableMaterialForwardBackWard(route = AniListRoute.COVER_LARGE + "/{imageString}",
+        composableMaterialForwardBackWard(
+            route = AniListRoute.COVER_LARGE + "/{imageString}",
             arguments = listOf(navArgument("imageString") { type = NavType.StringType }),
             content = { navBackStackEntry ->
                 CoverLarge(
                     coverImage = navBackStackEntry.arguments?.getString("imageString") ?: "",
-                    navigateBack = navigationActions::navigateBack
+                    navigateBack = navigationActions::navigateBack,
                 )
-            })
+            },
+        )
         composableMaterialForwardBackWard(
             AniListRoute.NOTIFICATION_ROUTE,
         ) {
@@ -239,7 +250,7 @@ fun AniNavHost(
                 onNavigateToUser = navigationActions::navigateToUser,
                 onNavigateToThread = navigationActions::navigateToThread,
                 onNavigateToThreadComment = navigationActions::navigateToThreadComment,
-                unreadNotificationsViewModel = unreadNotificationsViewModel
+                unreadNotificationsViewModel = unreadNotificationsViewModel,
             )
         }
         composableMaterialForwardBackWard(
@@ -248,18 +259,20 @@ fun AniNavHost(
             content = { navBackStackEntry ->
                 ActivityDetailScreen(
                     activityId = navBackStackEntry.arguments?.getInt("activityId") ?: -1,
-                    navigateBack = navigationActions::navigateBack
+                    navigateBack = navigationActions::navigateBack,
                 )
-            })
+            },
+        )
         composableMaterialForwardBackWard(
             route = AniListRoute.THREAD_COMMENT + "/{commentId}",
             arguments = listOf(navArgument("commentId") { type = NavType.IntType }),
             content = { navBackStackEntry ->
                 ThreadCommentScreen(
                     commentId = navBackStackEntry.arguments?.getInt("commentId") ?: -1,
-                    navigateBack = navigationActions::navigateBack
+                    navigateBack = navigationActions::navigateBack,
                 )
-            })
+            },
+        )
         composableMaterialForwardBackWard(
             AniListRoute.SETTINGS,
         ) {
@@ -308,7 +321,7 @@ fun materialPopExitTransition() =
     slideOut(animationSpec = materialExitTransitionSpec(), targetOffset = {
         IntOffset(
             x = it.width / 4,
-            y = 0
+            y = 0,
         )
     }) + fadeOut(animationSpec = materialExitTransitionSpec())
 
@@ -316,7 +329,7 @@ fun materialExitTransition() =
     slideOut(animationSpec = materialExitTransitionSpec(), targetOffset = {
         IntOffset(
             x = -it.width / 4,
-            y = 0
+            y = 0,
         )
     }) + fadeOut(animationSpec = materialExitTransitionSpec())
 
@@ -324,15 +337,16 @@ fun materialPopEnterTransition() =
     slideIn(animationSpec = materialExitTransitionSpec(), initialOffset = {
         IntOffset(
             x = -it.width / 4,
-            y = 0
+            y = 0,
         )
     }) + fadeIn(animationSpec = materialExitTransitionSpec())
 
-fun materialEnterTransition() = slideIn(
-    animationSpec = materialEnterTransitionSpec(), initialOffset = {
-        IntOffset(
-            x = it.width / 4,
-            y = 0
-        )
-    }) + fadeIn(animationSpec = materialEnterTransitionSpec())
-
+fun materialEnterTransition() =
+    slideIn(
+        animationSpec = materialEnterTransitionSpec(), initialOffset = {
+            IntOffset(
+                x = it.width / 4,
+                y = 0,
+            )
+        },
+    ) + fadeIn(animationSpec = materialEnterTransitionSpec())

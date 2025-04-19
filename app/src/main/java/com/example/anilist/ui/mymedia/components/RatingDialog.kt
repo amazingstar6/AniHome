@@ -18,13 +18,14 @@ fun RatingDialog(
     setShowRatingDialog: (Boolean) -> Unit,
     saveStatus: (StatusUpdate) -> Unit,
     currentMedia: Media,
-    setCurrentMedia: (Media) -> Unit
+    setCurrentMedia: (Media) -> Unit,
 ) {
     AlertDialog(onDismissRequest = { setShowRatingDialog(false) }, dismissButton = {
         TextButton(
             onClick = {
                 setShowRatingDialog(false)
-            }) {
+            },
+        ) {
             Text(text = stringResource(id = R.string.cancel))
         }
     }, confirmButton = {
@@ -46,11 +47,12 @@ fun RatingDialog(
                         advancedScores = null,
                         startedAt = null,
                         completedAt = null,
-                        mediaId = currentMedia.id
-                    )
+                        mediaId = currentMedia.id,
+                    ),
                 )
                 setShowRatingDialog(false)
-            }) {
+            },
+        ) {
             Text(text = stringResource(id = R.string.save))
         }
     }, text = {
@@ -60,12 +62,14 @@ fun RatingDialog(
                 setRawScore = {
                     setCurrentMedia(
                         currentMedia.copy(
-                            mediaListEntry = currentMedia.mediaListEntry.copy(
-                                score = it
-                            )
-                        )
+                            mediaListEntry =
+                                currentMedia.mediaListEntry.copy(
+                                    score = it,
+                                ),
+                        ),
                     )
-                })
+                },
+            )
         }
     })
 }
@@ -77,6 +81,6 @@ fun RatingDialogPreview() {
         setShowRatingDialog = {},
         saveStatus = {},
         currentMedia = Media(mediaListEntry = AniMediaListEntry(score = 25.0)),
-        setCurrentMedia = {}
+        setCurrentMedia = {},
     )
 }

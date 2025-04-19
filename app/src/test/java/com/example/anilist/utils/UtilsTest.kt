@@ -3,7 +3,7 @@ package com.example.anilist.utils
 import androidx.compose.ui.graphics.Color
 import com.example.anilist.utils.Utils.Companion.toHexString
 import org.junit.Test
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
 
 class UtilsTest {
     @Test

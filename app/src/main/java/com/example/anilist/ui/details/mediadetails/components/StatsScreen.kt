@@ -20,8 +20,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewFontScale
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import com.example.anilist.R
 import com.example.anilist.data.models.AniScoreDistribution
@@ -33,7 +31,6 @@ import com.example.anilist.ui.theme.AnilistTheme
 import com.patrykandpatrick.vico.compose.axis.axisGuidelineComponent
 import com.patrykandpatrick.vico.compose.axis.axisLineComponent
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
-import com.patrykandpatrick.vico.compose.axis.vertical.startAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
 import com.patrykandpatrick.vico.compose.chart.column.columnChart
 import com.patrykandpatrick.vico.compose.component.textComponent
@@ -45,9 +42,10 @@ import com.patrykandpatrick.vico.core.entry.entryModelOf
 @Composable
 fun Stats(stats: AniStats) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(Dimens.PaddingNormal),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(Dimens.PaddingNormal),
     ) {
         if (stats.ranksIsNotEmpty) {
             Heading(stringResource(R.string.rankings))
@@ -56,30 +54,33 @@ fun Stats(stats: AniStats) {
 
         Heading(stringResource(R.string.score_distribution))
         val scoreDistribution = stats.scoreDistribution
-        val chartEntryModel = entryModelOf(
-            10 to scoreDistribution.ten,
-            20 to scoreDistribution.twenty,
-            30 to scoreDistribution.thirty,
-            40 to scoreDistribution.forty,
-            50 to scoreDistribution.fifty,
-            60 to scoreDistribution.sixty,
-            70 to scoreDistribution.seventy,
-            80 to scoreDistribution.eighty,
-            90 to scoreDistribution.ninety,
-            100 to scoreDistribution.hundred,
-        )
+        val chartEntryModel =
+            entryModelOf(
+                10 to scoreDistribution.ten,
+                20 to scoreDistribution.twenty,
+                30 to scoreDistribution.thirty,
+                40 to scoreDistribution.forty,
+                50 to scoreDistribution.fifty,
+                60 to scoreDistribution.sixty,
+                70 to scoreDistribution.seventy,
+                80 to scoreDistribution.eighty,
+                90 to scoreDistribution.ninety,
+                100 to scoreDistribution.hundred,
+            )
         ProvideChartStyle(m3ChartStyle()) {
             Chart(
-                chart = columnChart(
-                    dataLabel = textComponent(color = MaterialTheme.colorScheme.onSurface),
-                    dataLabelVerticalPosition = VerticalPosition.Top,
-                ),
+                chart =
+                    columnChart(
+                        dataLabel = textComponent(color = MaterialTheme.colorScheme.onSurface),
+                        dataLabelVerticalPosition = VerticalPosition.Top,
+                    ),
                 model = chartEntryModel,
-                bottomAxis = bottomAxis(
-                    axis = axisLineComponent(),
-                    label = textComponent(color = MaterialTheme.colorScheme.onSurface),
-                    guideline = axisGuidelineComponent(thickness = 0.dp),
-                ),
+                bottomAxis =
+                    bottomAxis(
+                        axis = axisLineComponent(),
+                        label = textComponent(color = MaterialTheme.colorScheme.onSurface),
+                        guideline = axisGuidelineComponent(thickness = 0.dp),
+                    ),
             )
         }
         Heading(stringResource(R.string.status_distribution))
@@ -94,27 +95,31 @@ fun Stats(stats: AniStats) {
                 Pair(AniStatsStatusTypes.DROPPED, statusDistribution.dropped),
             ).sortedByDescending { it.second }
 
-        //todo sort by largest first
+        // todo sort by largest first
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = Dimens.PaddingSmall),
-            horizontalArrangement = Arrangement.SpaceAround
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = Dimens.PaddingSmall),
+            horizontalArrangement = Arrangement.SpaceAround,
         ) {
             listToSortValues.forEach {
                 StatsLegendText(
                     text = it.first.toString(LocalContext.current),
                     it.first.getColor(LocalContext.current),
-                    it.second
+                    it.second,
                 )
             }
         }
         Row(modifier = Modifier.fillMaxWidth()) {
             listToSortValues.forEach {
                 HorizontalDivider(
-                    modifier = Modifier.weight(
-                        it.second.toFloat()
-                    ), thickness = 12.dp, color = it.first.getColor(LocalContext.current)
+                    modifier =
+                        Modifier.weight(
+                            it.second.toFloat(),
+                        ),
+                    thickness = 12.dp,
+                    color = it.first.getColor(LocalContext.current),
                 )
             }
         }
@@ -133,7 +138,11 @@ fun Stats(stats: AniStats) {
  * | 1           | 1               | 0      |
  */
 @Composable
-fun Rankings(stats: AniStats, onlyShowTwo: Boolean = false, modifier: Modifier = Modifier) {
+fun Rankings(
+    stats: AniStats,
+    onlyShowTwo: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
     var heartShown = false
     var starShown = false
     Column(modifier = modifier) {
@@ -216,23 +225,24 @@ private fun StatsLegendText(
     text: String,
     color: Color,
     amount: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Surface(color = color, shape = MaterialTheme.shapes.medium) {
             Text(
                 text = text,
                 color = Color.White,
-                modifier = Modifier
-                    .padding(4.dp)
-                    .then(modifier)
+                modifier =
+                    Modifier
+                        .padding(4.dp)
+                        .then(modifier),
             )
         }
         Text(
             text = amount.toString(),
             color = color,
             style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(top = 2.dp)
+            modifier = Modifier.padding(top = 2.dp),
         )
     }
 }
@@ -247,21 +257,27 @@ private fun Heading(text: String) {
 }
 
 @Composable
-fun IconWithTextRankings(text: String, showHeart: Boolean) {
+fun IconWithTextRankings(
+    text: String,
+    showHeart: Boolean,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .padding(vertical = 4.dp)
-            .then(Modifier),
+        modifier =
+            Modifier
+                .padding(vertical = 4.dp)
+                .then(Modifier),
     ) {
         Icon(
-            painter = painterResource(
-                id = if (showHeart) {
-                    R.drawable.anime_details_heart
-                } else {
-                    R.drawable.anime_details_rating_star
-                },
-            ),
+            painter =
+                painterResource(
+                    id =
+                        if (showHeart) {
+                            R.drawable.anime_details_heart
+                        } else {
+                            R.drawable.anime_details_rating_star
+                        },
+                ),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.secondary,
         )
@@ -280,30 +296,33 @@ fun StatsPreview() {
     AnilistTheme {
         Surface {
             Stats(
-                stats = AniStats(
-                    highestRatedAllTime = 99,
-                    mostPopularAllTime = 183,
-                    highestRatedYearRank = 8,
-                    highestRatedYearNumber = 2023,
-                    mostPopularSeasonRank = 2,
-                    mostPopularSeasonYear = 2023,
-                    mostPopularSeasonSeason = AniSeason.SUMMER,
-                    mostPopularYearNumber = 2023,
-                    mostPopularYearRank = 65,
-                    highestRatedSeasonRank = 3,
-                    highestRatedSeasonSeason = AniSeason.SUMMER,
-                    highestRatedSeasonYear = 2023,
-                    scoreDistribution = AniScoreDistribution(
-                        105,
-                        34, 28, 28, 102, 143, 627, 1511, 3009, 2437,
-                    ),
-                    statusDistribution = AniStatsStatusDistribution(
-                        current = 279069,
-                        planning = 67133,
-                        completed = 20648,
-                        dropped = 29865,
-                        paused = 56446,
-                    )
+                stats =
+                    AniStats(
+                        highestRatedAllTime = 99,
+                        mostPopularAllTime = 183,
+                        highestRatedYearRank = 8,
+                        highestRatedYearNumber = 2023,
+                        mostPopularSeasonRank = 2,
+                        mostPopularSeasonYear = 2023,
+                        mostPopularSeasonSeason = AniSeason.SUMMER,
+                        mostPopularYearNumber = 2023,
+                        mostPopularYearRank = 65,
+                        highestRatedSeasonRank = 3,
+                        highestRatedSeasonSeason = AniSeason.SUMMER,
+                        highestRatedSeasonYear = 2023,
+                        scoreDistribution =
+                            AniScoreDistribution(
+                                105,
+                                34, 28, 28, 102, 143, 627, 1511, 3009, 2437,
+                            ),
+                        statusDistribution =
+                            AniStatsStatusDistribution(
+                                current = 279069,
+                                planning = 67133,
+                                completed = 20648,
+                                dropped = 29865,
+                                paused = 56446,
+                            ),
 //            mapOf(
 //                Status.CURRENT to 279069,
 //                Status.COMPLETED to 20648,
@@ -311,7 +330,7 @@ fun StatsPreview() {
 //                Status.DROPPED to 29865,
 //                Status.PAUSED to 56446,
 //            ),
-                ),
+                    ),
             )
         }
     }
@@ -322,7 +341,8 @@ enum class AniStatsStatusTypes {
     PLANNING,
     PAUSED,
     DROPPED,
-    COMPLETED;
+    COMPLETED,
+    ;
 
     fun toString(context: Context): String {
         return when (this) {

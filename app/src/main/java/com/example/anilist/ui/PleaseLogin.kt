@@ -14,7 +14,6 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.example.anilist.R
 
 @Composable
@@ -32,7 +31,7 @@ fun PleaseLogin() {
             style = MaterialTheme.typography.displayMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+            modifier = Modifier.padding(bottom = Dimens.PaddingSmall),
         )
         Button(onClick = {
             uriHandler.openUri("https://anilist.co/api/v2/oauth/authorize?client_id=13616&response_type=token")

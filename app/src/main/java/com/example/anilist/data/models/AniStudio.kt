@@ -7,5 +7,5 @@ data class AniStudio(
     val favourites: Int = -1,
     val isAnimationStudio: Boolean = false,
     val isFavourite: Boolean = false,
-    val siteUrl: String = ""
+    val siteUrl: String = "",
 )

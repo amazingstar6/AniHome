@@ -27,7 +27,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,7 +52,7 @@ import timber.log.Timber
 @Composable
 fun SettingsScreen(
     settingsViewModel: SettingsViewModel = hiltViewModel(),
-    navigateBack: () -> Unit
+    navigateBack: () -> Unit,
 ) {
     val settingsUiState by settingsViewModel.settingsUiState.collectAsStateWithLifecycle()
 
@@ -65,12 +64,14 @@ fun SettingsScreen(
                     IconButton(onClick = navigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = stringResource(
-                                id = R.string.back
-                            )
+                            contentDescription =
+                                stringResource(
+                                    id = R.string.back,
+                                ),
                         )
                     }
-                })
+                },
+            )
         },
     ) {
         SettingsContent(it, settingsUiState, settingsViewModel)
@@ -82,13 +83,14 @@ fun SettingsScreen(
 private fun SettingsContent(
     it: PaddingValues,
     settingsUiState: SettingsUiState,
-    settingsViewModel: SettingsViewModel
+    settingsViewModel: SettingsViewModel,
 ) {
     Column(
-        modifier = Modifier
-            .padding(top = it.calculateTopPadding())
-            .padding(Dimens.PaddingNormal)
-            .verticalScroll(rememberScrollState())
+        modifier =
+            Modifier
+                .padding(top = it.calculateTopPadding())
+                .padding(Dimens.PaddingNormal)
+                .verticalScroll(rememberScrollState()),
     ) {
         when (settingsUiState) {
             is SettingsUiState.Loading -> {
@@ -99,12 +101,15 @@ private fun SettingsContent(
                 var showModalBottomSheet by remember { mutableStateOf(false) }
                 var showDialogue by remember { mutableStateOf(false) }
                 Section("Display")
-                Column(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = Dimens.PaddingSmall)
-                    .clickable {
-                        showModalBottomSheet = true
-                    }) {
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = Dimens.PaddingSmall)
+                            .clickable {
+                                showModalBottomSheet = true
+                            },
+                ) {
                     Text(
                         text = "Theme",
                         style = MaterialTheme.typography.titleMedium,
@@ -126,11 +131,12 @@ private fun SettingsContent(
                             }, modifier = Modifier.fillMaxWidth()) {
                                 Text(
                                     text = theme.toString(),
-                                    color = if (theme == (settingsUiState as SettingsUiState.Success).settings.theme) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurface
-                                    }
+                                    color =
+                                        if (theme == (settingsUiState as SettingsUiState.Success).settings.theme) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        },
                                 )
                             }
                         }
@@ -143,9 +149,8 @@ private fun SettingsContent(
                     title = settingsUiState.settings.titleFormat.toString(),
                     currentIndex = settingsUiState.settings.titleFormat.ordinal,
                     valueList = TitleFormat.values().map { it.name },
-                    saveSetting = { settingsViewModel.saveTitle(TitleFormat.values()[it]) }
+                    saveSetting = { settingsViewModel.saveTitle(TitleFormat.values()[it]) },
                 )
-
 
                 if ((settingsUiState as SettingsUiState.Success).settings.accessCode != "") {
                     HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingNormal))
@@ -159,7 +164,7 @@ private fun SettingsContent(
                 if ((settingsUiState as SettingsUiState.Success).settings.accessCode != "") {
                     TextButton(
                         onClick = { showLogOutConfirmation = true },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(text = stringResource(id = R.string.log_out))
                     }
@@ -181,7 +186,7 @@ private fun SettingsContent(
                             }
                         },
                         title = { Text(text = stringResource(R.string.log_out_question)) },
-                        text = { Text(text = stringResource(R.string.are_you_sure_you_want_to_log_out)) }
+                        text = { Text(text = stringResource(R.string.are_you_sure_you_want_to_log_out)) },
                     )
                 }
 
@@ -192,18 +197,17 @@ private fun SettingsContent(
                             Toast.makeText(
                                 context,
                                 "Cache was successfully cleared!",
-                                Toast.LENGTH_SHORT
+                                Toast.LENGTH_SHORT,
                             ).show()
                         } else {
                             Toast.makeText(
                                 context,
                                 "Cache did not successfully clear!",
-                                Toast.LENGTH_SHORT
+                                Toast.LENGTH_SHORT,
                             ).show()
                         }
-
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(text = stringResource(id = R.string.clear_cache))
                 }
@@ -228,18 +232,21 @@ private fun RadioButtonSetting(
     title: String,
     currentIndex: Int,
     valueList: List<String>,
-    saveSetting: (Int) -> Unit
+    saveSetting: (Int) -> Unit,
 //    settingsUiState: SettingsUiState,
 //    settingsViewModel: SettingsViewModel
 ) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .clickable {
-            setShowDialogue(true)
-        }) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable {
+                    setShowDialogue(true)
+                },
+    ) {
         TitleSubtitle(
             "Title",
-            title
+            title,
         )
     }
     if (showDialogue) {
@@ -250,7 +257,8 @@ private fun RadioButtonSetting(
                     Text(text = "Close")
                 }
             },
-            title = { Text(text = "Title") }, text = {
+            title = { Text(text = "Title") },
+            text = {
                 // We have two radio buttons and only one can be selected
                 var state = currentIndex
                 // Note that Modifier.selectableGroup() is essential to ensure correct accessibility behavior.
@@ -261,16 +269,18 @@ private fun RadioButtonSetting(
                     valueList.forEachIndexed { index, title ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .toggleable(
-                                    value = state == index,
-                                    role = Role.RadioButton,
-                                    onValueChange = {
-                                        state = index
-                                        saveSetting(index)
-                                        setShowDialogue(false)
-                                    })
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .toggleable(
+                                        value = state == index,
+                                        role = Role.RadioButton,
+                                        onValueChange = {
+                                            state = index
+                                            saveSetting(index)
+                                            setShowDialogue(false)
+                                        },
+                                    ),
                         ) {
                             RadioButton(
                                 selected = state == index,
@@ -279,15 +289,16 @@ private fun RadioButtonSetting(
                                     saveSetting(index)
                                     setShowDialogue(false)
                                 },
-                                modifier = Modifier.semantics {
-                                    contentDescription = title
-                                }
+                                modifier =
+                                    Modifier.semantics {
+                                        contentDescription = title
+                                    },
                             )
                             Text(text = title)
                         }
                     }
                 }
-            }
+            },
         )
     }
 }
@@ -303,7 +314,10 @@ private fun Section(text: String) {
 }
 
 @Composable
-fun TitleSubtitle(title: String, subTitle: String) {
+fun TitleSubtitle(
+    title: String,
+    subTitle: String,
+) {
     Text(
         text = title,
         style = MaterialTheme.typography.titleMedium,

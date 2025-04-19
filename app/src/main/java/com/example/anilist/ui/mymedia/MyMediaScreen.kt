@@ -80,18 +80,18 @@ import coil.request.ImageRequest
 import com.example.anilist.R
 import com.example.anilist.data.models.AniMediaFormat
 import com.example.anilist.data.models.AniMediaListSort
+import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.EditStatusModalSheet
-import com.example.anilist.utils.LoadingCircle
 import com.example.anilist.ui.mymedia.components.ErrorScreen
 import com.example.anilist.ui.mymedia.components.FilterSheet
 import com.example.anilist.ui.mymedia.components.NoMediaScreen
 import com.example.anilist.ui.mymedia.components.RatingDialog
 import com.example.anilist.ui.mymedia.components.SortingBottomSheet
+import com.example.anilist.utils.LoadingCircle
 import com.example.anilist.utils.isScrollingUp
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -116,7 +116,6 @@ fun MyMediaScreen(
         myMediaViewModel.setSort(if (desc) AniMediaListSort.valueOf(newSort.name + "_DESC") else newSort)
     }
     val setIsDescending: (Boolean) -> Unit = { isDescending = it }
-
 
     LaunchedEffect(Unit) {
         myMediaViewModel
@@ -155,7 +154,7 @@ fun MyMediaScreen(
                 sort = sort,
                 setSort = setSort,
                 isDescending = isDescending,
-                setIsDescending = setIsDescending
+                setIsDescending = setIsDescending,
             )
         }
 
@@ -242,22 +241,28 @@ private fun MyMedia(
                 scrollBehavior = topAppBarScrollBehaviour,
                 title = {
                     Text(
-                        text = if (isAnime) stringResource(R.string.my_anime_list) else stringResource(
-                            R.string.my_manga_list
-                        )
+                        text =
+                            if (isAnime) {
+                                stringResource(R.string.my_anime_list)
+                            } else {
+                                stringResource(
+                                    R.string.my_manga_list,
+                                )
+                            },
                     )
                 },
                 actions = {
                     TooltipBox(
                         state = rememberTooltipState(),
                         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                        tooltip = {PlainTooltip { Text(text = stringResource(id = R.string.refresh)) }}
+                        tooltip = { PlainTooltip { Text(text = stringResource(id = R.string.refresh)) } },
                     ) {
                         IconButton(
-                            onClick = reloadMyMedia) {
+                            onClick = reloadMyMedia,
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = stringResource(id = R.string.refresh)
+                                contentDescription = stringResource(id = R.string.refresh),
                             )
                         }
                     }
@@ -267,40 +272,49 @@ private fun MyMedia(
                         state = rememberTooltipState(),
                     ) {
                         IconButton(
-                            onClick = { showSortingSheet = true }
+                            onClick = { showSortingSheet = true },
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.sort),
-                                contentDescription = stringResource(
-                                    id = R.string.sort
-                                )
+                                contentDescription =
+                                    stringResource(
+                                        id = R.string.sort,
+                                    ),
                             )
                         }
                     }
-                })
+                },
+            )
         },
         floatingActionButton = {
             AnimatedVisibility(
                 visible = isFabVisible,
-                enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(
-                    tween(100)
-                ),
-                exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(tween(300))
+                enter =
+                    slideInVertically(initialOffsetY = { it / 2 }) +
+                        fadeIn(
+                            tween(100),
+                        ),
+                exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(tween(300)),
             ) {
                 ExtendedFloatingActionButton(
                     text = {
                         Text(
-                            if (filter == AniPersonalMediaStatus.UNKNOWN) stringResource(id = R.string.filter) else filter.toString(
-                                isAnime = isAnime,
-                                context = LocalContext.current
-                            )
+                            if (filter == AniPersonalMediaStatus.UNKNOWN) {
+                                stringResource(id = R.string.filter)
+                            } else {
+                                filter.toString(
+                                    isAnime = isAnime,
+                                    context = LocalContext.current,
+                                )
+                            },
                         )
                     },
                     icon = {
                         Icon(
-                            painter = painterResource(
-                                id = filter.getIconResource()
-                            ),
+                            painter =
+                                painterResource(
+                                    id = filter.getIconResource(),
+                                ),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSecondaryContainer,
                         )
@@ -310,8 +324,9 @@ private fun MyMedia(
                     },
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier
-                        .padding(Dimens.PaddingNormal),
+                    modifier =
+                        Modifier
+                            .padding(Dimens.PaddingNormal),
                 )
             }
         },
@@ -345,10 +360,10 @@ private fun MyMedia(
                                 advancedScores = null,
                                 startedAt = null,
                                 completedAt = null,
-                                mediaId = currentMedia.id
+                                mediaId = currentMedia.id,
                             ),
                             (if (isAnime) currentMedia.episodeAmount else currentMedia.chapters)
-                                    == newProgress
+                                == newProgress,
                         )
                     },
                     increaseVolumeProgress = { entryId, newProgress ->
@@ -368,15 +383,15 @@ private fun MyMedia(
                                 advancedScores = null,
                                 startedAt = null,
                                 completedAt = null,
-                                mediaId = currentMedia.id
+                                mediaId = currentMedia.id,
                             ),
-                            currentMedia.volumes == currentMedia.mediaListEntry.progress
+                            currentMedia.volumes == currentMedia.mediaListEntry.progress,
                         )
                     },
                     showEditSheet = showEditSheet,
                     isAnime = isAnime,
                     openRatingDialog = openRatingDialog,
-                    lazyListState = lazyListState
+                    lazyListState = lazyListState,
                 )
             } else {
                 NoMediaScreen(isAnime = isAnime)
@@ -386,7 +401,8 @@ private fun MyMedia(
                     { showRatingDialog = it },
                     { saveStatus(it, false) },
                     currentMedia,
-                    { currentMedia = it })
+                    { currentMedia = it },
+                )
             }
             if (editSheetIsVisible) {
                 EditStatusModalSheet(
@@ -396,7 +412,7 @@ private fun MyMedia(
                     media = currentMedia,
                     saveStatus = saveStatus,
                     isAnime = isAnime,
-                    deleteListEntry = deleteListEntry
+                    deleteListEntry = deleteListEntry,
                 )
             }
             if (filterSheetIsVisible) {
@@ -405,7 +421,7 @@ private fun MyMedia(
                     hideFilterSheet,
                     filter,
                     setFilter = setFilter,
-                    isAnime
+                    isAnime,
                 )
             }
             if (showSortingSheet) {
@@ -414,7 +430,7 @@ private fun MyMedia(
                     isDescending = isDescending,
                     setIsDescending = setIsDescending,
                     setSort = setSort,
-                    sort = sort
+                    sort = sort,
                 )
             }
         }
@@ -434,61 +450,69 @@ private fun MyMediaLazyList(
     showEditSheet: (Media) -> Unit,
     openRatingDialog: (Media) -> Unit,
     isAnime: Boolean,
-    lazyListState: LazyListState
+    lazyListState: LazyListState,
 ) {
     val sortedMediaList: Map<AniPersonalMediaStatus, List<Media>>? by remember(
         key1 = sort,
-        key2 = myMedia
+        key2 = myMedia,
     ) {
-        mutableStateOf(myMedia?.mapValues { (_, mediaList) ->
-            when (sort) {
-                AniMediaListSort.MEDIA_ID -> mediaList.sortedBy { media -> media.id }
-                AniMediaListSort.MEDIA_ID_DESC -> mediaList.sortedByDescending { media -> media.id }
-                AniMediaListSort.SCORE -> mediaList.sortedBy { media -> media.mediaListEntry.score }
-                AniMediaListSort.SCORE_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.score }
-                AniMediaListSort.UPDATED_TIME -> mediaList.sortedBy { media -> sortDate(media.mediaListEntry.updatedAt) }
-                AniMediaListSort.UPDATED_TIME_DESC -> mediaList.sortedByDescending { media ->
-                    sortDate(
-                        media.mediaListEntry.updatedAt
-                    )
-                }
+        mutableStateOf(
+            myMedia?.mapValues { (_, mediaList) ->
+                when (sort) {
+                    AniMediaListSort.MEDIA_ID -> mediaList.sortedBy { media -> media.id }
+                    AniMediaListSort.MEDIA_ID_DESC -> mediaList.sortedByDescending { media -> media.id }
+                    AniMediaListSort.SCORE -> mediaList.sortedBy { media -> media.mediaListEntry.score }
+                    AniMediaListSort.SCORE_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.score }
+                    AniMediaListSort.UPDATED_TIME -> mediaList.sortedBy { media -> sortDate(media.mediaListEntry.updatedAt) }
+                    AniMediaListSort.UPDATED_TIME_DESC ->
+                        mediaList.sortedByDescending { media ->
+                            sortDate(
+                                media.mediaListEntry.updatedAt,
+                            )
+                        }
 
-                AniMediaListSort.PROGRESS -> mediaList.sortedBy { media -> media.mediaListEntry.progress }
-                AniMediaListSort.PROGRESS_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.progress }
-                AniMediaListSort.PROGRESS_VOLUMES -> mediaList.sortedBy { media -> media.mediaListEntry.progressVolumes }
-                AniMediaListSort.PROGRESS_VOLUMES_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.progressVolumes }
-                AniMediaListSort.REPEAT -> mediaList.sortedBy { media -> media.mediaListEntry.repeat }
-                AniMediaListSort.REPEAT_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.repeat }
-                AniMediaListSort.PRIORITY -> mediaList.sortedBy { media -> media.priority }
-                AniMediaListSort.PRIORITY_DESC -> mediaList.sortedByDescending { media -> media.priority }
-                AniMediaListSort.STARTED_ON -> mediaList.sortedBy { media ->
-                    sortDate(media.mediaListEntry.startedAt)
-                }
+                    AniMediaListSort.PROGRESS -> mediaList.sortedBy { media -> media.mediaListEntry.progress }
+                    AniMediaListSort.PROGRESS_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.progress }
+                    AniMediaListSort.PROGRESS_VOLUMES -> mediaList.sortedBy { media -> media.mediaListEntry.progressVolumes }
+                    AniMediaListSort.PROGRESS_VOLUMES_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.progressVolumes }
+                    AniMediaListSort.REPEAT -> mediaList.sortedBy { media -> media.mediaListEntry.repeat }
+                    AniMediaListSort.REPEAT_DESC -> mediaList.sortedByDescending { media -> media.mediaListEntry.repeat }
+                    AniMediaListSort.PRIORITY -> mediaList.sortedBy { media -> media.priority }
+                    AniMediaListSort.PRIORITY_DESC -> mediaList.sortedByDescending { media -> media.priority }
+                    AniMediaListSort.STARTED_ON ->
+                        mediaList.sortedBy { media ->
+                            sortDate(media.mediaListEntry.startedAt)
+                        }
 
-                AniMediaListSort.STARTED_ON_DESC -> mediaList.sortedByDescending { media ->
-                    sortDate(media.mediaListEntry.startedAt)
-                }
+                    AniMediaListSort.STARTED_ON_DESC ->
+                        mediaList.sortedByDescending { media ->
+                            sortDate(media.mediaListEntry.startedAt)
+                        }
 
-                AniMediaListSort.FINISHED_ON -> mediaList.sortedBy { media ->
-                    sortDate(media.mediaListEntry.completedAt)
-                }
+                    AniMediaListSort.FINISHED_ON ->
+                        mediaList.sortedBy { media ->
+                            sortDate(media.mediaListEntry.completedAt)
+                        }
 
-                AniMediaListSort.FINISHED_ON_DESC -> mediaList.sortedByDescending { media ->
-                    sortDate(media.mediaListEntry.completedAt)
-                }
+                    AniMediaListSort.FINISHED_ON_DESC ->
+                        mediaList.sortedByDescending { media ->
+                            sortDate(media.mediaListEntry.completedAt)
+                        }
 
-                AniMediaListSort.ADDED_TIME -> mediaList.sortedBy { media ->
-                    sortDate(media.mediaListEntry.createdAt)
-                }
+                    AniMediaListSort.ADDED_TIME ->
+                        mediaList.sortedBy { media ->
+                            sortDate(media.mediaListEntry.createdAt)
+                        }
 
-                AniMediaListSort.ADDED_TIME_DESC -> mediaList.sortedByDescending { media ->
-                    sortDate(media.mediaListEntry.createdAt)
-                }
+                    AniMediaListSort.ADDED_TIME_DESC ->
+                        mediaList.sortedByDescending { media ->
+                            sortDate(media.mediaListEntry.createdAt)
+                        }
 
-                AniMediaListSort.MEDIA_TITLE -> mediaList.sortedBy { media -> media.title }
-                AniMediaListSort.MEDIA_TITLE_DESC -> mediaList.sortedByDescending { media -> media.title }
-            }
-        }
+                    AniMediaListSort.MEDIA_TITLE -> mediaList.sortedBy { media -> media.title }
+                    AniMediaListSort.MEDIA_TITLE_DESC -> mediaList.sortedByDescending { media -> media.title }
+                }
+            },
         )
     }
     LazyColumn(state = lazyListState, modifier = Modifier.padding(top = it.calculateTopPadding())) {
@@ -498,12 +522,12 @@ private fun MyMediaLazyList(
                 if (mediaList.isNotEmpty()) {
                     stickyHeader {
                         MyMediaHeadline(
-                            status.toString(LocalContext.current, isAnime)
+                            status.toString(LocalContext.current, isAnime),
                         )
                     }
                     items(
                         mediaList,
-                        key = { it.id }
+                        key = { it.id },
                     ) { media ->
                         MediaCard(
                             navigateToDetails,
@@ -512,7 +536,7 @@ private fun MyMediaLazyList(
                             media,
                             { showEditSheet(media) },
                             isAnime = isAnime,
-                            openRatingDialog = { openRatingDialog(media) }
+                            openRatingDialog = { openRatingDialog(media) },
                         )
                     }
                 }
@@ -652,24 +676,25 @@ private fun MyMediaLazyList(
     }
 }
 
-fun sortDate(date: FuzzyDate?) =
-    (date?.year?.times(10000) ?: 0) + (date?.month?.times(100) ?: 0) + (date?.day ?: 0)
+fun sortDate(date: FuzzyDate?) = (date?.year?.times(10000) ?: 0) + (date?.month?.times(100) ?: 0) + (date?.day ?: 0)
 
 @Composable
 private fun MyMediaHeadline(text: String) {
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier =
+            Modifier
+                .fillMaxWidth(),
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(
-                start = Dimens.PaddingNormal,
-                end = Dimens.PaddingNormal,
-                bottom = Dimens.PaddingSmall
-            ),
+            modifier =
+                Modifier.padding(
+                    start = Dimens.PaddingNormal,
+                    end = Dimens.PaddingNormal,
+                    bottom = Dimens.PaddingSmall,
+                ),
         )
     }
 }
@@ -697,42 +722,46 @@ private fun MediaCard(
     Box(modifier = Modifier.padding(vertical = Dimens.PaddingSmall)) {
         ElevatedCard(
             shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-            modifier = Modifier
-                .padding(horizontal = Dimens.PaddingSmall)
-                .height(150.dp)
-                .fillMaxWidth()
-                .combinedClickable(
-                    onClick = { navigateToDetails(media.id) },
-                    onLongClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        openEditStatusSheet()
-                    }
-                ),
+            modifier =
+                Modifier
+                    .padding(horizontal = Dimens.PaddingSmall)
+                    .height(150.dp)
+                    .fillMaxWidth()
+                    .combinedClickable(
+                        onClick = { navigateToDetails(media.id) },
+                        onLongClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            openEditStatusSheet()
+                        },
+                    ),
         ) {
             Row {
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(media.coverImage)
-                        .crossfade(true).build(),
+                    model =
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(media.coverImage)
+                            .crossfade(true).build(),
                     contentDescription = "",
                     placeholder = painterResource(id = R.drawable.no_image),
                     fallback = painterResource(id = R.drawable.no_image),
                     contentScale = ContentScale.FillHeight,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(100.dp)
-                        .clip(RoundedCornerShape(12.dp, 12.dp, 12.dp, 0.dp)),
+                    modifier =
+                        Modifier
+                            .fillMaxHeight()
+                            .width(100.dp)
+                            .clip(RoundedCornerShape(12.dp, 12.dp, 12.dp, 0.dp)),
                 )
                 Row(
                     verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(
-                            top = Dimens.PaddingSmall,
-                            bottom = Dimens.PaddingNormal,
-                            start = Dimens.PaddingSmall,
-                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(
+                                top = Dimens.PaddingSmall,
+                                bottom = Dimens.PaddingNormal,
+                                start = Dimens.PaddingSmall,
+                            ),
                 ) {
                     Column(
                         modifier = Modifier.fillMaxHeight(),
@@ -754,15 +783,16 @@ private fun MediaCard(
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start,
-                            modifier = Modifier.clickable {
-                                openRatingDialog()
-                            }
+                            modifier =
+                                Modifier.clickable {
+                                    openRatingDialog()
+                                },
                         ) {
                             Icon(
                                 painterResource(id = R.drawable.anime_details_rating_star),
                                 contentDescription = stringResource(id = R.string.rating),
                                 tint = MaterialTheme.colorScheme.secondary,
-                                modifier = Modifier.padding(end = 2.dp)
+                                modifier = Modifier.padding(end = 2.dp),
                             )
                             Text(
                                 text = media.mediaListEntry.score.div(10).toString(),
@@ -773,9 +803,13 @@ private fun MediaCard(
                         if (isAnime) {
                             Text(
                                 text = "${media.mediaListEntry.progress}/${
-                                    if (media.episodeAmount != -1) media.episodeAmount else stringResource(
-                                        id = R.string.question_mark
-                                    )
+                                    if (media.episodeAmount != -1) {
+                                        media.episodeAmount
+                                    } else {
+                                        stringResource(
+                                            id = R.string.question_mark,
+                                        )
+                                    }
                                 }",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
@@ -783,18 +817,26 @@ private fun MediaCard(
                         } else {
                             Text(
                                 text = "${media.mediaListEntry.progress}/${
-                                    if (media.chapters != -1) media.chapters else stringResource(
-                                        id = R.string.question_mark
-                                    )
+                                    if (media.chapters != -1) {
+                                        media.chapters
+                                    } else {
+                                        stringResource(
+                                            id = R.string.question_mark,
+                                        )
+                                    }
                                 }",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
                                 text = "${media.mediaListEntry.progressVolumes}/${
-                                    if (media.volumes != -1) media.volumes else stringResource(
-                                        id = R.string.question_mark
-                                    )
+                                    if (media.volumes != -1) {
+                                        media.volumes
+                                    } else {
+                                        stringResource(
+                                            id = R.string.question_mark,
+                                        )
+                                    }
                                 }",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
@@ -804,7 +846,7 @@ private fun MediaCard(
                     Column(
                         horizontalAlignment = Alignment.End,
                         verticalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxHeight()
+                        modifier = Modifier.fillMaxHeight(),
                     ) {
                         TooltipBox(
                             tooltip = { PlainTooltip { Text(text = stringResource(R.string.edit)) } },
@@ -858,18 +900,19 @@ private fun MediaCard(
         val animatedProgress by animateFloatAsState(
             targetValue = progress,
             animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
-            label = "Media progress bar"
+            label = "Media progress bar",
         )
         LinearProgressIndicator(
             progress = animatedProgress,
             strokeCap = StrokeCap.Square,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Dimens.PaddingSmall)
-                .align(
-                    Alignment.BottomCenter
-                )
-                .animateContentSize()
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Dimens.PaddingSmall)
+                    .align(
+                        Alignment.BottomCenter,
+                    )
+                    .animateContentSize(),
         )
     }
 }
@@ -891,7 +934,7 @@ private fun IncreaseProgress(
             personalEpisodeProgress1++
         },
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-        modifier = Modifier.padding(end = Dimens.PaddingSmall)
+        modifier = Modifier.padding(end = Dimens.PaddingSmall),
     ) {
         Text(
             text = label,
@@ -901,9 +944,9 @@ private fun IncreaseProgress(
     }
 }
 
-//@Preview(showBackground = true, group = "fullscreen")
-//@Composable
-//fun MyAnimePreview() {
+// @Preview(showBackground = true, group = "fullscreen")
+// @Composable
+// fun MyAnimePreview() {
 //    MyMedia(
 //        isAnime = false,
 //        myMedia = mapOf(
@@ -949,7 +992,7 @@ private fun IncreaseProgress(
 //        isDescending = true,
 //        setIsDescending = {}
 //    )
-//}
+// }
 
 @Preview(showBackground = true)
 @Composable
@@ -958,17 +1001,18 @@ fun MediaCardPreview() {
         navigateToDetails = {},
         increaseEpisodeProgress = { _, _ -> },
         increaseVolumeProgress = { _, _ -> },
-        media = Media(
-            title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
-            format = AniMediaFormat.TV,
-            episodeAmount = 204,
+        media =
+            Media(
+                title = "NARUTO -ナルト- 紅き四つ葉のクローバーを探せ",
+                format = AniMediaFormat.TV,
+                episodeAmount = 204,
 //            personalRating = 10.0,
 //            personalProgress = 120,
 //            note = "",
-        ),
+            ),
         openEditStatusSheet = { },
         openRatingDialog = { },
-        isAnime = true
+        isAnime = true,
     )
 }
 
@@ -979,8 +1023,6 @@ fun IncreaseProgressPreview() {
         increaseEpisodeProgress = { _, _ -> },
         listEntryId = 1023918,
         personalEpisodeProgress = 12,
-        label = stringResource(id = R.string.plus_one_episode)
+        label = stringResource(id = R.string.plus_one_episode),
     )
 }
-
-

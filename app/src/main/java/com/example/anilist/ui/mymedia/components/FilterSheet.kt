@@ -31,7 +31,7 @@ fun FilterSheet(
     hideFilterSheet: () -> Unit,
     filter: AniPersonalMediaStatus,
     setFilter: (AniPersonalMediaStatus) -> Unit,
-    isAnime: Boolean
+    isAnime: Boolean,
 ) {
     ModalBottomSheet(
         sheetState = filterSheetState,
@@ -59,7 +59,7 @@ fun FilterSheet(
                 filter = filter,
                 thisFilter = status,
                 name = status.toString(LocalContext.current, isAnime),
-                icon = status.getIconResource()
+                icon = status.getIconResource(),
             )
         }
 //        ModalSheetTextButton(
@@ -92,7 +92,7 @@ fun FilterSheet(
 //            filter = filter,
 //            thisFilter = PersonalMediaStatus.COMPLETED,
 //            name = stringResource(id = R.string.completed),
-////            icon = R.drawable.outline_done_24
+// //            icon = R.drawable.outline_done_24
 //            icon = R.drawable.outline_check_circle_24
 //        )
 //        ModalSheetTextButton(
@@ -109,7 +109,7 @@ fun FilterSheet(
 //            filter = filter,
 //            thisFilter = PersonalMediaStatus.DROPPED,
 //            name = stringResource(id = R.string.dropped),
-////            icon = R.drawable.outline_arrow_drop_down_circle_24
+// //            icon = R.drawable.outline_arrow_drop_down_circle_24
 //            icon = R.drawable.outline_cancel_24
 //        )
 //        ModalSheetTextButton(
@@ -130,24 +130,25 @@ fun ModalSheetTextButton(
     filter: AniPersonalMediaStatus,
     thisFilter: AniPersonalMediaStatus,
     icon: Int,
-    name: String
+    name: String,
 ) {
     Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth()) {
         TextButton(
             onClick = {
                 filterFunction(thisFilter)
                 hideFilterSheet()
-            }, shape = RectangleShape
+            },
+            shape = RectangleShape,
         ) {
             Icon(
                 painter = painterResource(id = icon),
                 contentDescription = null,
-                modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+                modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
             )
             Text(
                 name,
                 color = if (filter == thisFilter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -162,7 +163,7 @@ fun FilterComponentPreview() {
         filter = AniPersonalMediaStatus.PLANNING,
         thisFilter = AniPersonalMediaStatus.REPEATING,
         name = "Repeating",
-        icon = R.drawable.outline_replay_24
+        icon = R.drawable.outline_replay_24,
     )
 }
 
@@ -178,6 +179,6 @@ fun FilterModalSheetPreview() {
         hideFilterSheet = { },
         filter = AniPersonalMediaStatus.CURRENT,
         setFilter = {},
-        isAnime = true
+        isAnime = true,
     )
 }

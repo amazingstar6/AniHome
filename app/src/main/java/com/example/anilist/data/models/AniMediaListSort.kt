@@ -8,6 +8,7 @@ enum class AniMediaListSort {
     MEDIA_ID_DESC,
     SCORE,
     SCORE_DESC,
+
 //    STATUS,
 //    STATUS_DESC,
     PROGRESS,
@@ -26,15 +27,18 @@ enum class AniMediaListSort {
     ADDED_TIME_DESC,
     UPDATED_TIME,
     UPDATED_TIME_DESC,
+
     // only using user preferred title
     MEDIA_TITLE,
-    MEDIA_TITLE_DESC;
-    //todo requires reload
+    MEDIA_TITLE_DESC,
+    ;
+
+    // todo requires reload
 //    MEDIA_POPULARITY,
 //    MEDIA_POPULARITY_DESC;
 
     fun toString(context: Context): String {
-        return when(this) {
+        return when (this) {
             // desc strings are not used for now
             MEDIA_ID -> context.getString(R.string.media_id)
             MEDIA_ID_DESC -> context.getString(R.string.media_id_desc)

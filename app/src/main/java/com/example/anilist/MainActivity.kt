@@ -1,6 +1,5 @@
 package com.example.anilist
 
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -16,8 +15,6 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -33,7 +30,6 @@ import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     companion object {
         var accessCode = ""
         var userId = -1
@@ -48,8 +44,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge( // fixme not working
             SystemBarStyle.auto(
                 resources.getColor(R.color.purple_200, null),
-                resources.getColor(R.color.purple_200, null)
-            )
+                resources.getColor(R.color.purple_200, null),
+            ),
         )
         super.onCreate(savedInstanceState)
         Timber.plant(Timber.DebugTree())
@@ -65,7 +61,7 @@ class MainActivity : ComponentActivity() {
                     Toast.makeText(
                         this@MainActivity,
                         message,
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_SHORT,
                     ).show()
                 }
         }
@@ -90,16 +86,17 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AnilistTheme(
-                darkTheme = when (uiState) {
-                    is MainActivityUiState.Loading -> isSystemInDarkTheme()
-                    is MainActivityUiState.Success -> {
-                        when ((uiState as MainActivityUiState.Success).userData.theme) {
-                            Theme.SYSTEM_DEFAULT -> isSystemInDarkTheme()
-                            Theme.LIGHT -> false
-                            Theme.DARK -> true
+                darkTheme =
+                    when (uiState) {
+                        is MainActivityUiState.Loading -> isSystemInDarkTheme()
+                        is MainActivityUiState.Success -> {
+                            when ((uiState as MainActivityUiState.Success).userData.theme) {
+                                Theme.SYSTEM_DEFAULT -> isSystemInDarkTheme()
+                                Theme.LIGHT -> false
+                                Theme.DARK -> true
+                            }
                         }
-                    }
-                }
+                    },
             ) {
                 // A surface container using the 'background' color from the theme
                 AniApp(uiState, calculateWindowSizeClass(this))

@@ -7,10 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -37,15 +34,19 @@ import com.example.anilist.utils.LoadingCircle
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun AniApp(uiState: MainActivityUiState, windowSize: WindowSizeClass) {
+fun AniApp(
+    uiState: MainActivityUiState,
+    windowSize: WindowSizeClass,
+) {
     Surface(
         color = MaterialTheme.colorScheme.background,
-        modifier = Modifier.consumeWindowInsets(WindowInsets(0.dp))
+        modifier = Modifier.consumeWindowInsets(WindowInsets(0.dp)),
     ) {
         val navController = rememberNavController()
-        val navigationAction = remember(navController) {
-            AniListNavigationActions(navController)
-        }
+        val navigationAction =
+            remember(navController) {
+                AniListNavigationActions(navController)
+            }
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val selectedDestination = navBackStackEntry?.destination?.route ?: AniListRoute.HOME_ROUTE
 
@@ -53,19 +54,20 @@ fun AniApp(uiState: MainActivityUiState, windowSize: WindowSizeClass) {
             mutableStateOf(true)
         }
         val bottomBarIsVisible =
-            navController.currentBackStackEntryAsState().value?.destination?.route in TOP_LEVEL_DESTINATIONS.map {
-                it.route
-            }
+            navController.currentBackStackEntryAsState().value?.destination?.route in
+                TOP_LEVEL_DESTINATIONS.map {
+                    it.route
+                }
 
         Scaffold(bottomBar = {
             AnimatedVisibility(
                 windowSize.widthSizeClass == WindowWidthSizeClass.Compact && bottomBarIsVisible,
                 enter = fadeIn(),
-                exit = fadeOut()
+                exit = fadeOut(),
             ) {
                 AniListBottomNavigationBar(
                     selectedDestination = selectedDestination,
-                    navigateToTopLevelDestination = navigationAction::navigateTo
+                    navigateToTopLevelDestination = navigationAction::navigateTo,
                 )
             }
         }) {
@@ -81,19 +83,22 @@ fun AniApp(uiState: MainActivityUiState, windowSize: WindowSizeClass) {
                         if (windowSize.widthSizeClass == WindowWidthSizeClass.Medium || windowSize.widthSizeClass == WindowWidthSizeClass.Expanded) {
                             AniListNavigationRail(
                                 selectedDestination = selectedDestination,
-                                navigateToTopLevelDestination = navigationAction::navigateTo
+                                navigateToTopLevelDestination = navigationAction::navigateTo,
                             )
                         }
-                        AniNavHost(accessCode = MainActivity.accessCode,
+                        AniNavHost(
+                            accessCode = MainActivity.accessCode,
                             navController = navController,
                             navigationActions = navigationAction,
                             // fixme navigation bar has a height of 80.dp https://m3.material.io/components/navigation-bar/specs
-                            modifier = Modifier.padding(
-                                bottom = if (bottomBarIsVisible) 80.dp else 0.dp/*it.calculateBottomPadding()*/
-                            ),
+                            modifier =
+                                Modifier.padding(
+                                    bottom = if (bottomBarIsVisible) 80.dp else 0.dp, // it.calculateBottomPadding()
+                                ),
                             setBottomBarState = { newValue ->
                                 showBottomBar = newValue
-                            })
+                            },
+                        )
                     }
                 }
             }

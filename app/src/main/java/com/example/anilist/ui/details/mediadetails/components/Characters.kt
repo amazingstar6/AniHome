@@ -3,7 +3,6 @@ package com.example.anilist.ui.details.mediadetails.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,8 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -65,10 +62,11 @@ fun Characters(
             val coroutineScope = rememberCoroutineScope()
             if (isAnime) {
                 LazyRow(
-                    modifier = Modifier.padding(
+                    modifier =
+                        Modifier.padding(
 //                    horizontal = Dimens.PaddingNormal,
-                        vertical = Dimens.PaddingSmall
-                    )
+                            vertical = Dimens.PaddingSmall,
+                        ),
                 ) {
                     itemsIndexed(languages) { index, language ->
                         FilterChip(
@@ -80,10 +78,11 @@ fun Characters(
                                 setSelectedLanguage(index)
                             },
                             label = { Text(text = language) },
-                            modifier = Modifier.padding(
-                                start = Dimens.PaddingNormal,
-                                end = if (index == languages.lastIndex) Dimens.PaddingNormal else 0.dp
-                            ),
+                            modifier =
+                                Modifier.padding(
+                                    start = Dimens.PaddingNormal,
+                                    end = if (index == languages.lastIndex) Dimens.PaddingNormal else 0.dp,
+                                ),
                         )
                     }
                 }
@@ -91,19 +90,19 @@ fun Characters(
             LazyVerticalGrid(
                 state = lazyGridState,
                 columns = GridCells.Adaptive(120.dp),
-                modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+                modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
             ) {
                 items(characterWithVoiceActors.itemCount) { index ->
                     val character = characterWithVoiceActors[index]
                     if (character != null) {
                         Column(modifier = Modifier.padding(bottom = Dimens.PaddingLarge)) {
                             Column(
-                                modifier = Modifier
-                                    .clickable { navigateToCharacter(character.id) }
-                                    .padding(12.dp)
-                                    .align(Alignment.CenterHorizontally),
-
-                                ) {
+                                modifier =
+                                    Modifier
+                                        .clickable { navigateToCharacter(character.id) }
+                                        .padding(12.dp)
+                                        .align(Alignment.CenterHorizontally),
+                            ) {
                                 ProfilePicture(character.coverImage, character.name)
                                 Text(
                                     text = character.name,
@@ -111,41 +110,44 @@ fun Characters(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     textAlign = TextAlign.Center,
                                     overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier
-                                        .padding(top = 6.dp)
-                                        .width(120.dp)
-                                        .height(20.dp)
+                                    modifier =
+                                        Modifier
+                                            .padding(top = 6.dp)
+                                            .width(120.dp)
+                                            .height(20.dp),
 //                                    .fillMaxWidth(),
                                 )
                             }
                             if (isAnime) {
                                 Column(
-                                    modifier = Modifier
-                                        .clickable { navigateToStaff(character.voiceActorId) }
-                                        .padding(12.dp)
-                                        .align(Alignment.CenterHorizontally),
-
-                                    ) {
+                                    modifier =
+                                        Modifier
+                                            .clickable { navigateToStaff(character.voiceActorId) }
+                                            .padding(12.dp)
+                                            .align(Alignment.CenterHorizontally),
+                                ) {
                                     ProfilePicture(
                                         character.voiceActorCoverImage,
-                                        character.voiceActorName
+                                        character.voiceActorName,
                                     )
                                     Text(
-                                        text = buildAnnotatedString {
-                                            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {
-                                                append(character.voiceActorName)
-                                            }
-                                            if (character.roleNotes.isNotEmpty()) {
-                                                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                                                    append(" (${character.roleNotes})")
+                                        text =
+                                            buildAnnotatedString {
+                                                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {
+                                                    append(character.voiceActorName)
                                                 }
-                                            }
-                                        },
+                                                if (character.roleNotes.isNotEmpty()) {
+                                                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                                                        append(" (${character.roleNotes})")
+                                                    }
+                                                }
+                                            },
                                         style = MaterialTheme.typography.labelLarge,
                                         textAlign = TextAlign.Center,
-                                        modifier = Modifier
-                                            .padding(top = 6.dp, bottom = 6.dp)
-                                            .fillMaxWidth(),
+                                        modifier =
+                                            Modifier
+                                                .padding(top = 6.dp, bottom = 6.dp)
+                                                .fillMaxWidth(),
                                     )
 //                                Text(
 //                                    text = character.voiceActorName + "(${character.roleNotes})",
@@ -175,31 +177,35 @@ fun Characters(
 }
 
 @Composable
-private fun ProfilePicture(coverImage: String, name: String) {
+private fun ProfilePicture(
+    coverImage: String,
+    name: String,
+) {
     AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(coverImage)
-            .crossfade(true).build(),
+        model =
+            ImageRequest.Builder(LocalContext.current)
+                .data(coverImage)
+                .crossfade(true).build(),
         contentDescription = "Profile image of $name",
         placeholder = painterResource(id = R.drawable.no_image),
         fallback = painterResource(id = R.drawable.no_image),
         contentScale = ContentScale.Crop,
-        modifier = Modifier.Companion
-            .size(150.dp)
-            .clip(RoundedCornerShape(12.dp)),
+        modifier =
+            Modifier.Companion
+                .size(150.dp)
+                .clip(RoundedCornerShape(12.dp)),
     )
 }
 
-
-//@Preview(
+// @Preview(
 //    device = "id:pixel_6_pro",
 //    showBackground = true,
 //    uiMode = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL,
 //    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE,
 //    group = "Characters",
-//)
-//@Composable
-//fun CharactersPreview() {
+// )
+// @Composable
+// fun CharactersPreview() {
 //    Characters(
 //        isAnime = false,
 //        listOf("Japanese", "Portuguese", "English", "French"),
@@ -216,5 +222,4 @@ private fun ProfilePicture(coverImage: String, name: String) {
 //        ),
 //        navigateToCharacter = { },
 //    ) { }
-//}
-
+// }

@@ -13,18 +13,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.example.anilist.R
 import com.example.anilist.data.models.AniStaff
 import com.example.anilist.ui.Dimens
 import com.example.anilist.utils.AsyncImageRoundedCorners
@@ -49,11 +42,12 @@ fun StaffScreen(
                 val staff = staffList[index]
                 if (staff != null) {
                     Row(
-                        modifier = Modifier
-                            .padding(Dimens.PaddingNormal)
-                            .clickable {
-                                onNavigateToStaff(staff.id)
-                            },
+                        modifier =
+                            Modifier
+                                .padding(Dimens.PaddingNormal)
+                                .clickable {
+                                    onNavigateToStaff(staff.id)
+                                },
                     ) {
 //                        AsyncImage(
 //                            model = ImageRequest.Builder(LocalContext.current)
@@ -65,7 +59,7 @@ fun StaffScreen(
 //                            contentScale = ContentScale.Crop,
 //                            modifier = Modifier
 //                                .fillMaxHeight()
-////                        .width(100.dp)
+// //                        .width(100.dp)
 //                                .padding(end = Dimens.PaddingNormal)
 //                                .clip(MaterialTheme.shapes.medium),
 //
@@ -92,22 +86,24 @@ fun StaffScreen(
                     }
                 }
             }
-        })
+        },
+    )
 }
 
 @Preview(showBackground = true)
 @Composable
 fun StaffPreview() {
-    val data = flowOf(
-        PagingData.from(
-            listOf(
-                AniStaff(123, "吾峠呼世晴", "Original Creator"),
-                AniStaff(1234, "外崎春雄", "Director")
-            )
-        )
-    ).collectAsLazyPagingItems()
+    val data =
+        flowOf(
+            PagingData.from(
+                listOf(
+                    AniStaff(123, "吾峠呼世晴", "Original Creator"),
+                    AniStaff(1234, "外崎春雄", "Director"),
+                ),
+            ),
+        ).collectAsLazyPagingItems()
     StaffScreen(
         staffList = data,
-        onNavigateToStaff = {}
+        onNavigateToStaff = {},
     )
 }

@@ -21,12 +21,12 @@ val MATERIAL_MOTION_EASING_EMPHASIZED_ACCELERATE = CubicBezierEasing(0.05f, 0.7f
 fun <T> materialEnterTransitionSpec(
     durationMillis: Int = MATERIAL_MOTION_DURATION_MEDIUM_4,
     delayMillis: Int = 0,
-    easing: Easing = MATERIAL_MOTION_EASING_EMPHASIZED_DECELERATE
+    easing: Easing = MATERIAL_MOTION_EASING_EMPHASIZED_DECELERATE,
 ): TweenSpec<T> = TweenSpec(durationMillis, delayMillis, easing)
 
 @Stable
 fun <T> materialExitTransitionSpec(
     durationMillis: Int = MATERIAL_MOTION_DURATION_SHORT_4,
     delayMillis: Int = 0,
-    easing: Easing = MATERIAL_MOTION_EASING_EMPHASIZED_ACCELERATE
+    easing: Easing = MATERIAL_MOTION_EASING_EMPHASIZED_ACCELERATE,
 ): TweenSpec<T> = TweenSpec(durationMillis, delayMillis, easing)

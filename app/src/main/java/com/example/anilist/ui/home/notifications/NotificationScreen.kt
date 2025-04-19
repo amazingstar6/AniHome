@@ -72,12 +72,12 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.anilist.MainActivity
 import com.example.anilist.R
-import com.example.anilist.data.models.AniNotificationType
-import com.example.anilist.utils.Utils
 import com.example.anilist.data.models.AniNotification
+import com.example.anilist.data.models.AniNotificationType
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.PleaseLogin
 import com.example.anilist.utils.LoadingCircle
+import com.example.anilist.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -90,7 +90,7 @@ fun NotificationScreen(
     onNavigateToActivity: (Int) -> Unit,
     onNavigateToUser: (Int) -> Unit,
     onNavigateToThread: (Int) -> Unit,
-    onNavigateToThreadComment: (Int) -> Unit
+    onNavigateToThreadComment: (Int) -> Unit,
 ) {
     val notifications = notificationsViewModel.notifications.collectAsLazyPagingItems()
     val unReadNotificationsCount by unreadNotificationsViewModel.notificationUnReadCount.collectAsStateWithLifecycle()
@@ -118,7 +118,7 @@ fun NotificationScreen(
         onNavigateToActivity = onNavigateToActivity,
         onNavigateToThread = onNavigateToThread,
         onNavigateToThreadComment = onNavigateToThreadComment,
-        reloadNotificationCount = unreadNotificationsViewModel::fetchNotificationUnReadCount
+        reloadNotificationCount = unreadNotificationsViewModel::fetchNotificationUnReadCount,
     )
 }
 
@@ -134,7 +134,7 @@ private fun Notifications(
     onNavigateToUser: (Int) -> Unit,
     onNavigateToActivity: (Int) -> Unit,
     onNavigateToThread: (Int) -> Unit, // todo pass comment id as well
-    onNavigateToThreadComment: (Int) -> Unit
+    onNavigateToThreadComment: (Int) -> Unit,
 ) {
     var currentFilter by remember {
         mutableStateOf(NotificationFilterList.ALL)
@@ -163,9 +163,9 @@ private fun Notifications(
             },
             actions = {
                 TooltipBox(
-                    tooltip = { PlainTooltip { Text(text = "Reload") }},
+                    tooltip = { PlainTooltip { Text(text = "Reload") } },
                     positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                    state = rememberTooltipState()
+                    state = rememberTooltipState(),
                 ) {
                     IconButton(onClick = {
                         notifications.refresh()
@@ -174,7 +174,8 @@ private fun Notifications(
                         Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reload")
                     }
                 }
-            })
+            },
+        )
     }, floatingActionButton = {
         ScrollUpFab(fabVisibility, lazyScrollScope, topAppBarState, lazyState)
     }) { padding ->
@@ -191,12 +192,13 @@ private fun Notifications(
                 is LoadState.NotLoading -> {
                     LazyColumn(
                         state = lazyState,
-                        modifier = Modifier.padding(top = padding.calculateTopPadding())
+                        modifier = Modifier.padding(top = padding.calculateTopPadding()),
                     ) {
                         item {
                             FlowRow(
-                                modifier = Modifier
-                                    .padding(horizontal = Dimens.PaddingNormal)
+                                modifier =
+                                    Modifier
+                                        .padding(horizontal = Dimens.PaddingNormal),
                             ) {
                                 notificationFilterList.forEachIndexed { _, filter ->
                                     val selected = filter == currentFilter
@@ -228,34 +230,35 @@ private fun Notifications(
 //                        }
                             OutlinedButton(
                                 onClick = markAllAsRead,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(Dimens.PaddingNormal),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(Dimens.PaddingNormal),
                             ) {
                                 Text(text = stringResource(R.string.mark_all_as_read))
                             }
                         }
                         items(
-                            notifications.itemCount
+                            notifications.itemCount,
                         ) { index ->
                             val notification = notifications[index]
-                            if (notification != null && notification.type.isInFilter(
-                                    currentFilter
+                            if (notification != null &&
+                                notification.type.isInFilter(
+                                    currentFilter,
                                 )
                             ) {
                                 val isUnread by remember(key1 = unReadNotificationsCount) {
                                     mutableStateOf(
-                                        index < unReadNotificationsCount
+                                        index < unReadNotificationsCount,
                                     )
                                 }
                                 when (notification.type) {
-
                                     AniNotificationType.AiringNotification -> {
                                         NotificationComponent(
                                             { navigateToMediaDetails(notification.animeId) },
                                             notification,
                                             context = "Episode ${notification.airedEpisode} of ${notification.mediaTitle} aired.",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -264,7 +267,7 @@ private fun Notifications(
                                             onClick = { onNavigateToActivity(notification.activityId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -273,7 +276,7 @@ private fun Notifications(
                                             onClick = { onNavigateToActivity(notification.activityId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -282,7 +285,7 @@ private fun Notifications(
                                             onClick = { onNavigateToActivity(notification.activityId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -291,7 +294,7 @@ private fun Notifications(
                                             onClick = { onNavigateToActivity(notification.activityId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -300,7 +303,7 @@ private fun Notifications(
                                             onClick = { onNavigateToActivity(notification.activityId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -309,7 +312,7 @@ private fun Notifications(
                                             onClick = { onNavigateToActivity(notification.activityId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -318,7 +321,7 @@ private fun Notifications(
                                             onClick = { onNavigateToActivity(notification.activityId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -327,7 +330,7 @@ private fun Notifications(
                                             onClick = { onNavigateToThreadComment(notification.threadCommentId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -336,7 +339,7 @@ private fun Notifications(
                                             onClick = { onNavigateToThreadComment(notification.threadCommentId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -345,7 +348,7 @@ private fun Notifications(
                                             onClick = { onNavigateToThreadComment(notification.threadCommentId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -354,16 +357,16 @@ private fun Notifications(
                                             onClick = { onNavigateToThreadComment(notification.threadCommentId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
-                                    AniNotificationType.ThreadLikeNotification -> { //todo what is being liked?
+                                    AniNotificationType.ThreadLikeNotification -> { // todo what is being liked?
                                         NotificationComponent(
                                             onClick = { onNavigateToThread(notification.threadId) },
                                             notification = notification,
                                             context = "${notification.userName}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                             // todo is it always your thread?
                                         )
                                     }
@@ -373,7 +376,7 @@ private fun Notifications(
                                             { navigateToMediaDetails(notification.mediaId) },
                                             notification,
                                             context = "${notification.mediaTitle}${notification.context}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -382,11 +385,11 @@ private fun Notifications(
                                             { navigateToMediaDetails(notification.mediaId) },
                                             notification,
                                             context = "${notification.mediaTitle}${notification.context}. ${notification.mediaChangeReason}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
-                                    //todo what does context say
+                                    // todo what does context say
                                     AniNotificationType.MediaMergeNotification -> {
                                         NotificationComponent(
                                             onClick = { navigateToMediaDetails(notification.mediaId) },
@@ -396,7 +399,7 @@ private fun Notifications(
                                                     notification.deletedMediaTitles.forEachIndexed { index, title ->
                                                         if (index == notification.deletedMediaTitles.lastIndex) {
                                                             append(
-                                                                title
+                                                                title,
                                                             )
                                                         } else {
                                                             append("$title, ")
@@ -404,7 +407,7 @@ private fun Notifications(
                                                     }
                                                 }
                                             } was merged into ${notification.mediaTitle}${notification.mediaChangeReason.ifBlank { "" }}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -413,7 +416,7 @@ private fun Notifications(
                                             { /*cannot navigate to delete title*/ },
                                             notification,
                                             context = "${notification.deletedMediaTitle}${notification.context}${notification.mediaChangeReason}",
-                                            isUnRead = isUnread
+                                            isUnRead = isUnread,
                                         )
                                     }
 
@@ -436,18 +439,18 @@ private fun ScrollUpFab(
     fabVisibility: Boolean,
     lazyScrollScope: CoroutineScope,
     topAppBarState: TopAppBarState,
-    lazyState: LazyListState
+    lazyState: LazyListState,
 ) {
     AnimatedVisibility(
         visible = fabVisibility,
         enter = scaleIn() + fadeIn(tween(100)),
-        exit = scaleOut() + fadeOut(tween(200))
+        exit = scaleOut() + fadeOut(tween(200)),
     ) {
         FloatingActionButton(onClick = {
             lazyScrollScope.launch {
                 topAppBarState.heightOffset = 0f
                 lazyState.animateScrollToItem(
-                    0
+                    0,
                 )
             }
         }) {
@@ -465,7 +468,7 @@ fun ScrollUpFabPreview() {
         fabVisibility = true,
         lazyScrollScope = rememberCoroutineScope(),
         topAppBarState = topAppBarState,
-        lazyState = rememberLazyListState()
+        lazyState = rememberLazyListState(),
     )
 }
 
@@ -474,46 +477,48 @@ private fun NotificationComponent(
     onClick: () -> Unit,
     notification: AniNotification,
     context: String,
-    isUnRead: Boolean
+    isUnRead: Boolean,
 ) {
     if (isUnRead) Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh) else Modifier
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = if (isUnRead) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(Dimens.PaddingSmall),
-        onClick = onClick
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(Dimens.PaddingSmall),
+        onClick = onClick,
     ) {
         Row(
             verticalAlignment = Alignment.Top,
-            modifier = Modifier
+            modifier = Modifier,
 //                .then(isUnReadModifier)
 //                .fillMaxWidth()
 //                .padding(vertical = Dimens.PaddingSmall)
 //                .clickable { onClick() }
-
         ) {
             if (!LocalInspectionMode.current) {
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(notification.image)
-                        .crossfade(true)
-                        .build(),
+                    model =
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(notification.image)
+                            .crossfade(true)
+                            .build(),
                     placeholder = painterResource(id = R.drawable.no_image),
                     fallback = painterResource(id = R.drawable.no_image),
                     contentDescription = "notification cover",
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .height(80.dp)
-                        .width(90.dp)
-                        .padding(
+                    modifier =
+                        Modifier
+                            .height(80.dp)
+                            .width(90.dp)
+                            .padding(
 //                        start = Dimens.PaddingNormal,
-                            end = Dimens.PaddingNormal,
+                                end = Dimens.PaddingNormal,
 //                    bottom = Dimens.PaddingSmall,
 //                    top = Dimens.PaddingNormal
-                        )
-                        .clip(MaterialTheme.shapes.medium),
+                            )
+                            .clip(MaterialTheme.shapes.medium),
                 )
             }
             Column {
@@ -539,7 +544,6 @@ private fun NotificationComponent(
             }
         }
     }
-
 }
 
 @Preview(showBackground = true)
@@ -549,7 +553,7 @@ fun NotificationComponentPreview() {
         onClick = { },
         notification = AniNotification(),
         context = "Context",
-        isUnRead = true
+        isUnRead = true,
     )
 }
 

@@ -9,7 +9,7 @@ private const val STARTING_KEY = 1
 
 class StaffPagingSource(
     private val mediaId: Int,
-    private val mediaDetailsRepository: MediaDetailsRepository
+    private val mediaDetailsRepository: MediaDetailsRepository,
 ) : PagingSource<Int, AniStaff>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, AniStaff> {
         val start = params.key ?: STARTING_KEY
@@ -18,7 +18,7 @@ class StaffPagingSource(
                 LoadResult.Page(
                     data = data.data,
                     prevKey = if (start == STARTING_KEY) null else start - 1,
-                    nextKey = if (data.data.isNotEmpty()) start + 1 else null
+                    nextKey = if (data.data.isNotEmpty()) start + 1 else null,
                 )
             }
 
@@ -26,7 +26,6 @@ class StaffPagingSource(
                 LoadResult.Error(Exception(data.error))
             }
         }
-
     }
 
     override fun getRefreshKey(state: PagingState<Int, AniStaff>): Int? {

@@ -9,7 +9,8 @@ enum class AniMediaStatus {
     NOT_YET_RELEASED,
     CANCELLED,
     HIATUS,
-    UNKNOWN;
+    UNKNOWN,
+    ;
 
     fun toString(context: Context): String {
         return when (this) {

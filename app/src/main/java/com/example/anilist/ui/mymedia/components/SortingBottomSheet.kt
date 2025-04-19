@@ -9,7 +9,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.PlainTooltip
-//import androidx.compose.material3.PlainTooltipBox
+// import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -39,14 +39,15 @@ fun SortingBottomSheet(
     isDescending: Boolean,
     setIsDescending: (Boolean) -> Unit,
     setSort: (AniMediaListSort, Boolean) -> Unit,
-    sort: AniMediaListSort
+    sort: AniMediaListSort,
 ) {
     ModalBottomSheet(onDismissRequest = { setShowSortingSheet(false) }) {
         Row(
-            modifier = Modifier
-                .padding(horizontal = Dimens.PaddingNormal)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .padding(horizontal = Dimens.PaddingNormal)
+                    .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             SingleChoiceSegmentedButtonRow(modifier = Modifier.weight(1f)) {
                 SegmentedButton(
@@ -56,10 +57,11 @@ fun SortingBottomSheet(
                         setSort(sort.removeDescending(), false)
                     },
                     // TODO is the shape correct?
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = 0,
-                        count = 0
-                    )
+                    shape =
+                        SegmentedButtonDefaults.itemShape(
+                            index = 0,
+                            count = 0,
+                        ),
                 ) {
                     Text(text = "Ascending")
                 }
@@ -69,10 +71,11 @@ fun SortingBottomSheet(
                         setIsDescending(true)
                         setSort(sort.removeDescending(), true)
                     },
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = 0,
-                        count = 0
-                    )
+                    shape =
+                        SegmentedButtonDefaults.itemShape(
+                            index = 0,
+                            count = 0,
+                        ),
                 ) {
                     Text(text = "Descending")
                 }
@@ -80,46 +83,49 @@ fun SortingBottomSheet(
             TooltipBox(
                 tooltip = {
                     PlainTooltip {
-                         Text(text = stringResource(R.string.reset_sort))
+                        Text(text = stringResource(R.string.reset_sort))
                     }
                 },
                 positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
                 state = rememberTooltipState(),
             ) {
-        IconButton(
-            onClick = {
-                setSort(AniMediaListSort.UPDATED_TIME, true)
-                setIsDescending(true)
-            }, modifier = Modifier
-                .padding(start = Dimens.PaddingSmall)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.baseline_restart_alt_24),
-                contentDescription = stringResource(R.string.reset_sort)
-            )
+                IconButton(
+                    onClick = {
+                        setSort(AniMediaListSort.UPDATED_TIME, true)
+                        setIsDescending(true)
+                    },
+                    modifier =
+                        Modifier
+                            .padding(start = Dimens.PaddingSmall),
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_restart_alt_24),
+                        contentDescription = stringResource(R.string.reset_sort),
+                    )
 //                    Icon(
 //                        imageVector = Icons.Default.Clear,
 //                        contentDescription = stringResource(R.string.reset)
 //                    )
+                }
+            }
         }
-    }
-    }
-    val sortTypesToShow by remember {
-        mutableStateOf(
-            AniMediaListSort.values().filter { !it.name.contains("DESC") })
-    }
-    sortTypesToShow.forEach {
-        TextButton(onClick = {
-            setSort(it, isDescending)
-        }, modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)) {
-            Text(
-                text = it.toString(LocalContext.current),
-                color = if (it == sort || it.name == sort.name.substringBefore("_DESC")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.fillMaxWidth()
+        val sortTypesToShow by remember {
+            mutableStateOf(
+                AniMediaListSort.values().filter { !it.name.contains("DESC") },
             )
         }
+        sortTypesToShow.forEach {
+            TextButton(onClick = {
+                setSort(it, isDescending)
+            }, modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)) {
+                Text(
+                    text = it.toString(LocalContext.current),
+                    color = if (it == sort || it.name == sort.name.substringBefore("_DESC")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
     }
-}
 }
 
 @Preview(showBackground = true)
@@ -130,6 +136,6 @@ fun SortingBottomSheetPreview() {
         isDescending = true,
         setIsDescending = {},
         setSort = { _, _ -> },
-        sort = AniMediaListSort.UPDATED_TIME_DESC
+        sort = AniMediaListSort.UPDATED_TIME_DESC,
     )
 }

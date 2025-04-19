@@ -4,5 +4,5 @@ data class Tag(
     val name: String,
     val rank: Int,
     val isMediaSpoiler: Boolean,
-    val description: String
+    val description: String,
 )

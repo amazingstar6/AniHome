@@ -24,7 +24,8 @@ enum class AniMediaRelationTypes {
     SOURCE,
     COMPILATION,
     CONTAINS,
-    UNKNOWN;
+    UNKNOWN,
+    ;
 
     fun toString(context: Context): String {
         return when (this) {

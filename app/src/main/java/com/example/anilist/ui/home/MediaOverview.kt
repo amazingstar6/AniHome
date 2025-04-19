@@ -1,12 +1,6 @@
 package com.example.anilist.ui.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,7 +26,6 @@ import com.example.anilist.R
 import com.example.anilist.data.models.HomeTrendingTypes
 import com.example.anilist.ui.Dimens
 import com.example.anilist.utils.AsyncImageRoundedCorners
-import com.example.anilist.utils.shimmerBrush
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -40,26 +33,27 @@ fun MediaOverview(
     ordinalNumber: Int,
     navigateBack: () -> Unit,
     navigateToDetails: (Int) -> Unit,
-    homeViewModel: HomeViewModel
+    homeViewModel: HomeViewModel,
 ) {
     val type = HomeTrendingTypes.values()[ordinalNumber]
-    val pager = when (type) {
-        HomeTrendingTypes.TRENDING_NOW -> homeViewModel.trendingNowPager
-        HomeTrendingTypes.POPULAR_THIS_SEASON -> homeViewModel.popularThisSeasonPager
-        HomeTrendingTypes.UPCOMING_NEXT_SEASON -> homeViewModel.upComingNextSeasonPager
-        HomeTrendingTypes.ALL_TIME_POPULAR -> homeViewModel.allTimePopularPager
-        HomeTrendingTypes.TOP_100_ANIME -> homeViewModel.top100AnimePager
-        HomeTrendingTypes.POPULAR_MANHWA -> homeViewModel.popularManhwaPager
-    }.collectAsLazyPagingItems()
+    val pager =
+        when (type) {
+            HomeTrendingTypes.TRENDING_NOW -> homeViewModel.trendingNowPager
+            HomeTrendingTypes.POPULAR_THIS_SEASON -> homeViewModel.popularThisSeasonPager
+            HomeTrendingTypes.UPCOMING_NEXT_SEASON -> homeViewModel.upComingNextSeasonPager
+            HomeTrendingTypes.ALL_TIME_POPULAR -> homeViewModel.allTimePopularPager
+            HomeTrendingTypes.TOP_100_ANIME -> homeViewModel.top100AnimePager
+            HomeTrendingTypes.POPULAR_MANHWA -> homeViewModel.popularManhwaPager
+        }.collectAsLazyPagingItems()
 
     Scaffold(topBar = {
         TopAppBar(title = { Text(text = type.toString(LocalContext.current)) }, navigationIcon = {
             IconButton(
-                onClick = navigateBack
+                onClick = navigateBack,
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = stringResource(id = R.string.back)
+                    contentDescription = stringResource(id = R.string.back),
                 )
             }
         })
@@ -67,39 +61,41 @@ fun MediaOverview(
         LazyVerticalGrid(
             columns = GridCells.Adaptive(120.dp),
             contentPadding = PaddingValues(horizontal = Dimens.PaddingSmall),
-            modifier = Modifier.padding(top = it.calculateTopPadding())
+            modifier = Modifier.padding(top = it.calculateTopPadding()),
         ) {
             items(pager.itemCount) { index ->
                 val media = pager[index]
 //                if (media != null) {
 //                AnimatedVisibility(visible = media != null, enter = scaleIn(), exit = scaleOut()) {
-                    Column(modifier = Modifier
-                        .clickable {
-                            navigateToDetails(media?.id ?: -1)
-                        }
+                Column(
+                    modifier =
+                        Modifier
+                            .clickable {
+                                navigateToDetails(media?.id ?: -1)
+                            },
 //                    .animateContentSize()
 //                    .animateItemPlacement(tween())
 //                        .background(shimmerBrush(media != null))
-                    ) {
-                        AsyncImageRoundedCorners(
-                            coverImage = media?.coverImage ?: "",
-                            contentDescription = "Cover of ${media?.title ?: ""}"
-                        )
-                        Text(
-                            text = media?.title ?: "",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(
+                ) {
+                    AsyncImageRoundedCorners(
+                        coverImage = media?.coverImage ?: "",
+                        contentDescription = "Cover of ${media?.title ?: ""}",
+                    )
+                    Text(
+                        text = media?.title ?: "",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier =
+                            Modifier.padding(
                                 start = Dimens.PaddingSmall,
                                 end = Dimens.PaddingSmall,
-                                bottom = Dimens.PaddingNormal
-                            )
-                        )
-                    }
+                                bottom = Dimens.PaddingNormal,
+                            ),
+                    )
                 }
+            }
 //                }
 //            }
         }
-
     }
 }

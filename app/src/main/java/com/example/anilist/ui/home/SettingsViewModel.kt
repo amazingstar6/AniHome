@@ -15,43 +15,44 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SettingsViewModel @Inject constructor(
-    private val userDataRepository: UserDataRepository
-) : ViewModel() {
+class SettingsViewModel
+    @Inject
+    constructor(
+        private val userDataRepository: UserDataRepository,
+    ) : ViewModel() {
+        val settingsUiState: StateFlow<SettingsUiState> =
+            userDataRepository.userPreferencesFlow.map { userData ->
+                SettingsUiState.Success(
+                    settings = userData,
+                )
+            }
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = SettingsUiState.Loading,
+                )
 
-    val settingsUiState: StateFlow<SettingsUiState> =
-        userDataRepository.userPreferencesFlow.map { userData ->
-            SettingsUiState.Success(
-                settings = userData,
-            )
+        fun saveTheme(theme: Theme) {
+            viewModelScope.launch {
+                userDataRepository.saveTheme(theme)
+            }
         }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = SettingsUiState.Loading,
-            )
 
+        fun saveTitle(titleFormat: TitleFormat) {
+            viewModelScope.launch {
+                userDataRepository.saveTitle(titleFormat)
+            }
+        }
 
-    fun saveTheme(theme: Theme) {
-        viewModelScope.launch {
-            userDataRepository.saveTheme(theme)
+        fun logOut() {
+            viewModelScope.launch {
+                userDataRepository.logOut()
+            }
         }
     }
-
-    fun saveTitle(titleFormat: TitleFormat) {
-        viewModelScope.launch {
-            userDataRepository.saveTitle(titleFormat)
-        }
-    }
-
-    fun logOut() {
-        viewModelScope.launch {
-            userDataRepository.logOut()
-        }
-    }
-}
 
 sealed interface SettingsUiState {
     object Loading : SettingsUiState
+
     data class Success(val settings: UserSettings) : SettingsUiState
 }

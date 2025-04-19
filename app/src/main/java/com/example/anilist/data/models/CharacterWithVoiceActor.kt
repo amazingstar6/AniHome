@@ -12,14 +12,15 @@ data class CharacterWithVoiceActor(
     val voiceActorCoverImage: String = "",
     val voiceActorLanguage: String = "",
     val role: AniCharacterRole = AniCharacterRole.UNKNOWN,
-    val roleNotes: String = ""
+    val roleNotes: String = "",
 )
 
 enum class AniCharacterRole {
     MAIN,
     SUPPORTING,
     BACKGROUND,
-    UNKNOWN;
+    UNKNOWN,
+    ;
 
     fun toString(context: Context): String {
         return when (this) {

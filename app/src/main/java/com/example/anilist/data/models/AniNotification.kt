@@ -19,7 +19,7 @@ data class AniNotification(
     val mediaId: Int = -1,
     val mediaChangeReason: String = "",
     val deletedMediaTitles: List<String> = emptyList(),
-    val deletedMediaTitle: String = ""
+    val deletedMediaTitle: String = "",
 )
 
 enum class AniNotificationType {
@@ -40,7 +40,8 @@ enum class AniNotificationType {
     MediaDataChangeNotification,
     MediaMergeNotification,
     MediaDeletionNotification,
-    UNKNOWN;
+    UNKNOWN,
+    ;
 
     fun isInFilter(filter: NotificationFilterList): Boolean {
         if (filter == NotificationFilterList.ALL) return true

@@ -10,12 +10,13 @@ enum class AniPersonalMediaStatus {
     COMPLETED,
     PAUSED,
     DROPPED,
-    PLANNING;
+    PLANNING,
+    ;
 
     fun toString(
         context: Context,
         isAnime: Boolean,
-        unknownString: String = context.getString(R.string.all)
+        unknownString: String = context.getString(R.string.all),
     ): String {
         return when (this) {
             CURRENT -> if (isAnime) context.getString(R.string.watching) else context.getString(R.string.reading)
@@ -23,9 +24,14 @@ enum class AniPersonalMediaStatus {
             COMPLETED -> context.getString(R.string.completed)
             DROPPED -> context.getString(R.string.dropped)
             PAUSED -> context.getString(R.string.paused)
-            REPEATING -> if (isAnime) context.getString(R.string.rewatching) else context.getString(
-                R.string.rereading
-            )
+            REPEATING ->
+                if (isAnime) {
+                    context.getString(R.string.rewatching)
+                } else {
+                    context.getString(
+                        R.string.rereading,
+                    )
+                }
 
             UNKNOWN -> unknownString
         }

@@ -9,7 +9,8 @@ enum class HomeTrendingTypes {
     UPCOMING_NEXT_SEASON,
     ALL_TIME_POPULAR,
     TOP_100_ANIME,
-    POPULAR_MANHWA;
+    POPULAR_MANHWA,
+    ;
 
     fun toString(context: Context): String {
         return when (this) {

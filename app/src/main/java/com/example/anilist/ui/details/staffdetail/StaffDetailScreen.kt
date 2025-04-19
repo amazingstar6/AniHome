@@ -27,15 +27,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.anilist.R
-import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.data.models.AniCharacterMediaConnection
 import com.example.anilist.data.models.AniMediaType
 import com.example.anilist.data.models.AniStaffDetail
+import com.example.anilist.data.models.CharacterWithVoiceActor
 import com.example.anilist.ui.Dimens
 import com.example.anilist.ui.details.characterdetail.AvatarAndName
-import com.example.anilist.utils.Description
 import com.example.anilist.ui.details.characterdetail.Headline
 import com.example.anilist.ui.details.characterdetail.ImageWithTitleAndSubTitle
+import com.example.anilist.utils.Description
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,8 +53,9 @@ fun StaffDetailScreen(
         TopAppBar(title = {
             AnimatedVisibility(visible = staff is StaffDetailUiState.Success, enter = fadeIn()) {
                 Text(
-                    text = (staff as? StaffDetailUiState.Success)?.staff?.userPreferredName
-                        ?: stringResource(R.string.question_mark),
+                    text =
+                        (staff as? StaffDetailUiState.Success)?.staff?.userPreferredName
+                            ?: stringResource(R.string.question_mark),
                 )
             }
         }, navigationIcon = {
@@ -72,16 +73,17 @@ fun StaffDetailScreen(
                 staffMedia = staffMedia,
                 onNavigateToCharacter = onNavigateToCharacter,
                 onNavigateToMedia = onNavigateToMedia,
-                modifier = Modifier.padding(
-                    top = it.calculateTopPadding(),
-                    bottom = Dimens.PaddingNormal,
-                ),
+                modifier =
+                    Modifier.padding(
+                        top = it.calculateTopPadding(),
+                        bottom = Dimens.PaddingNormal,
+                    ),
                 toggleFavourite = {
                     staffDetailViewModel.toggleFavourite(
                         id,
                     )
                 },
-                isLoading = staff is StaffDetailUiState.Loading
+                isLoading = staff is StaffDetailUiState.Loading,
             )
         }
     }
@@ -95,12 +97,13 @@ private fun StaffScreen(
     onNavigateToMedia: (Int) -> Unit,
     modifier: Modifier = Modifier,
     toggleFavourite: () -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
 ) {
     Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .then(modifier),
+        modifier =
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .then(modifier),
     ) {
         AvatarAndName(
             staff.coverImage,
@@ -111,7 +114,7 @@ private fun StaffScreen(
             modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
             isFavorite = staff.isFavourite,
             toggleFavourite = toggleFavourite,
-            isLoading = isLoading
+            isLoading = isLoading,
         )
         if (staff.description.isNotBlank()) {
             Description(staff.description)
@@ -135,7 +138,7 @@ private fun StaffScreen(
 fun MediaStaffRole(
     media: LazyPagingItems<AniCharacterMediaConnection>,
     onNavigateToMedia: (Int) -> Unit,
-    type: AniMediaType
+    type: AniMediaType,
 ) {
     LazyRow(contentPadding = PaddingValues(end = Dimens.PaddingNormal)) {
         items(media.itemCount) { index ->
@@ -156,7 +159,7 @@ fun MediaStaffRole(
 @Composable
 fun VoiceCharacters(
     characterWithVoiceActors: List<CharacterWithVoiceActor>,
-    onNavigateToCharacter: (Int) -> Unit
+    onNavigateToCharacter: (Int) -> Unit,
 ) {
     LazyRow(contentPadding = PaddingValues(end = Dimens.PaddingNormal)) {
         items(characterWithVoiceActors) { character ->

@@ -56,9 +56,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.anilist.R
 import com.example.anilist.data.models.AniMediaListEntry
+import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.models.FuzzyDate
 import com.example.anilist.data.models.Media
-import com.example.anilist.data.models.AniPersonalMediaStatus
 import com.example.anilist.data.models.StatusUpdate
 import com.example.anilist.utils.Utils
 import kotlinx.datetime.Instant
@@ -78,41 +78,47 @@ fun EditStatusModalSheet(
     isAnime: Boolean,
     hideEditSheet: () -> Unit,
     saveStatus: (StatusUpdate, Boolean) -> Unit,
-    deleteListEntry: (id: Int) -> Unit
+    deleteListEntry: (id: Int) -> Unit,
 ) {
     var currentListEntry by remember { mutableStateOf(unChangeListEntry) }
     var showCloseConfirmation by remember {
         mutableStateOf(false)
     }
 
-    val datePickerStateCompletedAt = rememberDatePickerState(
-        initialSelectedDateMillis = if (currentListEntry.completedAt == null) {
-            null
-        } else {
-            LocalDate(
-                currentListEntry.completedAt!!.year,
-                currentListEntry.completedAt!!.month,
-                currentListEntry.completedAt!!.day,
-            ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
-        },
-    )
+    val datePickerStateCompletedAt =
+        rememberDatePickerState(
+            initialSelectedDateMillis =
+                if (currentListEntry.completedAt == null) {
+                    null
+                } else {
+                    LocalDate(
+                        currentListEntry.completedAt!!.year,
+                        currentListEntry.completedAt!!.month,
+                        currentListEntry.completedAt!!.day,
+                    ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+                },
+        )
 
-    val datePickerStateStartedAt = rememberDatePickerState(
-        initialSelectedDateMillis = if (currentListEntry.startedAt == null) {
-            null
-        } else {
-            LocalDate(
-                currentListEntry.completedAt!!.year,
-                currentListEntry.completedAt!!.month,
-                currentListEntry.completedAt!!.day,
-            ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
-        },
-    )
+    val datePickerStateStartedAt =
+        rememberDatePickerState(
+            initialSelectedDateMillis =
+                if (currentListEntry.startedAt == null) {
+                    null
+                } else {
+                    LocalDate(
+                        currentListEntry.completedAt!!.year,
+                        currentListEntry.completedAt!!.month,
+                        currentListEntry.completedAt!!.day,
+                    ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+                },
+        )
 
-    ModalBottomSheet(sheetState = editSheetState,
-        onDismissRequest = { hideEditSheet() }) {
+    ModalBottomSheet(
+        sheetState = editSheetState,
+        onDismissRequest = { hideEditSheet() },
+    ) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            /*do we need this? fixme */
+            // do we need this? fixme
 //            var selectedOptionText by remember { mutableStateOf(unChangeListEntry.status) }
             AnimatedVisibility(showCloseConfirmation) {
                 AlertDialog(
@@ -135,7 +141,8 @@ fun EditStatusModalSheet(
                     onDismissRequest = {
                         showCloseConfirmation = false
                         hideEditSheet()
-                    })
+                    },
+                )
             }
 
             CenterAlignedTopAppBar(
@@ -182,9 +189,9 @@ fun EditStatusModalSheet(
                                 advancedScores = null,
                                 startedAt = currentListEntry.startedAt,
                                 completedAt = currentListEntry.completedAt,
-                                mediaId = media.id
+                                mediaId = media.id,
                             ),
-                            false
+                            false,
                         )
                         hideEditSheet()
 //                        reloadMyMedia()
@@ -196,7 +203,7 @@ fun EditStatusModalSheet(
 
             DropDownMenuStatus(
                 currentListEntry.status,
-                isAnime = isAnime
+                isAnime = isAnime,
             ) { currentListEntry = currentListEntry.copy(status = it) }
 
             NumberTextField(
@@ -208,26 +215,28 @@ fun EditStatusModalSheet(
                     if ((if (isAnime) media.episodeAmount else media.chapters)
                         == currentListEntry.progress
                     ) {
-                        currentListEntry = currentListEntry.copy(
-                            status = AniPersonalMediaStatus.COMPLETED,
-                            completedAt = Utils.getCurrentDay(),
-                        )
+                        currentListEntry =
+                            currentListEntry.copy(
+                                status = AniPersonalMediaStatus.COMPLETED,
+                                completedAt = Utils.getCurrentDay(),
+                            )
                         datePickerStateCompletedAt.selectedDateMillis = Utils.getCurrentDayMillisEpoch()
                     }
                 },
-                maxCount = if (isAnime) {
-                    if (media.episodeAmount != -1) {
-                        media.episodeAmount
+                maxCount =
+                    if (isAnime) {
+                        if (media.episodeAmount != -1) {
+                            media.episodeAmount
+                        } else {
+                            Int.MAX_VALUE
+                        }
                     } else {
-                        Int.MAX_VALUE
-                    }
-                } else {
-                    if (media.chapters != -1) {
-                        media.chapters
-                    } else {
-                        Int.MAX_VALUE
-                    }
-                },
+                        if (media.chapters != -1) {
+                            media.chapters
+                        } else {
+                            Int.MAX_VALUE
+                        }
+                    },
             )
             if (!isAnime) {
                 NumberTextField(
@@ -249,31 +258,33 @@ fun EditStatusModalSheet(
             )
             SliderTextField(
                 currentListEntry.score,
-                setRawScore = { currentListEntry = currentListEntry.copy(score = it) })
+                setRawScore = { currentListEntry = currentListEntry.copy(score = it) },
+            )
 
             DatePickerDialogue(
                 "Start date",
                 initialValue = currentListEntry.startedAt,
                 setValue = { currentListEntry = currentListEntry.copy(startedAt = it) },
-                datePickerState = datePickerStateStartedAt
+                datePickerState = datePickerStateStartedAt,
             )
             DatePickerDialogue(
                 "Finish date",
                 initialValue = currentListEntry.completedAt,
                 setValue = { currentListEntry = currentListEntry.copy(completedAt = it) },
-                datePickerState = datePickerStateCompletedAt
+                datePickerState = datePickerStateCompletedAt,
             )
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.PaddingNormal)
-                    .clickable {
-                        currentListEntry =
-                            currentListEntry.copy(private = !currentListEntry.private)
-                    }
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimens.PaddingNormal)
+                        .clickable {
+                            currentListEntry =
+                                currentListEntry.copy(private = !currentListEntry.private)
+                        },
             ) {
                 Checkbox(checked = currentListEntry.private, onCheckedChange = {
                     currentListEntry = currentListEntry.copy(private = it)
@@ -291,12 +302,13 @@ fun EditStatusModalSheet(
                 onValueChange = {
                     currentListEntry = currentListEntry.copy(notes = it)
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = Dimens.PaddingNormal,
-                        vertical = Dimens.PaddingLarge
-                    ),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = Dimens.PaddingNormal,
+                            vertical = Dimens.PaddingLarge,
+                        ),
                 minLines = 5,
                 trailingIcon = {
                     if (currentListEntry.notes.isNotBlank()) {
@@ -307,12 +319,12 @@ fun EditStatusModalSheet(
                                 Icon(
                                     imageVector = Icons.Default.Clear,
                                     contentDescription = "clear",
-                                    modifier = Modifier.align(Alignment.TopEnd)
+                                    modifier = Modifier.align(Alignment.TopEnd),
                                 )
                             }
                         }
                     }
-                }
+                },
             )
 
             var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -333,28 +345,31 @@ fun EditStatusModalSheet(
                             Text(stringResource(R.string.delete))
                         }
                     },
-                    onDismissRequest = { showDeleteConfirmation = false })
+                    onDismissRequest = { showDeleteConfirmation = false },
+                )
             }
 
             Button(
                 onClick = {
                     showDeleteConfirmation = true
                 },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = Dimens.PaddingNormal,
-                        end = Dimens.PaddingNormal,
-                        bottom = Dimens.PaddingNormal
-                    )
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = Dimens.PaddingNormal,
+                            end = Dimens.PaddingNormal,
+                            bottom = Dimens.PaddingNormal,
+                        ),
             ) {
                 Text(
                     text = "Delete entry",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }
@@ -362,7 +377,10 @@ fun EditStatusModalSheet(
 }
 
 @Composable
-fun SliderTextField(rawScore: Double, setRawScore: (Double) -> Unit) {
+fun SliderTextField(
+    rawScore: Double,
+    setRawScore: (Double) -> Unit,
+) {
     var sliderPosition by remember {
         mutableFloatStateOf(
             rawScore.roundToInt().toFloat(),
@@ -376,44 +394,48 @@ fun SliderTextField(rawScore: Double, setRawScore: (Double) -> Unit) {
     OutlinedTextField(
         value = text,
         onValueChange = { newInput ->
-            text = try {
-                if (newInput.toFloat() in valueRange) {
-                    newInput
-                } else {
-                    //fixme should we make a toast?
-                    Toast.makeText(
-                        context,
-                        R.string.input_a_valid_value,
-                        Toast.LENGTH_SHORT
-                    ).show()
+            text =
+                try {
+                    if (newInput.toFloat() in valueRange) {
+                        newInput
+                    } else {
+                        // fixme should we make a toast?
+                        Toast.makeText(
+                            context,
+                            R.string.input_a_valid_value,
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                        ""
+                    }
+                } catch (e: NumberFormatException) {
                     ""
                 }
-            } catch (e: NumberFormatException) {
-                ""
-            }
-            sliderPosition = try {
-                if (newInput.toFloat() in valueRange) {
-                    newInput.toFloat()
-                } else {
+            sliderPosition =
+                try {
+                    if (newInput.toFloat() in valueRange) {
+                        newInput.toFloat()
+                    } else {
+                        0f
+                    }
+                } catch (e: NumberFormatException) {
                     0f
                 }
-            } catch (e: NumberFormatException) {
-                0f
-            }
         },
         label = { Text("Score") },
         suffix = { Text(text = "/100") },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier
-            .padding(Dimens.PaddingNormal),
+        modifier =
+            Modifier
+                .padding(Dimens.PaddingNormal),
     )
     Slider(
-        modifier = Modifier
-            .semantics {
-                contentDescription = "Localized Description"
-            }
-            .padding(Dimens.PaddingNormal),
+        modifier =
+            Modifier
+                .semantics {
+                    contentDescription = "Localized Description"
+                }
+                .padding(Dimens.PaddingNormal),
         valueRange = valueRange,
         value = sliderPosition,
         onValueChange = {
@@ -441,15 +463,20 @@ fun DropDownMenuStatus(
     ) {
         OutlinedTextField(
             // The `menuAnchor` modifier must be passed to the text field for correctness.
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth(),
+            modifier =
+                Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
             readOnly = true,
-            value = selectedOptionText.toString(
-                isAnime = isAnime, context = LocalContext.current, unknownString = stringResource(
-                    R.string.none
-                )
-            ),
+            value =
+                selectedOptionText.toString(
+                    isAnime = isAnime,
+                    context = LocalContext.current,
+                    unknownString =
+                        stringResource(
+                            R.string.none,
+                        ),
+                ),
             onValueChange = {},
             label = { Text("Status") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -466,8 +493,8 @@ fun DropDownMenuStatus(
                             Text(
                                 selectionOption.toString(
                                     isAnime = isAnime,
-                                    context = LocalContext.current
-                                )
+                                    context = LocalContext.current,
+                                ),
                             )
                         },
                         onClick = {
@@ -505,7 +532,7 @@ fun NumberTextField(
                     if (newInput.toInt() in 0..maxCount) {
                         text = newInput
                         setValue(
-                            newInput.toInt()
+                            newInput.toInt(),
                         )
                     } else {
                         text = ""
@@ -521,23 +548,25 @@ fun NumberTextField(
             suffix = { if (suffix.isNotEmpty()) Text(text = "/$suffix") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             placeholder = { Text(text = (0).toString()) },
-            modifier = Modifier
-                .padding(Dimens.PaddingNormal)
-                .weight(1f),
+            modifier =
+                Modifier
+                    .padding(Dimens.PaddingNormal)
+                    .weight(1f),
         )
         TextButton(onClick = {
-            text = try {
-                if (text.toInt() < 1) {
+            text =
+                try {
+                    if (text.toInt() < 1) {
+                        setValue(0)
+                        (0).toString()
+                    } else {
+                        setValue(text.toInt().dec())
+                        text.toInt().dec().toString()
+                    }
+                } catch (e: NumberFormatException) {
                     setValue(0)
                     (0).toString()
-                } else {
-                    setValue(text.toInt().dec())
-                    text.toInt().dec().toString()
                 }
-            } catch (e: NumberFormatException) {
-                setValue(0)
-                (0).toString()
-            }
         }) {
             Text(text = stringResource(R.string.minus_one))
         }
@@ -563,7 +592,7 @@ fun DatePickerDialogue(
     label: String,
     initialValue: FuzzyDate?,
     setValue: (FuzzyDate?) -> Unit,
-    datePickerState: DatePickerState
+    datePickerState: DatePickerState,
 ) {
     var expanded by remember { mutableStateOf(false) }
 //    val mutableInitialValue by remember { mutableStateOf(initialValue) }
@@ -603,36 +632,40 @@ fun DatePickerDialogue(
         }
     OutlinedTextField(
         // The `menuAnchor` modifier must be passed to the text field for correctness.
-        modifier = Modifier
+        modifier =
+            Modifier
 //                .menuAnchor()
-            .clickable {
-                expanded = !expanded
-            }
-            .padding(Dimens.PaddingNormal)
-            .fillMaxWidth(),
+                .clickable {
+                    expanded = !expanded
+                }
+                .padding(Dimens.PaddingNormal)
+                .fillMaxWidth(),
         readOnly = true,
         enabled = false,
         value = timeString,
         onValueChange = { },
         label = { Text(label) },
         trailingIcon = {
-            if (datePickerState.selectedDateMillis != null) IconButton(onClick = {
-                datePickerState.selectedDateMillis = null
-            }) {
-                Icon(
-                    imageVector = Icons.Default.Clear,
-                    contentDescription = stringResource(id = R.string.clear)
-                )
+            if (datePickerState.selectedDateMillis != null) {
+                IconButton(onClick = {
+                    datePickerState.selectedDateMillis = null
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = stringResource(id = R.string.clear),
+                    )
+                }
             }
         },
-        colors = OutlinedTextFieldDefaults.colors(
-            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-            disabledBorderColor = MaterialTheme.colorScheme.outline,
-            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        colors =
+            OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
 //            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
     )
 //    }
@@ -668,10 +701,10 @@ fun DatePickerDialogue(
     }
 }
 
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Preview
-//@Composable
-//fun EditStatusModalSheetPreview() {
+// @OptIn(ExperimentalMaterial3Api::class)
+// @Preview
+// @Composable
+// fun EditStatusModalSheetPreview() {
 //    EditStatusModalSheet(
 //        editSheetState = rememberModalBottomSheetState(),
 //        unChangeListEntry = Media(),
@@ -680,7 +713,7 @@ fun DatePickerDialogue(
 //        saveStatus = { },
 //        deleteListEntry = { }
 //    )
-//}
+// }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, group = "Date picker")

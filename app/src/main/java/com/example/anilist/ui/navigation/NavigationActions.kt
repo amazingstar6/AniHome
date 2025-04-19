@@ -83,43 +83,43 @@ class AniListNavigationActions(private val navController: NavController) {
 
     fun navigateToStudio(id: Int) {
         navController.navigate(
-            route = AniListRoute.STUDIO_DETAIL_ROUTE + "/$id"
+            route = AniListRoute.STUDIO_DETAIL_ROUTE + "/$id",
         )
     }
 
     fun navigateToThread(id: Int) {
         navController.navigate(
-            route = AniListRoute.THREAD_DETAIL_ROUTE + "/$id"
+            route = AniListRoute.THREAD_DETAIL_ROUTE + "/$id",
         )
     }
 
     fun navigateToUser(id: Int) {
         navController.navigate(
-            route = AniListRoute.USER_DETAIL_ROUTE + "/$id"
+            route = AniListRoute.USER_DETAIL_ROUTE + "/$id",
         )
     }
 
     fun navigateToLargeCover(imageString: String) {
         navController.navigate(
-            route = AniListRoute.COVER_LARGE + "/$imageString"
+            route = AniListRoute.COVER_LARGE + "/$imageString",
         )
     }
 
     fun navigateToOverview(homeTrendingTypes: HomeTrendingTypes) {
         navController.navigate(
-            route = AniListRoute.MEDIA_OVERVIEW_ROUTE + "/${homeTrendingTypes.ordinal}"
+            route = AniListRoute.MEDIA_OVERVIEW_ROUTE + "/${homeTrendingTypes.ordinal}",
         )
     }
 
     fun navigateToActivity(activityId: Int) {
         navController.navigate(
-            route = AniListRoute.ACTIVITY + "/$activityId"
+            route = AniListRoute.ACTIVITY + "/$activityId",
         )
     }
 
     fun navigateToThreadComment(commentId: Int) {
         navController.navigate(
-            route = AniListRoute.THREAD_COMMENT + "/$commentId"
+            route = AniListRoute.THREAD_COMMENT + "/$commentId",
         )
     }
 }
@@ -127,25 +127,26 @@ class AniListNavigationActions(private val navController: NavController) {
 /**
  * Describes all the top level destinations in the app; the three destinations in the bottom bar
  */
-val TOP_LEVEL_DESTINATIONS = listOf(
-    AnilistTopLevelDestination(
-        route = AniListRoute.HOME_ROUTE,
-        selectedIcon = R.drawable.navigation_home_filled,
-        unselectedIcon = R.drawable.navigation_home_outlined,
-        iconTextId = R.string.home,
-    ),
-    AnilistTopLevelDestination(
-        route = AniListRoute.ANIME_ROUTE,
-        selectedIcon = R.drawable.navigation_anime_filled,
-        unselectedIcon = R.drawable.navigation_anime_outlined,
-        iconTextId = R.string.my_anime,
-    ),
-    AnilistTopLevelDestination(
-        route = AniListRoute.MANGA_ROUTE,
-        selectedIcon = R.drawable.navigation_manga_filled,
-        unselectedIcon = R.drawable.navigation_manga_outlined,
-        iconTextId = R.string.my_manga,
-    ),
+val TOP_LEVEL_DESTINATIONS =
+    listOf(
+        AnilistTopLevelDestination(
+            route = AniListRoute.HOME_ROUTE,
+            selectedIcon = R.drawable.navigation_home_filled,
+            unselectedIcon = R.drawable.navigation_home_outlined,
+            iconTextId = R.string.home,
+        ),
+        AnilistTopLevelDestination(
+            route = AniListRoute.ANIME_ROUTE,
+            selectedIcon = R.drawable.navigation_anime_filled,
+            unselectedIcon = R.drawable.navigation_anime_outlined,
+            iconTextId = R.string.my_anime,
+        ),
+        AnilistTopLevelDestination(
+            route = AniListRoute.MANGA_ROUTE,
+            selectedIcon = R.drawable.navigation_manga_filled,
+            unselectedIcon = R.drawable.navigation_manga_outlined,
+            iconTextId = R.string.my_manga,
+        ),
 //    AnilistTopLevelDestination(
 //        route = AniListRoute.FEED_ROUTE,
 //        selectedIcon = R.drawable.navigation_feed_filled,
@@ -158,4 +159,4 @@ val TOP_LEVEL_DESTINATIONS = listOf(
 //        unselectedIcon = R.drawable.navigation_forum_outlined,
 //        iconTextId = R.string.forum,
 //    ),
-)
+    )

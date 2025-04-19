@@ -12,7 +12,7 @@ private const val STARTING_KEY = 1
 
 class SearchMediaPagingSource(
     private val homeRepository: HomeRepositoryImpl,
-    private val searchState: MediaSearchState
+    private val searchState: MediaSearchState,
 ) : PagingSource<Int, Media>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Media> {
         val start = params.key ?: STARTING_KEY
@@ -20,16 +20,17 @@ class SearchMediaPagingSource(
             homeRepository.searchMedia(
                 page = start,
                 pageSize = params.loadSize,
-                searchState = searchState
+                searchState = searchState,
             )
         Timber.i("Media search is querying ${searchState.query} for ${searchState.searchType}")
         return when (data) {
             is AniResult.Failure -> LoadResult.Error(Exception(data.error))
-            is AniResult.Success -> LoadResult.Page(
-                data = data.data,
-                prevKey = if (start == STARTING_KEY) null else start - 1,
-                nextKey = if (data.data.isNotEmpty()) start + 1 else null
-            )
+            is AniResult.Success ->
+                LoadResult.Page(
+                    data = data.data,
+                    prevKey = if (start == STARTING_KEY) null else start - 1,
+                    nextKey = if (data.data.isNotEmpty()) start + 1 else null,
+                )
         }
     }
 
@@ -40,5 +41,4 @@ class SearchMediaPagingSource(
             anchorPage?.prevKey ?: anchorPage?.nextKey
         }
     }
-
 }

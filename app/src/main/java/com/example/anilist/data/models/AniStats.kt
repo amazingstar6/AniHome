@@ -15,7 +15,7 @@ data class AniStats(
     val mostPopularSeasonSeason: AniSeason = AniSeason.UNKNOWN,
     val mostPopularSeasonYear: Int = -1,
     val scoreDistribution: AniScoreDistribution = AniScoreDistribution(),
-    val statusDistribution: AniStatsStatusDistribution = AniStatsStatusDistribution(0, 0, 0, 0, 0)
+    val statusDistribution: AniStatsStatusDistribution = AniStatsStatusDistribution(0, 0, 0, 0, 0),
 )
 
 data class AniStatsStatusDistribution(

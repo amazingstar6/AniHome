@@ -9,7 +9,5 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface MyMediaRepositoryModule {
     @Binds
-    fun bindMyMediaRepository(
-        myMediaRepositoryImpl: MyMediaRepositoryImpl
-    ): MyMediaRepository
+    fun bindMyMediaRepository(myMediaRepositoryImpl: MyMediaRepositoryImpl): MyMediaRepository
 }

@@ -25,7 +25,6 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
@@ -47,7 +46,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -95,12 +93,13 @@ fun Overview(
     isLoading: Boolean,
     onNavigateToDetails: (Int) -> Unit,
     onNavigateToLargeCover: (String) -> Unit,
-    navigateToStudioDetails: (Int) -> Unit
+    navigateToStudioDetails: (Int) -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(bottom = 100.dp),
+        modifier =
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 100.dp),
         //            .padding(20.dp)
     ) {
         val anime: Media = media
@@ -129,26 +128,28 @@ fun Overview(
 //            ExternalLinksPlaceholder()
         }
     }
-
 }
 
 @Composable
 fun RelationsPlaceHolder() {
     Column(
-        modifier = Modifier
-            .padding(Dimens.PaddingNormal)
+        modifier =
+            Modifier
+                .padding(Dimens.PaddingNormal),
     ) {
         Text(
             text = "Relations placeholder",
-            modifier = Modifier
-                .padding(bottom = Dimens.PaddingNormal)
-                .defaultPlaceholder()
+            modifier =
+                Modifier
+                    .padding(bottom = Dimens.PaddingNormal)
+                    .defaultPlaceholder(),
         )
         Box(
-            modifier = Modifier
-                .height(SMALL_MEDIA_HEIGHT.dp)
-                .fillMaxWidth()
-                .defaultPlaceholder()
+            modifier =
+                Modifier
+                    .height(SMALL_MEDIA_HEIGHT.dp)
+                    .fillMaxWidth()
+                    .defaultPlaceholder(),
         )
     }
 }
@@ -158,32 +159,35 @@ fun AnimeCoverDetailsPlaceHolder() {
     Column {
         Row(modifier = Modifier.padding(Dimens.PaddingNormal)) {
             Box(
-                modifier = Modifier
-                    .size(LARGE_MEDIA_WIDTH.dp, LARGE_MEDIA_HEIGHT.dp)
-                    .defaultPlaceholder()
+                modifier =
+                    Modifier
+                        .size(LARGE_MEDIA_WIDTH.dp, LARGE_MEDIA_HEIGHT.dp)
+                        .defaultPlaceholder(),
             )
             Column(modifier = Modifier.padding(start = Dimens.PaddingNormal)) {
                 Text(
                     text = "Placeholder for title",
-                    modifier = Modifier
-                        .padding(bottom = Dimens.PaddingNormal)
-                        .defaultPlaceholder()
+                    modifier =
+                        Modifier
+                            .padding(bottom = Dimens.PaddingNormal)
+                            .defaultPlaceholder(),
                 )
                 Box(
-                    modifier = Modifier
-                        .size((LARGE_MEDIA_HEIGHT * 3 / 4).dp)
-                        .defaultPlaceholder()
+                    modifier =
+                        Modifier
+                            .size((LARGE_MEDIA_HEIGHT * 3 / 4).dp)
+                            .defaultPlaceholder(),
                 ) {
-
                 }
             }
         }
         Box(
-            modifier = Modifier
-                .padding(Dimens.PaddingNormal)
-                .fillMaxWidth()
-                .height(160.dp)
-                .defaultPlaceholder()
+            modifier =
+                Modifier
+                    .padding(Dimens.PaddingNormal)
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .defaultPlaceholder(),
         )
     }
 }
@@ -193,28 +197,29 @@ fun DescriptionPlaceHolder() {
     Column(modifier = Modifier.padding(Dimens.PaddingNormal)) {
         Text(
             text = "Description",
-            modifier = Modifier
-                .padding(bottom = Dimens.PaddingNormal)
-                .placeholder(
-                    visible = true,
-                    highlight = PlaceholderHighlight.shimmer(),
-                )
+            modifier =
+                Modifier
+                    .padding(bottom = Dimens.PaddingNormal)
+                    .placeholder(
+                        visible = true,
+                        highlight = PlaceholderHighlight.shimmer(),
+                    ),
         )
         Box(
-            modifier = Modifier
-                .size(200.dp)
-                .placeholder(
-                    visible = true,
-                    highlight = PlaceholderHighlight.shimmer()
-                )
+            modifier =
+                Modifier
+                    .size(200.dp)
+                    .placeholder(
+                        visible = true,
+                        highlight = PlaceholderHighlight.shimmer(),
+                    ),
         ) {
-
         }
     }
 //    Box(
 //        modifier = Modifier
 //            .size(200.dp)
-////            .background(Color.Red)
+// //            .background(Color.Red)
 //            .background(shimmerBrush())
 //    )
 }
@@ -223,7 +228,7 @@ fun DescriptionPlaceHolder() {
 @OptIn(ExperimentalLayoutApi::class)
 private fun OverViewStudios(
     anime: Media,
-    navigateToStudioDetails: (Int) -> Unit
+    navigateToStudioDetails: (Int) -> Unit,
 ) {
     if (anime.studios.isNotEmpty()) {
         HeadLine("Studios")
@@ -231,7 +236,7 @@ private fun OverViewStudios(
             anime.studios.forEach {
                 OutlinedButton(
                     onClick = { navigateToStudioDetails(it.id) },
-                    modifier = Modifier.padding(end = Dimens.PaddingSmall)
+                    modifier = Modifier.padding(end = Dimens.PaddingSmall),
                 ) {
                     Text(
                         text = it.name,
@@ -254,30 +259,34 @@ private fun OverviewRelations(
         LazyRow(contentPadding = PaddingValues(end = Dimens.PaddingNormal)) {
             items(relations) { relation ->
                 Column(
-                    modifier = Modifier
-                        .padding(start = Dimens.PaddingNormal)
-                        .width(80.dp)
-                        .clickable {
-                            onNavigateToDetails(relation.id)
-                        },
+                    modifier =
+                        Modifier
+                            .padding(start = Dimens.PaddingNormal)
+                            .width(80.dp)
+                            .clickable {
+                                onNavigateToDetails(relation.id)
+                            },
                 ) {
                     AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(relation.coverImage).crossfade(true).build(),
+                        model =
+                            ImageRequest.Builder(LocalContext.current)
+                                .data(relation.coverImage).crossfade(true).build(),
                         contentDescription = "Cover of ${relation.title}",
                         contentScale = ContentScale.FillHeight,
-                        modifier = Modifier
-                            .height(SMALL_MEDIA_HEIGHT.dp)
-                            .padding(bottom = Dimens.PaddingSmall)
-                            .clip(RoundedCornerShape(12.dp)),
+                        modifier =
+                            Modifier
+                                .height(SMALL_MEDIA_HEIGHT.dp)
+                                .padding(bottom = Dimens.PaddingSmall)
+                                .clip(RoundedCornerShape(12.dp)),
                     )
                     Text(
                         text = relation.title,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .padding(bottom = 10.dp)
-                            .width(80.dp),
+                        modifier =
+                            Modifier
+                                .padding(bottom = 10.dp)
+                                .width(80.dp),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -302,27 +311,28 @@ private fun OverviewTrailer(
     if (trailerImage != "") {
         HeadLine("Trailer")
         AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(trailerImage)
-                .crossfade(true).build(),
+            model =
+                ImageRequest.Builder(LocalContext.current)
+                    .data(trailerImage)
+                    .crossfade(true).build(),
             contentDescription = "Trailer",
             contentScale = ContentScale.FillWidth,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { openUri() }
-                .padding(Dimens.PaddingNormal)
-                .clip(RoundedCornerShape(12.dp)),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { openUri() }
+                    .padding(Dimens.PaddingNormal)
+                    .clip(RoundedCornerShape(12.dp)),
         )
     }
 }
-
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 private fun OverviewAnimeCoverDetails(
     media: Media,
     genres: List<String>,
-    showImageLarge: (String) -> Unit
+    showImageLarge: (String) -> Unit,
 ) {
     val isAnime = media.type == AniMediaType.ANIME
     Row(modifier = Modifier.padding(Dimens.PaddingNormal)) {
@@ -332,16 +342,17 @@ private fun OverviewAnimeCoverDetails(
                 contentDescription = "Cover of ${media.title}",
                 width = LARGE_MEDIA_WIDTH.dp,
                 height = LARGE_MEDIA_HEIGHT.dp,
-                modifier = Modifier.clickable {
-                    showImageLarge(
-                        //fixme
-                        URLEncoder.encode(
-                            media.coverImage,
+                modifier =
+                    Modifier.clickable {
+                        showImageLarge(
+                            // fixme
+                            URLEncoder.encode(
+                                media.coverImage,
 //                                StandardCharsets.UTF_8
+                            ),
                         )
-                    )
-                },
-                padding = 0.dp
+                    },
+                padding = 0.dp,
             )
 //            AsyncImage(
 //                model = ImageRequest.Builder(LocalContext.current).data(media.coverImage)
@@ -372,46 +383,54 @@ private fun OverviewAnimeCoverDetails(
         Timber.d("Time at airing is ${media.nextAiringEpisode.airingAt}")
         val tooltipScope = rememberCoroutineScope()
         val tooltipState = rememberTooltipState(isPersistent = true)
-        TooltipBox (
+        TooltipBox(
             positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
-            state  = tooltipState,
+            state = tooltipState,
             tooltip = {
                 RichTooltip {
-                Text(text = Utils.convertEpochToDateTimeTimeZoneString(media.nextAiringEpisode.airingAt.toLong() /* - Clock.System.now().epochSeconds*/))
-
-                }}) {
+                    Text(
+                        text =
+                            Utils.convertEpochToDateTimeTimeZoneString(
+                                media.nextAiringEpisode.airingAt.toLong(), // - Clock.System.now().epochSeconds
+                            ),
+                    )
+                }
+            },
+        ) {
             Text(
                 text = "Episode ${media.nextAiringEpisode.episode} airs in ${
                     Utils.getRelativeTimeFuture(
-                        media.nextAiringEpisode.timeUntilAiring.toLong()
+                        media.nextAiringEpisode.timeUntilAiring.toLong(),
                     )
                 }",
                 style = MaterialTheme.typography.headlineSmall,
                 fontFamily = FontFamily.SansSerif,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .padding(
-                        start = Dimens.PaddingNormal,
-                        end = Dimens.PaddingNormal,
-                        bottom = Dimens.PaddingSmall
-                    )
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        tooltipScope.launch {
-                            tooltipState.show()
-                        }
-                    }
+                modifier =
+                    Modifier
+                        .padding(
+                            start = Dimens.PaddingNormal,
+                            end = Dimens.PaddingNormal,
+                            bottom = Dimens.PaddingSmall,
+                        )
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) {
+                            tooltipScope.launch {
+                                tooltipState.show()
+                            }
+                        },
             )
         }
     }
 
     FlowRow(
         horizontalArrangement = Arrangement.Start,
-        modifier = Modifier
-            .padding(start = Dimens.PaddingNormal, end = Dimens.PaddingNormal)
-            .fillMaxWidth(),
+        modifier =
+            Modifier
+                .padding(start = Dimens.PaddingNormal, end = Dimens.PaddingNormal)
+                .fillMaxWidth(),
     ) {
         for (genre in genres) {
             ElevatedButton(
@@ -425,12 +444,11 @@ private fun OverviewAnimeCoverDetails(
     Rankings(
         stats = media.stats,
         onlyShowTwo = true,
-        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+        modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
     )
 //    if (media.stats.mostPopularAllTime != -1) {
 //        IconWithTextRankings(text = , showHeart = )
 //    }
-
 
 //    if (anime1.highestRated != "") {
 //        IconWithText(
@@ -454,7 +472,6 @@ private fun OverviewAnimeCoverDetails(
 
 @Composable
 private fun OverviewDescription(description: String) {
-
 //    val color = MaterialTheme.colorScheme.onSurface.toArgb()
 //    HtmlText(text = description, style = MaterialTheme.typography.bodyMedium)
 //    Column {
@@ -463,7 +480,7 @@ private fun OverviewDescription(description: String) {
 //            style = MaterialTheme.typography.bodyMedium,
 //            color = MaterialTheme.colorScheme.onSurfaceVariant,
 //            modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
-////                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
+// //                    colorMapping = mapOf(Color.Black to MaterialTheme.colorScheme.onSurface),
 //        )
 //    }
     Column {
@@ -505,7 +522,7 @@ private fun OverviewExternalLinks(
 @OptIn(ExperimentalLayoutApi::class)
 private fun LinkFlowRow(
     externalLinks: List<AniLink>,
-    openUri: (String) -> Unit
+    openUri: (String) -> Unit,
 ) {
     FlowRow(modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)) {
         for (link in externalLinks) {
@@ -519,13 +536,15 @@ private fun LinkFlowRow(
                 ) {
                     if (link.icon.isNotBlank()) {
                         AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(link.icon)
-                                .crossfade(true).build(),
+                            model =
+                                ImageRequest.Builder(LocalContext.current)
+                                    .data(link.icon)
+                                    .crossfade(true).build(),
                             contentDescription = link.site,
-                            colorFilter = ColorFilter.tint(
-                                Color(link.color.toColorInt()),
-                            ),
+                            colorFilter =
+                                ColorFilter.tint(
+                                    Color(link.color.toColorInt()),
+                                ),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
@@ -561,15 +580,16 @@ private fun OverViewTags(
             if (!tag.isMediaSpoiler) {
                 val tooltipCoroutine = rememberCoroutineScope()
                 val tooltipState = rememberTooltipState(isPersistent = true)
-                TooltipBox (
-                    tooltip = { RichTooltip {Text(text = tag.description) }},
+                TooltipBox(
+                    tooltip = { RichTooltip { Text(text = tag.description) } },
                     state = tooltipState,
-                    positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider()
+                    positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
                 ) {
                     SuggestionChip(
-                        onClick = { tooltipCoroutine.launch {tooltipState.show()} },
-                        modifier = Modifier
-                            .padding(end = Dimens.PaddingNormal),
+                        onClick = { tooltipCoroutine.launch { tooltipState.show() } },
+                        modifier =
+                            Modifier
+                                .padding(end = Dimens.PaddingNormal),
                         label = {
                             Text(
                                 buildAnnotatedString {
@@ -583,34 +603,39 @@ private fun OverViewTags(
                                     }
                                 },
                             )
-                        })
+                        },
+                    )
                 }
             } else if (showSpoilers) {
-                TooltipBox (
-                    tooltip = { RichTooltip {Text(text = tag.description) }},
+                TooltipBox(
+                    tooltip = { RichTooltip { Text(text = tag.description) } },
                     state = rememberTooltipState(isPersistent = true),
-                    positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider()
+                    positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
                 ) {
                     SuggestionChip(
                         onClick = { },
-                        modifier = Modifier
-                            .padding(end = 12.dp, bottom = 4.dp),
-                        colors = ChipColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            labelColor = MaterialTheme.colorScheme.onErrorContainer,
-                            disabledContainerColor = MaterialTheme.colorScheme.onErrorContainer,
-                            disabledLabelColor = MaterialTheme.colorScheme.onErrorContainer,
-                            leadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-                            trailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-                            disabledLeadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
-                            disabledTrailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer
-                        ), label = {
+                        modifier =
+                            Modifier
+                                .padding(end = 12.dp, bottom = 4.dp),
+                        colors =
+                            ChipColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                labelColor = MaterialTheme.colorScheme.onErrorContainer,
+                                disabledContainerColor = MaterialTheme.colorScheme.onErrorContainer,
+                                disabledLabelColor = MaterialTheme.colorScheme.onErrorContainer,
+                                leadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                trailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                disabledLeadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                disabledTrailingIconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            ),
+                        label = {
                             Text(
                                 buildAnnotatedString {
                                     withStyle(
-                                        style = SpanStyle(
-                                            color = MaterialTheme.colorScheme.error,
-                                        ),
+                                        style =
+                                            SpanStyle(
+                                                color = MaterialTheme.colorScheme.error,
+                                            ),
                                     ) {
                                         append("${tag.rank}% ")
                                     }
@@ -619,7 +644,8 @@ private fun OverViewTags(
                                     }
                                 },
                             )
-                        })
+                        },
+                    )
                 }
             }
         }
@@ -627,28 +653,35 @@ private fun OverViewTags(
 }
 
 @Composable
-private fun OverViewInfo(media: Media, navigateToStudioDetails: (Int) -> Unit) {
+private fun OverViewInfo(
+    media: Media,
+    navigateToStudioDetails: (Int) -> Unit,
+) {
     HeadLine("Info")
     Column(
-        modifier = Modifier
-            .padding(horizontal = Dimens.PaddingNormal),
+        modifier =
+            Modifier
+                .padding(horizontal = Dimens.PaddingNormal),
     ) {
         InfoDataItem("Format", media.infoList.format.ifBlank { "?" })
 
-
         InfoDataItem(
             "Status",
-            if (media.infoList.status != AniMediaStatus.UNKNOWN) media.infoList.status.toString(
-                LocalContext.current
-            ) else "?"
+            if (media.infoList.status != AniMediaStatus.UNKNOWN) {
+                media.infoList.status.toString(
+                    LocalContext.current,
+                )
+            } else {
+                "?"
+            },
         )
         InfoDataItem(
             "Start date",
-            if (media.startDate != null) formatFuzzyDateToYearMonthDayString(startDate = media.startDate) else "?"
+            if (media.startDate != null) formatFuzzyDateToYearMonthDayString(startDate = media.startDate) else "?",
         )
         InfoDataItem(
             "End date",
-            if (media.endDate != null) formatFuzzyDateToYearMonthDayString(startDate = media.endDate) else "?"
+            if (media.endDate != null) formatFuzzyDateToYearMonthDayString(startDate = media.endDate) else "?",
         )
         InfoDataItem(
             if (media.type == AniMediaType.ANIME) "Episodes" else "Chapters",
@@ -656,7 +689,7 @@ private fun OverViewInfo(media: Media, navigateToStudioDetails: (Int) -> Unit) {
                 if (media.episodeAmount == -1) stringResource(id = R.string.question_mark) else media.episodeAmount.toString()
             } else {
                 if (media.chapters == -1) stringResource(id = R.string.question_mark) else media.chapters.toString()
-            }
+            },
         )
         val duration = media.infoList.duration
         InfoDataItem(
@@ -669,7 +702,9 @@ private fun OverViewInfo(media: Media, navigateToStudioDetails: (Int) -> Unit) {
                 } else {
                     "$duration mins"
                 }
-            } else "?"
+            } else {
+                "?"
+            },
         )
 
         InfoDataItem("Country", media.infoList.country.ifBlank { "?" })
@@ -678,13 +713,21 @@ private fun OverViewInfo(media: Media, navigateToStudioDetails: (Int) -> Unit) {
         val uriHandler = LocalUriHandler.current
         val uri = getTwitterUriFromHashtags(media.infoList.hashtag)
         Timber.d("Uri is $uri")
-        //todo make text primary color
-        InfoDataItem("Hashtag", media.infoList.hashtag.ifBlank { "?" },
-            modifier = if (media.infoList.hashtag != "") Modifier
-                .fillMaxWidth()
-                .clickable {
-                    uriHandler.openUri(uri)
-                } else Modifier)
+        // todo make text primary color
+        InfoDataItem(
+            "Hashtag",
+            media.infoList.hashtag.ifBlank { "?" },
+            modifier =
+                if (media.infoList.hashtag != "") {
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            uriHandler.openUri(uri)
+                        }
+                } else {
+                    Modifier
+                },
+        )
         InfoDataItem(
             "Licensed",
             if (media.infoList.licensed != null) media.infoList.licensed.toString() else "?",
@@ -692,17 +735,24 @@ private fun OverViewInfo(media: Media, navigateToStudioDetails: (Int) -> Unit) {
         InfoDataItem("Updated at", media.infoList.updatedAt.ifBlank { "?" })
         InfoDataItem(
             "NSFW",
-            if (media.infoList.nsfw != null) media.infoList.nsfw.toString() else "?"
+            if (media.infoList.nsfw != null) media.infoList.nsfw.toString() else "?",
         )
-        InfoDataItem("Synonyms", if (media.infoList.synonyms.isNotEmpty()) buildString {
-            media.infoList.synonyms.forEachIndexed { index, synonym ->
-                if (index != media.infoList.synonyms.lastIndex) {
-                    append("$synonym, ")
-                } else {
-                    append(synonym)
+        InfoDataItem(
+            "Synonyms",
+            if (media.infoList.synonyms.isNotEmpty()) {
+                buildString {
+                    media.infoList.synonyms.forEachIndexed { index, synonym ->
+                        if (index != media.infoList.synonyms.lastIndex) {
+                            append("$synonym, ")
+                        } else {
+                            append(synonym)
+                        }
+                    }
                 }
-            }
-        } else "?")
+            } else {
+                "?"
+            },
+        )
     }
 }
 
@@ -728,17 +778,22 @@ fun getTwitterUriFromHashtags(hashtags: String): String {
 }
 
 @Composable
-fun InfoDataItem(infoName: String, infoData: String, modifier: Modifier = Modifier) {
+fun InfoDataItem(
+    infoName: String,
+    infoData: String,
+    modifier: Modifier = Modifier,
+) {
     Row(
-        modifier = Modifier
-            .padding(bottom = Dimens.PaddingSmall)
-            .then(modifier)
+        modifier =
+            Modifier
+                .padding(bottom = Dimens.PaddingSmall)
+                .then(modifier),
     ) {
         Text(
             text = infoName,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(120.dp)
+            modifier = Modifier.width(120.dp),
         )
         Text(
             text = infoData,
@@ -749,7 +804,10 @@ fun InfoDataItem(infoName: String, infoData: String, modifier: Modifier = Modifi
 }
 
 @Composable
-private fun InfoName(text: String, modifier: Modifier = Modifier) {
+private fun InfoName(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodyMedium,
@@ -759,7 +817,10 @@ private fun InfoName(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun InfoData(text: String, modifier: Modifier = Modifier) {
+private fun InfoData(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodyMedium,
@@ -794,12 +855,12 @@ private fun SmallHeadLine(text: String) {
     heightDp = 2000,
     group = "Overview",
 )
-//@Preview(
+// @Preview(
 //    name = "Night mode",
 //    showBackground = true,
 //    uiMode = Configuration.UI_MODE_NIGHT_YES,
 //    group = "Overview",
-//)
+// )
 @Composable
 fun OverviewPreview() {
     AnilistTheme {
@@ -807,75 +868,83 @@ fun OverviewPreview() {
             Overview(
                 onNavigateToLargeCover = {},
                 onNavigateToDetails = {},
-                media = Media(
-                    type = AniMediaType.ANIME,
-                    title = "鬼滅の刃 刀鍛冶の里編",
-                    coverImage = "",
-                    format = AniMediaFormat.TV,
-                    season = AniSeason.SPRING,
-                    seasonYear = 2023,
-                    episodeAmount = 11,
-                    averageScore = 83,
-                    genres = listOf("Action", "Adventure", "Drama", "Fantasy", "Supernatural"),
-                    highestRated = "#99 Highest rated all time",
-                    mostPopular = "#183 Most popular all time",
-                    description = "Adaptation of the Swordsmith Village Arc.<br>\n<br>\nTanjiro\u2019s journey leads him to the Swordsmith Village, where he reunites with two Hashira, members of the Demon Slayer Corps\u2019 highest-ranking swordsmen - Mist Hashira Muichiro Tokito and Love Hashira Mitsuri Kanroji. With the shadows of demons lurking near, a new battle begins for Tanjiro and his comrades.\n<br><br>\n<i>Notes:<br>\n\u2022 The first episode has a runtime of ~49 minutes, and received an early premiere in cinemas worldwide as part of a special screening alongside the final two episodes of Kimetsu no Yaiba: Yuukaku-hen.<br>\n\u2022 The final episode has a runtime of ~52 minutes. </i>",
-                    relations = emptyList(),
-                    infoList = MediaDetailInfoList(
-                        format = "TV",
-                        status = AniMediaStatus.FINISHED,
-                        duration = 24,
-                        country = "Japan",
-                        source = "Manga",
-                        hashtag = "#鬼滅の刃",
-                        licensed = true,
-                        updatedAt = "04-06-2023",
-                        synonyms = listOf(
-                            "KnY 3ดาบพิฆาตอสูร ภาค 3 บทหมู่บ้านช่างตีดาบ",
-                            "Demon Slayer: Kimetsu no Yaiba - Le village des forgerons",
-                            "Истребитель демонов: Kimetsu no Yaiba. Деревня кузнецов"
-                        ),
-                        nsfw = false,
+                media =
+                    Media(
+                        type = AniMediaType.ANIME,
+                        title = "鬼滅の刃 刀鍛冶の里編",
+                        coverImage = "",
+                        format = AniMediaFormat.TV,
+                        season = AniSeason.SPRING,
+                        seasonYear = 2023,
+                        episodeAmount = 11,
+                        averageScore = 83,
+                        genres = listOf("Action", "Adventure", "Drama", "Fantasy", "Supernatural"),
+                        highestRated = "#99 Highest rated all time",
+                        mostPopular = "#183 Most popular all time",
+                        description = "Adaptation of the Swordsmith Village Arc.<br>\n<br>\nTanjiro\u2019s journey leads him to the Swordsmith Village, where he reunites with two Hashira, members of the Demon Slayer Corps\u2019 highest-ranking swordsmen - Mist Hashira Muichiro Tokito and Love Hashira Mitsuri Kanroji. With the shadows of demons lurking near, a new battle begins for Tanjiro and his comrades.\n<br><br>\n<i>Notes:<br>\n\u2022 The first episode has a runtime of ~49 minutes, and received an early premiere in cinemas worldwide as part of a special screening alongside the final two episodes of Kimetsu no Yaiba: Yuukaku-hen.<br>\n\u2022 The final episode has a runtime of ~52 minutes. </i>",
+                        relations = emptyList(),
+                        infoList =
+                            MediaDetailInfoList(
+                                format = "TV",
+                                status = AniMediaStatus.FINISHED,
+                                duration = 24,
+                                country = "Japan",
+                                source = "Manga",
+                                hashtag = "#鬼滅の刃",
+                                licensed = true,
+                                updatedAt = "04-06-2023",
+                                synonyms =
+                                    listOf(
+                                        "KnY 3ดาบพิฆาตอสูร ภาค 3 บทหมู่บ้านช่างตีดาบ",
+                                        "Demon Slayer: Kimetsu no Yaiba - Le village des forgerons",
+                                        "Истребитель демонов: Kimetsu no Yaiba. Деревня кузнецов",
+                                    ),
+                                nsfw = false,
+                            ),
+                        tags =
+                            listOf(
+                                Tag(
+                                    name = "Demons",
+                                    96,
+                                    false,
+                                    description = "Media that involves a whole lot of demons.",
+                                ),
+                                Tag(
+                                    name = "Shounen",
+                                    rank = 40,
+                                    true,
+                                    description = "Media meant for young virgins.",
+                                ),
+                                //                        "Shounen",
+                                //                        "Swordplay",
+                                //                        "Male Protagonist",
+                                //                        "Super Power",
+                                //                        "Gore",
+                                //                        "Monster Girl",
+                                //                        "Body Horror",
+                                //                        "Historical",
+                                //                        "CGI",
+                                //                        "Femaile Protagonist",
+                                //                        "Orphan",
+                                //                        "Rural"
+                            ),
+                        trailerImage = "",
+                        trailerLink = "https://www.youtube.com/watch?v=a9tq0aS5Zu8",
+                        externalLinks =
+                            listOf(
+                                AniLink(
+                                    "https://kimetsu.com/anime/katanakajinosatohen/",
+                                    "Official Site",
+                                    "Japanese",
+                                    "",
+                                    "",
+                                    type = AniLinkType.SOCIAL,
+                                ),
+                            ),
                     ),
-                    tags = listOf(
-                        Tag(
-                            name = "Demons",
-                            96,
-                            false,
-                            description = "Media that involves a whole lot of demons."
-                        ),
-                        Tag(
-                            name = "Shounen",
-                            rank = 40,
-                            true,
-                            description = "Media meant for young virgins."
-                        ),
-                        //                        "Shounen",
-                        //                        "Swordplay",
-                        //                        "Male Protagonist",
-                        //                        "Super Power",
-                        //                        "Gore",
-                        //                        "Monster Girl",
-                        //                        "Body Horror",
-                        //                        "Historical",
-                        //                        "CGI",
-                        //                        "Femaile Protagonist",
-                        //                        "Orphan",
-                        //                        "Rural"
-                    ),
-                    trailerImage = "",
-                    trailerLink = "https://www.youtube.com/watch?v=a9tq0aS5Zu8",
-                    externalLinks = listOf(
-                        AniLink(
-                            "https://kimetsu.com/anime/katanakajinosatohen/",
-                            "Official Site",
-                            "Japanese",
-                            "",
-                            "",
-                            type = AniLinkType.SOCIAL
-                        ),
-                    ),
-                ), isLoading = true, navigateToStudioDetails = {})
+                isLoading = true,
+                navigateToStudioDetails = {},
+            )
         }
     }
 }
@@ -884,19 +953,23 @@ fun OverviewPreview() {
 @Composable
 fun OverviewDescriptionPreview() {
     OverviewDescription(
-        "Gold Roger was known as the Pirate King, the strongest and most infamous being to have sailed the Grand Line. The capture and death of Roger by the World Government brought a change throughout the world. His last words before his death revealed the location of the greatest treasure in the world, One Piece. It was this revelation that brought about the Grand Age of Pirates, men who dreamed of finding One Piece (which promises an unlimited amount of riches and fame), and quite possibly the most coveted of titles for the person who found it, the title of the Pirate King.<br><br>\\nEnter Monkey D. Luffy, a 17-year-old boy that defies your standard definition of a pirate. Rather than the popular persona of a wicked, hardened, toothless pirate who ransacks villages for fun, Luffy’s reason for being a pirate is one of pure wonder; the thought of an exciting adventure and meeting new and intriguing people, along with finding One Piece, are his reasons of becoming a pirate. Following in the footsteps of his childhood hero, Luffy and his crew travel across the Grand Line, experiencing crazy adventures, unveiling dark mysteries and battling strong enemies, all in order to reach One Piece.<br><br>\\n<b>*This includes following special episodes:<\\/b><br>\\n- Chopperman to the Rescue! Protect the TV Station by the Shore! (Episode 336)<br>\\n- The Strongest Tag-Team! Luffy and Toriko's Hard Struggle! (Episode 492)<br>\\n- Team Formation! Save Chopper (Episode 542)<br>\\n- History's Strongest Collaboration vs. Glutton of the Sea (Episode 590)<br>\\n- 20th Anniversary! Special Romance Dawn (Episode 907)"
+        "Gold Roger was known as the Pirate King, the strongest and most infamous being to have sailed the Grand Line. The capture and death of Roger by the World Government brought a change throughout the world. His last words before his death revealed the location of the greatest treasure in the world, One Piece. It was this revelation that brought about the Grand Age of Pirates, men who dreamed of finding One Piece (which promises an unlimited amount of riches and fame), and quite possibly the most coveted of titles for the person who found it, the title of the Pirate King.<br><br>\\nEnter Monkey D. Luffy, a 17-year-old boy that defies your standard definition of a pirate. Rather than the popular persona of a wicked, hardened, toothless pirate who ransacks villages for fun, Luffy’s reason for being a pirate is one of pure wonder; the thought of an exciting adventure and meeting new and intriguing people, along with finding One Piece, are his reasons of becoming a pirate. Following in the footsteps of his childhood hero, Luffy and his crew travel across the Grand Line, experiencing crazy adventures, unveiling dark mysteries and battling strong enemies, all in order to reach One Piece.<br><br>\\n<b>*This includes following special episodes:<\\/b><br>\\n- Chopperman to the Rescue! Protect the TV Station by the Shore! (Episode 336)<br>\\n- The Strongest Tag-Team! Luffy and Toriko's Hard Struggle! (Episode 492)<br>\\n- Team Formation! Save Chopper (Episode 542)<br>\\n- History's Strongest Collaboration vs. Glutton of the Sea (Episode 590)<br>\\n- 20th Anniversary! Special Romance Dawn (Episode 907)",
     )
 }
 
 @Composable
-fun ShowHideSpoiler(showSpoilers: Boolean, toggleSpoilers: () -> Unit) {
+fun ShowHideSpoiler(
+    showSpoilers: Boolean,
+    toggleSpoilers: () -> Unit,
+) {
     IconWithText(
         icon = if (showSpoilers) R.drawable.anime_detail_not_visible else R.drawable.anime_detail_visible,
         text = if (showSpoilers) "Hide spoilers" else "Show spoilers",
         iconTint = MaterialTheme.colorScheme.error,
         textColor = MaterialTheme.colorScheme.error,
-        modifier = Modifier
-            .clickable { toggleSpoilers() }
-            .padding(end = Dimens.PaddingNormal),
+        modifier =
+            Modifier
+                .clickable { toggleSpoilers() }
+                .padding(end = Dimens.PaddingNormal),
     )
 }

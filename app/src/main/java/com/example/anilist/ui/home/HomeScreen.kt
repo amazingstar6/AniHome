@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,11 +52,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RichTooltip
-//import androidx.compose.material3.PlainTooltipBox
-//import androidx.compose.material3.RichTooltipBox
+// import androidx.compose.material3.PlainTooltipBox
+// import androidx.compose.material3.RichTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -67,10 +65,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
-//import androidx.compose.material3.rememberRichTooltipState
+// import androidx.compose.material3.rememberRichTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -94,7 +91,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -142,22 +138,23 @@ fun HomeScreen(
     navigateToUserDetails: (Int) -> Unit,
     navigateToThreadDetails: (Int) -> Unit,
     navigateToStudioDetails: (Int) -> Unit,
-    navigateToOverview: (HomeTrendingTypes) -> Unit
+    navigateToOverview: (HomeTrendingTypes) -> Unit,
 ) {
-    val uiState = HomeUiStateData(
-        pagerTrendingNow = homeViewModel.trendingNowPager.collectAsLazyPagingItems(),
-        pagerPopularThisSeason = homeViewModel.popularThisSeasonPager.collectAsLazyPagingItems(),
-        pagerUpcomingNextSeason = homeViewModel.upComingNextSeasonPager.collectAsLazyPagingItems(),
-        pagerAllTimePopular = homeViewModel.allTimePopularPager.collectAsLazyPagingItems(),
-        pagerTop100Anime = homeViewModel.top100AnimePager.collectAsLazyPagingItems(),
-        pagerPopularManhwa = homeViewModel.popularManhwaPager.collectAsLazyPagingItems(),
-        searchResultsMedia = homeViewModel.searchResultsMedia.collectAsLazyPagingItems(),
-        searchResultsCharacter = homeViewModel.searchResultsCharacter.collectAsLazyPagingItems(),
-        searchResultsStaff = homeViewModel.searchResultsStaff.collectAsLazyPagingItems(),
-        searchResultsStudio = homeViewModel.searchResultsStudio.collectAsLazyPagingItems(),
-        searchResultsThread = homeViewModel.searchResultsThread.collectAsLazyPagingItems(),
-        searchResultsUser = homeViewModel.searchResultsUser.collectAsLazyPagingItems(),
-    )
+    val uiState =
+        HomeUiStateData(
+            pagerTrendingNow = homeViewModel.trendingNowPager.collectAsLazyPagingItems(),
+            pagerPopularThisSeason = homeViewModel.popularThisSeasonPager.collectAsLazyPagingItems(),
+            pagerUpcomingNextSeason = homeViewModel.upComingNextSeasonPager.collectAsLazyPagingItems(),
+            pagerAllTimePopular = homeViewModel.allTimePopularPager.collectAsLazyPagingItems(),
+            pagerTop100Anime = homeViewModel.top100AnimePager.collectAsLazyPagingItems(),
+            pagerPopularManhwa = homeViewModel.popularManhwaPager.collectAsLazyPagingItems(),
+            searchResultsMedia = homeViewModel.searchResultsMedia.collectAsLazyPagingItems(),
+            searchResultsCharacter = homeViewModel.searchResultsCharacter.collectAsLazyPagingItems(),
+            searchResultsStaff = homeViewModel.searchResultsStaff.collectAsLazyPagingItems(),
+            searchResultsStudio = homeViewModel.searchResultsStudio.collectAsLazyPagingItems(),
+            searchResultsThread = homeViewModel.searchResultsThread.collectAsLazyPagingItems(),
+            searchResultsUser = homeViewModel.searchResultsUser.collectAsLazyPagingItems(),
+        )
 
     val isAnime by homeViewModel.isAnime.collectAsStateWithLifecycle()
     val search by homeViewModel.search.collectAsStateWithLifecycle()
@@ -217,7 +214,8 @@ fun HomeScreen(
             navigateToStudioDetails = navigateToStudioDetails,
             toggleFavourite = {
                 mediaDetailsViewModel.toggleFavourite(
-                    AniLikeAbleType.STUDIO, it
+                    AniLikeAbleType.STUDIO,
+                    it,
                 )
                 uiState.searchResultsStudio.refresh()
             },
@@ -226,11 +224,14 @@ fun HomeScreen(
             filterTagsAndGenres = { text ->
 //                tags.filter { tag -> tag.name.startsWith(text, ignoreCase = true) }
 //                genres
-            }
+            },
         )
     }, floatingActionButton = {
         FloatingActionButton(
-            onClick = { active = true; focusRequester.requestFocus() },
+            onClick = {
+                active = true
+                focusRequester.requestFocus()
+            },
         ) {
             Icon(
                 imageVector = Icons.Default.Search,
@@ -239,93 +240,113 @@ fun HomeScreen(
         }
     }) {
         // checks if there are any values loaded yet
-        //fixme
+        // fixme
         if (true/*uiState.pagerTrendingNow.itemCount != 0 || uiState.pagerPopularThisSeason.itemCount != 0 || uiState.pagerUpcomingNextSeason.itemCount != 0 || uiState.pagerAllTimePopular.itemCount != 0 || uiState.pagerTop100Anime.itemCount != 0*/) {
             Column(
-                modifier = Modifier.padding(top = it.calculateTopPadding())
+                modifier = Modifier.padding(top = it.calculateTopPadding()),
 //                    .verticalScroll(rememberScrollState()),
             ) {
                 var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
                 val options = listOf("Anime", "Manga")
                 SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = Dimens.PaddingNormal,
-                            end = Dimens.PaddingNormal,
-                            bottom = Dimens.PaddingSmall
-                        )
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = Dimens.PaddingNormal,
+                                end = Dimens.PaddingNormal,
+                                bottom = Dimens.PaddingSmall,
+                            ),
                 ) {
                     SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                        index = 0, count = options.size
-                    ), onClick = {
-                        columnScrollScope.launch {
-                            columnScrollState.animateScrollTo(0)
-                        }
-                        selectedIndex = 0
-                        homeViewModel.setToAnime()
-                    }, selected = 0 == selectedIndex, icon = { }) {
+                        shape =
+                            SegmentedButtonDefaults.itemShape(
+                                index = 0,
+                                count = options.size,
+                            ),
+                        onClick = {
+                            columnScrollScope.launch {
+                                columnScrollState.animateScrollTo(0)
+                            }
+                            selectedIndex = 0
+                            homeViewModel.setToAnime()
+                        },
+                        selected = 0 == selectedIndex,
+                        icon = { },
+                    ) {
                         Text("Anime")
                     }
                     // TODO does this work well?
 //                    SegmentedButton(shape = SegmentedButtonDefaults.shape(
 //                        position = 1, count = options.size
                     SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                        index = 1, count = options.size
-                    ), onClick = {
-                        columnScrollScope.launch {
-                            columnScrollState.animateScrollTo(0)
-                        }
-                        selectedIndex = 1
-                        homeViewModel.setToManga()
-                    }, selected = 1 == selectedIndex, icon = { }) {
+                        shape =
+                            SegmentedButtonDefaults.itemShape(
+                                index = 1,
+                                count = options.size,
+                            ),
+                        onClick = {
+                            columnScrollScope.launch {
+                                columnScrollState.animateScrollTo(0)
+                            }
+                            selectedIndex = 1
+                            homeViewModel.setToManga()
+                        },
+                        selected = 1 == selectedIndex,
+                        icon = { },
+                    ) {
                         Text("Manga")
                     }
                 }
 
-
                 Column(modifier = Modifier.verticalScroll(columnScrollState)) {
                     HeadlineText(
                         text = stringResource(R.string.trending_now),
-                        onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TRENDING_NOW) })
+                        onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TRENDING_NOW) },
+                    )
                     LazyRowLazyPagingItems(uiState.pagerTrendingNow, onNavigateToMediaDetails)
 
                     if (isAnime) {
                         HeadlineText(
                             text = stringResource(R.string.popular_this_season),
-                            onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_THIS_SEASON) })
+                            onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_THIS_SEASON) },
+                        )
                         LazyRowLazyPagingItems(
-                            uiState.pagerPopularThisSeason, onNavigateToMediaDetails
+                            uiState.pagerPopularThisSeason,
+                            onNavigateToMediaDetails,
                         )
                         HeadlineText(
                             text = stringResource(R.string.upcoming_next_season),
-                            onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.UPCOMING_NEXT_SEASON) })
+                            onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.UPCOMING_NEXT_SEASON) },
+                        )
                         Timber.d(uiState.pagerUpcomingNextSeason.itemCount.toString())
                         LazyRowLazyPagingItems(
-                            uiState.pagerUpcomingNextSeason, onNavigateToMediaDetails
+                            uiState.pagerUpcomingNextSeason,
+                            onNavigateToMediaDetails,
                         )
                     }
 
                     if (!isAnime) {
                         HeadlineText(
                             text = stringResource(id = R.string.popular_manhwa),
-                            onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_MANHWA) })
+                            onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.POPULAR_MANHWA) },
+                        )
                         LazyRowLazyPagingItems(
                             pager = uiState.pagerPopularManhwa,
-                            onNavigateToMediaDetails = onNavigateToMediaDetails
+                            onNavigateToMediaDetails = onNavigateToMediaDetails,
                         )
                     }
 
                     HeadlineText(
                         text = stringResource(R.string.all_time_popular),
-                        onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.ALL_TIME_POPULAR) })
+                        onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.ALL_TIME_POPULAR) },
+                    )
                     LazyRowLazyPagingItems(uiState.pagerAllTimePopular, onNavigateToMediaDetails)
 
                     HeadlineText(
                         text = stringResource(if (isAnime) R.string.top_100_anime else R.string.top_100_manga),
-                        onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TOP_100_ANIME) })
+                        onNavigateToOverview = { navigateToOverview(HomeTrendingTypes.TOP_100_ANIME) },
+                    )
                     LazyRowLazyPagingItems(uiState.pagerTop100Anime, onNavigateToMediaDetails)
                 }
             }
@@ -336,7 +357,10 @@ fun HomeScreen(
 }
 
 @Composable
-fun HeadlineText(text: String, onNavigateToOverview: () -> Unit) {
+fun HeadlineText(
+    text: String,
+    onNavigateToOverview: () -> Unit,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -355,30 +379,31 @@ fun HeadlineText(text: String, onNavigateToOverview: () -> Unit) {
 
 @Composable
 fun LazyRowLazyPagingItems(
-    pager: LazyPagingItems<Media>, onNavigateToMediaDetails: (Int) -> Unit
+    pager: LazyPagingItems<Media>,
+    onNavigateToMediaDetails: (Int) -> Unit,
 ) {
     when (pager.loadState.refresh) {
         is LoadState.Error -> {
             Column(
-                modifier = Modifier
-                    .height(CARD_HEIGHT.dp)
-                    .fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .height(CARD_HEIGHT.dp)
+                        .fillMaxWidth(),
                 verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     text = "Network error, please reload",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+                    modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
                 )
                 TextButton(
                     onClick = { pager.retry() },
-                    modifier = Modifier.padding(horizontal = Dimens.PaddingNormal)
+                    modifier = Modifier.padding(horizontal = Dimens.PaddingNormal),
                 ) {
                     Text(text = "Reload")
                 }
-
             }
         }
 
@@ -408,24 +433,26 @@ fun AnimeCard(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
-            .padding(start = 12.dp)
-            .width(120.dp)
-            .height(240.dp)
-            .then(modifier)
-            .clickable { onNavigateToDetails() }
-            .semantics(mergeDescendants = true) {},
+        modifier =
+            Modifier
+                .padding(start = 12.dp)
+                .width(120.dp)
+                .height(240.dp)
+                .then(modifier)
+                .clickable { onNavigateToDetails() }
+                .semantics(mergeDescendants = true) {},
     ) {
         AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
-                .build(),
+            model =
+                ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
+                    .build(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .height(160.dp)
-                .clip(RoundedCornerShape(12.dp)),
-
-            )
+            modifier =
+                Modifier
+                    .height(160.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+        )
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
@@ -437,7 +464,15 @@ fun AnimeCard(
 }
 
 enum class SearchFilter {
-    MEDIA, ANIME, MANGA, CHARACTERS, STAFF, STUDIOS, THREADS, USER;
+    MEDIA,
+    ANIME,
+    MANGA,
+    CHARACTERS,
+    STAFF,
+    STUDIOS,
+    THREADS,
+    USER,
+    ;
 
     override fun toString(): String {
         return this.name.lowercase()
@@ -459,7 +494,18 @@ enum class SearchFilter {
 }
 
 enum class AniMediaSort {
-    SEARCH_MATCH, START_DATE, END_DATE, SCORE, POPULARITY, TRENDING, EPISODES, DURATION, CHAPTERS, VOLUMES, FAVOURITES;
+    SEARCH_MATCH,
+    START_DATE,
+    END_DATE,
+    SCORE,
+    POPULARITY,
+    TRENDING,
+    EPISODES,
+    DURATION,
+    CHAPTERS,
+    VOLUMES,
+    FAVOURITES,
+    ;
 
     fun toString(context: Context): String {
         return when (this) {
@@ -469,7 +515,7 @@ enum class AniMediaSort {
             SCORE -> context.getString(R.string.score)
             POPULARITY -> context.getString(R.string.popularity)
             TRENDING -> context.getString(R.string.trending)
-            EPISODES -> context.getString(R.string.episode_amount) //fixme also is chapter amount?
+            EPISODES -> context.getString(R.string.episode_amount) // fixme also is chapter amount?
             DURATION -> context.getString(R.string.duration)
             CHAPTERS -> context.getString(R.string.chapter_amount)
             VOLUMES -> context.getString(R.string.volume_amount)
@@ -484,7 +530,9 @@ enum class AniCharacterSort {
     //    RELEVANCE,
 //    ROLE,
 //    ROLE_DESC,
-    FAVOURITES, FAVOURITES_DESC;
+    FAVOURITES,
+    FAVOURITES_DESC,
+    ;
 
     fun toString(context: Context): String {
         return when (this) {
@@ -496,23 +544,28 @@ enum class AniCharacterSort {
 }
 
 @Composable
-fun GenreCheckBox(selectedGenres: MutableList<String>, genre: String) {
+fun GenreCheckBox(
+    selectedGenres: MutableList<String>,
+    genre: String,
+) {
     var checked by remember {
         mutableStateOf(selectedGenres.contains(genre))
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                if (checked) {
-                    checked = false
-                    selectedGenres.remove(genre)
-                } else {
-                    checked = true
-                    selectedGenres.add(genre)
-                }
-            }) {
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable {
+                    if (checked) {
+                        checked = false
+                        selectedGenres.remove(genre)
+                    } else {
+                        checked = true
+                        selectedGenres.add(genre)
+                    }
+                },
+    ) {
         Checkbox(
             checked = checked,
             onCheckedChange = {
@@ -524,21 +577,24 @@ fun GenreCheckBox(selectedGenres: MutableList<String>, genre: String) {
                     selectedGenres.remove(genre)
                 }
                 Timber.d(
-                    "Checkbox change in tag: parameter is $it\n list of tags is $selectedGenres\n check status is $checked"
+                    "Checkbox change in tag: parameter is $it\n list of tags is $selectedGenres\n check status is $checked",
                 )
-            })
+            },
+        )
         Text(
             text = genre,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
     }
 }
 
 @Composable
 @OptIn(
-    ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class
+    ExperimentalMaterial3Api::class,
+    ExperimentalLayoutApi::class,
+    ExperimentalFoundationApi::class,
 )
 fun AniSearchBar(
 //    characterSort: AniCharacterSort,
@@ -565,10 +621,11 @@ fun AniSearchBar(
     navigateToStudioDetails: (Int) -> Unit,
     tags: List<AniTag>,
     genres: List<String>,
-    filterTagsAndGenres: (String) -> Unit
+    filterTagsAndGenres: (String) -> Unit,
 ) {
     val padding by animateDpAsState(
-        targetValue = if (!active) Dimens.PaddingNormal else 0.dp, label = "increase padding" + ""
+        targetValue = if (!active) Dimens.PaddingNormal else 0.dp,
+        label = "increase padding" + "",
     )
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -583,9 +640,9 @@ fun AniSearchBar(
     var selectedSeason by rememberSaveable { mutableStateOf(AniSeason.UNKNOWN) }
     var selectedYear by rememberSaveable { mutableIntStateOf(-1) }
     var selectedStatus by rememberSaveable { mutableStateOf(AniMediaStatus.UNKNOWN) }
-    val selectedGenres: MutableList<String> by rememberSaveable { mutableStateOf(mutableListOf()) } //fixme warning?
+    val selectedGenres: MutableList<String> by rememberSaveable { mutableStateOf(mutableListOf()) } // fixme warning?
     val selectedTags: MutableList<String> by rememberSaveable {
-        mutableStateOf(mutableListOf())  //fixme warning?
+        mutableStateOf(mutableListOf()) // fixme warning?
     }
     var showOnlyOnMyList by rememberSaveable {
         mutableStateOf(false)
@@ -603,8 +660,8 @@ fun AniSearchBar(
                 year = selectedYear,
                 genres = selectedGenres.toImmutableList(),
                 tags = selectedTags.toImmutableList(),
-                onlyOnMyList = showOnlyOnMyList
-            )
+                onlyOnMyList = showOnlyOnMyList,
+            ),
         )
     }
 
@@ -627,7 +684,7 @@ fun AniSearchBar(
                 IconButton(onClick = { setActive(false) }) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
-                        contentDescription = stringResource(id = R.string.back)
+                        contentDescription = stringResource(id = R.string.back),
                     )
                 }
             } else {
@@ -663,24 +720,25 @@ fun AniSearchBar(
                 TooltipBox(
                     tooltip = { PlainTooltip { Text(text = "Clear text") } },
                     positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                    state = rememberTooltipState()
+                    state = rememberTooltipState(),
                 ) {
                     IconButton(
-                        onClick = { updateSearchParameterless("") }
+                        onClick = { updateSearchParameterless("") },
                     ) {
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = stringResource(R.string.clear)
+                            contentDescription = stringResource(R.string.clear),
                         )
                     }
                 }
             }
         },
-        modifier = Modifier
-            .animateContentSize()
-            .fillMaxWidth()
-            .padding(start = padding, end = padding, top = padding, bottom = padding)
-            .focusRequester(focusRequester)
+        modifier =
+            Modifier
+                .animateContentSize()
+                .fillMaxWidth()
+                .padding(start = padding, end = padding, top = padding, bottom = padding)
+                .focusRequester(focusRequester),
     ) {
         Box {
             Column {
@@ -688,28 +746,35 @@ fun AniSearchBar(
                 LazyRow(modifier = Modifier.padding(top = Dimens.PaddingSmall)) {
                     itemsIndexed(filterList) { index, filterName ->
                         FilterChip(
-                            selected = index == selectedChip.ordinal, onClick = {
-                            setSelectedChipValue(filterList[index]) //fixme
+                            selected = index == selectedChip.ordinal,
+                            onClick = {
+                                setSelectedChipValue(filterList[index]) // fixme
 //                            updateSearchParameterless(query)
-                        }, label = { Text(text = filterName.toString()) }, leadingIcon = {
-                            if (index == selectedChip.ordinal) {
-                                Icon(
-                                    imageVector = Icons.Default.Check, contentDescription = null
-                                )
-                            } else {
-                                Icon(
-                                    painter = painterResource(id = filterName.getIconResource()),
-                                    contentDescription = null
-                                )
-                            }
-                        }, modifier = Modifier.padding(
-                            start = Dimens.PaddingNormal,
-                            end = if (index == filterList.lastIndex) {
-                                Dimens.PaddingNormal
-                            } else {
-                                0.dp
-                            }
-                        )
+                            },
+                            label = { Text(text = filterName.toString()) },
+                            leadingIcon = {
+                                if (index == selectedChip.ordinal) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(id = filterName.getIconResource()),
+                                        contentDescription = null,
+                                    )
+                                }
+                            },
+                            modifier =
+                                Modifier.padding(
+                                    start = Dimens.PaddingNormal,
+                                    end =
+                                        if (index == filterList.lastIndex) {
+                                            Dimens.PaddingNormal
+                                        } else {
+                                            0.dp
+                                        },
+                                ),
                         )
                     }
                 }
@@ -720,11 +785,10 @@ fun AniSearchBar(
                 var showSeasonBottomSheet by remember { mutableStateOf(false) }
                 var showAiringStatusBottomSheet by remember { mutableStateOf(false) }
 
-
                 val context = LocalContext.current
                 FlowRow(
                     horizontalArrangement = Arrangement.Start,
-                    modifier = Modifier.padding(start = Dimens.PaddingNormal)
+                    modifier = Modifier.padding(start = Dimens.PaddingNormal),
                 ) {
                     if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME || selectedChip == SearchFilter.MANGA) {
                         HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.PaddingSmall))
@@ -734,12 +798,13 @@ fun AniSearchBar(
                             leadingIcon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.sort),
-                                    contentDescription = stringResource(
-                                        id = R.string.sort
-                                    )
+                                    contentDescription =
+                                        stringResource(
+                                            id = R.string.sort,
+                                        ),
                                 )
                             },
-                            modifier = Modifier.padding(end = Dimens.PaddingNormal)
+                            modifier = Modifier.padding(end = Dimens.PaddingNormal),
                         )
 
 //                        AssistChip(
@@ -759,11 +824,11 @@ fun AniSearchBar(
                             leadingIcon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.outline_theater_comedy_24),
-                                    contentDescription = null
+                                    contentDescription = null,
                                 )
                             },
                             label = { Text(text = stringResource(R.string.genres_tags)) },
-                            modifier = Modifier.padding(end = Dimens.PaddingNormal)
+                            modifier = Modifier.padding(end = Dimens.PaddingNormal),
                         )
 
                         AssistChip(
@@ -771,31 +836,39 @@ fun AniSearchBar(
                             leadingIcon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.anime_details_calendar),
-                                    contentDescription = null
+                                    contentDescription = null,
                                 )
                             },
-                            label = { Text(text = if (selectedYear == -1) stringResource(id = R.string.year) else selectedYear.toString()) },
-                            modifier = Modifier.padding(end = Dimens.PaddingNormal)
+                            label = {
+                                Text(
+                                    text = if (selectedYear == -1) stringResource(id = R.string.year) else selectedYear.toString(),
+                                )
+                            },
+                            modifier = Modifier.padding(end = Dimens.PaddingNormal),
                         )
-
-
 
                         if (selectedChip == SearchFilter.MEDIA || selectedChip == SearchFilter.ANIME) {
                             AssistChip(
-                                onClick = { showSeasonBottomSheet = true }, leadingIcon = {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.baseline_local_florist_24),
-                                    contentDescription = null
-                                )
-                            }, label = {
-                                Text(
-                                    text = if (selectedSeason == AniSeason.UNKNOWN) {
-                                        stringResource(id = R.string.season)
-                                    } else selectedSeason.getString(
-                                        context
+                                onClick = { showSeasonBottomSheet = true },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.baseline_local_florist_24),
+                                        contentDescription = null,
                                     )
-                                )
-                            }, modifier = Modifier.padding(end = Dimens.PaddingNormal)
+                                },
+                                label = {
+                                    Text(
+                                        text =
+                                            if (selectedSeason == AniSeason.UNKNOWN) {
+                                                stringResource(id = R.string.season)
+                                            } else {
+                                                selectedSeason.getString(
+                                                    context,
+                                                )
+                                            },
+                                    )
+                                },
+                                modifier = Modifier.padding(end = Dimens.PaddingNormal),
                             )
                         }
 
@@ -805,19 +878,20 @@ fun AniSearchBar(
                                 leadingIcon = {
                                     Icon(
                                         painter = painterResource(id = R.drawable.baseline_cast_24),
-                                        contentDescription = null
+                                        contentDescription = null,
                                     )
                                 },
                                 label = {
                                     Text(
-                                        text = if (selectedStatus == AniMediaStatus.UNKNOWN) {
-                                            stringResource(R.string.airing_status)
-                                        } else {
-                                            selectedStatus.toString(context)
-                                        }
+                                        text =
+                                            if (selectedStatus == AniMediaStatus.UNKNOWN) {
+                                                stringResource(R.string.airing_status)
+                                            } else {
+                                                selectedStatus.toString(context)
+                                            },
                                     )
                                 },
-                                modifier = Modifier.padding(end = Dimens.PaddingNormal)
+                                modifier = Modifier.padding(end = Dimens.PaddingNormal),
                             )
                         }
 
@@ -828,10 +902,12 @@ fun AniSearchBar(
                                 updateSearchParameterless(query)
                             },
                             leadingIcon = {
-                                if (showOnlyOnMyList) Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Check"
-                                )
+                                if (showOnlyOnMyList) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Check",
+                                    )
+                                }
                             },
                             selected = showOnlyOnMyList,
 //                            {
@@ -841,9 +917,8 @@ fun AniSearchBar(
 //                                )
 //                            },
                             label = { Text("Show only my list") },
-                            modifier = Modifier.padding(end = Dimens.PaddingNormal)
+                            modifier = Modifier.padding(end = Dimens.PaddingNormal),
                         )
-
                     } else if (selectedChip == SearchFilter.CHARACTERS) {
                         HorizontalDivider()
                         AssistChip(
@@ -852,9 +927,10 @@ fun AniSearchBar(
                             leadingIcon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.sort),
-                                    contentDescription = stringResource(
-                                        id = R.string.sort
-                                    )
+                                    contentDescription =
+                                        stringResource(
+                                            id = R.string.sort,
+                                        ),
                                 )
                             },
                         )
@@ -869,11 +945,13 @@ fun AniSearchBar(
                                         currentMediaSort = mediaSort
                                         updateSearchParameterless(query)
                                         showSortingBottomSheet = false
-                                    }, modifier = Modifier.fillMaxWidth(), shape = RectangleShape
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RectangleShape,
                                 ) {
                                     Text(
                                         mediaSort.toString(context),
-                                        color = if (currentMediaSort == mediaSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        color = if (currentMediaSort == mediaSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                     )
                                 }
                             }
@@ -883,11 +961,13 @@ fun AniSearchBar(
                                     onClick = {
                                         currentCharacterSort = aniCharacterSort
                                         showSortingBottomSheet = false
-                                    }, modifier = Modifier.fillMaxWidth(), shape = RectangleShape
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RectangleShape,
                                 ) {
                                     Text(
                                         aniCharacterSort.toString(context),
-                                        color = if (currentCharacterSort == aniCharacterSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        color = if (currentCharacterSort == aniCharacterSort) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                     )
                                 }
                             }
@@ -927,7 +1007,7 @@ fun AniSearchBar(
                     genres,
                     reloadGenres,
                     reloadTags,
-                    filterTagsAndGenres
+                    filterTagsAndGenres,
                 )
                 if (showYearDialog) {
                     val unchangedYear by remember(key1 = showYearDialog) {
@@ -953,19 +1033,24 @@ fun AniSearchBar(
                             items(yearsRange.toList().sortedDescending()) { year ->
                                 TextButton(
                                     onClick = {
-                                        selectedYear = if (selectedYear == year) {
-                                            -1
-                                        } else {
-                                            year
-                                        }
-                                    }, modifier = Modifier.fillMaxWidth(), shape = RectangleShape
+                                        selectedYear =
+                                            if (selectedYear == year) {
+                                                -1
+                                            } else {
+                                                year
+                                            }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RectangleShape,
                                 ) {
                                     Text(
-                                        year.toString(), color = if (selectedYear == year) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface
-                                        }
+                                        year.toString(),
+                                        color =
+                                            if (selectedYear == year) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurface
+                                            },
                                     )
                                 }
                             }
@@ -978,17 +1063,19 @@ fun AniSearchBar(
                             if (season != AniSeason.UNKNOWN) {
                                 TextButton(
                                     onClick = {
-                                        selectedSeason = if (selectedSeason == season) {
-                                            AniSeason.UNKNOWN
-                                        } else {
-                                            season
-                                        }
+                                        selectedSeason =
+                                            if (selectedSeason == season) {
+                                                AniSeason.UNKNOWN
+                                            } else {
+                                                season
+                                            }
                                         updateSearchParameterless(query)
-                                    }, modifier = Modifier.fillMaxWidth()
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
                                 ) {
                                     Text(
                                         text = season.getString(context),
-                                        color = if (season == selectedSeason) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        color = if (season == selectedSeason) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                     )
                                 }
                             }
@@ -1001,21 +1088,24 @@ fun AniSearchBar(
                             if (status != AniMediaStatus.UNKNOWN) {
                                 TextButton(
                                     onClick = {
-                                        selectedStatus = if (selectedStatus == status) {
-                                            AniMediaStatus.UNKNOWN
-                                        } else {
-                                            status
-                                        }
+                                        selectedStatus =
+                                            if (selectedStatus == status) {
+                                                AniMediaStatus.UNKNOWN
+                                            } else {
+                                                status
+                                            }
                                         updateSearchParameterless(query)
-                                    }, modifier = Modifier.fillMaxWidth()
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
                                 ) {
                                     Text(
                                         text = status.toString(context),
-                                        color = if (status == selectedStatus) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface
-                                        }
+                                        color =
+                                            if (status == selectedStatus) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurface
+                                            },
                                     )
                                 }
                             }
@@ -1032,7 +1122,7 @@ fun AniSearchBar(
                     navigateToStudioDetails = navigateToStudioDetails,
                     navigateToThreadDetails = navigateToThreadDetails,
                     navigateToUserDetails = navigateToUserDetails,
-                    toggleFavourite = toggleFavourite
+                    toggleFavourite = toggleFavourite,
                 )
             }
         }
@@ -1049,13 +1139,15 @@ fun SearchResults(
     navigateToStudioDetails: (Int) -> Unit,
     navigateToThreadDetails: (Int) -> Unit,
     navigateToUserDetails: (Int) -> Unit,
-    toggleFavourite: (Int) -> Unit
+    toggleFavourite: (Int) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         when (selectedChip) {
             SearchFilter.MEDIA, SearchFilter.ANIME, SearchFilter.MANGA -> {
                 val pager = uiState.searchResultsMedia
-                Timber.d("Refresh load-state is: " + pager.loadState.refresh.toString() + "\nappend load state is : ${pager.loadState.append}")
+                Timber.d(
+                    "Refresh load-state is: " + pager.loadState.refresh.toString() + "\nappend load state is : ${pager.loadState.append}",
+                )
                 when (pager.loadState.refresh) {
                     is LoadState.Error -> {
                         Timber.d("Search error: ${(pager.loadState.refresh as LoadState.Error).error.message}")
@@ -1081,7 +1173,7 @@ fun SearchResults(
                                         media.id,
                                         media.coverImage,
                                         media.title,
-                                        media.type
+                                        media.type,
                                     )
                                 }
                             }
@@ -1119,7 +1211,7 @@ fun SearchResults(
                                     character.coverImage,
                                     character.userPreferredName,
                                     character.favorites,
-                                    character.isFavourite
+                                    character.isFavourite,
                                 )
                             }
                         }
@@ -1152,7 +1244,7 @@ fun SearchResults(
                                     staff.coverImage,
                                     staff.userPreferredName,
                                     staff.favourites,
-                                    staff.isFavourite
+                                    staff.isFavourite,
                                 )
                             }
                         }
@@ -1180,7 +1272,9 @@ fun SearchResults(
                             val studio = uiState.searchResultsStudio[index]
                             if (studio != null) {
                                 SearchCardStudio(
-                                    studio, navigateToStudioDetails, toggleFavourite
+                                    studio,
+                                    navigateToStudioDetails,
+                                    toggleFavourite,
                                 )
                             }
                         }
@@ -1189,7 +1283,6 @@ fun SearchResults(
             }
 
             SearchFilter.THREADS -> {
-
                 val pager = uiState.searchResultsThread
                 when (pager.loadState.refresh) {
                     is LoadState.Error -> {
@@ -1209,7 +1302,9 @@ fun SearchResults(
                             val thread = uiState.searchResultsThread[index]
                             if (thread != null) {
                                 SearchCardForum(
-                                    thread.id, thread.title, navigateToThreadDetails
+                                    thread.id,
+                                    thread.title,
+                                    navigateToThreadDetails,
                                 )
                             }
                         }
@@ -1237,14 +1332,14 @@ fun SearchResults(
                             val user = uiState.searchResultsUser[index]
                             if (user != null) {
                                 SearchCardUser(
-                                    user.id, user.name, navigateToUserDetails
+                                    user.id,
+                                    user.name,
+                                    navigateToUserDetails,
                                 )
                             }
                         }
                     }
                 }
-
-
             }
         }
     }
@@ -1257,15 +1352,20 @@ fun SearchResultNetworkError() {
             text = "Network error! Please try searching again.",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(Dimens.PaddingNormal)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(Dimens.PaddingNormal),
         )
     }
 }
 
 @Composable
-fun SearchCardUser(id: Int, name: String, navigateToUserDetails: (Int) -> Unit) {
+fun SearchCardUser(
+    id: Int,
+    name: String,
+    navigateToUserDetails: (Int) -> Unit,
+) {
     Column(modifier = Modifier.clickable { navigateToUserDetails(id) }) {
         Text(text = id.toString())
         Text(text = name)
@@ -1273,7 +1373,11 @@ fun SearchCardUser(id: Int, name: String, navigateToUserDetails: (Int) -> Unit) 
 }
 
 @Composable
-fun SearchCardForum(id: Int, title: String, navigateToThreadDetails: (Int) -> Unit) {
+fun SearchCardForum(
+    id: Int,
+    title: String,
+    navigateToThreadDetails: (Int) -> Unit,
+) {
     Column(modifier = Modifier.clickable { navigateToThreadDetails(id) }) {
         Text(text = id.toString())
         Text(text = title)
@@ -1282,35 +1386,39 @@ fun SearchCardForum(id: Int, title: String, navigateToThreadDetails: (Int) -> Un
 
 @Composable
 fun SearchCardStudio(
-    studio: AniStudio, navigateToStudioDetails: (Int) -> Unit, toggleFavourite: (Int) -> Unit
+    studio: AniStudio,
+    navigateToStudioDetails: (Int) -> Unit,
+    toggleFavourite: (Int) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { navigateToStudioDetails(studio.id) }
-            .padding(Dimens.PaddingNormal)
-
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { navigateToStudioDetails(studio.id) }
+                .padding(Dimens.PaddingNormal),
     ) {
         Text(
             text = studio.name,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         Text(
             text = if (studio.favourites == -1) "?" else studio.favourites.toString(),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = Dimens.PaddingSmall)
+            modifier = Modifier.padding(horizontal = Dimens.PaddingSmall),
         )
         Icon(
             painter = painterResource(id = if (!studio.isFavourite) R.drawable.anime_details_heart else R.drawable.baseline_favorite_24),
             contentDescription = "Favourites",
-            modifier = Modifier.clickable {
-                toggleFavourite(studio.id)
-            })
+            modifier =
+                Modifier.clickable {
+                    toggleFavourite(studio.id)
+                },
+        )
     }
 }
 
@@ -1321,33 +1429,35 @@ fun SearchCardCharacter(
     coverImage: String,
     userPreferredName: String,
     favourites: Int,
-    isFavourite: Boolean
+    isFavourite: Boolean,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onNavigateToDetails(id) }) {
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { onNavigateToDetails(id) },
+    ) {
         AsyncImageRoundedCorners(coverImage = coverImage, contentDescription = userPreferredName)
         Column(modifier = Modifier.padding(Dimens.PaddingNormal)) {
             Text(
                 text = userPreferredName,
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Row(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = Dimens.PaddingSmall)
+                modifier = Modifier.padding(top = Dimens.PaddingSmall),
             ) {
                 Text(
                     text = favourites.toString(),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(end = Dimens.PaddingSmall)
+                    modifier = Modifier.padding(end = Dimens.PaddingSmall),
                 )
                 Icon(
                     painter = painterResource(id = if (!isFavourite) R.drawable.anime_details_heart else R.drawable.baseline_favorite_24),
-                    contentDescription = "Favourite"
+                    contentDescription = "Favourite",
                 )
             }
         }
@@ -1361,43 +1471,47 @@ fun SearchCardMedia(
     id: Int,
     coverImage: String,
     title: String,
-    mediaType: AniMediaType
+    mediaType: AniMediaType,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onNavigateToDetails(id) },
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { onNavigateToDetails(id) },
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
-                .build(),
+            model =
+                ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
+                    .build(),
             contentDescription = "Cover of $title",
             placeholder = painterResource(id = R.drawable.no_image),
             fallback = painterResource(id = R.drawable.no_image),
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .height(175.dp)
-                .width(125.dp)
-                .padding(
-                    start = Dimens.PaddingNormal,
-                    top = Dimens.PaddingSmall,
-                    bottom = Dimens.PaddingSmall
-                )
-                .clip(RoundedCornerShape(12.dp))
+            modifier =
+                Modifier
+                    .height(175.dp)
+                    .width(125.dp)
+                    .padding(
+                        start = Dimens.PaddingNormal,
+                        top = Dimens.PaddingSmall,
+                        bottom = Dimens.PaddingSmall,
+                    )
+                    .clip(RoundedCornerShape(12.dp)),
         )
         Column {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(
-                    start = Dimens.PaddingNormal,
-                    end = Dimens.PaddingNormal,
-                    top = Dimens.PaddingNormal
-                ),
+                modifier =
+                    Modifier.padding(
+                        start = Dimens.PaddingNormal,
+                        end = Dimens.PaddingNormal,
+                        top = Dimens.PaddingNormal,
+                    ),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
             QuickInfo(media = media, isAnime = mediaType == AniMediaType.ANIME)
         }
@@ -1418,9 +1532,11 @@ fun AnimeRow(
             AnimeCard(
                 title = anime.title,
                 coverImage = anime.coverImage,
-                onNavigateToDetails = ({
-                    onNavigateToDetails(anime.id)
-                }),
+                onNavigateToDetails = (
+                    {
+                        onNavigateToDetails(anime.id)
+                    }
+                ),
             )
         }
     }
@@ -1443,46 +1559,46 @@ fun AnimeRow(
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationBadge(
     unReadNotificationCount: Int,
-    onNavigateToNotification: () -> Unit
+    onNavigateToNotification: () -> Unit,
 ) {
     TooltipBox(
         tooltip = { PlainTooltip { Text(text = stringResource(id = R.string.notifications)) } },
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-        state = rememberTooltipState()
+        state = rememberTooltipState(),
     ) {
 //        IconButton(onClick = { /*TODO*/ }) {
         BadgedBox(
-            modifier = Modifier
+            modifier = Modifier,
 //            .padding(Dimens.PaddingNormal)
 //            .clip(CircleShape)
 //            .clickable { onNavigateToNotification() }
-            , badge = {
+            badge = {
                 if (unReadNotificationCount != 0 && unReadNotificationCount != -1) {
                     Badge {
                         Text(
                             unReadNotificationCount.toString(),
-                            modifier = Modifier.semantics {
-                                contentDescription =
-                                    "$unReadNotificationCount new notifications"
-                            }
+                            modifier =
+                                Modifier.semantics {
+                                    contentDescription =
+                                        "$unReadNotificationCount new notifications"
+                                },
                         )
                     }
                 }
-            }) {
+            },
+        ) {
 //                        IconButton(onClick = onNavigateToNotification, modifier = Modifier.tooltipTrigger()) {
             Icon(
                 imageVector = Icons.Outlined.Notifications,
                 contentDescription = "notifications",
-                modifier = Modifier
-
-                    .clip(CircleShape)
-                    .clickable { onNavigateToNotification() }
-
+                modifier =
+                    Modifier
+                        .clip(CircleShape)
+                        .clickable { onNavigateToNotification() },
             )
 //                        }
 //            }
@@ -1493,7 +1609,7 @@ fun NotificationBadge(
 @Composable
 @OptIn(
     ExperimentalFoundationApi::class,
-    ExperimentalLayoutApi::class
+    ExperimentalLayoutApi::class,
 )
 fun TagDialog(
     showTagDialog: Boolean,
@@ -1506,7 +1622,7 @@ fun TagDialog(
     genres: List<String>,
     reloadGenres: () -> Unit,
     reloadTags: () -> Unit,
-    filterTagsAndGenres: (String) -> Unit
+    filterTagsAndGenres: (String) -> Unit,
 ) {
     if (showTagDialog) {
         var filterTextFieldValue by remember { mutableStateOf("") }
@@ -1517,29 +1633,34 @@ fun TagDialog(
             mutableStateOf(selectedGenres.toImmutableList())
         }
         val filteredTags by remember(key1 = filterTextFieldValue) {
-            mutableStateOf(tags.filter { tag ->
-                tag.name.startsWith(
-                    filterTextFieldValue,
-                    ignoreCase = true
-                )
-            })
+            mutableStateOf(
+                tags.filter { tag ->
+                    tag.name.startsWith(
+                        filterTextFieldValue,
+                        ignoreCase = true,
+                    )
+                },
+            )
         }
         val filteredGenres by remember(key1 = filterTextFieldValue) {
-            mutableStateOf(genres.filter { name ->
-                name.startsWith(
-                    filterTextFieldValue,
-                    ignoreCase = true
-                )
-            })
+            mutableStateOf(
+                genres.filter { name ->
+                    name.startsWith(
+                        filterTextFieldValue,
+                        ignoreCase = true,
+                    )
+                },
+            )
         }
 
         AlertDialog(
             onDismissRequest = { setShowTagDialog(false) },
             shape = RectangleShape,
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false
-            ),
+            properties =
+                DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    decorFitsSystemWindows = false,
+                ),
             dismissButton = {
                 TextButton(onClick = {
                     selectedTags.apply {
@@ -1568,12 +1689,15 @@ fun TagDialog(
                 if (tags.isNotEmpty() && genres.isNotEmpty()) {
                     Column {
                         OutlinedTextField(
-                            value = filterTextFieldValue, onValueChange = {
+                            value = filterTextFieldValue,
+                            onValueChange = {
                                 filterTextFieldValue = it
                                 filterTagsAndGenres(it)
-                            }, modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Dimens.PaddingNormal)
+                            },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(Dimens.PaddingNormal),
                         )
                         FlowRow {
 //                            val chosenTags by remember(key1 = selectedTags, key2 = selectedGenres) {
@@ -1585,14 +1709,20 @@ fun TagDialog(
                                     trailingIcon = {
                                         Icon(
                                             imageVector = Icons.Default.Clear,
-                                            contentDescription = "Clear"
+                                            contentDescription = "Clear",
                                         )
                                     },
-                                    onClick = { selectedTags.remove(it); /*selectedGenres.remove(it)*/ },
-                                    label = { Text(text = it) })
+                                    onClick = {
+                                        selectedTags.remove(it); // selectedGenres.remove(it)
+                                    },
+                                    label = { Text(text = it) },
+                                )
                             }
                         }
-                        TextButton(onClick = { selectedTags.clear(); selectedGenres.clear() }) {
+                        TextButton(onClick = {
+                            selectedTags.clear()
+                            selectedGenres.clear()
+                        }) {
                             Text(text = "Clear filters")
                         }
                         LazyColumn {
@@ -1607,14 +1737,14 @@ fun TagDialog(
                                             text = stringResource(id = R.string.genres),
                                             style = MaterialTheme.typography.titleMedium,
                                             color = MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+                                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall),
                                         )
                                     }
                                 }
                                 items(filteredGenres) { genre ->
                                     GenreCheckBox(
                                         selectedGenres = selectedGenres,
-                                        genre = genre
+                                        genre = genre,
                                     )
                                 }
                             }
@@ -1626,7 +1756,7 @@ fun TagDialog(
                                             text = category,
                                             style = MaterialTheme.typography.titleMedium,
                                             color = MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+                                            modifier = Modifier.padding(bottom = Dimens.PaddingSmall),
                                         )
                                     }
                                 }
@@ -1639,7 +1769,8 @@ fun TagDialog(
                 } else {
                     FailedToLoadTagsAndGenres(genres, reloadGenres, tags, reloadTags)
                 }
-            })
+            },
+        )
     }
 }
 
@@ -1648,17 +1779,17 @@ fun FailedToLoadTagsAndGenres(
     genres: List<String>,
     reloadGenres: () -> Unit,
     tags: List<AniTag>,
-    reloadTags: () -> Unit
+    reloadTags: () -> Unit,
 ) {
     Column(
         horizontalAlignment = Alignment.Start,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
             text = "Failed to load",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = Dimens.PaddingSmall)
+            modifier = Modifier.padding(bottom = Dimens.PaddingSmall),
         )
         if (genres.isEmpty()) {
             TextButton(onClick = { reloadGenres() }) {
@@ -1673,34 +1804,34 @@ fun FailedToLoadTagsAndGenres(
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TagCheckBox(
     selectedTags: MutableList<String>,
-    tag: AniTag
+    tag: AniTag,
 ) {
     var checked by remember(key1 = selectedTags) {
         mutableStateOf(
             selectedTags.contains(
-                tag.name
-            )
+                tag.name,
+            ),
         )
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                if (checked) {
-                    checked = false
-                    selectedTags.remove(tag.name)
-                } else {
-                    checked = true
-                    selectedTags.add(tag.name)
-                }
-            }) {
-
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable {
+                    if (checked) {
+                        checked = false
+                        selectedTags.remove(tag.name)
+                    } else {
+                        checked = true
+                        selectedTags.add(tag.name)
+                    }
+                },
+    ) {
 //        var showTagDescription by remember {
 //            mutableStateOf(
 //                false
@@ -1717,14 +1848,15 @@ fun TagCheckBox(
                     selectedTags.remove(tag.name)
                 }
                 Timber.d(
-                    "Checkbox change in tag: parameter is $it\n list of tags is $selectedTags\n check status is $checked"
+                    "Checkbox change in tag: parameter is $it\n list of tags is $selectedTags\n check status is $checked",
                 )
-            })
+            },
+        )
         Text(
             text = tag.name,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
 //        val tooltipState = rememberTooltipState(isPersistent = true)
         val scope = rememberCoroutineScope()
@@ -1735,24 +1867,23 @@ fun TagCheckBox(
         ) {
             Icon(
                 imageVector = Icons.Filled.Info,
-                contentDescription = stringResource(R.string.tag_info)
+                contentDescription = stringResource(R.string.tag_info),
             )
         }
     }
 }
 
-
-//@Preview(showBackground = true)
-//@Composable
-//fun SearchCardStudioPreview() {
+// @Preview(showBackground = true)
+// @Composable
+// fun SearchCardStudioPreview() {
 //    SearchCardStudio(AniStudio(id = 12, name = "Tokyo TV", favourites = 2123),
 //        navigateToStudioDetails = { },
 //        toggleFavourite = { })
-//}
+// }
 //
-//@Preview(showBackground = true)
-//@Composable
-//fun SearchCardCharacterPreview() {
+// @Preview(showBackground = true)
+// @Composable
+// fun SearchCardCharacterPreview() {
 //    SearchCardCharacter(
 //        onNavigateToDetails = {},
 //        id = 12,
@@ -1761,17 +1892,17 @@ fun TagCheckBox(
 //        favourites = 1223,
 //        isFavourite = true
 //    )
-//}
+// }
 //
-//@Preview(showBackground = true, group = "Notification")
-//@Composable
-//fun NotificationBadgePreview() {
+// @Preview(showBackground = true, group = "Notification")
+// @Composable
+// fun NotificationBadgePreview() {
 //    NotificationBadge(unReadNotificationCount = 2, onNavigateToNotification = {})
-//}
+// }
 
-//@Preview
-//@Composable
-//fun TagDialogPreview() {
+// @Preview
+// @Composable
+// fun TagDialogPreview() {
 //    TagDialog(
 //        showTagDialog = true,
 //        selectedTags = mutableListOf(),
@@ -1806,4 +1937,4 @@ fun TagCheckBox(
 //        reloadTags = { }) {
 //
 //    }
-//}
+// }
