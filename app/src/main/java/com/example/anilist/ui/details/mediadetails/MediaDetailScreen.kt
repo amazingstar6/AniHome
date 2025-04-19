@@ -24,15 +24,17 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-// TODO deprecated
-//import androidx.compose.material3.PlainTooltipBox
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -154,34 +156,38 @@ fun MediaDetail(
         }, actions = {
             val uriHandler = LocalUriHandler.current
             val uri = "https://anilist.co/${if (isAnime) "anime" else "manga"}/$mediaId"
-            // TODO deprecated
-//            PlainTooltipBox(tooltip = {
-//                Text(
-//                    text = "Favourite",
-//                )
-//            }) {
-//                IconButton(
-//                    onClick = {
-//                        mediaDetailsViewModel.toggleFavourite(
-//                            if (isAnime) AniLikeAbleType.ANIME else AniLikeAbleType.MANGA,
-//                            mediaId,
-//                        )
-//                    },
-//                    modifier = Modifier.tooltipTrigger(),
-//                ) {
-//                    Icon(
-//                        painter = painterResource(
-//                            id = if (if (media is MediaDetailUiState.Success) {
-//                                    (media as MediaDetailUiState.Success).data.isFavourite
-//                                } else false
-//                            ) {
-//                                R.drawable.baseline_favorite_24
-//                            } else R.drawable.anime_details_heart,
-//                        ),
-//                        contentDescription = "Add to favourites",
-//                    )
-//                }
-//            }
+            TooltipBox(
+                tooltip = {
+                    PlainTooltip {
+                        Text(
+                            text = "Favourite",
+                        )
+                    }
+                },
+                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                state = rememberTooltipState()
+            ) {
+                IconButton(
+                    onClick = {
+                        mediaDetailsViewModel.toggleFavourite(
+                            if (isAnime) AniLikeAbleType.ANIME else AniLikeAbleType.MANGA,
+                            mediaId,
+                        )
+                    },
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            id = if (if (media is MediaDetailUiState.Success) {
+                                    (media as MediaDetailUiState.Success).data.isFavourite
+                                } else false
+                            ) {
+                                R.drawable.baseline_favorite_24
+                            } else R.drawable.anime_details_heart,
+                        ),
+                        contentDescription = "Add to favourites",
+                    )
+                }
+            }
             OpenInBrowserAndShareToolTips(uriHandler, uri, context)
         })
     }, floatingActionButton = {

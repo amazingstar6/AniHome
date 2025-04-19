@@ -6,5 +6,4 @@ import androidx.compose.runtime.Composable
 @Composable
 fun ThreadCommentScreen(commentId: Int, navigateBack: () -> Unit) {
     Text(text = "Showing thread comment with comment id $commentId")
-    //todo
 }

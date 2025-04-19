@@ -39,6 +39,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.PlainTooltip
 // todo deprecated
 //import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.ProgressIndicatorDefaults
@@ -46,9 +47,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -246,31 +250,35 @@ private fun MyMedia(
                     )
                 },
                 actions = {
-                    // todo deprecated
-//                    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.refresh)) }) {
-//                        IconButton(
-//                            onClick = reloadMyMedia,
-//                            modifier = Modifier.tooltipTrigger()
-//                        ) {
-//                            Icon(
-//                                imageVector = Icons.Default.Refresh,
-//                                contentDescription = stringResource(id = R.string.refresh)
-//                            )
-//                        }
-//                    }
-//                    PlainTooltipBox(tooltip = { Text(text = stringResource(id = R.string.sort)) }) {
-//                        IconButton(
-//                            onClick = { showSortingSheet = true },
-//                            modifier = Modifier.tooltipTrigger()
-//                        ) {
-//                            Icon(
-//                                painter = painterResource(id = R.drawable.sort),
-//                                contentDescription = stringResource(
-//                                    id = R.string.sort
-//                                )
-//                            )
-//                        }
-//                    }
+                    TooltipBox(
+                        state = rememberTooltipState(),
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = {PlainTooltip { Text(text = stringResource(id = R.string.refresh)) }}
+                    ) {
+                        IconButton(
+                            onClick = reloadMyMedia) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = stringResource(id = R.string.refresh)
+                            )
+                        }
+                    }
+                    TooltipBox(
+                        tooltip = { PlainTooltip { Text(text = stringResource(id = R.string.sort)) } },
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        state = rememberTooltipState(),
+                    ) {
+                        IconButton(
+                            onClick = { showSortingSheet = true }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.sort),
+                                contentDescription = stringResource(
+                                    id = R.string.sort
+                                )
+                            )
+                        }
+                    }
                 })
         },
         floatingActionButton = {
@@ -800,22 +808,20 @@ private fun MediaCard(
                         verticalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxHeight()
                     ) {
-                        // TODO deprecated
-//                        PlainTooltipBox(
-//                            tooltip = { Text(text = stringResource(R.string.edit)) },
-////                            modifier = Modifier.align(Alignment.BottomCenter),
-//                        ) {
-//                            IconButton(
-//                                onClick = openEditStatusSheet,
-//                                modifier = Modifier.tooltipTrigger()
-//                                //                        modifier = Modifier.weight(1f, false)
-//                            ) {
-//                                Icon(
-//                                    imageVector = Icons.Default.Edit,
-//                                    contentDescription = stringResource(id = R.string.edit),
-//                                )
-//                            }
-//                        }
+                        TooltipBox(
+                            tooltip = { PlainTooltip { Text(text = stringResource(R.string.edit)) } },
+                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            state = rememberTooltipState(),
+                        ) {
+                            IconButton(
+                                onClick = openEditStatusSheet,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = stringResource(id = R.string.edit),
+                                )
+                            }
+                        }
                         if (isAnime) {
                             if (media.mediaListEntry.progress != media.episodeAmount) {
                                 IncreaseProgress(

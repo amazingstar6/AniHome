@@ -25,13 +25,14 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-// TODO deprecated
-//import androidx.compose.material3.RichTooltipBox
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-// TODO deprecated
-//import androidx.compose.material3.rememberRichTooltipState
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -369,38 +370,41 @@ private fun OverviewAnimeCoverDetails(
 
     if (media.nextAiringEpisode.id != -1) {
         Timber.d("Time at airing is ${media.nextAiringEpisode.airingAt}")
-        // TODO deprecated
-//        val tooltipState = rememberRichTooltipState(isPersistent = true)
-//        val tooltipScope = rememberCoroutineScope()
-//        RichTooltipBox(
-//            tooltipState = tooltipState,
-//            text = { Text(text = Utils.convertEpochToDateTimeTimeZoneString(media.nextAiringEpisode.airingAt.toLong() /* - Clock.System.now().epochSeconds*/)) }) {
-//            Text(
-//                text = "Episode ${media.nextAiringEpisode.episode} airs in ${
-//                    Utils.getRelativeTimeFuture(
-//                        media.nextAiringEpisode.timeUntilAiring.toLong()
-//                    )
-//                }",
-//                style = MaterialTheme.typography.headlineSmall,
-//                fontFamily = FontFamily.SansSerif,
-//                color = MaterialTheme.colorScheme.primary,
-//                modifier = Modifier
-//                    .padding(
-//                        start = Dimens.PaddingNormal,
-//                        end = Dimens.PaddingNormal,
-//                        bottom = Dimens.PaddingSmall
-//                    )
-//                    .clickable(
-//                        interactionSource = remember { MutableInteractionSource() },
-//                        indication = null
-//                    ) {
-//                        tooltipScope.launch {
-//                            tooltipState.show()
-//                        }
-//                    }
-//                    .tooltipTrigger()
-//            )
-//        }
+        val tooltipScope = rememberCoroutineScope()
+        val tooltipState = rememberTooltipState(isPersistent = true)
+        TooltipBox (
+            positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
+            state  = tooltipState,
+            tooltip = {
+                RichTooltip {
+                Text(text = Utils.convertEpochToDateTimeTimeZoneString(media.nextAiringEpisode.airingAt.toLong() /* - Clock.System.now().epochSeconds*/))
+
+                }}) {
+            Text(
+                text = "Episode ${media.nextAiringEpisode.episode} airs in ${
+                    Utils.getRelativeTimeFuture(
+                        media.nextAiringEpisode.timeUntilAiring.toLong()
+                    )
+                }",
+                style = MaterialTheme.typography.headlineSmall,
+                fontFamily = FontFamily.SansSerif,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .padding(
+                        start = Dimens.PaddingNormal,
+                        end = Dimens.PaddingNormal,
+                        bottom = Dimens.PaddingSmall
+                    )
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        tooltipScope.launch {
+                            tooltipState.show()
+                        }
+                    }
+            )
+        }
     }
 
     FlowRow(
