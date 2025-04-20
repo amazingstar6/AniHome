@@ -17,10 +17,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.kevin.anihome.ui.PleaseLogin
-import com.kevin.anihome.ui.details.CoverLarge
 import com.kevin.anihome.ui.details.activitydetail.ActivityDetailScreen
 import com.kevin.anihome.ui.details.characterdetail.CharacterDetailScreen
 import com.kevin.anihome.ui.details.forumdetail.ForumDetailScreen
+import com.kevin.anihome.ui.details.mediadetails.CoverLarge
 import com.kevin.anihome.ui.details.mediadetails.MediaDetail
 import com.kevin.anihome.ui.details.reviewdetail.ReviewDetailScreen
 import com.kevin.anihome.ui.details.staffdetail.StaffDetailScreen
@@ -61,7 +61,6 @@ fun AniNavHost(
     ) {
         composable(
             AniListRoute.HOME_ROUTE,
-//            popEnterTransition = { scaleIn() }
         ) {
             setBottomBarState(true)
             HomeScreen(
@@ -198,7 +197,7 @@ fun AniNavHost(
                 ReviewDetailScreen(
                     reviewId = backStackEntry.arguments?.getInt("reviewId") ?: -1,
                     onNavigateBack = navigationActions::navigateBack,
-                    navigateToUserDetailScreen = navigationActions::navigateToUser
+                    navigateToUserDetailScreen = navigationActions::navigateToUser,
                 )
             },
         )

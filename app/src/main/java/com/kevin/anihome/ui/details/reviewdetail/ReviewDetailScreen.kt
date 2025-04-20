@@ -89,7 +89,7 @@ fun ReviewDetailScreen(
             ReviewDetail(
                 review ?: AniReview(userId = review?.userId ?: -1),
                 vote = { reviewDetailViewModel.rateReview(review?.id ?: -1, it) },
-                {navigateToUserDetailScreen(review?.userId ?: -1)},
+                { navigateToUserDetailScreen(review?.userId ?: -1) },
                 modifier = Modifier.padding(top = it.calculateTopPadding()),
             )
         } else {
@@ -128,7 +128,7 @@ private fun ReviewDetail(
             review.userAvatar,
             review.userName,
             Utils.convertEpochToDateString(review.createdAt.toLong()),
-            navigateToUserDetailScreen
+            navigateToUserDetailScreen,
         )
 //        HtmlText(
 //            text = review.body,
@@ -183,22 +183,27 @@ fun AvatarNameDate(
             Modifier
                 .fillMaxWidth()
                 .padding(Dimens.PaddingSmall)
-                .then(modifier)
-                ,
+                .then(modifier),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Avatar(avatar = avatar, userName = userName, modifier =                 Modifier.clickable {
-            navigateToUserDetailScreen()
-        })
+        Avatar(
+            avatar = avatar,
+            userName = userName,
+            modifier =
+                Modifier.clickable {
+                    navigateToUserDetailScreen()
+                },
+        )
         Column(modifier = Modifier.padding(start = Dimens.PaddingNormal)) {
             Text(
                 text = userName,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier =                Modifier .clickable {
-                navigateToUserDetailScreen()
-            }
+                modifier =
+                    Modifier.clickable {
+                        navigateToUserDetailScreen()
+                    },
             )
             Text(
                 text = date,

@@ -712,13 +712,6 @@ private fun MediaCard(
 ) {
     val haptic = LocalHapticFeedback.current
 
-//    val context = LocalContext.current
-//    val request = ImageRequest.Builder(context)
-//        .data(media.coverImage)
-//        // Optional, but setting a ViewSizeResolver will conserve memory by limiting the size the image should be preloaded into memory at.
-//        .build()
-//    context.imageLoader.enqueue(request)
-
     Box(modifier = Modifier.padding(vertical = Dimens.PaddingSmall)) {
         ElevatedCard(
             shape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
@@ -749,7 +742,7 @@ private fun MediaCard(
                         Modifier
                             .fillMaxHeight()
                             .width(100.dp)
-                            .clip(RoundedCornerShape(12.dp, 12.dp, 12.dp, 0.dp)),
+                            .clip(RoundedCornerShape(12.dp, 0.dp, 0.dp, 0.dp)),
                 )
                 Row(
                     verticalAlignment = Alignment.Top,

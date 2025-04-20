@@ -12,11 +12,6 @@ class UtilsTest {
     }
 
     @Test
-    fun getRelativeTimeTest() {
-        TODO()
-    }
-
-    @Test
     fun colorToHexStringTest() {
         val color = Color.Cyan
         assertEquals("#00FFFF", color.toHexString())

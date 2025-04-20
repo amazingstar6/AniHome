@@ -49,13 +49,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.kevin.anihome.ui.Dimens
-import com.kevin.anihome.ui.details.characterdetail.Headline
-import com.kevin.anihome.utils.Utils.Companion.toHexString
 import com.google.accompanist.web.AccompanistWebViewClient
 import com.google.accompanist.web.LoadingState
 import com.google.accompanist.web.WebView
 import com.google.accompanist.web.rememberWebViewStateWithHTMLData
+import com.kevin.anihome.ui.Dimens
+import com.kevin.anihome.ui.details.characterdetail.Headline
+import com.kevin.anihome.utils.Utils.Companion.toHexString
 import org.jsoup.Jsoup
 import timber.log.Timber
 
@@ -99,10 +99,10 @@ fun quantityStringResource(
 fun AsyncImageRoundedCorners(
     coverImage: String,
     contentDescription: String,
+    width: Dp,
+    height: Dp,
+    padding: Dp,
     modifier: Modifier = Modifier,
-    width: Dp = MEDIUM_MEDIA_WIDTH.dp,
-    height: Dp = MEDIUM_MEDIA_HEIGHT.dp,
-    padding: Dp = Dimens.PaddingSmall,
 ) {
     var showShimmer by remember { mutableStateOf(true) }
     AsyncImage(

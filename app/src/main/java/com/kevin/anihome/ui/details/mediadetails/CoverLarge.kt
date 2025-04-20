@@ -1,4 +1,4 @@
-package com.kevin.anihome.ui.details
+package com.kevin.anihome.ui.details.mediadetails
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn

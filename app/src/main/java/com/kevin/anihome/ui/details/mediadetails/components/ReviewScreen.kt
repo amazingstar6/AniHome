@@ -140,7 +140,7 @@ fun Reviews(
 fun Avatar(
     avatar: String,
     userName: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     AsyncImage(
         model =

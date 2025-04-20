@@ -1,18 +1,15 @@
 package com.kevin.anihome.ui.home
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -25,7 +22,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.kevin.anihome.R
 import com.kevin.anihome.data.models.HomeTrendingTypes
 import com.kevin.anihome.ui.Dimens
-import com.kevin.anihome.utils.AsyncImageRoundedCorners
+import com.kevin.anihome.utils.MEDIUM_MEDIA_WIDTH
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -35,7 +32,7 @@ fun MediaOverview(
     navigateToDetails: (Int) -> Unit,
     homeViewModel: HomeViewModel,
 ) {
-    val type = HomeTrendingTypes.values()[ordinalNumber]
+    val type = HomeTrendingTypes.entries[ordinalNumber]
     val pager =
         when (type) {
             HomeTrendingTypes.TRENDING_NOW -> homeViewModel.trendingNowPager
@@ -52,50 +49,25 @@ fun MediaOverview(
                 onClick = navigateBack,
             ) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(id = R.string.back),
                 )
             }
         })
     }) {
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(120.dp),
+            columns = GridCells.Adaptive(MEDIUM_MEDIA_WIDTH.dp),
             contentPadding = PaddingValues(horizontal = Dimens.PaddingSmall),
             modifier = Modifier.padding(top = it.calculateTopPadding()),
         ) {
             items(pager.itemCount) { index ->
                 val media = pager[index]
-//                if (media != null) {
-//                AnimatedVisibility(visible = media != null, enter = scaleIn(), exit = scaleOut()) {
-                Column(
-                    modifier =
-                        Modifier
-                            .clickable {
-                                navigateToDetails(media?.id ?: -1)
-                            },
-//                    .animateContentSize()
-//                    .animateItemPlacement(tween())
-//                        .background(shimmerBrush(media != null))
-                ) {
-                    AsyncImageRoundedCorners(
-                        coverImage = media?.coverImage ?: "",
-                        contentDescription = "Cover of ${media?.title ?: ""}",
-                    )
-                    Text(
-                        text = media?.title ?: "",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier =
-                            Modifier.padding(
-                                start = Dimens.PaddingSmall,
-                                end = Dimens.PaddingSmall,
-                                bottom = Dimens.PaddingNormal,
-                            ),
-                    )
-                }
+                AnimeCard(
+                    title = media?.title ?: "",
+                    coverImage = media?.coverImage ?: "",
+                    onNavigateToDetails = { navigateToDetails(media?.id ?: -1) },
+                )
             }
-//                }
-//            }
         }
     }
 }

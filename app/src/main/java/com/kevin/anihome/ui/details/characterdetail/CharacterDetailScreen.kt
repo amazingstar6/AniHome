@@ -36,7 +36,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -288,32 +287,31 @@ fun ImageWithTitleAndSubTitle(
 ) {
     TooltipBox(
         positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
-        tooltip = {RichTooltip { Text(text = subTitle) }},
-        state = rememberTooltipState()
+        tooltip = { RichTooltip { Text(text = subTitle) } },
+        state = rememberTooltipState(),
     ) {
-    Column(
-        Modifier
-            .clickable { onClick(id) }
-            .padding(horizontal = Dimens.PaddingNormal)
-
+        Column(
+            Modifier
+                .clickable { onClick(id) }
+                .padding(horizontal = Dimens.PaddingNormal),
 //            .height(MEDIUM_MEDIA_HEIGHT.dp + 50.dp)
 //            .width(MEDIUM_MEDIA_WIDTH.dp)
-    ) {
-        AsyncImageRoundedCorners(
-            coverImage = coverImage,
-            contentDescription = "Cover image of $title",
-            width = MEDIUM_MEDIA_WIDTH.dp,
-            height = MEDIUM_MEDIA_HEIGHT.dp,
-            padding = 0.dp
-        )
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier =                Modifier         .width(MEDIUM_MEDIA_WIDTH.dp),
-            overflow = TextOverflow.Ellipsis,
-            maxLines = 1,
-        )
+        ) {
+            AsyncImageRoundedCorners(
+                coverImage = coverImage,
+                contentDescription = "Cover image of $title",
+                width = MEDIUM_MEDIA_WIDTH.dp,
+                height = MEDIUM_MEDIA_HEIGHT.dp,
+                padding = 0.dp,
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.width(MEDIUM_MEDIA_WIDTH.dp),
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+            )
             Text(
                 text = subTitle,
                 style = MaterialTheme.typography.bodyMedium,

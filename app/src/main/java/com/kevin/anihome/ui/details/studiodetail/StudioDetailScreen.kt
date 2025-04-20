@@ -8,13 +8,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
-// import androidx.compose.material3.PlainTooltipBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
@@ -30,15 +29,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kevin.anihome.R
-import com.kevin.anihome.data.models.Media
 import com.kevin.anihome.data.models.AniLikeAbleType
+import com.kevin.anihome.data.models.Media
 import com.kevin.anihome.ui.Dimens
 import com.kevin.anihome.utils.AsyncImageRoundedCorners
+import com.kevin.anihome.utils.MEDIUM_MEDIA_HEIGHT
+import com.kevin.anihome.utils.MEDIUM_MEDIA_WIDTH
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +59,7 @@ fun StudioDetailScreen(
         TopAppBar(title = { Text(text = studio.name) }, navigationIcon = {
             IconButton(onClick = navigateBack) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(id = R.string.back),
                 )
             }
@@ -112,16 +114,19 @@ fun StudioDetailScreen(
                     text = "This studio is not an animation studio",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(vertical = Dimens.PaddingSmall)
+
                 )
             } else {
                 Text(
                     text = "This studio is an animation studio",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(vertical = Dimens.PaddingSmall)
                 )
             }
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(120.dp),
+                columns = GridCells.Adaptive(MEDIUM_MEDIA_WIDTH.dp),
             ) {
                 items(mediaList.itemCount) { index ->
                     val media = mediaList[index]
@@ -142,19 +147,24 @@ private fun MediaCard(
     Column(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Center,
-        modifier = Modifier.clickable { navigateToMedia(media.id) },
+        modifier = Modifier.padding(horizontal = Dimens.PaddingSmall).clickable { navigateToMedia(media.id) },
     ) {
         AsyncImageRoundedCorners(
             coverImage = media.coverImage,
             contentDescription = "Cover of ${media.title}",
+            width = MEDIUM_MEDIA_WIDTH.dp,
+            height = MEDIUM_MEDIA_HEIGHT.dp,
+            padding = 0.dp
         )
         Text(
             text = media.title,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 2,
             modifier =
                 Modifier
-                    .padding(horizontal = Dimens.PaddingNormal, vertical = Dimens.PaddingSmall)
+                    .padding(vertical = Dimens.PaddingSmall)
                     .width(125.dp),
         )
     }

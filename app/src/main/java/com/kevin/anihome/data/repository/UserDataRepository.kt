@@ -103,7 +103,6 @@ class UserDataRepository
 
         suspend fun saveTheme(theme: Theme) {
             dataStore.edit { settings ->
-                Timber.d("Saving theme $theme in data store")
                 settings[PreferencesKeys.THEME] = theme.name
             }
         }

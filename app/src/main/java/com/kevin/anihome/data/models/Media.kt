@@ -78,8 +78,10 @@ data class AniMediaListEntry(
     val private: Boolean = false,
     val notes: String = "",
     val hiddenFromStatusLists: Boolean = false,
-    val customLists: String = "", // actually json
-    val advancedScores: String = "", // actually json
+    // actually json
+    val customLists: String = "",
+    // actually json
+    val advancedScores: String = "",
     val startedAt: FuzzyDate? = null,
     val completedAt: FuzzyDate? = null,
     val updatedAt: FuzzyDate? = null,

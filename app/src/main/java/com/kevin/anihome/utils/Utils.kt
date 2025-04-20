@@ -6,7 +6,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import timber.log.Timber
+import java.util.Locale
 
 class Utils {
     companion object {
@@ -19,6 +19,7 @@ class Utils {
                     epochSeconds,
                 ).toLocalDateTime(TimeZone.UTC)
             return String.format(
+                Locale.UK,
                 "%04d-%02d-%02d",
                 time.year,
                 time.monthNumber,
@@ -30,7 +31,6 @@ class Utils {
          * Gets the relative time from now taken from an epoch timestamp in seconds.
          */
         fun getRelativeTimeFromNow(timestamp: Long): String {
-//            val currentTime = System.currentTimeMillis() / 1000
             val currentTime = Clock.System.now().epochSeconds
             val elapsedTime = currentTime - timestamp
 
@@ -52,12 +52,6 @@ class Utils {
                 else -> "Just now"
             }
         }
-
-//        fun convertToRFC3339(secondsToAdd: Long): String {
-//            val currentTime = ZonedDateTime.now().plusSeconds(secondsToAdd)
-//            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
-//            return currentTime.format(formatter)
-//        }
 
         fun convertEpochToFuzzyDate(epochSeconds: Long): FuzzyDate {
             val time =
@@ -103,12 +97,6 @@ class Utils {
          * Gets the relative time from current time + [timestamp] (seconds) in the future.
          */
         fun getRelativeTimeFuture(timestamp: Long): String {
-//            val time = Instant.fromEpochSeconds(timestamp + Clock.System.now().epochSeconds)
-//                .toLocalDateTime(
-//                    TimeZone.currentSystemDefault()
-//                )
-//            val futureTime = Clock.System.now().epochSeconds + timestamp
-
             val seconds = timestamp
             val minutes = seconds / 60
             val hours = minutes / 60
@@ -120,7 +108,6 @@ class Utils {
             return when {
                 years > 0 -> "$years ${if (years == (1).toLong()) "year" else "years"}"
                 months > 0 -> "$months ${if (months == (1).toLong()) "month" else "months"}"
-//                weeks > 0 -> "$weeks ${if (weeks == (1).toLong()) "week" else "weeks"} ago"
                 days > 0 -> "$days ${if (days == (1).toLong()) "day" else "days"}"
                 hours > 0 -> "$hours ${if (hours == (1).toLong()) "hour" else "hours"}"
                 minutes > 0 -> "$minutes ${if (minutes == (1).toLong()) "minute" else "minutes"}"
@@ -129,16 +116,23 @@ class Utils {
         }
 
         /**
+         * Converts a Unix epoch timestamp (in seconds) to a formatted date-time string
+         * including the system's current time zone.
          *
-         * @param timestamp in epoch seconds
+         * The output format is: `"YYYY-MM-DD, HH:MM <TimeZone ID> timezone"`.
+         * Example: `"2025-04-20, 16:42 Asia/Seoul timezone"`
+         *
+         * @param timestamp The Unix epoch time in seconds since January 1, 1970 (UTC).
+         * @return A formatted date-time string representing the local date and time
+         *         corresponding to the given timestamp, along with the system time zone.
          */
         fun convertEpochToDateTimeTimeZoneString(timestamp: Long): String {
             val time =
                 Instant.fromEpochSeconds(
                     timestamp,
                 ).toLocalDateTime(TimeZone.currentSystemDefault())
-            Timber.d("Current timezone is ${TimeZone.currentSystemDefault().id}")
             return String.format(
+                Locale.UK,
                 "%04d-%02d-%02d, %02d:%02d %s timezone",
                 time.year,
                 time.monthNumber,

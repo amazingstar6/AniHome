@@ -391,7 +391,7 @@ private fun OverviewAnimeCoverDetails(
                     Text(
                         text =
                             Utils.convertEpochToDateTimeTimeZoneString(
-                                media.nextAiringEpisode.airingAt.toLong(), // - Clock.System.now().epochSeconds
+                                media.nextAiringEpisode.airingAt.toLong(),
                             ),
                     )
                 }
@@ -762,7 +762,6 @@ fun getTwitterUriFromHashtags(hashtags: String): String {
         return "https://twitter.com/search?q=${hashtags.replace("#", "%23")}&src=typd"
     } else {
         val split = hashtags.split("#")
-        Timber.d("Split is $split")
         return buildString {
             append("https://twitter.com/search?q=")
             split.forEachIndexed { index, string ->

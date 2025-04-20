@@ -115,6 +115,8 @@ import com.kevin.anihome.ui.details.mediadetails.MediaDetailsViewModel
 import com.kevin.anihome.ui.details.mediadetails.QuickInfo
 import com.kevin.anihome.ui.home.notifications.UnreadNotificationsViewModel
 import com.kevin.anihome.utils.AsyncImageRoundedCorners
+import com.kevin.anihome.utils.MEDIUM_MEDIA_HEIGHT
+import com.kevin.anihome.utils.MEDIUM_MEDIA_WIDTH
 import com.kevin.anihome.utils.Utils
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -417,6 +419,7 @@ fun LazyRowLazyPagingItems(
                             title = item.title,
                             coverImage = item.coverImage,
                             onNavigateToDetails = { onNavigateToMediaDetails(item.id) },
+                            modifier = Modifier.padding(start = Dimens.PaddingNormal)
                         )
                     }
                 }
@@ -435,30 +438,25 @@ fun AnimeCard(
     Column(
         modifier =
             Modifier
-                .padding(start = 12.dp)
-                .width(120.dp)
-                .height(240.dp)
+                .width(MEDIUM_MEDIA_WIDTH.dp)
                 .then(modifier)
                 .clickable { onNavigateToDetails() }
                 .semantics(mergeDescendants = true) {},
     ) {
-        AsyncImage(
-            model =
-                ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true)
-                    .build(),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier =
-                Modifier
-                    .height(160.dp)
-                    .clip(RoundedCornerShape(12.dp)),
+        AsyncImageRoundedCorners(
+            coverImage = coverImage,
+            contentDescription = title,
+            width = MEDIUM_MEDIA_WIDTH.dp,
+            height = MEDIUM_MEDIA_HEIGHT.dp,
+            padding = 0.dp,
         )
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(10.dp),
+            modifier = Modifier.padding(vertical = Dimens.PaddingSmall),
             overflow = TextOverflow.Ellipsis,
+            maxLines = 2
         )
     }
 }
@@ -1434,10 +1432,9 @@ fun SearchCardCharacter(
     Row(
         modifier =
             Modifier
-                .fillMaxWidth()
                 .clickable { onNavigateToDetails(id) },
     ) {
-        AsyncImageRoundedCorners(coverImage = coverImage, contentDescription = userPreferredName)
+        AsyncImageRoundedCorners(coverImage = coverImage, padding = Dimens.PaddingSmall, width = MEDIUM_MEDIA_WIDTH.dp, height = MEDIUM_MEDIA_HEIGHT.dp, contentDescription = userPreferredName)
         Column(modifier = Modifier.padding(Dimens.PaddingNormal)) {
             Text(
                 text = userPreferredName,
