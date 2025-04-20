@@ -1,6 +1,5 @@
 package com.kevin.anihome.ui
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,6 +52,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.kevin.anihome.R
 import com.kevin.anihome.data.models.AniMediaListEntry
@@ -63,12 +63,16 @@ import com.kevin.anihome.data.models.StatusUpdate
 import com.kevin.anihome.utils.Utils
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import timber.log.Timber
 import java.util.Locale
 import kotlin.math.roundToInt
+
+const val TAG = "EditStatusSheet"
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,14 +97,18 @@ fun EditStatusModalSheet(
                     null
                 } else if (currentListEntry.completedAt?.day == null || currentListEntry.completedAt?.month == null || currentListEntry.completedAt?.year == null) {
                     null
-                }else {
-                    LocalDate(
+                } else {
+                    Timber.d("completedAt: ${currentListEntry.completedAt}")
+                    LocalDateTime(
                         currentListEntry.completedAt!!.year,
                         currentListEntry.completedAt!!.month,
                         currentListEntry.completedAt!!.day,
-                    ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+                        0,
+                        0
+                    ).toInstant(TimeZone.UTC).toEpochMilliseconds()
                 },
         )
+    Timber.d("datePickerStateCompletedAt: ${datePickerStateCompletedAt.selectedDateMillis}")
 
     val datePickerStateStartedAt =
         rememberDatePickerState(
@@ -111,11 +119,13 @@ fun EditStatusModalSheet(
                     null
                 }
                 else {
-                    LocalDate(
+                    LocalDateTime(
                         currentListEntry.startedAt!!.year,
                         currentListEntry.startedAt!!.month,
                         currentListEntry.startedAt!!.day,
-                    ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+                        0,
+                        0
+                    ).toInstant(TimeZone.UTC).toEpochMilliseconds()
                 },
         )
 
@@ -155,6 +165,8 @@ fun EditStatusModalSheet(
                 title = {
                     Text(
                         text = media.title,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
                     )
                 },
                 navigationIcon = {
@@ -267,15 +279,13 @@ fun EditStatusModalSheet(
 
             DatePickerDialogue(
                 "Start date",
-                initialValue = currentListEntry.startedAt,
-                setValue = { currentListEntry = currentListEntry.copy(startedAt = it) },
                 datePickerState = datePickerStateStartedAt,
+                setDateListEntry = { currentListEntry = currentListEntry.copy(startedAt = it) },
             )
             DatePickerDialogue(
                 "Finish date",
-                initialValue = currentListEntry.completedAt,
-                setValue = { currentListEntry = currentListEntry.copy(completedAt = it) },
                 datePickerState = datePickerStateCompletedAt,
+                setDateListEntry = { currentListEntry = currentListEntry.copy(completedAt = it) },
             )
 
             Row(
@@ -284,7 +294,7 @@ fun EditStatusModalSheet(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Dimens.PaddingNormal)
+                        .padding(horizontal = Dimens.PaddingSmall)
                         .clickable {
                             currentListEntry =
                                 currentListEntry.copy(private = !currentListEntry.private)
@@ -311,7 +321,7 @@ fun EditStatusModalSheet(
                         .fillMaxWidth()
                         .padding(
                             horizontal = Dimens.PaddingNormal,
-                            vertical = Dimens.PaddingLarge,
+                            vertical = Dimens.PaddingSmall,
                         ),
                 minLines = 5,
                 trailingIcon = {
@@ -589,48 +599,32 @@ fun NumberTextField(
 @OptIn(ExperimentalMaterial3Api::class)
 fun DatePickerDialogue(
     label: String,
-    initialValue: FuzzyDate?,
-    setValue: (FuzzyDate?) -> Unit,
     datePickerState: DatePickerState,
+    setDateListEntry: (FuzzyDate?) -> Unit = {},
 ) {
     var expanded by remember { mutableStateOf(false) }
-//    val mutableInitialValue by remember { mutableStateOf(initialValue) }
-
-//    ExposedDropdownMenuBox(
-//        expanded = expanded,
-//        onExpandedChange = { expanded = !expanded },
-//        modifier = Modifier.padding(Dimens.PaddingNormal),
-//    ) {
-    val time =
-        datePickerState.selectedDateMillis?.let {
+    val dateBeforeChange = datePickerState.selectedDateMillis
+    Timber.d("dateBeforeChange: $dateBeforeChange")
+    val dateBeforeChangeConverted =
+        dateBeforeChange?.let {
             Instant.fromEpochMilliseconds(
                 it,
-            ).toLocalDateTime(TimeZone.UTC)
+            ).toLocalDateTime(TimeZone.currentSystemDefault())
         }
-//    setValue(
-//        if (time != null) {
-//            FuzzyDate(
-//                time.year,
-//                time.monthNumber,
-//                time.dayOfMonth,
-//            )
-//        } else {
-//            null
-//        },
-//    )
-    val timeString =
-        if (time != null) {
+    Timber.d("dateBeforeChangeConverted: $dateBeforeChangeConverted")
+    val dateBeforeChangeString =
+        if (dateBeforeChangeConverted != null) {
             String.format(Locale.UK,
                 "%04d-%02d-%02d",
-                time.year,
-                time.monthNumber,
-                time.dayOfMonth,
+                dateBeforeChangeConverted.year,
+                dateBeforeChangeConverted.monthNumber,
+                dateBeforeChangeConverted.dayOfMonth,
             )
         } else {
             ""
         }
+    Timber.d("dateBeforeChangeString: $dateBeforeChangeString")
     OutlinedTextField(
-        // The `menuAnchor` modifier must be passed to the text field for correctness.
         modifier =
             Modifier
 //                .menuAnchor()
@@ -641,13 +635,14 @@ fun DatePickerDialogue(
                 .fillMaxWidth(),
         readOnly = true,
         enabled = false,
-        value = timeString,
-        onValueChange = { },
+        value = dateBeforeChangeString,
+        onValueChange = {},
         label = { Text(label) },
         trailingIcon = {
             if (datePickerState.selectedDateMillis != null) {
                 IconButton(onClick = {
                     datePickerState.selectedDateMillis = null
+                    setDateListEntry(null)
                 }) {
                     Icon(
                         imageVector = Icons.Default.Clear,
@@ -665,21 +660,27 @@ fun DatePickerDialogue(
                 disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
-//            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
     )
-//    }
     if (expanded) {
         DatePickerDialog(
             onDismissRequest = {
-                // Dismiss the dialog when the user clicks outside the dialog or on the back
-                // button. If you want to disable that functionality, simply use an empty
-                // onDismissRequest.
                 expanded = false
             },
             confirmButton = {
                 TextButton(
                     onClick = {
                         expanded = false
+                        val newDate = datePickerState.selectedDateMillis?.let {
+                            Instant.fromEpochMilliseconds(
+                                it,
+                            ).toLocalDateTime(TimeZone.currentSystemDefault())
+                        }
+                        val newDateFuzzy : FuzzyDate? = if (newDate != null) FuzzyDate(
+                            year = newDate.year,
+                            month = newDate.month.value,
+                            day = newDate.dayOfMonth
+                        ) else {null}
+                        setDateListEntry(newDateFuzzy)
                     },
                 ) {
                     Text("OK")
@@ -689,6 +690,7 @@ fun DatePickerDialogue(
                 TextButton(
                     onClick = {
                         expanded = false
+                        datePickerState.selectedDateMillis = dateBeforeChange
                     },
                 ) {
                     Text("Cancel")
@@ -700,32 +702,18 @@ fun DatePickerDialogue(
     }
 }
 
-// @OptIn(ExperimentalMaterial3Api::class)
-// @Preview
-// @Composable
-// fun EditStatusModalSheetPreview() {
-//    EditStatusModalSheet(
-//        editSheetState = rememberModalBottomSheetState(),
-//        unChangeListEntry = Media(),
-//        isAnime = true,
-//        hideEditSheet = { },
-//        saveStatus = { },
-//        deleteListEntry = { }
-//    )
-// }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, group = "Date picker")
 @Composable
 fun DatePickerPreview() {
-    DatePickerDialogue("Start date", initialValue = FuzzyDate(2022, 7, 22), setValue = {}, datePickerState = rememberDatePickerState())
+    DatePickerDialogue("Start date", datePickerState = rememberDatePickerState())
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, group = "Date picker")
 @Composable
 fun DatePickerNoDatePreview() {
-    DatePickerDialogue("Start date", initialValue = null, setValue = {}, datePickerState = rememberDatePickerState())
+    DatePickerDialogue("Start date", datePickerState = rememberDatePickerState())
 }
 
 @Preview(showBackground = true, group = "Dialog")
