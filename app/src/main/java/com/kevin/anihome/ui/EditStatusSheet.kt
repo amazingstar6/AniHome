@@ -67,6 +67,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import timber.log.Timber
+import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
@@ -90,7 +91,9 @@ fun EditStatusModalSheet(
             initialSelectedDateMillis =
                 if (currentListEntry.completedAt == null) {
                     null
-                } else {
+                } else if (currentListEntry.completedAt?.day == null || currentListEntry.completedAt?.month == null || currentListEntry.completedAt?.year == null) {
+                    null
+                }else {
                     LocalDate(
                         currentListEntry.completedAt!!.year,
                         currentListEntry.completedAt!!.month,
@@ -104,11 +107,14 @@ fun EditStatusModalSheet(
             initialSelectedDateMillis =
                 if (currentListEntry.startedAt == null) {
                     null
-                } else {
+                } else if (currentListEntry.startedAt?.day == null || currentListEntry.startedAt?.month == null || currentListEntry.startedAt?.year == null) {
+                    null
+                }
+                else {
                     LocalDate(
-                        currentListEntry.completedAt!!.year,
-                        currentListEntry.completedAt!!.month,
-                        currentListEntry.completedAt!!.day,
+                        currentListEntry.startedAt!!.year,
+                        currentListEntry.startedAt!!.month,
+                        currentListEntry.startedAt!!.day,
                     ).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
                 },
         )
@@ -173,7 +179,6 @@ fun EditStatusModalSheet(
                 actions = {
                     TextButton(onClick = {
                         saveStatus(
-                            // todo fill these
                             StatusUpdate(
                                 entryListId = currentListEntry.listEntryId,
                                 status = currentListEntry.status,
@@ -194,7 +199,6 @@ fun EditStatusModalSheet(
                             false,
                         )
                         hideEditSheet()
-//                        reloadMyMedia()
                     }) {
                         Text("Save")
                     }
@@ -390,21 +394,15 @@ fun SliderTextField(
     var text by remember {
         mutableStateOf("${sliderPosition.toInt()}")
     }
-    val context = LocalContext.current
     OutlinedTextField(
         value = text,
         onValueChange = { newInput ->
             text =
                 try {
                     if (newInput.toFloat() in valueRange) {
+                        setRawScore(newInput.toDouble())
                         newInput
                     } else {
-                        // fixme should we make a toast?
-                        Toast.makeText(
-                            context,
-                            R.string.input_a_valid_value,
-                            Toast.LENGTH_SHORT,
-                        ).show()
                         ""
                     }
                 } catch (e: NumberFormatException) {
@@ -421,13 +419,13 @@ fun SliderTextField(
                     0f
                 }
         },
-        label = { Text("Score") },
+        label = { Text(stringResource(R.string.score)) },
         suffix = { Text(text = "/100") },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier =
             Modifier
-                .padding(Dimens.PaddingNormal),
+                .padding(horizontal = Dimens.PaddingNormal, vertical = Dimens.PaddingSmall),
     )
     Slider(
         modifier =
@@ -435,7 +433,7 @@ fun SliderTextField(
                 .semantics {
                     contentDescription = "Localized Description"
                 }
-                .padding(Dimens.PaddingNormal),
+                .padding(horizontal = Dimens.PaddingLarge, vertical = Dimens.PaddingNormal),
         valueRange = valueRange,
         value = sliderPosition,
         onValueChange = {
@@ -465,6 +463,7 @@ fun DropDownMenuStatus(
             // The `menuAnchor` modifier must be passed to the text field for correctness.
             modifier =
                 Modifier
+                    // TODO deprecated
                     .menuAnchor()
                     .fillMaxWidth(),
             readOnly = true,
@@ -486,7 +485,7 @@ fun DropDownMenuStatus(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
-            AniPersonalMediaStatus.values().forEach { selectionOption ->
+            AniPersonalMediaStatus.entries.forEach { selectionOption ->
                 if (selectionOption != AniPersonalMediaStatus.UNKNOWN) {
                     DropdownMenuItem(
                         text = {
@@ -550,7 +549,7 @@ fun NumberTextField(
             placeholder = { Text(text = (0).toString()) },
             modifier =
                 Modifier
-                    .padding(Dimens.PaddingNormal)
+                    .padding(horizontal = Dimens.PaddingNormal, vertical = Dimens.PaddingSmall)
                     .weight(1f),
         )
         TextButton(onClick = {
@@ -621,7 +620,7 @@ fun DatePickerDialogue(
 //    )
     val timeString =
         if (time != null) {
-            String.format(
+            String.format(Locale.UK,
                 "%04d-%02d-%02d",
                 time.year,
                 time.monthNumber,
