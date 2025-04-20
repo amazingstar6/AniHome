@@ -72,8 +72,6 @@ import timber.log.Timber
 import java.util.Locale
 import kotlin.math.roundToInt
 
-const val TAG = "EditStatusSheet"
-
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun EditStatusModalSheet(
@@ -84,6 +82,7 @@ fun EditStatusModalSheet(
     hideEditSheet: () -> Unit,
     saveStatus: (StatusUpdate, Boolean) -> Unit,
     deleteListEntry: (id: Int) -> Unit,
+    showDelete: Boolean= true,
 ) {
     var currentListEntry by remember { mutableStateOf(unChangeListEntry) }
     var showCloseConfirmation by remember {
@@ -341,52 +340,54 @@ fun EditStatusModalSheet(
                 },
             )
 
-            var showDeleteConfirmation by remember { mutableStateOf(false) }
-            AnimatedVisibility(visible = showDeleteConfirmation) {
-                AlertDialog(
-                    title = { Text(text = "Delete entry \"${media.title}\"?") },
-                    dismissButton = {
-                        TextButton(onClick = { showDeleteConfirmation = false }) {
-                            Text(text = stringResource(R.string.cancel))
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            deleteListEntry(currentListEntry.listEntryId)
-                            showDeleteConfirmation = false
-                            hideEditSheet()
-                        }) {
-                            Text(stringResource(R.string.delete))
-                        }
-                    },
-                    onDismissRequest = { showDeleteConfirmation = false },
-                )
-            }
+            if (showDelete) {
+                var showDeleteConfirmation by remember { mutableStateOf(false) }
+                AnimatedVisibility(visible = showDeleteConfirmation) {
+                    AlertDialog(
+                        title = { Text(text = "Delete entry \"${media.title}\"?") },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteConfirmation = false }) {
+                                Text(text = stringResource(R.string.cancel))
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                deleteListEntry(currentListEntry.listEntryId)
+                                showDeleteConfirmation = false
+                                hideEditSheet()
+                            }) {
+                                Text(stringResource(R.string.delete))
+                            }
+                        },
+                        onDismissRequest = { showDeleteConfirmation = false },
+                    )
+                }
 
-            Button(
-                onClick = {
-                    showDeleteConfirmation = true
-                },
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    ),
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = Dimens.PaddingNormal,
-                            end = Dimens.PaddingNormal,
-                            bottom = Dimens.PaddingNormal,
+                Button(
+                    onClick = {
+                        showDeleteConfirmation = true
+                    },
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
                         ),
-            ) {
-                Text(
-                    text = "Delete entry",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = Dimens.PaddingNormal,
+                                end = Dimens.PaddingNormal,
+                                bottom = Dimens.PaddingNormal,
+                            ),
+                ) {
+                    Text(
+                        text = "Delete entry",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
-        }
+            }
     }
 }
 

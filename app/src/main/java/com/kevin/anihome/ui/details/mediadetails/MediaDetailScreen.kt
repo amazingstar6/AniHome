@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -74,6 +75,7 @@ import com.kevin.anihome.ui.mymedia.components.ErrorScreen
 import com.kevin.anihome.utils.LoadingCircle
 import com.kevin.anihome.utils.quantityStringResource
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 enum class DetailTabs {
     Overview,
@@ -139,6 +141,9 @@ fun MediaDetail(
     val reviews = mediaDetailsViewModel.reviews.collectAsLazyPagingItems()
     val staff = mediaDetailsViewModel.staffList.collectAsLazyPagingItems()
 
+    val mediaIsOnList = (media as? MediaDetailUiState.Success)?.data?.mediaListEntry?.listEntryId != -1
+    Timber.d("mediaIsOnList: $mediaIsOnList; listEntryId: ${(media as? MediaDetailUiState.Success)?.data?.mediaListEntry?.listEntryId}")
+
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(title = {
             Text(
@@ -203,7 +208,11 @@ fun MediaDetail(
                     showEditSheet()
                 },
             ) {
-                Icon(imageVector = Icons.Outlined.Add, contentDescription = "add to list")
+                if (mediaIsOnList) {
+                    Icon(imageVector = Icons.Outlined.Edit, contentDescription = "edit list entry")
+                } else {
+                    Icon(imageVector = Icons.Outlined.Add, contentDescription = "add to list")
+                }
             }
         }
     }) {
@@ -313,6 +322,7 @@ fun MediaDetail(
                                 },
                                 isAnime = isAnime,
                                 deleteListEntry = { mediaDetailsViewModel.deleteEntry(it) },
+                                showDelete = mediaIsOnList
                             )
                         }
                     }
