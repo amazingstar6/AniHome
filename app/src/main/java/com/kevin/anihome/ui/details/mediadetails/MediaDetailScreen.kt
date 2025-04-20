@@ -16,8 +16,10 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -135,8 +137,6 @@ fun MediaDetail(
         }
     })
 
-//    fetchMedia()
-
     // fixme reviews reload (network) on navigating back
     val reviews = mediaDetailsViewModel.reviews.collectAsLazyPagingItems()
     val staff = mediaDetailsViewModel.staffList.collectAsLazyPagingItems()
@@ -151,7 +151,7 @@ fun MediaDetail(
         }, navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(id = R.string.back),
                 )
             }
@@ -205,7 +205,7 @@ fun MediaDetail(
                     showEditSheet()
                 },
             ) {
-                Icon(imageVector = Icons.Outlined.Edit, contentDescription = "edit")
+                Icon(imageVector = Icons.Outlined.Add, contentDescription = "add to list")
             }
         }
     }) {
@@ -228,33 +228,27 @@ fun MediaDetail(
                         val pagerState =
                             rememberPagerState(
                                 initialPage = 0,
-                                pageCount = { DetailTabs.values().size },
+                                pageCount = { DetailTabs.entries.size },
                             )
                         val pagerScope = rememberCoroutineScope()
-//                val nestedScrollConnection = PagerDefaults.pageNestedScrollConnection(Orientation.Horizontal)
 
                         AniDetailTabs(
                             modifier = Modifier.padding(top = it.calculateTopPadding()),
-                            titles = DetailTabs.values().map { it.name },
+                            titles = DetailTabs.entries.map { it.name },
                             tabSelected = pagerState.currentPage,
                             onTabSelected = {
                                 pagerScope.launch {
                                     pagerState.animateScrollToPage(it.ordinal)
                                 }
-//                        index = it
                             },
                         )
                         HorizontalPager(
                             state = pagerState,
-//                    flingBehavior = PagerDefaults.flingBehavior(
-//                        state = pagerState,
-//                    ),
                             flingBehavior =
                                 PagerDefaults.flingBehavior(
                                     state = pagerState,
                                     snapAnimationSpec = spring(stiffness = Spring.StiffnessHigh),
                                 ),
-//                    pageNestedScrollConnection = nestedScrollConnection
                         ) { currentPage ->
                             when (currentPage) {
                                 0 -> {
@@ -273,7 +267,6 @@ fun MediaDetail(
                                         languages = (media as MediaDetailUiState.Success).data.languages,
                                         selectedLanguage = selectedLanguage,
                                         setSelectedLanguage = setSelectedLanguage,
-//                                        (media as MediaDetailUiState.Success).data.characterWithVoiceActors,
                                         characterWithVoiceActors = characters,
                                         navigateToCharacter = navigateToCharacter,
                                         navigateToStaff = navigateToStaff,
@@ -322,6 +315,7 @@ fun MediaDetail(
                                 },
                                 isAnime = isAnime,
                                 deleteListEntry = { mediaDetailsViewModel.deleteEntry(it) },
+                                showDeleteList = false
                             )
                         }
                     }
@@ -398,7 +392,7 @@ private fun AniDetailTabs(
             val selected = index == tabSelected
             Tab(
                 selected = selected,
-                onClick = { onTabSelected(DetailTabs.values()[index]) },
+                onClick = { onTabSelected(DetailTabs.entries[index]) },
                 text = { Text(text = title) },
             )
         }
