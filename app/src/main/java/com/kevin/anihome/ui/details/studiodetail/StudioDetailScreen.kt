@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -109,25 +110,23 @@ fun StudioDetailScreen(
         })
     }) {
         Column(modifier = Modifier.padding(top = it.calculateTopPadding())) {
-            if (!studio.isAnimationStudio) {
-                Text(
-                    text = "This studio is not an animation studio",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(vertical = Dimens.PaddingSmall)
-
-                )
-            } else {
-                Text(
-                    text = "This studio is an animation studio",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(vertical = Dimens.PaddingSmall)
-                )
-            }
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(MEDIUM_MEDIA_WIDTH.dp),
             ) {
+                item(span = { GridItemSpan(this.maxLineSpan)}) {
+                    val text = if (!studio.isAnimationStudio) {
+                        "This studio is not an animation studio"
+                    } else {
+                        "This studio is an animation studio"
+                    }
+
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(Dimens.PaddingSmall)
+                    )
+                }
                 items(mediaList.itemCount) { index ->
                     val media = mediaList[index]
                     if (media != null) {
@@ -147,7 +146,9 @@ private fun MediaCard(
     Column(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Center,
-        modifier = Modifier.padding(horizontal = Dimens.PaddingSmall).clickable { navigateToMedia(media.id) },
+        modifier = Modifier
+            .padding(horizontal = Dimens.PaddingSmall)
+            .clickable { navigateToMedia(media.id) },
     ) {
         AsyncImageRoundedCorners(
             coverImage = media.coverImage,
