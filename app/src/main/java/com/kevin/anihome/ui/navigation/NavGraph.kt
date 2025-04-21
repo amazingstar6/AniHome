@@ -32,7 +32,7 @@ import com.kevin.anihome.ui.forum.ForumScreen
 import com.kevin.anihome.ui.home.HomeScreen
 import com.kevin.anihome.ui.home.HomeViewModel
 import com.kevin.anihome.ui.home.MediaOverview
-import com.kevin.anihome.ui.home.SettingsScreen
+import com.kevin.anihome.ui.home.settings.SettingsScreen
 import com.kevin.anihome.ui.home.notifications.NotificationScreen
 import com.kevin.anihome.ui.home.notifications.UnreadNotificationsViewModel
 import com.kevin.anihome.ui.mymedia.MyMediaScreen

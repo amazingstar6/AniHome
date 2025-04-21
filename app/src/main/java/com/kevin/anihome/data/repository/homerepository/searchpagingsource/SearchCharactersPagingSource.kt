@@ -5,7 +5,7 @@ import androidx.paging.PagingState
 import com.kevin.anihome.data.models.AniCharacterDetail
 import com.kevin.anihome.data.models.AniResult
 import com.kevin.anihome.data.repository.homerepository.HomeRepositoryImpl
-import com.kevin.anihome.ui.home.AniCharacterSort
+import com.kevin.anihome.ui.home.search.AniCharacterSort
 import timber.log.Timber
 
 private const val STARTING_KEY = 1

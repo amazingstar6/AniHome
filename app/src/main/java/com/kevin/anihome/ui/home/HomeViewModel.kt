@@ -23,6 +23,9 @@ import com.kevin.anihome.data.repository.homerepository.searchpagingsource.Searc
 import com.kevin.anihome.data.repository.homerepository.searchpagingsource.SearchStudioPagingSource
 import com.kevin.anihome.data.repository.homerepository.searchpagingsource.SearchThreadPagingSource
 import com.kevin.anihome.data.repository.homerepository.searchpagingsource.SearchUserPagingSource
+import com.kevin.anihome.ui.home.search.AniCharacterSort
+import com.kevin.anihome.ui.home.search.AniMediaSort
+import com.kevin.anihome.ui.home.search.SearchFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview

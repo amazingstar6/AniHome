@@ -159,6 +159,13 @@
     <string name="rankings">Rankings</string>
     <string name="score_distribution">Score distribution</string>
     <string name="status_distribution">Status distribution</string>
+    <string name="search_for_anime_manga">Search for Anime, Manga...</string>
+    <string name="status">Status</string>
+    <string name="confirm">Confirm</string>
+    <string name="anime_year">Anime year</string>
+    <string name="relevance">Relevance</string>
+    <string name="role">Role</string>
+    <string name="role_desc">Role (desc)</string>
     <plurals name="show_spoiler_name">
         <item quantity="one">Show spoiler name</item>
         <item quantity="other">Show spoiler names</item>

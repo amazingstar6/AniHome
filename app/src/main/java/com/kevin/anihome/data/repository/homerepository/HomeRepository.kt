@@ -8,7 +8,7 @@ import com.kevin.anihome.data.models.AniTag
 import com.kevin.anihome.data.models.AniThread
 import com.kevin.anihome.data.models.AniUser
 import com.kevin.anihome.data.models.Media
-import com.kevin.anihome.ui.home.AniCharacterSort
+import com.kevin.anihome.ui.home.search.AniCharacterSort
 import com.kevin.anihome.ui.home.MediaSearchState
 
 interface HomeRepository {

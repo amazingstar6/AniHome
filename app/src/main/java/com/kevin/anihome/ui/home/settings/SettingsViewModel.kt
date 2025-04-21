@@ -1,4 +1,4 @@
-package com.kevin.anihome.ui.home
+package com.kevin.anihome.ui.home.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

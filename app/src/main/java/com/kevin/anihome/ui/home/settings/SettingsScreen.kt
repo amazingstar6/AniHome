@@ -1,4 +1,4 @@
-package com.kevin.anihome.ui.home
+package com.kevin.anihome.ui.home.settings
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable

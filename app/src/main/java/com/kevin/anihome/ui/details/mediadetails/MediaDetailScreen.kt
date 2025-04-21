@@ -104,15 +104,6 @@ fun MediaDetail(
 ) {
     val media by mediaDetailsViewModel.media.collectAsStateWithLifecycle()
 
-    val isAnime by remember {
-        mutableStateOf(
-            if (media is MediaDetailUiState.Success) {
-                (media as MediaDetailUiState.Success).data.type == AniMediaType.ANIME
-            } else {
-                true
-            },
-        )
-    }
     var editStatusBottomSheetIsVisible by remember { mutableStateOf(false) }
     val editSheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = false, confirmValueChange = {
@@ -143,6 +134,8 @@ fun MediaDetail(
 
     val mediaIsOnList = (media as? MediaDetailUiState.Success)?.data?.mediaListEntry?.listEntryId != -1
     Timber.d("mediaIsOnList: $mediaIsOnList; listEntryId: ${(media as? MediaDetailUiState.Success)?.data?.mediaListEntry?.listEntryId}")
+
+    val isAnime = (media as? MediaDetailUiState.Success)?.data?.type == AniMediaType.ANIME
 
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(title = {

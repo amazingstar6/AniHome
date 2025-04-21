@@ -157,6 +157,9 @@ dependencies {
 //    implementation 'com.github.commandiron:WheelPickerCompose:1.1.11'
     // For shimmer effect
     implementation 'com.valentinilk.shimmer:compose-shimmer:1.0.5'
+
+    // For lazy columns with scrollbar
+    implementation 'com.github.nanihadesuka:LazyColumnScrollbar:2.2.0'
 }
 
 apollo {
