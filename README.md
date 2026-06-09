@@ -10,9 +10,7 @@ It has the following list of features:
 - Look up anime & manga
 - Track your anime & manga
 
-Since, it's a WIP it has the following issue or missing features:
-- ~~"Upcoming next season" doesn't display anything~~
-- Fix scrolability of the body of a review
+Since it's a WIP, there are still bugs and a few features missing, for a detailed overview of the roadmap, please checkout the [project roadmap](https://github.com/users/amazingstar6/projects/1).
 
 ## Screenshots
 ![Home screen anime light mode](/screenshots/home_anime_light.png)
